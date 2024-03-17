@@ -16,7 +16,7 @@ namespace GroundCompiler
         static void Main(string[] args)
         {
             var fileName = "source_console";
-            var fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\GroundCompiler\\Examples\\{fileName}.g"));
+            var fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}.g"));
 
             Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath };
             compilation.Build();
