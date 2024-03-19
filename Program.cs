@@ -8,15 +8,24 @@ namespace GroundCompiler
         required public string sourceFilename, sourceFullFilepath;
         string? sourcecode, generatedCode;
         string currentDir = System.IO.Directory.GetCurrentDirectory();
-        bool isGuiApplication = true;
+        bool isGuiApplication = false;
         bool runAfterCompilation = false;
-        bool generateDebugInfo = true;
+        bool generateDebugInfo = false;
 
 
         static void Main(string[] args)
         {
-            var fileName = "source_console";
-            var fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}.g"));
+            string fileName, fullPath;
+            if (args.Length == 0) {
+                fileName = "source_console";
+                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}.g"));
+            } else {
+                fileName = args[0];
+                if (fileName.EndsWith(".g",StringComparison.InvariantCultureIgnoreCase))
+                    fileName = fileName.Substring(0,fileName.Length-2);
+
+                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), fileName+".g"));
+            }
 
             Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath };
             compilation.Build();
@@ -61,8 +70,7 @@ namespace GroundCompiler
                 generateDebugInfo = true;
             }
 
-            if (sourcecode.StartsWith("//run console") || sourcecode.StartsWith("//!run console") || sourcecode.StartsWith("//debug console"))
-                isGuiApplication = false;
+            isGuiApplication = !(sourcecode.StartsWith("//run console") || sourcecode.StartsWith("//!run console") || sourcecode.StartsWith("//debug console"));
         }
 
         public void Assemble()

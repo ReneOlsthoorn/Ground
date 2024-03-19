@@ -126,7 +126,9 @@ while (textLine != null) {
     if (textLine != null and textLine == "Line2\r\n") {
         println("Second line found...");
     } else {
-        print(textLine);
+        if (textLine != null) {
+            print(textLine);
+        }
     }
 }
 fclose(tmpFile);
