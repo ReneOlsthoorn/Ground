@@ -78,6 +78,9 @@ namespace GroundCompiler.AstNodes
                 HardcodedFunctionSymbol fn_fclose = this.Scope.DefineHardcodedFunction("fclose");
                 fn_fclose.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
 
+                HardcodedFunctionSymbol fn_charstr = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
+                fn_charstr.FunctionStatement.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
+
                 HardcodedFunctionSymbol fn_GC_ReadAllText = this.Scope.DefineHardcodedFunction("GC_ReadAllText", Datatype.GetDatatype("string"));
                 fn_GC_ReadAllText.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
 

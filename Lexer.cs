@@ -311,7 +311,7 @@ namespace GroundCompiler
         public bool IsDigitOrPoint(char c) { return (c >= '0' && c <= '9') || c == '.'; }
         public bool IsAlphabetical(char c) { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }
         public bool IsIdentifierStart(char c) { return (IsAlphabetical(c) || (c == '_')); }
-        public bool IsIdentifierRest(char c) { return (IsIdentifierStart(c) || IsDigit(c)); }
+        public bool IsIdentifierRest(char c) { return (IsIdentifierStart(c) || IsDigit(c) || (c == '$')); }
         public bool IsNotStringEnd(char c) { return (c != '\"'); }
         public bool IsNotGraveAccentStringEnd(char c) { return (c != '`'); }
         public bool IsNotRightBrace(char c) { return (c != '}'); }

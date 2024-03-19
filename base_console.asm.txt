@@ -226,6 +226,21 @@ _f_fclose:
   retn  16
 
 
+intvalue@_f_chr$ equ rbp+16
+_f_chr$:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, 2
+  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+  mov   rdx, qword [intvalue@_f_chr$]
+  mov   byte [rax], dl
+  mov   byte [rax+1], 0
+  mov   rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  retn  16
+
+
 input@_f_fputs equ rbp+24
 file@_f_fputs equ rbp+16
 _f_fputs:

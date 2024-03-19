@@ -108,9 +108,9 @@ println("ConsoleClass a.a = Hallo! => " + a.a);
 
 string tmpFilename = "test.txt";
 int tmpFile = fopen(tmpFilename, "wb");
-fputs("Line1\r\n", tmpFile);
-fputs("Line2\r\n", tmpFile);
-fputs("Line3\r\n", tmpFile);
+fputs("Line " + chr$(65) + "\r\n", tmpFile);
+fputs("Line " + chr$(65+1) + "\r\n", tmpFile);
+fputs("Line " + chr$(65+2) + "\r\n", tmpFile);
 fclose(tmpFile);
 
 println("\r\nReading generated file...");

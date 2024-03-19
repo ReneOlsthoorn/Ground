@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml.Linq;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
 
@@ -233,7 +234,7 @@ namespace GroundCompiler.AstNodes
                 if (symbol == null)
                     Compiler.Error($"Symbol {name} does not exist.");
 
-                if (symbol is Scope.Symbol.HardcodedVariable)
+                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol)
                     return symbol;
 
                 // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.
@@ -574,6 +575,15 @@ namespace GroundCompiler.AstNodes
                     arg.Initialize();
                 }
                 base.Initialize();
+
+                var scope = GetScope();
+                var functionName = FunctionName as Expression.Variable;
+                var symbol = GetSymbol(functionName!.Name.Lexeme, scope!);
+
+                if (symbol is Scope.Symbol.HardcodedFunctionSymbol hardCodedFunction) { 
+                    if (hardCodedFunction.FunctionStatement.ResultDatatype != null)
+                        ExprType = hardCodedFunction.FunctionStatement.ResultDatatype!;
+                }
 
                 foreach (var arg in Arguments)
                 {
