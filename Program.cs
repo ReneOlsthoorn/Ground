@@ -10,7 +10,7 @@ namespace GroundCompiler
         string currentDir = System.IO.Directory.GetCurrentDirectory();
         bool isGuiApplication = false;
         bool runAfterCompilation = false;
-        bool generateDebugInfo = true;
+        bool generateDebugInfo = false;
 
 
         static void Main(string[] args)
