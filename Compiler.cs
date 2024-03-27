@@ -1,6 +1,7 @@
 ﻿using GroundCompiler.AstNodes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
@@ -81,8 +82,12 @@ namespace GroundCompiler
             {
                 if (stmt.Initializer != null)
                 {
-                    stmt.Initializer!.ExprType = localVarSymbol.DataType;
+                    // shortcut. A special list validator must be made.
+                    if (stmt.Initializer is Expression.List)
+                        stmt.Initializer!.ExprType = localVarSymbol.DataType;
+
                     EmitExpression(stmt.Initializer);
+                    EmitConversionCompatibleType(stmt.Initializer!, localVarSymbol.DataType);
 
                     if (stmt.Initializer!.ExprType.IsReferenceType)
                     {
@@ -103,6 +108,12 @@ namespace GroundCompiler
         {
             // We do not generate the classes at the place it is defined.
             // Compiler>>EmitClasses emits the classes.
+            return null;
+        }
+
+
+        public object? VisitorGroup(Statement.GroupStatement stmt)
+        {
             return null;
         }
 
@@ -373,15 +384,48 @@ namespace GroundCompiler
 
         public object? VisitorFunctionCallExpr(Expression.FunctionCall expr)
         {
-            var functionName = expr.FunctionName as Expression.Variable;
+            // normally, the scope of the functioncall is used.
             var currentScope = expr.GetScope();
-            var theFunction = currentScope!.GetRootScope().GetFunction(functionName!.Name.Lexeme);
-            if (theFunction == null)
-                Compiler.Error($"VisitorFunctionCallExpr: {functionName!.Name.Lexeme} not found!");
+            var scope = currentScope;
+            Scope.Symbol.FunctionSymbol? theFunction = null;
+            string instVarName = null;
 
-            if (expr.Arguments.Count % 2 == 1)
+            if (expr.FunctionName is Expression.Variable functionNameVariable)
+            {
+                theFunction = scope!.GetRootScope().GetFunction(functionNameVariable.Name.Lexeme);
+                if (theFunction == null)
+                    Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
+            }
+
+            // When we have an methodcall, we use the scope from the class
+            if (expr.FunctionName is Expression.Get functionNameGet)
+            {
+                if (functionNameGet.Object is Expression.Variable functionNameVar)
+                {
+                    string funcName = functionNameVar.Name.Lexeme;
+                    var theSymbol = scope.GetVariable(funcName);
+
+                    var theClass = theSymbol.GetClassStatement();
+                    if (theClass != null)
+                    {
+                        scope = theClass.GetScope();
+                        if (theSymbol != null)
+                            instVarName = theSymbol.Name;
+                    }
+
+                    var theGroupStmt = theSymbol.GetGroupStatement();
+                    if (theGroupStmt != null)
+                        scope = theGroupStmt.GetScope();
+
+
+                    string functionName = functionNameGet.Name.Lexeme;
+                    theFunction = GetSymbol(functionName, scope!) as Scope.Symbol.FunctionSymbol;
+                }
+            }
+
+            int nrArguments = expr.Arguments.Count + 1;  // 1 = this, which is added the last
+            if (nrArguments % 2 == 1)
                 emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
-
 
             List<FunctionParameter> fPars = theFunction!.FunctionStatement.Parameters;
             int needle = 0;
@@ -393,6 +437,12 @@ namespace GroundCompiler
                 emitter.Push();
                 needle++;
             }
+
+            if (instVarName != null)
+                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(instVarName, currentScope?.Owner));
+            else
+                emitter.LoadNull();
+            emitter.Push();
 
             emitter.CallFunction(theFunction!, expr);
             return null;

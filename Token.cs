@@ -61,7 +61,8 @@ namespace GroundCompiler
         Return,       // return
         Print,        // print statement
         Function,     // function statement
-        Class         // class statement
+        Class,        // class statement
+        Group         // group statement
     }
 
 

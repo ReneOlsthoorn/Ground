@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using static GroundCompiler.Scope.Symbol;
 
 namespace GroundCompiler.AstNodes
@@ -24,6 +25,7 @@ namespace GroundCompiler.AstNodes
             R VisitorExpression(ExpressionStatement stmt);
             R VisitorFunction(FunctionStatement stmt);
             R VisitorClass(ClassStatement stmt);
+            R VisitorGroup(GroupStatement stmt);
             R VisitorReturn(ReturnStatement stmt);
             R VisitorBreak(BreakStatement stmt);
             R VisitorAssembly(AssemblyStatement stmt);
@@ -61,39 +63,69 @@ namespace GroundCompiler.AstNodes
         {
             public void AddHardcodedFunctions()
             {
+                // group msvcrt
+                var msvcrtToken = new Token(TokenType.Identifier);
+                msvcrtToken.Lexeme = "msvcrt";
+
+                List<FunctionStatement> msvcrtStmts = new List<FunctionStatement>();
+                GroupStatement msvcrtGroup = new GroupStatement(msvcrtToken, msvcrtStmts);
+                msvcrtGroup.Parent = this;
+                this.Scope.DefineGroup(msvcrtGroup);
+
+                HardcodedFunctionSymbol fn_fopen = msvcrtGroup.Scope.DefineHardcodedFunction("fopen");
+                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("mode", Datatype.GetDatatype("string")));
+                fn_fopen.FunctionStatement.Parent = msvcrtGroup;
+
+                HardcodedFunctionSymbol fn_fputs = msvcrtGroup.Scope.DefineHardcodedFunction("fputs");
+                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
+                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn_fputs.FunctionStatement.Parent = msvcrtGroup;
+
+                HardcodedFunctionSymbol fn_fclose = msvcrtGroup.Scope.DefineHardcodedFunction("fclose");
+                fn_fclose.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn_fclose.FunctionStatement.Parent = msvcrtGroup;
+
+                HardcodedFunctionSymbol fn_fgets = msvcrtGroup.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
+                fn_fgets.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn_fgets.FunctionStatement.Parent = msvcrtGroup;
+
+
+                // group gc
+                var gcToken = new Token(TokenType.Identifier);
+                gcToken.Lexeme = "gc";
+
+                List<FunctionStatement> gcFunctionStmts = new List<FunctionStatement>();
+                GroupStatement gcGroup = new GroupStatement(gcToken, gcFunctionStmts);
+                gcGroup.Parent = this;
+                this.Scope.DefineGroup(gcGroup);
+
+                gcGroup.Scope.DefineHardcodedFunction("input_int");
+                gcGroup.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
+
+                HardcodedFunctionSymbol fn_GC_ReadAllText = gcGroup.Scope.DefineHardcodedFunction("ReadAllText", Datatype.GetDatatype("string"));
+                fn_GC_ReadAllText.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+                fn_GC_ReadAllText.FunctionStatement.Parent = gcGroup;
+
+
+
+
                 HardcodedFunctionSymbol print = this.Scope.DefineHardcodedFunction("print");
                 print.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
                 HardcodedFunctionSymbol println = this.Scope.DefineHardcodedFunction("println");
                 println.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
-                HardcodedFunctionSymbol fn_fopen = this.Scope.DefineHardcodedFunction("fopen");
-                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
-                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("mode", Datatype.GetDatatype("string")));
-
-                HardcodedFunctionSymbol fn_fputs = this.Scope.DefineHardcodedFunction("fputs");
-                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
-                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-
-                HardcodedFunctionSymbol fn_fclose = this.Scope.DefineHardcodedFunction("fclose");
-                fn_fclose.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-
                 HardcodedFunctionSymbol fn_charstr = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
                 fn_charstr.FunctionStatement.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
 
-                HardcodedFunctionSymbol fn_GC_ReadAllText = this.Scope.DefineHardcodedFunction("GC_ReadAllText", Datatype.GetDatatype("string"));
-                fn_GC_ReadAllText.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
 
                 HardcodedFunctionSymbol fn_GC_Replace = this.Scope.DefineHardcodedFunction("GC_Replace", Datatype.GetDatatype("string"));
                 fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("string")));
                 fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
                 fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
 
-                HardcodedFunctionSymbol fn_fgets = this.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
-                fn_fgets.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
 
-                this.Scope.DefineHardcodedFunction("input_int");
-                this.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
                 this.Scope.DefineHardcodedFunction("GC_WaitVBL");
                 this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextRows", Datatype.GetDatatype("int"));
@@ -353,6 +385,47 @@ namespace GroundCompiler.AstNodes
         }
 
 
+
+        public class GroupStatement : Statement, IScopeStatement
+        {
+            public GroupStatement(Token name, List<FunctionStatement> methods)
+            {
+                Name = name;
+                Methods = methods;
+                this.Scope = new Scope(this);
+            }
+
+            public override void Initialize()
+            {
+                UpdateParentInNodes();
+                this.Scope.Parent = Parent?.GetScope() ?? null;
+
+                Scope.Parent?.DefineGroup(this);
+                base.Initialize();
+
+                foreach (var aFunctionStatement in Methods)
+                {
+                    aFunctionStatement.Parent = this;
+                    aFunctionStatement.Initialize();
+                }
+            }
+
+            public Scope Scope;
+            public Token Name;
+            public List<FunctionStatement> Methods;
+
+            public Scope GetScopeFromStatement() => this.Scope;
+            public Token GetScopeName() => this.Name;
+
+            [DebuggerStepThrough]
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitorGroup(this);
+            }
+        }
+
+
+
         public class ReturnStatement : Statement
         {
             public ReturnStatement(Expression? value)
@@ -439,6 +512,8 @@ namespace GroundCompiler.AstNodes
         public class FunctionStatement : Statement, IScopeStatement
         {
             public Scope Scope;
+            public ClassStatement? classStatement = null;
+            public GroupStatement? groupStatement = null;
 
             public FunctionStatement()
             {
@@ -463,17 +538,14 @@ namespace GroundCompiler.AstNodes
                 UpdateParentInNodes();
                 this.Scope.Parent = Parent?.GetScope() ?? null;
 
-                bool parentIsClass = (Parent != null && (Parent is ClassStatement));
-
-                if (!parentIsClass)
-                    Scope.Parent?.DefineFunction(this);
+                classStatement = Parent as ClassStatement;
+                groupStatement = Parent as GroupStatement;
+                Scope.Parent?.DefineFunction(this);
 
                 base.Initialize();
 
                 if (Body != null) {
-                    if (!parentIsClass)
-                        Body.GetScope()?.DefineFunctionParameters(this);
-
+                    Body.GetScope()?.DefineFunctionParameters(this);
                     Body.Parent = this;
                     Body.Initialize();
                 }
@@ -482,6 +554,13 @@ namespace GroundCompiler.AstNodes
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
 
+            public string? GetGroupName()
+            {
+                if (this.Parent is GroupStatement groupStatement)
+                    return groupStatement.Name.Lexeme;
+
+                return null;
+            }
 
             public Token Name { get; }
             public List<FunctionParameter> Parameters { get; set; }

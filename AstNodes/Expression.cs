@@ -42,14 +42,37 @@ namespace GroundCompiler.AstNodes
 
             public override void Initialize()
             {
-                if (Object != null) { Object.Parent = this; Object.Initialize(); }
+                if (Object != null) {
+                    Object.Parent = this;
+                    Object.Initialize();
+                }
                 base.Initialize();
 
                 var currentScope = GetScope();
-                var variableExpr = Object as Expression.Variable;
-                var classStatement = variableExpr.ExprType.Properties["classStatement"] as ClassStatement;
-                var instVar = classStatement.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == Name.Lexeme);
-                ExprType = instVar.ResultType;
+                var objVariableExpr = Object as Expression.Variable;
+                ClassStatement? classStatement = null;
+                if (objVariableExpr!.ExprType.isClass())
+                {
+                    classStatement = objVariableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                    var classScope = classStatement!.GetScope();
+                    var theVar = classScope!.GetVariable(Name.Lexeme);
+
+                    // method
+                    if (theVar is Scope.Symbol.FunctionSymbol funcSymbol)
+                    {
+                        var resultDatatype = funcSymbol.FunctionStatement.ResultDatatype;
+                        if (resultDatatype != null)
+                            ExprType = resultDatatype;
+                    }
+
+                    // instance variable
+                    if (theVar is Scope.Symbol.LocalVariableSymbol localVariableSymbol)
+                    {
+                        var resultDatatype = localVariableSymbol.DataType;
+                        if ( resultDatatype != null)
+                            ExprType = resultDatatype;
+                    }
+                }
             }
 
             public Expression Object;
@@ -560,6 +583,9 @@ namespace GroundCompiler.AstNodes
         // func(10);
         public class FunctionCall : Expression
         {
+            public Expression FunctionName;
+            public List<Expression> Arguments;
+
             public FunctionCall(Expression functionName, List<Expression> arguments)
             {
                 FunctionName = functionName;
@@ -568,17 +594,46 @@ namespace GroundCompiler.AstNodes
 
             public override void Initialize()
             {
+                string functionName = "";
+
                 //We don't initialize Callee, because it is simply a Name of the function packed in a Variable Expression
                 foreach (var arg in Arguments)
                 {
                     arg.Parent = this;
                     arg.Initialize();
                 }
+
+                // normally, the scope of the functioncall is used.
+                var scope = GetScope();
+                if (FunctionName is Expression.Variable functionNameVariable)
+                    functionName = functionNameVariable.Name.Lexeme;
+
+                // When we have an methodcall, we use the scope from the class
+                if (FunctionName is Expression.Get functionNameGet)
+                {
+
+                    if (functionNameGet.Object is Expression.Variable functionNameVar)
+                    {
+                        string funcName = functionNameVar.Name.Lexeme;
+                        var theSymbol = scope.GetVariable(funcName);
+
+                        var theClass = theSymbol.GetClassStatement();
+                        if (theClass != null)
+                            scope = theClass.GetScope();
+
+                        var theGroupStmt = theSymbol.GetGroupStatement();
+                        if (theGroupStmt != null)
+                            scope = theGroupStmt.GetScope();
+                    }
+
+                    functionNameGet.Parent = this;
+                    functionNameGet.Initialize();
+                    functionName = functionNameGet.Name.Lexeme;
+                }
+
                 base.Initialize();
 
-                var scope = GetScope();
-                var functionName = FunctionName as Expression.Variable;
-                var symbol = GetSymbol(functionName!.Name.Lexeme, scope!);
+                var symbol = GetSymbol(functionName, scope!);
 
                 if (symbol is Scope.Symbol.HardcodedFunctionSymbol hardCodedFunction) { 
                     if (hardCodedFunction.FunctionStatement.ResultDatatype != null)
@@ -597,9 +652,6 @@ namespace GroundCompiler.AstNodes
                     }
                 }
             }
-
-            public Expression FunctionName;
-            public List<Expression> Arguments;
 
             public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
             {

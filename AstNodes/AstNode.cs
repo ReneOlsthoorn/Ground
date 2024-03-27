@@ -83,13 +83,8 @@ namespace GroundCompiler.AstNodes
 
         public Scope? GetScope()
         {
-            Statement.ClassStatement? classStatement = this as Statement.ClassStatement;
-            Statement.FunctionStatement? functionStatement = this as Statement.FunctionStatement;
-
-            Scope? scope = classStatement?.Scope;
-            if (scope == null)
-                scope = functionStatement?.Scope;
-
+            var scopeStmt = this as IScopeStatement;
+            Scope? scope = scopeStmt?.GetScopeFromStatement();
             return (scope != null) ? scope : Parent?.GetScope();
         }
 

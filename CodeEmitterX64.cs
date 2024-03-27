@@ -117,7 +117,7 @@ namespace GroundCompiler
             if (needsTmpReference)
                 cpu.ReserveRegister("rcx");
 
-            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStatement.Name.Lexeme);
+            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStatement.Name.Lexeme, f.FunctionStatement.GetGroupName());
             Codeline($"call  {assemblyFunctionname}");
 
             if (needsTmpReference)
@@ -544,10 +544,7 @@ namespace GroundCompiler
             Writeline($"{label}:");
         }
 
-        public string ConvertToAssemblyFunctionName(string functionName)
-        {
-            return $"_f_{functionName}";
-        }
+        public string ConvertToAssemblyFunctionName(string functionName, string? groupName = null) => $"_f_{functionName}" + ((groupName != null) ? $"@{groupName}" : "");
 
         public string ConvertToAssemblyClassName(string className)
         {
@@ -576,11 +573,17 @@ namespace GroundCompiler
             return $"{part1}@{part2}";
         }
 
-        public string AssemblyVariableNameForFunctionParameter(string functionName, string parName)
+        public string AssemblyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)
         {
             string part1 = ConvertToAssemblyFunctionName(functionName);
             string part2 = parName;
-            return $"{part1}@{part2}";
+            return $"{part1}@{part2}" + ((groupName != null) ? $"@{groupName}" : "");
+        }
+        public string UserfriendlyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)
+        {
+            string part1 = functionName;
+            string part2 = parName;
+            return $"{part2}@{part1}" + ((groupName != null) ? $"@{groupName}" : "");
         }
 
         public void CleanDereferenced()

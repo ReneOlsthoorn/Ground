@@ -50,12 +50,18 @@ namespace GroundCompiler
                 if (varSymbol.DataType.Types.Contains(Datatype.TypeEnum.CustomClass))
                 {
                     ClassStatement classStatement = varSymbol.DataType.Properties["classStatement"] as ClassStatement;
+                    negativeOffset += varSymbol.DataType.SizeInBytes;
+
+                    var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
+                    Emitter.Writeline($"{theName} equ {negativeOffset}");
+                    Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+
                     foreach (var instVar in classStatement!.InstanceVariables)
                     {
                         negativeOffset += instVar.ResultType.SizeInBytes;
 
                         var instName = $"{varSymbol.Name}.{instVar.Name.Lexeme}";
-                        var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, instName);
+                        theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, instName);
                         Emitter.Writeline($"{theName} equ {negativeOffset}");
                         Emitter.Writeline($"{instName}@{ProcedureName} equ rbp-{negativeOffset}");
                     }
@@ -73,17 +79,36 @@ namespace GroundCompiler
         }
 
 
+        public string? GetGroupName()
+        {
+            if (FunctionStatement.Parent is GroupStatement groupStatement)
+                return groupStatement.Name.Lexeme;
+
+            return null;
+        }
+
+
         public void Emit_Equ_FunctionParameters()
         {
-            int counter = FunctionStatement.Parameters.Count - 1;
+            int counter = FunctionStatement.Parameters.Count;  // Not Count-1, because the "this" parameter is added.
+            var theName = "";
+            int positiveOffset = 0;
             foreach (var par in FunctionStatement.Parameters)
             {
-                var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, par.Name);
+                theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupName());
                 // the 16 bytes are for: push rbp(at position rbp) and call return address(at postition rbp+8).
-                int positiveOffset = 16 + (counter * 8);
+                positiveOffset = 16 + (counter * 8);
                 Emitter.Writeline($"{theName} equ {positiveOffset}");
-                Emitter.Writeline($"{par.Name}@{ProcedureName} equ rbp+{positiveOffset}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupName())} equ rbp+{positiveOffset}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
                 counter--;
+            }
+
+            if (ProcedureName != "main")
+            {
+                theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupName());
+                positiveOffset = 16 + (counter * 8);
+                Emitter.Writeline($"{theName} equ {positiveOffset}");
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupName())} equ rbp+{positiveOffset}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
             }
         }
 
@@ -93,7 +118,7 @@ namespace GroundCompiler
             if (ProcedureName == "main")
                 return;
 
-            Emitter.InsertLabel(Emitter.ConvertToAssemblyFunctionName(ProcedureName));
+            Emitter.InsertLabel(Emitter.ConvertToAssemblyFunctionName(ProcedureName, GetGroupName()));
         }
 
 

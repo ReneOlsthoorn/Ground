@@ -38,6 +38,8 @@ namespace GroundCompiler
             get { return !IsValueType;  }
         }
 
+        public bool isClass() => Contains(TypeEnum.CustomClass);
+
         public List<TypeEnum> Types;
         public string Name;
         public int SizeInBytes;
@@ -98,9 +100,9 @@ namespace GroundCompiler
             { "string", Datatype.FromData("string", [ TypeEnum.String, TypeEnum.Array, TypeEnum.Allocated ], isValueType:false, nrBytes:8) }
         };
 
-        public static void AddCustomClass(ClassStatement classStatement)
+        public static void AddClass(ClassStatement classStatement)
         {
-            string name = classStatement.Name.Lexeme.ToLower();
+            string name = classStatement.Name.Lexeme;
 
             int sizeInBytes = 0;
             foreach (VarStatement vs in classStatement.InstanceVariables)

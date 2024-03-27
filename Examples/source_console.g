@@ -86,13 +86,15 @@ println("f1: 3.77 = " + f1);
 
 
 // Integer input from console
-//print "Integer (1-100): ";
-//int aantal = input_int();
+//print("Integer (1-100): ");
+//int aantal = gc.input_int();
+//println("Value: " + aantal);
 
 
 // String input from console
-//print "String: ";
-//string tmp = input_string();
+//print("String: ");
+//tmp = gc.input_string();
+//println("Value: " + tmp);
 
 
 class ConsoleClass {
@@ -107,28 +109,33 @@ a.a = "Hallo!";
 println("ConsoleClass a.a = Hallo! => " + a.a);
 
 string tmpFilename = "test.txt";
-int tmpFile = fopen(tmpFilename, "wb");
-fputs("Line " + chr$(65) + "\r\n", tmpFile);
-fputs("Line " + chr$(65+1) + "\r\n", tmpFile);
-fputs("Line " + chr$(65+2) + "\r\n", tmpFile);
-fclose(tmpFile);
+int tmpFile = msvcrt.fopen(tmpFilename, "wb");
+msvcrt.fputs("Line " + chr$(65) + "\r\n", tmpFile);
+msvcrt.fputs("Line " + chr$(65+1) + "\r\n", tmpFile);
+msvcrt.fputs("Line " + chr$(65+2) + "\r\n", tmpFile);
+msvcrt.fclose(tmpFile);
 
 println("\r\nReading generated file...");
-string allText = GC_ReadAllText(tmpFilename);
+string allText = gc.ReadAllText(tmpFilename);
 print(allText);
 
 
 println("\r\nReading generated file line by line...");
-tmpFile = fopen(tmpFilename, "rb");
+tmpFile = msvcrt.fopen(tmpFilename, "rb");
 string textLine = "";
 while (textLine != null) {
-    textLine = fgets(tmpFile);
-    if (textLine != null and textLine == "Line2\r\n") {
-        println("Second line found...");
-    } else {
-        if (textLine != null) {
+    textLine = msvcrt.fgets(tmpFile);
+    if (textLine != null) {
+        if (textLine == "Line A\r\n") {
+            println("First line found...");
+        } else if (textLine == "Line B\r\n") {
+            println("Second line found...");
+            break;
+        } else {
             print(textLine);
         }
     }
 }
-fclose(tmpFile);
+msvcrt.fclose(tmpFile);
+
+println("Einde.");

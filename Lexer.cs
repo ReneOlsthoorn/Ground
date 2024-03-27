@@ -123,6 +123,7 @@ namespace GroundCompiler
             }
 
             if (sLower == "class") { fill(token, sLower, TokenType.Class); return; }
+            if (sLower == "group") { fill(token, sLower, TokenType.Group); return; }
             if (sLower == "and") { fill(token, sLower, TokenType.Operator, TokenType.LogicalAnd); return; }
             if (sLower == "or") { fill(token, sLower, TokenType.Operator, TokenType.LogicalOr); return; }
             if (sLower == "not") { fill(token, sLower, TokenType.Operator, TokenType.Not); return; }

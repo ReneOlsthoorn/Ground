@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -248,6 +249,18 @@ namespace GroundCompiler
             return newElement;
         }
 
+        public Symbol.GroupSymbol DefineGroup(Statement.GroupStatement groupStatement)
+        {
+            string name = groupStatement.Name.Lexeme;
+            string id = IdFor(name, "group");
+            if (Symboltable.ContainsKey(id))
+                Compiler.Error($"{name} already defined.");
+
+            var newElement = new Scope.Symbol.GroupSymbol(name, groupStatement);
+            Symboltable[name] = newElement;
+            return newElement;
+        }
+
         public HardcodedFunctionSymbol DefineHardcodedFunction(string name, Datatype? resultDatatype = null)
         {
             string id = IdFor(name, "function");
@@ -261,8 +274,9 @@ namespace GroundCompiler
 
         public void DefineFunctionParameters(Statement.FunctionStatement functionStatement)
         {
+            string classPrefix = (functionStatement.classStatement != null) ? functionStatement.classStatement.Name.Lexeme : "";
             foreach (var par in functionStatement.Parameters) {
-                string id = IdFor(par.Name, "function par");
+                string id = IdFor($"{classPrefix}_{par.Name}", "function par");
                 if (Symboltable.ContainsKey(id))
                     Compiler.Error($"{par.Name} already defined.");
 
@@ -324,6 +338,10 @@ namespace GroundCompiler
             public string Symboltype = "";
             public Dictionary<string, object?> Properties = new Dictionary<string, object?>();
 
+            public virtual ClassStatement? GetClassStatement() => null;
+            public virtual GroupStatement? GetGroupStatement() => null;
+
+            public virtual Datatype? GetDatatype() => null;
 
             public class VariableSymbol : Symbol
             {
@@ -335,6 +353,8 @@ namespace GroundCompiler
                     DataType = datatype;
                     Symboltype = "var";
                 }
+
+                public override Datatype? GetDatatype() => DataType; 
             }
 
 
@@ -342,6 +362,17 @@ namespace GroundCompiler
             {
                 public LocalVariableSymbol(string name, Datatype datatype) : base(name, datatype)
                 {
+                }
+
+                public override ClassStatement? GetClassStatement()
+                {
+                    if (DataType.Contains(Datatype.TypeEnum.CustomClass))
+                    {
+                        var theClassStatement = DataType.Properties["classStatement"];
+                        if (theClassStatement != null)
+                            return (ClassStatement)theClassStatement;
+                    }
+                    return null;
                 }
             }
 
@@ -406,6 +437,23 @@ namespace GroundCompiler
                     ClassStatement = classStatement;
                     Symboltype = "class";
                 }
+            }
+
+            public class GroupSymbol : Symbol
+            {
+                public Statement.GroupStatement GroupStatement;
+                public GroupSymbol(string name, Statement.GroupStatement groupStatement)
+                {
+                    Name = name;
+                    GroupStatement = groupStatement;
+                    Symboltype = "group";
+                }
+
+                public override GroupStatement? GetGroupStatement()
+                {
+                    return GroupStatement;
+                }
+
             }
 
 

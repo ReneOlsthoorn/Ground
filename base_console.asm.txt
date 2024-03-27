@@ -176,7 +176,7 @@ Insert_CString:
 
 _f_println:
   push  rbp
-  mov   rax, qword [rsp+16]
+  mov   rax, qword [rsp+24]
   call  GetMemoryPointerFromIndex
   call	PrintScreenString
   mov	rax, carriage_return_bytes
@@ -187,22 +187,22 @@ _f_println:
 
 _f_print:
   push  rbp
-  mov   rax, qword [rsp+16]
+  mov   rax, qword [rsp+24]
   call  GetMemoryPointerFromIndex
   call	PrintScreenString
   pop   rbp
   ret   16
 
 
-filename@_f_fopen equ rbp+24
-mode@_f_fopen equ rbp+16
-_f_fopen:
+filename@_f_fopen@msvcrt equ rbp+32
+mode@_f_fopen@msvcrt equ rbp+24
+_f_fopen@msvcrt:
   push  rbp
   mov   rbp, rsp
-  mov   rax, qword [filename@_f_fopen]
+  mov   rax, qword [filename@_f_fopen@msvcrt]
   call  GetMemoryPointerFromIndex
   mov   rcx, rax
-  mov   rax, qword [mode@_f_fopen]
+  mov   rax, qword [mode@_f_fopen@msvcrt]
   call  GetMemoryPointerFromIndex
   mov   rdx, rax
   sub   rsp, 20h
@@ -213,11 +213,11 @@ _f_fopen:
   ret   16
 
 
-stream@_f_fclose equ rbp+16
-_f_fclose:
+stream@_f_fclose@msvcrt equ rbp+24
+_f_fclose@msvcrt:
   push  rbp
   mov   rbp, rsp
-  mov   rcx, qword [stream@_f_fclose]
+  mov   rcx, qword [stream@_f_fclose@msvcrt]
   sub   rsp, 20h
   call  [msvcrt_fclose]
   add   rsp, 20h
@@ -226,7 +226,7 @@ _f_fclose:
   retn  16
 
 
-intvalue@_f_chr$ equ rbp+16
+intvalue@_f_chr$ equ rbp+24
 _f_chr$:
   push  rbp
   mov   rbp, rsp
@@ -241,15 +241,15 @@ _f_chr$:
   retn  16
 
 
-input@_f_fputs equ rbp+24
-file@_f_fputs equ rbp+16
-_f_fputs:
+input@_f_fputs@msvcrt equ rbp+32
+file@_f_fputs@msvcrt equ rbp+24
+_f_fputs@msvcrt:
   push  rbp
   mov   rbp, rsp
-  mov   rax, qword [input@_f_fputs]
+  mov   rax, qword [input@_f_fputs@msvcrt]
   call  GetMemoryPointerFromIndex
   mov   rcx, rax
-  mov   rdx, qword [file@_f_fputs]
+  mov   rdx, qword [file@_f_fputs@msvcrt]
   sub   rsp, 20h
   call  [msvcrt_fputs]
   add   rsp, 20h
@@ -258,12 +258,12 @@ _f_fputs:
   retn  16
 
 
-filename@_f_GC_ReadAllText equ rbp+16
-_f_GC_ReadAllText:
+filename@_f_ReadAllText@gc equ rbp+24
+_f_ReadAllText@gc:
   push  rbp
   mov   rbp, rsp
   push  r12 r13 r14 r15
-  mov   rax, qword [filename@_f_GC_ReadAllText]
+  mov   rax, qword [filename@_f_ReadAllText@gc]
   call  GetMemoryPointerFromIndex
   mov   rcx, rax
   lea   rdx, [readalltext_openmode]
@@ -310,9 +310,9 @@ _f_GC_ReadAllText:
   retn  16
 
 
-source@_f_GC_Replace equ rbp+32
-search@_f_GC_Replace equ rbp+24
-replace@_f_GC_Replace equ rbp+16
+source@_f_GC_Replace equ rbp+40
+search@_f_GC_Replace equ rbp+32
+replace@_f_GC_Replace equ rbp+24
 _f_GC_Replace:
   push  rbp
   mov   rbp, rsp
@@ -321,11 +321,11 @@ _f_GC_Replace:
   retn  32
 
 
-stream@_f_fgets equ rbp+16
-_f_fgets:
+stream@_f_fgets@msvcrt equ rbp+24
+_f_fgets@msvcrt:
   push  rbp
   mov   rbp, rsp
-  mov   r8, qword [stream@_f_fgets]
+  mov   r8, qword [stream@_f_fgets@msvcrt]
   lea   rcx, [tmpCharSpace]
   mov   rdx, 255
   sub   rsp, 30h
@@ -707,7 +707,7 @@ IntegerToString:
 
 
 FloatToString:
-  push  r8 r9 rsi rdi
+  push  r8 r9 rsi rdi r10
   movq  rax, xmm0
   cinvoke msvcrt_sprintf,tmpCharSpace,sprintf_float_template,rax
   lea   rcx, [tmpCharSpace]
@@ -722,7 +722,7 @@ FloatToString:
   mov	rcx, r9
   rep	movsb			; copy string
   mov   rax, r8
-  pop   rdi rsi r9 r8
+  pop   r10 rdi rsi r9 r8
   ret
 
 

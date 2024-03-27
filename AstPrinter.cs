@@ -33,9 +33,19 @@ namespace GroundCompiler
             //    builder.Append(" < " + Print(stmt.Superclass));
 
             foreach (var method in stmt.Methods)
-            {
                 builder.Append(" " + Print(method));
-            }
+
+            builder.Append(")");
+            return builder.ToString();
+        }
+
+        public string VisitorGroup(Statement.GroupStatement stmt)
+        {
+            var builder = new StringBuilder();
+            builder.Append("(group " + stmt.Name.Lexeme);
+
+            foreach (var method in stmt.Methods)
+                builder.Append(" " + Print(method));
 
             builder.Append(")");
             return builder.ToString();

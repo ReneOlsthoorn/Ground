@@ -77,11 +77,9 @@ namespace GroundCompiler
             return null!;
         }
 
-        [DebuggerStepThrough]
         public static void Error(Token token, String message)
         {
-            Console.WriteLine(message);
-            Environment.Exit(0);
+            Compiler.Error(message);
         }
 
         public ProgramNode GetAbstractSyntaxTree()
@@ -272,6 +270,7 @@ namespace GroundCompiler
         public Statement ParseStatement()
         {
             if (Match(TokenType.Class)) return ClassDeclaration();
+            if (Match(TokenType.Group)) return GroupDeclaration();
             if (Match(TokenType.Function)) return FunctionDeclaration("function");
             if (Check(TokenType.Type) || (Check(TokenType.Identifier) && IsCustomClass())) return VariableDeclaration();
             if (Match(TokenType.Poke)) return PokeStatement();
@@ -545,9 +544,27 @@ namespace GroundCompiler
 
             var result = new ClassStatement(name, instanceVariables, methods);
             //EarlyOnIdentifiedClasses[name.Lexeme] = result;
-            Datatype.AddCustomClass(result);
+            Datatype.AddClass(result);
             return result;
         }
+
+
+        private GroupStatement GroupDeclaration()
+        {
+            var name = Consume(TokenType.Identifier, "Expect group name before body.");
+            Consume(TokenType.LeftBrace, "Expect '{' before group body.");
+            var methods = new List<Statement.FunctionStatement>();
+            while (!Check(TokenType.RightBrace) && !IsAtEnd())
+            {
+                if (Match(TokenType.Function))
+                    methods.Add(FunctionDeclaration("method"));
+            }
+
+            Consume(TokenType.RightBrace, "Expect '}' after group body.");
+            var result = new GroupStatement(name, methods);
+            return result;
+        }
+
 
 
         private FunctionStatement FunctionDeclaration(string kind)

@@ -84,6 +84,7 @@ namespace GroundCompiler
                 if (assignment != null)
                 {
                     EmitExpression(assignment.RightOfEqualSign);
+                    EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
                     if (localVarSymbol!.DataType.IsReferenceType)
                     {
                         reg = emitter.Gather_CurrentStackframe();
