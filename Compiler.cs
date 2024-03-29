@@ -392,7 +392,7 @@ namespace GroundCompiler
 
             if (expr.FunctionName is Expression.Variable functionNameVariable)
             {
-                theFunction = scope!.GetRootScope().GetFunction(functionNameVariable.Name.Lexeme);
+                theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
                     Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
             }
@@ -512,6 +512,23 @@ namespace GroundCompiler
                         emitter.Pop();
                     }
                 }
+                else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+                {
+                    if (parentSymbol.DataType.Contains(TypeEnum.Integer) && expr.Postfix)
+                    {
+                        var reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                        emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                        emitter.Push();
+                        if (expr.Operator.Contains(TokenType.PlusPlus))
+                            emitter.IncrementCurrent();
+                        if (expr.Operator.Contains(TokenType.MinusMinus))
+                            emitter.DecrementCurrent();
+                        emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                        emitter.Pop();
+                        cpu.FreeRegister(reg);
+                    }
+                }
+
             } else if (expr.Operator.Contains(TokenType.Not))
             {
                 expr.Right.Accept(this);

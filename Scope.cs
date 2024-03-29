@@ -108,6 +108,17 @@ namespace GroundCompiler
             return Symboltable[id] as Symbol.FunctionSymbol;
         }
 
+        public Symbol.FunctionSymbol? GetFunctionAnywhere(string name)
+        {
+            if (Contains(name))
+                return Symboltable[name] as Symbol.FunctionSymbol;
+
+            if (Parent != null)
+                return Parent.GetFunctionAnywhere(name);
+
+            return null;
+        }
+
         public Symbol.StringConstantSymbol? GetStringById(string id)
         {
             return Symboltable[id] as Symbol.StringConstantSymbol;
@@ -174,7 +185,13 @@ namespace GroundCompiler
                 if (symbol is Symbol.HardcodedFunctionSymbol)
                     continue;
                 if (symbol is Symbol.FunctionSymbol)
-                    result.Add((symbol as Symbol.FunctionSymbol)!);
+                {
+                    Symbol.FunctionSymbol theFunction = (Symbol.FunctionSymbol)symbol;
+                    result.Add(theFunction);
+                    var childFunctionSymbols = theFunction.FunctionStatement.GetScope()!.GetFunctionSymbols();
+                    foreach (var childFunctionSymbol in childFunctionSymbols)
+                        result.Add(childFunctionSymbol);
+                }
             }
             return result;
         }

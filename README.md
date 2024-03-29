@@ -6,9 +6,9 @@ to be a serious programming language. So, if you are looking for a good programm
 different language like "Beef language", C#, C or Javascript. Only programmers interested in compiler design should 
 use this software.
 
-The C programming language, which is 50 years old at this moment, is a great language to do low-level programming, 
-but nowadays C compilers do not allow the mixing of C and assembly. The reason is obvious: manual inserted x86-64 
-assembly makes optimization of the generated code hard.
+The C programming language (not C++ with it's reinterpret_cast<> and return-value-optimization drama) is 50 years old 
+at this moment. It is a nice language to do low-level programming, but nowadays C compilers do not allow the mixing 
+of C and assembly. The reason is obvious: manual inserted assembly makes optimization of the generated code hard.
 
 Ground respects x64 assembly and gives it the proper place : usage in optimized loops. For precalculation, the fastest 
 performance is often not needed. In a Ground sourcefile, the x64 assembly can be inserted everywhere and it can use all 
@@ -30,11 +30,11 @@ When Ground generates code, a value-type variable will just contain the value in
 variables however, the value will be the index. This index will be used to lookup the pointer to the used memory block.
 
 3. Reference space.
-In a reference counting system, each function must manage their referenced objects. In this case the references are 
-indexes in the index space. When a function exits, the referenced objects must be looped and the reference count for 
-each referenced object must be decremented. The reference space contains all lists of references for all functions. 
-Such a list cannot be kept on the stack, because the stack cannot grow without affecting the positions of the local
-variables on the stack.
+In a reference counting system, each owner must manage their referenced objects. Functions are owners. The references 
+in this case are indexes in the index space. When a function exits, the referenced objects must be looped and the 
+reference count for each referenced object must be decremented. The reference space contains all lists of references 
+for all functions. Such a list cannot be kept on the stack, because there can be nesting of functions and when a 
+variable is assigned to a variable in a different scope/function it would mess up the stack.
 The reference space is used by two linked lists in a function: the RefCount list and the TmpRefCount list. Why 2 lists?
 The function must keep track of the temporary memory that is allocated in the expressions, so it can be freed with ease.
 The  RefCount list exists for values that are assigned to variables. Perhaps the lists can be merged, but then an extra 
@@ -77,6 +77,12 @@ At the moment of Compilation, in the Compiler visitor loop, the Compiler will us
 Left-side and Right-side using emitted code. In our example: the integer will get extra code which will convert the
 integer to a string (see usage of EmitConversionCompatibleType in method VisitorBinaryExpr in sourcefile Compiler.cs).
 
+### ParentScopeVariable
+When the Parser is done, we have a tree of Statement or Expression subclassed objects. The symbols in the symboltable
+usually have a reference to these objects. So, what kind of symbol is ParentScopeVariable? Well, it defines a usage 
+of a variable from another scope. So, the ParentScopeVariable knows how many levels down the original variable is. In
+the code generation process this is important.
+
 ### Emitting x86-64 code:
 Emitting happens in the CodeEmitterX64 class. For different types, different codepaths are emitted. For instance in
 the method CodeEmitterX64>>PopSub() you see different code for different expression types. One for integer, one for
@@ -115,8 +121,8 @@ Samples:
 
 ### Code generation:
 RAX/XMM0 is used to exchange the value the store or to read. RDX helps in that process.
-Most functions starts with:  push rbp  ;to make the stack 16-byte aligned which is needed for the fastcall convention.
-This also makes the stack for the parent always at [rbp]
+Most functions start with "push rbp" followed by "mov rbp, rsp". This makes the stack 16-byte aligned which is needed 
+for the fastcall convention. This also means that the pointer for the parentframe is at [rbp].
 
 Ground has two modes for PE(portable executable) file generation: Executable(.EXE) or Dynamic Link Library(.DLL).
 Ground has a console mode which generates an .EXE file, and an GUI mode which generates a .DLL file.
@@ -128,10 +134,10 @@ focus away from the compiler.
 ## An Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
 I want to take a moment here to bring credits to that platform. Recently, I took time to remember my old Commodore 64 
-and Amiga 500 days. I was heavily time-invested in the Amiga. Unfortunately, that platform really did not have a good 
-upgrade path. For instance, the Commodore Amiga was released in 1985, but the next model for the masses was the Amiga 
-1200 released in 1992, that is 7 years later. I really felt let down by Commodore in 1990/1991.
+and Amiga 500 days. I was heavily time-invested in the Amiga 500, because it seemed to be the successor of the C64. 
+However, the platform did not update for a long time. The Commodore Amiga was released in 1985, but the next model for 
+the masses was the Amiga 1200 released in 1992, that is 7 years later. I really felt let down by Commodore in 1990/1991.
 As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
-Fortunately, the good thing I did was to move to the Wintel platform and bought an Escom 486dx2 66 MHz PC in 1994. Now, 
-30 years and numerous upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
+Fortunately, the good thing I did was to move to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now, 
+30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
 and choose your moment to upgrade. We are truly blessed with this platform. This must be said!

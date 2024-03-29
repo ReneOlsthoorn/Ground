@@ -9,6 +9,22 @@ for (int i = 1; i < loopAantal+1; i++) {
 }
 
 
+// Nested functions test
+int outsideInt = 100;
+function nest() {
+    function nest2() {
+        function nest3() {
+            outsideInt = outsideInt + 1;
+        }
+        nest3();
+        outsideInt++;
+    }
+    nest2();
+}
+nest();
+println("outsideInt (102) = " + outsideInt);
+
+
 // Optimize check
 println(9*8*7*6*5*4*3*2*1 + " will be optimized to 362880.");
 
