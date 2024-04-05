@@ -106,7 +106,7 @@ namespace GroundCompiler
                 if (assignment != null)
                 {
                     EmitExpression(assignment.RightOfEqualSign);
-                    emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
+                    emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
                 }
                 else
                     emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol));
@@ -198,12 +198,12 @@ namespace GroundCompiler
 
                     if (multiplier > 1)
                     {
-                        emitter.Push();
+                        emitter.Push(expr);
                         emitter.LoadConstantUInt64(multiplier);
-                        emitter.PopMul();
+                        emitter.PopMul(expr);
                     }
                     if (i > 0)
-                        emitter.PopAdd();
+                        emitter.PopAdd(expr);
                 }
                 emitter.MoveCurrentToRegister(indexReg);
                 int elementSizeInBytes = 0;
@@ -218,7 +218,7 @@ namespace GroundCompiler
                 {
                     targetType = parentSymbol!.DataType.Base;
                     elementSizeInBytes = parentSymbol!.DataType.Base!.SizeInBytes;
-                    var reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                    var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                     emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol.TheScopeStatement));
                     cpu.FreeRegister(reg);
                 }
@@ -265,6 +265,8 @@ namespace GroundCompiler
                     emitter.IntegerToString(sourceExpr);
                 else if (sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
                     emitter.FloatToString(sourceExpr);
+                else if (sourceDatatype.Contains(Datatype.TypeEnum.Boolean))
+                    emitter.BooleanToString(sourceExpr);
 
                 sourceExpr.ExprType = destinationDatatype;
             }

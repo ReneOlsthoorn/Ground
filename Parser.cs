@@ -69,7 +69,7 @@ namespace GroundCompiler
             return check;
         }
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         private Token Consume(TokenType type, String message)
         {
             if (Check(type)) { return tokenDispenser.GetNextToken(); }
@@ -472,9 +472,15 @@ namespace GroundCompiler
         {
             if (Check(Datatype.TypeEnum.Boolean))
             {
+                Token token = NextToken();
+                return new Expression.Literal(token.Datatype!, (bool)token.Value!);
+                /*
                 Token peekToken = Peek();
                 if (peekToken.Value != null)
-                    return new Expression.Literal(peekToken.Datatype!, (bool)peekToken.Value!);
+                {
+                    Token token = NextToken();
+                }
+                */
             }
             if (Match(TokenType.Null)) return new Expression.Literal(null);
 

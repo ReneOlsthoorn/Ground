@@ -27,9 +27,6 @@ namespace GroundCompiler
             return string.Join("", generatedCode);
         }
 
-        // The ActiveExpression helps the emitter to choose between Integer or Float operations. 
-        public GroundCompiler.AstNodes.Expression? ActiveExpression = null;
-
         public void Writeline(string text) { generatedCode.Add(text + "\r\n"); }
         public void Codeline(string text) { Writeline($"  {text}"); }
         public string NewLabel() { return $"L{labelCounter++}"; }
@@ -62,7 +59,7 @@ namespace GroundCompiler
 
         public void EmitFixedStringIndexSpaceEntries(List<Scope.Symbol.StringConstantSymbol> globalStrings)
         {
-            int indexspaceRownr = 1;
+            int indexspaceRownr = 3;
             cpu.ReserveRegister("rcx");
             foreach (var variable in globalStrings)
             {
@@ -144,6 +141,11 @@ namespace GroundCompiler
             Codeline($"mov   rax, {value}");
         }
 
+        public void LoadBoolean(bool value)
+        {
+            Codeline($"mov   rax, { (value ? 1 : 0) }");
+        }
+
         public void LoadConstantFloat64(string name)
         {
             Codeline($"movq  xmm0, qword [{ name }]");
@@ -172,9 +174,9 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void Push()
+        public void Push(AstNodes.Expression? expr = null)
         {
-            if (ActiveExpression?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
+            if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
                 PushFloat();
             else
                 Codeline($"push  rax");
@@ -192,7 +194,7 @@ namespace GroundCompiler
             Codeline($"add   rsp, 16");
         }
 
-        public void PopAddStrings()
+        public void PopAddStrings(AstNodes.Expression? expr = null)
         {
             cpu.ReserveRegister("rcx");
             cpu.ReserveRegister("rdx");
@@ -200,25 +202,25 @@ namespace GroundCompiler
             Codeline("mov   rdx, rax");
             Codeline("call  AddCombinedStrings");       // rcx wijst naar eerste string, rdx wijst naar tweede string
             Codeline("mov   rcx, rbp");
-            AddTmpReference(ActiveExpression!);
+            AddTmpReference(expr!);
             cpu.FreeRegister("rdx");
             cpu.FreeRegister("rcx");
         }
 
-        public void PopAdd()
+        public void PopAdd(AstNodes.Expression? expr = null)
         {
-            if (ActiveExpression != null && ActiveExpression.ExprType.Name == "string")
+            if (expr?.ExprType.Name == "string")
             {
                 // We do string concatenation, this allocates memory. Clean the references so memory won't get drained when we are in a loop. 
-                var blockType = ActiveExpression.FindParentType(typeof(BlockStatement)) as BlockStatement;
+                var blockType = expr.FindParentType(typeof(BlockStatement)) as BlockStatement;
                 if (blockType != null)
                     blockType!.shouldCleanDereferenced = true;
 
-                PopAddStrings();
+                PopAddStrings(expr);
                 return;
             }
 
-            if (ActiveExpression != null && ActiveExpression.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq   {floatReg}, xmm0");
@@ -236,9 +238,9 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void PopSub()
+        public void PopSub(AstNodes.Expression? expr = null)
         {
-            if (ActiveExpression != null && ActiveExpression.ExprType.Contains(Datatype.TypeEnum.String))
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.String))
             {
                 // We have the situation that in string comparison there can be a null value in both arguments.
                 var nullExitLabel = NewLabel();
@@ -270,7 +272,7 @@ namespace GroundCompiler
                 return;
             }
 
-            if (ActiveExpression != null && ActiveExpression.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq   {floatReg}, xmm0");
@@ -288,12 +290,12 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void PopMul()
+        public void PopMul(AstNodes.Expression? expr = null)
         {
-            if (!(ActiveExpression?.ExprType.Contains(Datatype.TypeEnum.Number) ?? false))
+            if (!(expr?.ExprType.Contains(Datatype.TypeEnum.Number) ?? false))
                 Compiler.Error("CodeEmitterX64>>PopMul: Cannot multiply expressions that are not numbers.");
 
-            if (ActiveExpression != null && ActiveExpression.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq   {floatReg}, xmm0");
@@ -311,9 +313,9 @@ namespace GroundCompiler
             cpu.FreeRegister("rdx");
         }
 
-        public void PopDiv()
+        public void PopDiv(AstNodes.Expression? expr = null)
         {
-            if (ActiveExpression != null && ActiveExpression.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq   {floatReg}, xmm0");
@@ -478,6 +480,19 @@ namespace GroundCompiler
             return "rcx";
         }
 
+        public string Gather_LexicalParentStackframe(int levelDeep)
+        {
+            cpu.ReserveRegister("rcx");
+            if (levelDeep < 1)
+                Compiler.Error("Parent not found.");
+
+            int loopNr = levelDeep - 1;
+            Codeline("mov   rcx, [rbp+24]");  // parameter 2
+            for (int i = 0; i < loopNr; i++)
+                Codeline("mov   rcx, [rcx]");
+            return "rcx";
+        }
+
         public string Gather_CurrentStackframe()
         {
             cpu.ReserveRegister("rcx");
@@ -502,6 +517,14 @@ namespace GroundCompiler
         {
             Codeline($"mov   rax, qword [rbp+{variableName}]");
         }
+        public void StoreFunctionParameter64(string variableName, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  qword [rbp+{variableName}], xmm0");
+            else
+                Codeline($"mov   qword [rbp+{variableName}], rax");
+        }
+
         public void IncrementCurrent()
         {
             Codeline($"inc   rax");
@@ -532,6 +555,11 @@ namespace GroundCompiler
             Codeline("mov   rcx, rbp");
             AddTmpReference(expr);
             cpu.FreeRegister("rcx");
+        }
+
+        public void BooleanToString(AstNodes.Expression expr)
+        {
+            Codeline($"call  BooleanToString");
         }
 
         public void IntegerToFloat()
@@ -642,9 +670,9 @@ namespace GroundCompiler
             Codeline("push  rcx");
         }
 
-        public void Pop()
+        public void Pop(AstNodes.Expression? expr = null)
         {
-            if (ActiveExpression?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
+            if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
                 PopFloat();
             else
                 Codeline("pop   rax");

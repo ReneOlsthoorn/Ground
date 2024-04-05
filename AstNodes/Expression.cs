@@ -257,7 +257,7 @@ namespace GroundCompiler.AstNodes
                 if (symbol == null)
                     Compiler.Error($"Symbol {name} does not exist.");
 
-                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol)
+                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol)
                     return symbol;
 
                 // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.

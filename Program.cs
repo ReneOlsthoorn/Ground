@@ -16,7 +16,8 @@ namespace GroundCompiler
         {
             string fileName, fullPath;
             if (args.Length == 0) {
-                fileName = "source_console";
+                //fileName = "source_console";
+                fileName = "source_sudoku";
                 fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}.g"));
             } else {
                 fileName = args[0];

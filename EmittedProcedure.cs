@@ -90,7 +90,7 @@ namespace GroundCompiler
 
         public void Emit_Equ_FunctionParameters()
         {
-            int counter = FunctionStatement.Parameters.Count;  // Not Count-1, because the "this" parameter is added.
+            int counter = FunctionStatement.Parameters.Count + 1;  // Count + 1, because the "this" and __parent is added.
             var theName = "";
             int positiveOffset = 0;
             foreach (var par in FunctionStatement.Parameters)
@@ -105,6 +105,12 @@ namespace GroundCompiler
 
             if (ProcedureName != "main")
             {
+                theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupName());
+                positiveOffset = 16 + (counter * 8);
+                Emitter.Writeline($"{theName} equ {positiveOffset}");
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupName())} equ rbp+{positiveOffset}");
+                counter--;
+
                 theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupName());
                 positiveOffset = 16 + (counter * 8);
                 Emitter.Writeline($"{theName} equ {positiveOffset}");
@@ -140,7 +146,7 @@ namespace GroundCompiler
         {
             int stackToReclaim = 0;
             if (FunctionStatement.Parameters.Count > 0)
-                stackToReclaim = (((FunctionStatement.Parameters.Count - 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
+                stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
 
             string? returnLabel = ReturnLabel();
             if (returnLabel != null)

@@ -435,6 +435,12 @@ namespace GroundCompiler.AstNodes
 
             public Expression? Value;
 
+            public override void Initialize()
+            {
+                if (Value != null) { Value.Parent = this; Value.Initialize(); }
+                base.Initialize();
+            }
+
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {

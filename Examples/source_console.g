@@ -22,8 +22,9 @@ function nest() {
     nest2();
 }
 nest();
-println("outsideInt (102) = " + outsideInt);
-
+if (outsideInt != 102) {
+    println("nesting has failed");
+}
 
 // Optimize check
 println(9*8*7*6*5*4*3*2*1 + " will be optimized to 362880.");

@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using static GroundCompiler.AstNodes.Expression;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Datatype;
+using static GroundCompiler.Scope;
 
 namespace GroundCompiler
 {
@@ -120,6 +121,7 @@ namespace GroundCompiler
 
         public object? VisitorReturn(Statement.ReturnStatement stmt)
         {
+            EmitExpression(stmt.Value);
             if (stmt.FindParentType(typeof(FunctionStatement)) is FunctionStatement  fStmt)
             {
                 string returnLabel;
@@ -314,13 +316,11 @@ namespace GroundCompiler
         public object? VisitorBinaryExpr(Expression.Binary expr)
         {
             PrintAst(expr);
-            Expression? oldExpr = emitter.ActiveExpression;
-            emitter.ActiveExpression = expr;
 
             EmitExpression(expr.Left);
             EmitConversionCompatibleType(expr.Left, expr.ExprType);
 
-            emitter.Push();
+            emitter.Push(expr);
 
             EmitExpression(expr.Right);
             EmitConversionCompatibleType(expr.Right, expr.ExprType);
@@ -328,13 +328,13 @@ namespace GroundCompiler
             switch (expr.Operator.Type)
             {
                 case TokenType.Plus:
-                    emitter.PopAdd();
+                    emitter.PopAdd(expr);
                     break;
                 case TokenType.Minus:
-                    emitter.PopSub();
+                    emitter.PopSub(expr);
                     break;
                 case TokenType.Asterisk:
-                    emitter.PopMul();
+                    emitter.PopMul(expr);
                     break;
                 case TokenType.Slash:
                     emitter.PopDiv();
@@ -377,7 +377,6 @@ namespace GroundCompiler
                     break;
             }
 
-            emitter.ActiveExpression = oldExpr;
             return null;
         }
 
@@ -389,12 +388,21 @@ namespace GroundCompiler
             var scope = currentScope;
             Scope.Symbol.FunctionSymbol? theFunction = null;
             string instVarName = null;
+            int levelsDeep = 0;
 
             if (expr.FunctionName is Expression.Variable functionNameVariable)
             {
                 theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
                     Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
+
+                string name = functionNameVariable.Name.Lexeme;
+                var needleScope = scope;
+                while (!needleScope!.Contains(name))
+                {
+                    needleScope = needleScope.Parent;
+                    levelsDeep++;
+                }
             }
 
             // When we have an methodcall, we use the scope from the class
@@ -423,7 +431,7 @@ namespace GroundCompiler
                 }
             }
 
-            int nrArguments = expr.Arguments.Count + 1;  // 1 = this, which is added the last
+            int nrArguments = expr.Arguments.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
             if (nrArguments % 2 == 1)
                 emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
 
@@ -438,6 +446,18 @@ namespace GroundCompiler
                 needle++;
             }
 
+            // Add lexical parent frame. Position: [rbp+24] // second parameter
+            if (levelsDeep == 0)
+                emitter.Codeline("mov   rax, rbp");         // normal parent frame
+            else { 
+                int loopNr = levelsDeep - 1;
+                emitter.Codeline("mov   rax, [rbp+24]");    // parameter 2, lexical parent
+                for (int i = 0; i < loopNr; i++)
+                    emitter.Codeline("mov   rax, [rax]");
+            }
+            emitter.Push();
+
+            // Add "this" or null if there is no class instance. Position: [rbp+16] // first parameter
             if (instVarName != null)
                 emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(instVarName, currentScope?.Owner));
             else
@@ -470,14 +490,18 @@ namespace GroundCompiler
                 if (strConstant != null)
                     emitter.LoadConstantString(strConstant.IndexspaceRownr);
             }
-
-            if (expr.ExprType.Contains(Datatype.TypeEnum.Integer))
+            else if (expr.ExprType.Contains(Datatype.TypeEnum.Integer))
+            {
                 emitter.LoadConstant64(Convert.ToInt64(expr.Value));
-
-            if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            }
+            else if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, "const float");
                 emitter.LoadConstantFloat64(id);
+            }
+            else if (expr.ExprType.Contains(Datatype.TypeEnum.Boolean))
+            {
+                emitter.LoadBoolean((bool)expr.Value);
             }
 
             return null;
