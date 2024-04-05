@@ -148,23 +148,10 @@ namespace GroundCompiler
             if (FunctionStatement.Parameters.Count > 0)
                 stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
 
-            string? returnLabel = ReturnLabel();
-            if (returnLabel != null)
-                Emitter.InsertLabel(returnLabel);
-
             if (ProcedureName == "main")
                 return;
 
             Emitter.EndFunction(stackToReclaim, noFrameRestoration: FunctionStatement.AssemblyOnlyFunctionWithNoParameters());
-        }
-
-
-        public string? ReturnLabel()
-        {
-            if (FunctionStatement.Properties.ContainsKey("returnLabel"))
-                return (string)FunctionStatement.Properties["returnLabel"]!;
-
-            return null;
         }
 
 

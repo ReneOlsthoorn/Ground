@@ -155,4 +155,14 @@ while (textLine != null) {
 }
 msvcrt.fclose(tmpFile);
 
+
+int[4] puzzle = [ 1, 2, 3, 4 ];
+function fn(int i) {
+	if (i > 3) { return true; }
+	println(puzzle[i]);
+	return fn(i+1);
+}
+bool puzzleResult = fn(0);
+println("PuzzleResult (true) = " + puzzleResult);
+
 println("Einde.");

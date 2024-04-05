@@ -60,6 +60,17 @@ namespace GroundCompiler
             foreach (AstNode node in stmt.Nodes)
                 EmitStatement(node as Statement);
 
+            // We rather have the emitting of the returnLabel in the EmitProcedure, but
+            // then the cleaning is already done. The returnLabel must precede the cleaning.
+            if (stmt.Parent is FunctionStatement funcStatement)
+            {
+                if (funcStatement.Properties.ContainsKey("returnLabel"))
+                {
+                    var returnLabel = (string)funcStatement.Properties["returnLabel"]!;
+                    emitter.InsertLabel(returnLabel);
+                }
+            }
+
             if (stmt.shouldCleanTmpDereferenced)
                 emitter.CleanTmpDereferenced();
 
