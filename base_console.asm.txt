@@ -59,7 +59,7 @@ start:
   mov	[variableSpacePointer], rax
   mov	[variableSpaceNeedle], rax
 
-  mov	rax, 500 * G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mov	rax, 2000 * G_REFCOUNT_LINKED_LIST_ROWSIZE
   mov	[referenceSpaceSize], rax
   invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [referenceSpaceSize]
   mov	[referenceSpacePointer], rax
