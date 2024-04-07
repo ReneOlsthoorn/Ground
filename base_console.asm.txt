@@ -4,6 +4,9 @@ stack 80000h, 80000h
 
 include 'win64a.inc'
 
+GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT equ 1000
+GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT equ 2000
+
 GC_INDEXSPACE_ROWSIZE = 32
 GC_INDEXSPACE_SIZE_OFFSET = 8
 GC_INDEXSPACE_NRREFS_OFFSET = 16
@@ -48,18 +51,22 @@ start:
   mov	[processHeapHandle], rax
 
 
-  mov	rax, 1000 * GC_INDEXSPACE_ROWSIZE
-  mov	[indexSpaceSize], rax
-  invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [indexSpaceSize]
-  mov	[indexSpacePointer], rax
-
   mov	rax, 4 * 1024 * 1024
   mov	[variableSpaceSize], rax
   invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [variableSpaceSize]
   mov	[variableSpacePointer], rax
   mov	[variableSpaceNeedle], rax
 
-  mov	rax, 2000 * G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mov   rax, [indexSpaceNrElements]
+  mov   rdx, GC_INDEXSPACE_ROWSIZE
+  mul   rdx
+  mov	[indexSpaceSize], rax
+  invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [indexSpaceSize]
+  mov	[indexSpacePointer], rax
+
+  mov   rax, [referenceSpaceNrElements]
+  mov   rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mul   rdx
   mov	[referenceSpaceSize], rax
   invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [referenceSpaceSize]
   mov	[referenceSpacePointer], rax
@@ -103,6 +110,32 @@ start:
   mov	rcx, 10
   call	PrintNumber
 
+  lea   rcx, [indexchecker_message]
+  mov   rdx, [maxIndexSpacePointer]
+  sub   rdx, [indexSpacePointer]
+  mov   r8, GC_INDEXSPACE_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [indexSpaceNrElements]
+  sub   rsp, 20h
+  call  [msvcrt_printf]
+  add   rsp, 20h
+
+  lea   rcx, [refchecker_message]
+  mov   rdx, [maxReferenceSpacePointer]
+  sub   rdx, [referenceSpacePointer]
+  mov   r8, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [referenceSpaceNrElements]
+  sub   rsp, 20h
+  call  [msvcrt_printf]
+  add   rsp, 20h
+
 ; *** Print ' leak!' in case of a memory leak.
   mov	rax, [indexSpacePointer]
   sub	rax, GC_INDEXSPACE_ROWSIZE
@@ -121,9 +154,9 @@ start:
 .endloop:
 
 
+  invoke HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
   invoke HeapFree, [processHeapHandle], 0, [indexSpacePointer]
   invoke HeapFree, [processHeapHandle], 0, [variableSpacePointer]
-  invoke HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
 
 
   mov	rsp, rbp
@@ -220,7 +253,7 @@ AddCombinedStrings:
 GC_Allocate:
 ;INPUT:  rcx contains the requested size
 ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  push	rsi
+  push	rsi r8
   and	ecx, 0xffffff80 ; 128 bytes alignment
   add   rcx, 128
   mov	rsi, [indexSpacePointer]
@@ -233,6 +266,14 @@ GC_Allocate:
   inc	eax
   cmp	qword [rsi], 0
   je	.request_new_block
+
+; BEGIN GATHER maxIndexSpacePointer
+  mov   r8, [maxIndexSpacePointer]
+  cmp   r8, rsi
+  jge   .noIncreaseMaxIndexPointer
+  mov   [maxIndexSpacePointer], rsi
+.noIncreaseMaxIndexPointer:
+
   cmp	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 0
   jne	.rowloop
   cmp	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
@@ -248,7 +289,7 @@ GC_Allocate:
   mov	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1  ; by default, an allocation gets a referencecount of 1.
   mov	rcx, rax				; INDEXSPACE rownr in rcx
   mov	rax, rdx				; memptr in rax
-  pop	rsi
+  pop	r8 rsi
   ret
 
 
@@ -262,6 +303,12 @@ AddReference:
   jne	.findEmptySpace
   mov	rdx, [referenceSpacePointer]					; set start
 .findEmptySpace:
+; BEGIN GATHER maxReferenceSpacePointer
+  mov   r8, [maxReferenceSpacePointer]
+  cmp   r8, rdx
+  jge   .noIncreaseMaxRefIndex
+  mov   [maxReferenceSpacePointer], rdx
+.noIncreaseMaxRefIndex:
   mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
   cmp	r8, 0
   je	.newRowFoundInReferenceSpace
@@ -350,6 +397,12 @@ AddTmpReference:
   jne	.findEmptySpace
   mov	rdx, [referenceSpacePointer]					; set start
 .findEmptySpace:
+; BEGIN GATHER maxReferenceSpacePointer
+  mov   r8, [maxReferenceSpacePointer]
+  cmp   r8, rdx
+  jge   .noIncreaseMaxRefIndex
+  mov   [maxReferenceSpacePointer], rdx
+.noIncreaseMaxRefIndex:
   mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
   cmp	r8, 0
   je	.newRowFoundInReferenceSpace
@@ -800,6 +853,7 @@ section '.idata' import data readable writeable
 
   import  msvcrt, \
           msvcrt_sprintf,'sprintf', \
+          msvcrt_printf, 'printf', \
           msvcrt_fopen,  'fopen', \
           msvcrt_fclose, 'fclose', \
           msvcrt_fwrite, 'fwrite', \
@@ -821,15 +875,19 @@ processHeapHandle		dq 0
 GetStdHandle_outputhandle dq 0
 GetStdHandle_inputhandle  dq 0
 
+indexSpaceNrElements    dq GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT
 indexSpaceSize			dq 0
 indexSpacePointer		dq 0
+maxIndexSpacePointer    dq 0
 
 variableSpaceSize		dq 0
 variableSpacePointer	dq 0
 variableSpaceNeedle		dq 0
 
+referenceSpaceNrElements  dq GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT
 referenceSpaceSize		dq 0
 referenceSpacePointer	dq 0
+maxReferenceSpacePointer  dq 0
 
 currentExeDir           dq 0    ; the index for the currentExeDir, which is zero.
 currentExeDirChars      db 256 dup(0)
@@ -850,8 +908,10 @@ bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 
 carriage_return_bytes	db 13,10,0
-leak_message			db ' leak!',0
-memchecker_message		db 13,10,'Total memory used (bytes): ',0
+leak_message			db 13,10,'*** memoryleak! ***',0
+memchecker_message		db 13,10,'Variable memory used (bytes): ',0
+indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0
+refchecker_message		db 13,10,'Reference memory max: %d of total %d elements.',0
 
 
 ; *** GENERATED VARIABLES PART ***

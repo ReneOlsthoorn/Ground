@@ -467,19 +467,6 @@ namespace GroundCompiler
             Codeline($"mov   [rcx-{variableName}], rax");
         }
 
-        public string Gather_ParentStackframe(int levelDeep)
-        {
-            cpu.ReserveRegister("rcx");
-            if (levelDeep < 1)
-                Compiler.Error("Parent not found.");
-
-            int loopNr = levelDeep - 1;
-            Codeline("mov   rcx, [rbp]");
-            for (int i = 0; i < loopNr; i++)
-                Codeline("mov   rcx, [rcx]");
-            return "rcx";
-        }
-
         public string Gather_LexicalParentStackframe(int levelDeep)
         {
             cpu.ReserveRegister("rcx");
@@ -487,7 +474,7 @@ namespace GroundCompiler
                 Compiler.Error("Parent not found.");
 
             int loopNr = levelDeep - 1;
-            Codeline("mov   rcx, [rbp+24]");  // parameter 2
+            Codeline("mov   rcx, [rbp+G_PARAMETER_LEXPARENT]");
             for (int i = 0; i < loopNr; i++)
                 Codeline("mov   rcx, [rcx]");
             return "rcx";

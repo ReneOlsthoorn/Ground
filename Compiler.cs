@@ -457,12 +457,12 @@ namespace GroundCompiler
                 needle++;
             }
 
-            // Add lexical parent frame. Position: [rbp+24] // second parameter
+            // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
             if (levelsDeep == 0)
                 emitter.Codeline("mov   rax, rbp");         // normal parent frame
             else { 
                 int loopNr = levelsDeep - 1;
-                emitter.Codeline("mov   rax, [rbp+24]");    // parameter 2, lexical parent
+                emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
                 for (int i = 0; i < loopNr; i++)
                     emitter.Codeline("mov   rax, [rax]");
             }
@@ -551,7 +551,7 @@ namespace GroundCompiler
                 {
                     if (parentSymbol.DataType.Contains(TypeEnum.Integer) && expr.Postfix)
                     {
-                        var reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                        var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                         emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
                         emitter.Push();
                         if (expr.Operator.Contains(TokenType.PlusPlus))

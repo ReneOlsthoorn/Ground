@@ -118,13 +118,13 @@ namespace GroundCompiler
                     var assemblyVarName = emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement);
                     if (parentSymbol.DataType.IsReferenceType)
                     {
-                        reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                        reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                         emitter.LoadParentFunctionVariable64(assemblyVarName);
                         emitter.RemoveReference();
                         cpu.FreeRegister(reg);
                     }
                     EmitExpression(assignment.RightOfEqualSign);
-                    reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                    reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                     if (parentSymbol.DataType.IsReferenceType)
                         emitter.AddReference(assignment.RightOfEqualSign);
 
@@ -133,7 +133,7 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    reg = emitter.Gather_ParentStackframe(parentSymbol.LevelsDeep);
+                    reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                     emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
                     cpu.FreeRegister(reg);
                 }

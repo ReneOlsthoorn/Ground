@@ -20,16 +20,16 @@ string concatenation easier.
 The stack is 512k and is defined at the top of the generated assembly file.
 
 There are three memory spaces:
-1. Variable space.
-This contains the actual data. It is just a continuous block of memory. At this moment 4mb is reserved.
+1. Variable space. (4mb by default)
+This contains the actual data. It is just a continuous block of memory. The default allocation is 4mb at this moment.
 
-2. Index space.
+2. Index space. (1000 elements by default)
 We divide the variable space up in blocks. Each block is referenced by a row in the index space. Each row contains 
 a pointer, the size of the block and the number of references to this block. At this moment, the rowsize is 32 bytes. 
 When Ground generates code, a value-type variable will just contain the value in either RAX of XMM0. For reference-type
 variables however, the value will be the index. This index will be used to lookup the pointer to the used memory block.
 
-3. Reference space.
+3. Reference space. (2000 elements by default)
 In a reference counting system, each owner must manage their referenced objects. Functions are owners. The references 
 in this case are indexes in the index space. When a function exits, the referenced objects must be looped and the 
 reference count for each referenced object must be decremented. The reference space contains all lists of references 
