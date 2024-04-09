@@ -63,6 +63,7 @@ start:
   mov	[indexSpaceSize], rax
   invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [indexSpaceSize]
   mov	[indexSpacePointer], rax
+  mov	[maxIndexSpacePointer], rax
 
   mov   rax, [referenceSpaceNrElements]
   mov   rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
@@ -70,6 +71,7 @@ start:
   mov	[referenceSpaceSize], rax
   invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [referenceSpaceSize]
   mov	[referenceSpacePointer], rax
+  mov	[maxReferenceSpacePointer], rax
 
 
 ; Set the CurrentExeDir as FixedString at position 0 (zero).
