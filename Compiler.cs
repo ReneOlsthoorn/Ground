@@ -34,17 +34,16 @@ namespace GroundCompiler
         public void EmitExpression(Expression? expr) { expr?.Accept(this); }
 
 
-
         public object? VisitorProgramNode(ProgramNode prog)
         {
             emitter.BeforeMainCode();
-            var mainProc = new EmittedProcedure(prog, emitter, "main");
+            var mainProc = new EmittedProcedure(functionStatement: prog, classStatement: null, emitter, "main");
             mainProc.MainCallback = () =>
             {
                 emitter.EmitFixedStringIndexSpaceEntries(prog.Scope.GetRootScope().GetStringSymbols());
                 VisitorBlock(prog.Body);
                 emitter.AfterMainCode();
-                EmitFunctions(prog.Scope.GetFunctionSymbols());
+                EmitFunctions(prog.Scope.GetFunctionStatements());
                 EmitClasses(prog.Scope.GetClassSymbols());
                 emitter.AfterFunctions();
                 emitter.EmitLiteralFloats(prog.Scope.GetLiteralFloatSymbols());
@@ -60,8 +59,8 @@ namespace GroundCompiler
             foreach (AstNode node in stmt.Nodes)
                 EmitStatement(node as Statement);
 
-            // We rather have the emitting of the returnLabel in the EmitProcedure, but
-            // then the cleaning is already done. The returnLabel must precede the cleaning.
+            // We rather do the emitting of the returnLabel in the EmitProcedure, but then the cleaning of
+            // the references is already done. The returnLabel must precede the cleaning, else no cleaning is done when the returnLabel is used.
             if (stmt.Parent is FunctionStatement funcStatement)
             {
                 if (funcStatement.Properties.ContainsKey("returnLabel"))
@@ -92,6 +91,22 @@ namespace GroundCompiler
             // all declared variables are local to something, so we only know LocalVariableSymbols
             if (symbol is Scope.Symbol.LocalVariableSymbol  localVarSymbol)
             {
+                if (localVarSymbol.DataType.Types.Contains(TypeEnum.CustomClass))
+                {
+                    UInt64 nrBytesToAllocate = (UInt64)localVarSymbol.DataType.SizeInBytes;
+                    emitter.Allocate(nrBytesToAllocate);
+                    emitter.Make_IndexSpaceNr_Current();
+                    emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
+
+                    var reg = emitter.Gather_CurrentStackframe();
+                    emitter.AddTmpReference(stmt);
+                    cpu.FreeRegister(reg);
+
+                    reg = emitter.Gather_CurrentStackframe();
+                    emitter.AddReference(stmt);
+                    cpu.FreeRegister(reg);
+                }
+
                 if (stmt.Initializer != null)
                 {
                     // shortcut. A special list validator must be made.
@@ -268,17 +283,25 @@ namespace GroundCompiler
         {
             var currentScope = expr.GetScope();
             var variableExpr = expr.Object as Expression.Variable;
-            var classStatement = variableExpr.ExprType.Properties["classStatement"] as ClassStatement;
-            var instVar = classStatement.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
 
-            string varName = variableExpr.Name.Lexeme + "." + instVar.Name.Lexeme;
-
-            if (instVar.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
-                emitter.LoadFunctionVariableFloat64(emitter.AssemblyVariableName(varName, currentScope?.Owner));
+            if (variableExpr.Name.Lexeme == "this")
+            {
+                var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                string procName = functionStmt!.Name.Lexeme;
+                string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+                emitter.LoadFunctionParameter64(theName);
+            }
             else
-                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(varName, currentScope?.Owner));
+                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
 
-            //
+            emitter.GetMemoryPointerFromIndex();
+            string instVarReg = cpu.GetTmpRegister();
+            emitter.Codeline($"mov   {instVarReg}, rax");
+            emitter.LoadInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
+            cpu.FreeRegister(instVarReg);
+
             return null;
         }
 
@@ -288,10 +311,11 @@ namespace GroundCompiler
         {
             var currentScope = expr.GetScope();
             EmitExpression(expr.Value);
+            emitter.Push();
 
             var variableExpr = expr.Object as Expression.Variable;
-            var classStatement = variableExpr.ExprType.Properties["classStatement"] as ClassStatement;
-            var instVar = classStatement.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
             string reg;
             if (instVar!.ResultType.IsReferenceType)
@@ -300,8 +324,15 @@ namespace GroundCompiler
                 emitter.AddReference(expr.Value);
                 cpu.FreeRegister(reg);
             }
-            string varName = variableExpr.Name.Lexeme + "." + instVar.Name.Lexeme;
-            emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(varName, currentScope?.Owner), instVar.ResultType);
+
+            emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
+            emitter.GetMemoryPointerFromIndex();
+            string instVarReg = cpu.GetTmpRegister();
+            emitter.Codeline($"mov   {instVarReg}, rax");
+            emitter.Pop();
+
+            emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
+            cpu.FreeRegister(instVarReg);
 
             return null;
         }
@@ -316,8 +347,6 @@ namespace GroundCompiler
                 VariableAccess(variableExpr, assignment);
             else if (assignment.LeftOfEqualSign is Expression.ArrayAccess arrayExpr)
                 ArrayAccess(arrayExpr, assignment);
-
-            //else if (assignment.LeftOfEqualSign is Expression.Get getExpr)
 
             return null;
         }
@@ -398,7 +427,8 @@ namespace GroundCompiler
             var currentScope = expr.GetScope();
             var scope = currentScope;
             Scope.Symbol.FunctionSymbol? theFunction = null;
-            string instVarName = null;
+
+            string? instVarName = null;
             int levelsDeep = 0;
 
             if (expr.FunctionName is Expression.Variable functionNameVariable)
@@ -422,9 +452,9 @@ namespace GroundCompiler
                 if (functionNameGet.Object is Expression.Variable functionNameVar)
                 {
                     string funcName = functionNameVar.Name.Lexeme;
-                    var theSymbol = scope.GetVariable(funcName);
+                    var theSymbol = scope!.GetVariable(funcName);
 
-                    var theClass = theSymbol.GetClassStatement();
+                    var theClass = theSymbol!.GetClassStatement();
                     if (theClass != null)
                     {
                         scope = theClass.GetScope();
@@ -432,7 +462,7 @@ namespace GroundCompiler
                             instVarName = theSymbol.Name;
                     }
 
-                    var theGroupStmt = theSymbol.GetGroupStatement();
+                    var theGroupStmt = theSymbol!.GetGroupStatement();
                     if (theGroupStmt != null)
                         scope = theGroupStmt.GetScope();
 
@@ -563,8 +593,8 @@ namespace GroundCompiler
                         cpu.FreeRegister(reg);
                     }
                 }
-
-            } else if (expr.Operator.Contains(TokenType.Not))
+            }
+            else if (expr.Operator.Contains(TokenType.Not))
             {
                 expr.Right.Accept(this);
                 emitter.LogicalNot();

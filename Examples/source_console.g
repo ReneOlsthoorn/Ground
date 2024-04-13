@@ -2,9 +2,9 @@
 
 
 // Loop test
-int loopAantal = 3;
+int loopNr = 3;
 string tmp = "test";
-for (int i = 1; i < loopAantal+1; i++) {
+for (int i = 1; i < loopNr+1; i++) {
 	println(i + " " + tmp);
 }
 
@@ -63,7 +63,7 @@ println("54 = " + i);
 
 // if statement
 if (i == 54) {
-    println("if statement gelukt");
+    println("if statement succeeded.");
 }
 
 
@@ -115,15 +115,25 @@ println("f1: 3.77 = " + f1);
 
 
 class ConsoleClass {
-    string a;
-    string b;
-    int f1;
+	float f1;
+	int	i1;
+	string str1;
+
+	function testf() {
+        println("ConsoleClass this.str1 = Hello! => " + this.str1);
+	}
 }
 
 ConsoleClass a;
-a.a = "Hallo!";
+a.str1 = "Hello!";
 
-println("ConsoleClass a.a = Hallo! => " + a.a);
+println("ConsoleClass a.str1 = Hello! => " + a.str1);
+a.testf();
+
+ConsoleClass b;
+b.str1 = "World!";
+a = b;
+println("World! => " + a.str1);
 
 string tmpFilename = "test.txt";
 int tmpFile = msvcrt.fopen(tmpFilename, "wb");
@@ -156,13 +166,23 @@ while (textLine != null) {
 msvcrt.fclose(tmpFile);
 
 
-int[4] puzzle = [ 1, 2, 3, 4 ];
+int[4] testArray = [ 1, 2, 3, 4 ];
 function fn(int i) {
 	if (i > 3) { return true; }
-	println(puzzle[i]);
+	println(testArray[i]);
 	return fn(i+1);
 }
-bool puzzleResult = fn(0);
-println("PuzzleResult (true) = " + puzzleResult);
+bool testArrayResult = fn(0);
+println("testArrayResult (true) = " + testArrayResult);
 
-println("Einde.");
+group testgroup {
+    function gfun1() {
+        println("gfun1");
+    }
+    function gfun2() {
+        println("gfun2");
+    }
+}
+testgroup.gfun2();
+
+println("End.");

@@ -29,13 +29,6 @@ namespace GroundCompiler
             foreach (var inst in ClassStatement.InstanceVariables)
                 result += inst.ResultType.SizeInBytes;
 
-            /*
-            result += NeedsRefCount() ? ReferenceCountPointersAllocationSize() : 0;
-
-            List<Scope.Symbol.LocalVariableSymbol> theVariables = this.FunctionStatement.GetScope()!.GetVariableSymbols();
-            if (theVariables.Count != 0)
-                result += ((theVariables.Count * 8) & 0xfff0) + 16;  // take care of a 16 byte stack alignment
-            */
             return result;
         }
 
@@ -48,26 +41,22 @@ namespace GroundCompiler
         {
             List<Scope.Symbol.LocalVariableSymbol> theVariables = this.ClassStatement.GetScope()!.GetVariableSymbols();
 
-            int counter = 1;
+            int offset = 0;
             foreach (var varSymbol in theVariables)
             {
-                int negativeOffset = /*(NeedsRefCount() ? ReferenceCountPointersAllocationSize() : 0)*/ 0 + (counter * 8);
-
-                var theName = Emitter.AssemblyVariableNameForClassInstanceVariable(ClassName, varSymbol.Name);
-                Emitter.Writeline($"{theName} equ {negativeOffset}");
-                //Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
-                counter++;
+                Emitter.Writeline($"{varSymbol.Name}@{ClassName} = {offset}");
+                offset += varSymbol.DataType.SizeInBytes;
             }
         }
 
         public void Emit()
         {
-            //Emit_Equ_InstanceVariables();
+            Emit_Equ_InstanceVariables();
 
             foreach (var aFunctionStatement in ClassStatement.Methods)
             {
                 var funcStatement = aFunctionStatement;
-                var emittedProcedure = new EmittedProcedure(funcStatement, Emitter);
+                var emittedProcedure = new EmittedProcedure(functionStatement: funcStatement, classStatement: this.ClassStatement, Emitter);
                 emittedProcedure.MainCallback = () =>
                 {
                     MethodCallback?.Invoke(funcStatement);
@@ -75,8 +64,6 @@ namespace GroundCompiler
                 emittedProcedure.Emit();
             }
 
-
-            //EmitClassNameLabel();
             Emitter.Writeline($"; Class {ClassName}  Size: {this.AmountStackSpaceToReserve()}");
         }
 

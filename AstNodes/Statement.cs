@@ -69,6 +69,7 @@ namespace GroundCompiler.AstNodes
 
                 List<FunctionStatement> msvcrtStmts = new List<FunctionStatement>();
                 GroupStatement msvcrtGroup = new GroupStatement(msvcrtToken, msvcrtStmts);
+                msvcrtGroup.Properties["don't generate"] = true;
                 msvcrtGroup.Parent = this;
                 this.Scope.DefineGroup(msvcrtGroup);
 
@@ -97,6 +98,7 @@ namespace GroundCompiler.AstNodes
 
                 List<FunctionStatement> gcFunctionStmts = new List<FunctionStatement>();
                 GroupStatement gcGroup = new GroupStatement(gcToken, gcFunctionStmts);
+                gcGroup.Properties["don't generate"] = true;
                 gcGroup.Parent = this;
                 this.Scope.DefineGroup(gcGroup);
 
@@ -560,10 +562,13 @@ namespace GroundCompiler.AstNodes
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
 
-            public string? GetGroupName()
+            public string? GetGroupOrClassName()
             {
                 if (this.Parent is GroupStatement groupStatement)
                     return groupStatement.Name.Lexeme;
+
+                if (this.Parent is ClassStatement classStatement)
+                    return classStatement.Name.Lexeme;
 
                 return null;
             }

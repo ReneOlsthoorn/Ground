@@ -114,7 +114,7 @@ namespace GroundCompiler
             if (needsTmpReference)
                 cpu.ReserveRegister("rcx");
 
-            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStatement.Name.Lexeme, f.FunctionStatement.GetGroupName());
+            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStatement.Name.Lexeme, f.FunctionStatement.GetGroupOrClassName());
             Codeline($"call  {assemblyFunctionname}");
 
             if (needsTmpReference)
@@ -454,19 +454,6 @@ namespace GroundCompiler
             Codeline($"jmp   {label}");
         }
 
-        public void StoreFunctionVariable64(string variableName, Datatype datatype)
-        {
-            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  qword [rbp-{variableName}], xmm0");
-            else
-                Codeline($"mov   qword [rbp-{variableName}], rax");
-        }
-
-        public void StoreParentFunctionParameter64(string variableName)
-        {
-            Codeline($"mov   [rcx-{variableName}], rax");
-        }
-
         public string Gather_LexicalParentStackframe(int levelDeep)
         {
             cpu.ReserveRegister("rcx");
@@ -510,6 +497,35 @@ namespace GroundCompiler
                 Codeline($"movq  qword [rbp+{variableName}], xmm0");
             else
                 Codeline($"mov   qword [rbp+{variableName}], rax");
+        }
+
+        public void StoreFunctionVariable64(string variableName, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  qword [rbp-{variableName}], xmm0");
+            else
+                Codeline($"mov   qword [rbp-{variableName}], rax");
+        }
+
+        public void StoreParentFunctionParameter64(string variableName)
+        {
+            Codeline($"mov   [rcx-{variableName}], rax");
+        }
+
+        public void StoreInstanceVar(string instVar, string reg, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  qword [{reg}+{instVar}], xmm0");
+            else
+                Codeline($"mov   qword [{reg}+{instVar}], rax");
+        }
+
+        public void LoadInstanceVar(string instVar, string reg, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  xmm0, qword [{reg}+{instVar}]");
+            else
+                Codeline($"mov   rax, qword [{reg}+{instVar}]");
         }
 
         public void IncrementCurrent()
@@ -561,11 +577,6 @@ namespace GroundCompiler
 
         public string ConvertToAssemblyFunctionName(string functionName, string? groupName = null) => $"_f_{functionName}" + ((groupName != null) ? $"@{groupName}" : "");
 
-        public string ConvertToAssemblyClassName(string className)
-        {
-            return $"_c_{className}";
-        }
-
         public string AssemblyVariableName(Scope.Symbol.LocalVariableSymbol varSymbol, IScopeStatement? scopeStmt)
         {
             return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, varSymbol.Name);
@@ -581,18 +592,11 @@ namespace GroundCompiler
             return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, name);
         }
 
-        public string AssemblyVariableNameForClassInstanceVariable(string functionName, string parName)
-        {
-            string part1 = ConvertToAssemblyClassName(functionName);
-            string part2 = parName;
-            return $"{part1}@{part2}";
-        }
-
         public string AssemblyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)
         {
             string part1 = ConvertToAssemblyFunctionName(functionName);
             string part2 = parName;
-            return $"{part1}@{part2}" + ((groupName != null) ? $"@{groupName}" : "");
+            return $"{part2}@{part1}" + ((groupName != null) ? $"@{groupName}" : "");
         }
         public string UserfriendlyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)
         {
@@ -617,32 +621,40 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
+        public void LoadClassInstance(string varName)
+        {
+            cpu.ReserveRegister("rdi");
+            Codeline($"mov   rdi, [rbp-{varName}]");
+            cpu.FreeRegister("rdi");
+        }
+
         public void RemoveReference()
         {
             Codeline("call  RemoveReference");
         }
 
-        public void AddReference(AstNodes.Expression expr)
+        public void AddReference(AstNodes.AstNode node)
         {
             // rcx must contain the base of the stack of the function
             Codeline("call  AddReference");
-            var blockType = expr.FindParentType(typeof(BlockStatement)) as BlockStatement;
+            var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
             if (blockType == null)
-                Compiler.Error("AddTmpReference: no blockType found.");
+                Compiler.Error("AddReference: no blockType found.");
 
             blockType!.shouldCleanDereferenced = true;
         }
 
-        public void AddTmpReference(AstNodes.Expression expr)
+        public void AddTmpReference(AstNodes.AstNode node)
         {
             // rcx must contain the base of the stack of the function
             Codeline("call  AddTmpReference");
-            var blockType = expr.FindParentType(typeof(BlockStatement)) as BlockStatement;
+            var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
             if (blockType == null)
                 Compiler.Error("AddTmpReference: no blockType found.");
 
             blockType!.shouldCleanTmpDereferenced = true;
         }
+
 
         public void Allocate(UInt64 nrBytes)
         {
@@ -650,6 +662,11 @@ namespace GroundCompiler
             Codeline($"mov   rcx, {nrBytes}");
             Codeline($"call  GC_Allocate");   //; INPUT: rcx contains the requested size     ; RESULT: rcx = INDEXSPACE rownr, rax = memptr
             cpu.FreeRegister("rcx");
+        }
+
+        public void Make_IndexSpaceNr_Current()
+        {
+            Codeline("mov   rax, rcx");
         }
 
         public void PushAllocateIndexElement()

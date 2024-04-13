@@ -177,9 +177,9 @@ namespace GroundCompiler
             return result;
         }
 
-        public List<Symbol.FunctionSymbol> GetFunctionSymbols()
+        public List<FunctionStatement> GetFunctionStatements()
         {
-            List<Symbol.FunctionSymbol> result = new();
+            List<FunctionStatement> result = new();
             foreach (var symbol in Symboltable.Values)
             {
                 if (symbol is Symbol.HardcodedFunctionSymbol)
@@ -187,10 +187,18 @@ namespace GroundCompiler
                 if (symbol is Symbol.FunctionSymbol)
                 {
                     Symbol.FunctionSymbol theFunction = (Symbol.FunctionSymbol)symbol;
-                    result.Add(theFunction);
-                    var childFunctionSymbols = theFunction.FunctionStatement.GetScope()!.GetFunctionSymbols();
+                    result.Add(theFunction.FunctionStatement);
+                    var childFunctionSymbols = theFunction.FunctionStatement.GetScope()!.GetFunctionStatements();
                     foreach (var childFunctionSymbol in childFunctionSymbols)
                         result.Add(childFunctionSymbol);
+                }
+                if (symbol is Symbol.GroupSymbol groupSymbol)
+                {
+                    if (groupSymbol.GroupStatement.Properties.ContainsKey("don't generate"))
+                        continue;
+
+                    foreach (var groupFunction in groupSymbol.GroupStatement.Methods)
+                        result.Add(groupFunction);
                 }
             }
             return result;

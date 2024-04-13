@@ -1,19 +1,22 @@
 # Ground
 
-"Ground" aims to be a programming language for Windows which promotes the use of x64 assembly code and keeping the 
-generated .EXE files small. It is created to give me more knowledge about the x86-64 WIN32 runtime environment, not 
-to be a serious programming language. So, if you are looking for a good programming language, I suggest you use a 
-different language like "Beef language", C#, C or Javascript. Only programmers interested in compiler design should 
-use this software.
+"Ground" aims to be a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language 
+to be added anywhere in the code. Variables in the "Ground" code can easily be accessed in the assembly code.
+It also keeps the generated .EXE files small. Diving into this software will give you knowledge of the x86-64 WIN32 
+runtime environment, the Portable Executable format and also Compiler Design.
 
-The C programming language (not C++ with it's reinterpret_cast<> and return-value-optimization drama) is 50 years old 
-at this moment. It is a nice language to do low-level programming, but nowadays C compilers do not allow the mixing 
-of C and assembly. The reason is obvious: manual inserted assembly makes optimization of the generated code hard.
+Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...  
+See the example source_console.g for usage.
 
-Ground respects x64 assembly and gives it the proper place : usage in optimized loops. For precalculation, the fastest 
-performance is often not needed. In a Ground sourcefile, the x64 assembly can be inserted everywhere and it can use all 
-the variables in the function. Ground has a reference count system, so garbage collection is automatic. This makes 
-string concatenation easier.
+As far as I know, the features work, however do not use Ground for important production code. Ground is not solid enough.
+Use professional languages like "Beef language", C#, C or Javascript for that. Only programmers interested in compiler 
+design and x86-64 assembly should use this software.
+
+The C programming language is 50 years old at this moment. It is a nice language to do low-level programming, but 
+nowadays C compilers do not allow the mixing of C and assembly. The reason is obvious: manual inserted assembly makes 
+optimization of the generated code hard. Ground tries to bridge the gap. It respects x64 assembly and gives it the 
+proper place : usage in optimized loops. For precalculation, the fastest performance is often not needed. Ground has a 
+reference count system, so garbage collection is automatic. This makes string concatenation easier.
 
 
 ### Details on the memory model in Ground.

@@ -64,13 +64,18 @@ namespace GroundCompiler.AstNodes
                         if (resultDatatype != null)
                             ExprType = resultDatatype;
                     }
-
-                    // instance variable
-                    if (theVar is Scope.Symbol.LocalVariableSymbol localVariableSymbol)
+                    else if (theVar is Scope.Symbol.LocalVariableSymbol localVariableSymbol)
                     {
                         var resultDatatype = localVariableSymbol.DataType;
                         if ( resultDatatype != null)
                             ExprType = resultDatatype;
+                    }
+                    else
+                    {
+                        var instVarList = classStatement.InstanceVariables.Find((instVariable) => instVariable.Name.Lexeme == Name.Lexeme);
+                        if (instVarList != null) {
+                            ExprType = instVarList.ResultType;
+                        }
                     }
                 }
             }
@@ -297,18 +302,27 @@ namespace GroundCompiler.AstNodes
             public override void Initialize()
             {
                 var scope = GetScope();
-                var symbol = GetSymbol(Name.Lexeme, scope!);
 
-                if (symbol is Scope.Symbol.ParentScopeVariable)
-                    ExprType = (symbol as Scope.Symbol.ParentScopeVariable)!.DataType;
-                else if (symbol is Scope.Symbol.LocalVariableSymbol)
-                    ExprType = (symbol as Scope.Symbol.LocalVariableSymbol)!.DataType;
-                else if (symbol is Scope.Symbol.FunctionParameterSymbol)
-                    ExprType = (symbol as Scope.Symbol.FunctionParameterSymbol)!.DataType;
-                else if (symbol is Scope.Symbol.HardcodedVariable)
-                    ExprType = (symbol as Scope.Symbol.HardcodedVariable)!.DataType;
+                if (Name.Lexeme == "this")
+                {
+                    var classStmt = this.FindParentType(typeof(ClassStatement)) as ClassStatement;
+                    if (classStmt != null)
+                        ExprType = Datatype.GetDatatype(classStmt.Name.Lexeme);
+                }
                 else
-                    ExprType = Datatype.Default;
+                {
+                    var symbol = GetSymbol(Name.Lexeme, scope!);
+                    if (symbol is Scope.Symbol.ParentScopeVariable)
+                        ExprType = (symbol as Scope.Symbol.ParentScopeVariable)!.DataType;
+                    else if (symbol is Scope.Symbol.LocalVariableSymbol)
+                        ExprType = (symbol as Scope.Symbol.LocalVariableSymbol)!.DataType;
+                    else if (symbol is Scope.Symbol.FunctionParameterSymbol)
+                        ExprType = (symbol as Scope.Symbol.FunctionParameterSymbol)!.DataType;
+                    else if (symbol is Scope.Symbol.HardcodedVariable)
+                        ExprType = (symbol as Scope.Symbol.HardcodedVariable)!.DataType;
+                    else
+                        ExprType = Datatype.Default;
+                }
             }
 
             [DebuggerStepThrough]
@@ -646,8 +660,8 @@ namespace GroundCompiler.AstNodes
                     {
                         var currentScope = exprGet.GetScope();
                         var variableExpr = exprGet.Object as Expression.Variable;
-                        var classStatement = variableExpr.ExprType.Properties["classStatement"] as ClassStatement;
-                        var instVar = classStatement.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
+                        var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                        var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
                         arg.ExprType = instVar.ResultType;
                     }
                 }

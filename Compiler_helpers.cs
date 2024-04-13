@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Linq;
+using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
 
 namespace GroundCompiler
@@ -43,12 +44,11 @@ namespace GroundCompiler
         }
 
 
-        public void EmitFunctions(List<Symbol.FunctionSymbol> usedFunctions)
+        public void EmitFunctions(List<FunctionStatement> usedFunctions)
         {
-            foreach (var aFunction in usedFunctions)
+            foreach (var funcStatement in usedFunctions)
             {
-                var funcStatement = aFunction.FunctionStatement;
-                var emittedProcedure = new EmittedProcedure(funcStatement, emitter);
+                var emittedProcedure = new EmittedProcedure(functionStatement: funcStatement, classStatement: null, emitter);
                 emittedProcedure.MainCallback = () =>
                 {
                     VisitorBlock(funcStatement.Body);

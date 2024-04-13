@@ -474,13 +474,9 @@ namespace GroundCompiler
             {
                 Token token = NextToken();
                 return new Expression.Literal(token.Datatype!, (bool)token.Value!);
-                /*
-                Token peekToken = Peek();
-                if (peekToken.Value != null)
-                {
-                    Token token = NextToken();
-                }
-                */
+                // Token peekToken = Peek();
+                // if (peekToken.Value != null)
+                //    Token token = NextToken();
             }
             if (Match(TokenType.Null)) return new Expression.Literal(null);
 
@@ -519,8 +515,6 @@ namespace GroundCompiler
         }
 
 
-        //public Dictionary<string, ClassStatement> EarlyOnIdentifiedClasses = new();  // Only in the Initialize phase, the Classes are added to the scopes. This is a problem for the parsing which needs the names earlier.
-
         private ClassStatement ClassDeclaration()
         {
             var name = Consume(TokenType.Identifier, "Expect class name before body.");
@@ -545,11 +539,9 @@ namespace GroundCompiler
                 if (Check(TokenType.Type))
                     instanceVariables.Add(VariableDeclaration());
             }
-
             Consume(TokenType.RightBrace, "Expect '}' after class body.");
 
             var result = new ClassStatement(name, instanceVariables, methods);
-            //EarlyOnIdentifiedClasses[name.Lexeme] = result;
             Datatype.AddClass(result);
             return result;
         }
@@ -570,7 +562,6 @@ namespace GroundCompiler
             var result = new GroupStatement(name, methods);
             return result;
         }
-
 
 
         private FunctionStatement FunctionDeclaration(string kind)
@@ -602,7 +593,6 @@ namespace GroundCompiler
 
                 return theAsmFunction;
             }
-
             Consume(TokenType.LeftBrace, "FunctionDeclaration: Expected '{' before " + kind + " body.");
 
             var body = new Statement.BlockStatement(Block());

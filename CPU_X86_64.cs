@@ -7,12 +7,10 @@ namespace GroundCompiler
 {
     public class CPU_X86_64
     {
-        /* RAX, XMM0 cannot be reserved, because it can always be used. */
-
         public Dictionary<string, string> reservedRegisters;
-        public List<string> _tmpRegisters = new List<string>() { "r8", "r9", "r10", "r11", "rdx", "rcx" };
-        public List<string> _tmpFloatRegisters = new List<string>() { "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6" };
-        public List<string> _restoredRegisters = new List<string>() { "rbx", "rsi", "rdi", "r12", "r13", "r14", "r15" };   // rbp, rsp
+        public List<string> _tmpRegisters = new List<string>() { "r8", "r9", "r10", "r11", "rdx", "rcx" };      // RAX cannot be reserved, because it can always be used.
+        public List<string> _tmpFloatRegisters = new List<string>() { "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6" };     // XMM0 cannot be reserved, because it can always be used.
+        public List<string> _restoredRegisters = new List<string>() { "rbx", "rsi", "rdi", "r12", "r13", "r14", "r15" };    // rbp, rsp
 
         public CPU_X86_64()
         {
