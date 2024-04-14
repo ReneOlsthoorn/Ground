@@ -43,7 +43,12 @@ function draw() {
     {
         for (int x = 0; x < 9; x++)
         {
-            print(puzzle[x,y]);
+            int theValue = puzzle[x,y];
+            if (theValue == 0) {
+                print("-");
+            } else {
+                print(theValue);
+            }
             if ((x + 1) % 3 == 0)
                 print("  ");
         }

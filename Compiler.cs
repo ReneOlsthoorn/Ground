@@ -477,14 +477,13 @@ namespace GroundCompiler
                 emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
 
             List<FunctionParameter> fPars = theFunction!.FunctionStatement.Parameters;
-            int needle = 0;
-            foreach (var arg in expr.Arguments)
+            for (int i = (nrArguments-3); i >= 0; i--)
             {
+                var arg = expr.Arguments[i];
                 EmitExpression(arg);
-                FunctionParameter fPar = fPars[needle];
+                FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
                 emitter.Push();
-                needle++;
             }
 
             // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter

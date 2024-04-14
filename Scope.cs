@@ -499,6 +499,7 @@ namespace GroundCompiler
             {
                 public HardcodedFunctionSymbol(string name, Datatype? resultDatatype) : base(name, new FunctionStatement()) {
                     this.FunctionStatement.Name.Lexeme = name;
+                    this.FunctionStatement.Properties["hardcoded"] = true;
                     if (resultDatatype != null)
                         this.FunctionStatement.ResultDatatype = resultDatatype;
                 }

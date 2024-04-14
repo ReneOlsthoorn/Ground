@@ -18,13 +18,15 @@ G_LAST_REFCOUNT_PTR equ 16
 G_FIRST_TMPREFCOUNT_PTR equ 24
 G_LAST_TMPREFCOUNT_PTR equ 32
 
-; Below are the offsets on the stack in a Ground generated function. Relative to rbp.
+; Below are the offsets on the stack in a Ground generated function. Relative to rbp+.
 G_PARAMETER_THIS equ 16
 G_PARAMETER_LEXPARENT equ 24
 G_PARAMETER1 equ 32
 G_PARAMETER2 equ 40
 G_PARAMETER3 equ 48
 G_PARAMETER4 equ 56
+G_PARAMETER5 equ 64
+G_PARAMETER6 equ 72
 
 ; Below is the amount of stackspace that needs to be cleaned after a Ground generated function.
 G_STACKSPACE_0_PARAM equ 16
@@ -701,8 +703,8 @@ _f_print:
   ret   G_STACKSPACE_1_PARAM
 
 
-filename@_f_fopen@msvcrt equ rbp+G_PARAMETER2
-mode@_f_fopen@msvcrt equ rbp+G_PARAMETER1
+filename@_f_fopen@msvcrt equ rbp+G_PARAMETER1
+mode@_f_fopen@msvcrt equ rbp+G_PARAMETER2
 _f_fopen@msvcrt:
   push  rbp
   mov   rbp, rsp
@@ -748,8 +750,8 @@ _f_chr$:
   retn  G_STACKSPACE_1_PARAM
 
 
-input@_f_fputs@msvcrt equ rbp+G_PARAMETER2
-file@_f_fputs@msvcrt equ rbp+G_PARAMETER1
+input@_f_fputs@msvcrt equ rbp+G_PARAMETER1
+file@_f_fputs@msvcrt equ rbp+G_PARAMETER2
 _f_fputs@msvcrt:
   push  rbp
   mov   rbp, rsp
@@ -817,9 +819,9 @@ _f_ReadAllText@gc:
   retn  G_STACKSPACE_1_PARAM
 
 
-source@_f_GC_Replace equ rbp+G_PARAMETER3
+source@_f_GC_Replace equ rbp+G_PARAMETER1
 search@_f_GC_Replace equ rbp+G_PARAMETER2
-replace@_f_GC_Replace equ rbp+G_PARAMETER1
+replace@_f_GC_Replace equ rbp+G_PARAMETER3
 _f_GC_Replace:
   push  rbp
   mov   rbp, rsp
@@ -848,6 +850,53 @@ _f_fgets@msvcrt:
   retn  G_STACKSPACE_1_PARAM
 
 
+number@_f_calloc@msvcrt equ rbp+G_PARAMETER1
+size@_f_calloc@msvcrt equ rbp+G_PARAMETER2
+_f_calloc@msvcrt:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [number@_f_calloc@msvcrt]
+  mov   rdx, qword [size@_f_calloc@msvcrt]
+  sub   rsp, 20h
+  call  [msvcrt_calloc]
+  add   rsp, 20h
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_2_PARAM
+
+
+ptr@_f_free@msvcrt equ rbp+G_PARAMETER1
+_f_free@msvcrt:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [ptr@_f_free@msvcrt]
+  sub   rsp, 20h
+  call  [msvcrt_free]
+  add   rsp, 20h
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+buffer@_f_fwrite@msvcrt equ rbp+G_PARAMETER1
+size@_f_fwrite@msvcrt equ rbp+G_PARAMETER2
+count@_f_fwrite@msvcrt equ rbp+G_PARAMETER3
+stream@_f_fwrite@msvcrt equ rbp+G_PARAMETER4
+_f_fwrite@msvcrt:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [buffer@_f_fwrite@msvcrt]
+  mov   rdx, qword [size@_f_fwrite@msvcrt]
+  mov   r8, qword [count@_f_fwrite@msvcrt]
+  mov   r9, qword [stream@_f_fwrite@msvcrt]
+  sub   rsp, 20h
+  call  [msvcrt_fwrite]
+  add   rsp, 20h
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_4_PARAM
+
+
 
 section '.idata' import data readable writeable
   library kernel32,'KERNEL32.DLL', \
@@ -866,6 +915,8 @@ section '.idata' import data readable writeable
           msvcrt_ftell,  'ftell', \
           msvcrt_strcmp, 'strcmp', \
           msvcrt_scanf,  'scanf', \
+          msvcrt_calloc, 'calloc', \
+          msvcrt_free,   'free', \
           msvcrt_getch,  '_getch'
 
   include 'api\kernel32.inc'

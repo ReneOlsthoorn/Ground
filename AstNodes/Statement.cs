@@ -73,23 +73,42 @@ namespace GroundCompiler.AstNodes
                 msvcrtGroup.Parent = this;
                 this.Scope.DefineGroup(msvcrtGroup);
 
-                HardcodedFunctionSymbol fn_fopen = msvcrtGroup.Scope.DefineHardcodedFunction("fopen");
-                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
-                fn_fopen.FunctionStatement.Parameters.Add(new FunctionParameter("mode", Datatype.GetDatatype("string")));
-                fn_fopen.FunctionStatement.Parent = msvcrtGroup;
+                var bytePointerDatatype = Datatype.GetDatatype("byte[]");
+                bytePointerDatatype.IsValueType = true;
 
-                HardcodedFunctionSymbol fn_fputs = msvcrtGroup.Scope.DefineHardcodedFunction("fputs");
-                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
-                fn_fputs.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn_fputs.FunctionStatement.Parent = msvcrtGroup;
+                HardcodedFunctionSymbol fn = msvcrtGroup.Scope.DefineHardcodedFunction("fopen");
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("mode", Datatype.GetDatatype("string")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
 
-                HardcodedFunctionSymbol fn_fclose = msvcrtGroup.Scope.DefineHardcodedFunction("fclose");
-                fn_fclose.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn_fclose.FunctionStatement.Parent = msvcrtGroup;
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fputs");
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
 
-                HardcodedFunctionSymbol fn_fgets = msvcrtGroup.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
-                fn_fgets.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn_fgets.FunctionStatement.Parent = msvcrtGroup;
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fclose");
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
+
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
+
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fwrite");
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("buffer", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("count", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
+
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("calloc", bytePointerDatatype);
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("number", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
+
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("free", bytePointerDatatype);
+                fn.FunctionStatement.Parameters.Add(new FunctionParameter("ptr", Datatype.GetDatatype("int")));
+                fn.FunctionStatement.Parent = msvcrtGroup;
 
 
                 // group gc

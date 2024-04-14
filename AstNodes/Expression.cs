@@ -183,7 +183,15 @@ namespace GroundCompiler.AstNodes
 
                 if (ExprType.Contains(Datatype.TypeEnum.Integer))
                 {
-                    byte byteVal = Convert.ToByte(Value);
+                    byte byteVal = 0;
+                    try
+                    {
+                        byteVal = Convert.ToByte(Value);
+                    }
+                    catch (OverflowException oe)
+                    {
+                        Compiler.Error(oe.Message);
+                    }
                     return byteVal;
                 }
 

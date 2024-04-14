@@ -85,31 +85,26 @@ namespace GroundCompiler
 
         public void Emit_Equ_FunctionParameters()
         {
-            int counter = FunctionStatement.Parameters.Count + 1;  // Count + 1, because the "this" and __parent is added.
             var theName = "";
-            int positiveOffset = 0;
+            int counter = 1;
             foreach (var par in FunctionStatement.Parameters)
             {
                 theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName());
                 // the 16 bytes are for: push rbp(at position rbp) and call return address(at postition rbp+8).
-                positiveOffset = 16 + (counter * 8);
-                Emitter.Writeline($"{theName} equ {positiveOffset}");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName())} equ rbp+{positiveOffset}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
-                counter--;
+                Emitter.Writeline($"{theName} equ G_PARAMETER{counter}");
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName())} equ rbp+G_PARAMETER{counter}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
+                counter++;
             }
 
             if (ProcedureName != "main")
             {
                 theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName());
-                positiveOffset = 16 + (counter * 8);
-                Emitter.Writeline($"{theName} equ {positiveOffset}");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName())} equ rbp+{positiveOffset}");
-                counter--;
+                Emitter.Writeline($"{theName} equ G_PARAMETER_LEXPARENT");
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName())} equ rbp+G_PARAMETER_LEXPARENT");
 
                 theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName());
-                positiveOffset = 16 + (counter * 8);
-                Emitter.Writeline($"{theName} equ {positiveOffset}");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())} equ rbp+{positiveOffset}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
+                Emitter.Writeline($"{theName} equ G_PARAMETER_THIS");
+                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())} equ rbp+G_PARAMETER_THIS");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
             }
         }
 
