@@ -1,8 +1,8 @@
 # Ground
 
-"Ground" aims to be a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language 
-to be added anywhere in the code. Variables and parameters in the "Ground" code can easily be accessed in assembly
-due to special symbolic constants which are generated.
+"Ground" is a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language to be 
+added anywhere in the code. Variables and parameters in the "Ground" code can easily be accessed in assembly due to 
+special symbolic constants which are generated.
 The code that "Ground" generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
 external code will be loaded at load-time. The usage of the known system DLL's is promoted.
