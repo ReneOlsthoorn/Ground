@@ -19,9 +19,9 @@ namespace GroundCompiler
         AstPrinter AstPrint = new AstPrinter();
 
 
-        public Compiler(bool generateGuiApplication) {
+        public Compiler(string template) {
             cpu = new CPU_X86_64();
-            emitter = new CodeEmitterX64(cpu, generateGuiApplication);
+            emitter = new CodeEmitterX64(cpu, template);
         }
 
         public string GenerateAssembly(Statement stmt)

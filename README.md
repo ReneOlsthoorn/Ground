@@ -1,21 +1,40 @@
 # Ground
 
 "Ground" aims to be a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language 
-to be added anywhere in the code. Variables in the "Ground" code can easily be accessed in assembly.
-It also keeps the generated .EXE files small. Diving into this software will give you knowledge of the x86-64 WIN32 
-runtime environment, the Portable Executable format and also Compiler Design.
+to be added anywhere in the code. Variables and parameters in the "Ground" code can easily be accessed in assembly
+due to special symbolic constants which are generated.
+The code that "Ground" generates is poured in an assembly template which can be freely chosen. This will result in
+small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
+external code will be loaded at load-time. The usage of the known system DLL's is promoted.
+
+Diving into this software will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
+format and Compiler Design.
 
 The C programming language is 50 years old at this moment. It is a nice language to do low-level programming, but 
-nowadays C compilers do not allow the mixing of C and assembly. The reason is obvious: manual inserted assembly makes 
-optimization of the generated code hard. Ground tries to bridge the gap. It respects x64 assembly and gives it the 
-proper place : usage in optimized loops. For precalculation, the fastest performance is often not needed. Ground has a 
-reference count system, so garbage collection is automatic. This makes string concatenation easier.
+nowadays C compilers do not allow the mixing of C and assembly in the same function. The reason is obvious: manual 
+inserted assembly makes optimization of the generated code hard.
+It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
+must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and gives 
+it the proper place: everywhere. However, the fastest performance is often not needed and "Ground" code is much more
+compact. That's why a lot of precalculation code can be done in the Ground language and only the optimized loops can 
+be hand-written x86-64.
 
-Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...  
-See the example source_console.g for usage.
-At this moment, you should only use Ground if you understand the compiler, because you might need to fix a shortcoming
-here and there.
+Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...
+See file Examples\console.g to see some usage.
+Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
+At this moment, you should only use the Ground language if you understand the compiler, because you might need to fix 
+a shortcoming here and there.
 
+### Installing Fasm 1.73:
+Ground uses FASM to assemble the generated code. Download Fasm at https://flatassembler.net/fasmw17332.zip
+Set the INCLUDE environment variable to <installation directory>\INCLUDE
+Add the <installation directory> to the System variables Path variable.
+
+### Debugging with x64dbg:
+If you want to debug with x64dbg, also assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
+directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
+Ground will generate a x64dbg database file there. After compilation, you can load your .exe in x64dbg and you will see 
+the original sourcecode in the comment column of the debugger.
 
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
@@ -43,23 +62,13 @@ property must be added which tells the code that the variable is temporary. My c
 The reference counting system has an overhead during runtime. So, I agree with the "Beef language" that it's more ideal
 to have no Garbage Collection or Reference Counting.
 
-Details about the compiler. There are several steps done before the generated .EXE file is executed:
+### Details about the compiler
+There are several steps done before the generated .EXE file is executed:
 
 1) The Lexer generates tokens from the sourcecode.
 2) The tokens are grouped in a Abstract Syntax Tree (AST) by the Parser.
 3) The Optimizer makes the AST more compact, for instance by combining integer or string literals.
 4) The Compiler converts the AST to x86-64 assembly. It uses FASM 1.73 to generate the Portable Executable file.
-
-### Installing Fasm 1.73:
-Download Fasm https://flatassembler.net/fasmw17332.zip
-Set the INCLUDE environment variable to <installation directory>\INCLUDE
-Add the <installation directory> to the System variables Path variable.
-
-### Debugging with x64dbg:
-If you want to debug with x64dbg, also assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
-directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
-Ground will generate a x64dbg database file there. After compilation, you can load your .exe in x64dbg and you will see 
-the original sourcecode in the comment column of the tool.
 
 ### Tokenize details:
 Each token can have multiple types. For instance, the "True" token has 3 types: Literal, Boolean and True. The tokens 
@@ -87,9 +96,9 @@ the code generation process this is important.
 ### Emitting x86-64 code:
 Emitting happens in the CodeEmitterX64 class. For different types, different codepaths are emitted. For instance in
 the method CodeEmitterX64>>PopSub() you see different code for different expression types. One for integer, one for
-float, one for strings. Why substract strings?  Well, that actually doesn't happen. Normally the first part of a 
-comparison is a substraction. When the result is zero, the values are equal. For strings however, this substraction 
-is skipped and a byte-for-byte string comparison is done.
+float, one for strings. Why substract strings?  Well, that actually isn't the usecase. Normally the first part of a 
+comparison is a substraction. When the result is zero, the values are equal. For comparing strings however, this 
+substraction is skipped and a byte-for-byte string comparison is done.
 
 ### Stack- and Heap allocation:
 Normal variables and function parameters are allocated on the stack. This is also necessary because in multicore 
@@ -131,6 +140,22 @@ The .DLL can be used by the Ground execution environment which opens a Window wi
 to a character buffer, like the C64. This execution environment is not included, because it would really draw the 
 focus away from the compiler.
 
+### Choosing a template
+With the special #template directive, the programmer can choose a generation template. The default is console. See the
+directory Templates for the console.fasm template.
+
+### Only 64-bit
+The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
+they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since Windows 7,
+which was released in 2009, the 64-bit version is pushed as the default. Nowadays, Windows 11 only ships as 64-bit 
+version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
+
+### Using MSVCRT
+When you compile a C program with Visual Studio, it links VCRUNTIME140.dll. That DLL is not default available on a
+system. So, the user needs to install the VCRuntime installer first. That is a hassle.
+The solution is simple: don't use the default C runtime, use MSVCRT.DLL!
+MSVCRT is available on all Windows version since winxp, I believe, so it is available. It is also a KnownDLL. See the
+registry at: Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs
 
 ## An Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.

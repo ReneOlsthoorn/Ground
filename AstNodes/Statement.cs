@@ -110,6 +110,8 @@ namespace GroundCompiler.AstNodes
                 fn.FunctionStatement.Parameters.Add(new FunctionParameter("ptr", Datatype.GetDatatype("int")));
                 fn.FunctionStatement.Parent = msvcrtGroup;
 
+                fn = msvcrtGroup.Scope.DefineHardcodedFunction("getch", Datatype.GetDatatype("int"));
+                fn.FunctionStatement.Parent = msvcrtGroup;
 
                 // group gc
                 var gcToken = new Token(TokenType.Identifier);

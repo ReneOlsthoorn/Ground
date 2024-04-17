@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace GroundCompiler
@@ -6,9 +7,10 @@ namespace GroundCompiler
     public class Program
     {
         required public string sourceFilename, sourceFullFilepath;
-        string? sourcecode, generatedCode;
+        string sourcecode = "", generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
-        bool runAfterCompilation = false;
+        string usedTemplate = "console";
+        bool runAfterCompilation = true;
         bool generateDebugInfo = false;
 
 
@@ -16,9 +18,9 @@ namespace GroundCompiler
         {
             string fileName, fullPath;
             if (args.Length == 0) {
-                //fileName = "source_console";
-                fileName = "source_sudoku";
-                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}.g"));
+                //fileName = "sudoku.g";
+                fileName = "console.g";
+                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}"));
             } else {
                 fileName = args[0];
                 if (fileName.EndsWith(".g",StringComparison.InvariantCultureIgnoreCase))
@@ -35,7 +37,7 @@ namespace GroundCompiler
         public void Build()
         {
             sourcecode = File.ReadAllText(sourceFullFilepath);
-            CheckAnnotations();
+            CheckCompilerDirectives();
 
             Console.WriteLine("*** Convert sourcecode to tokens.");
             var lexer = new Lexer(sourcecode);
@@ -51,7 +53,7 @@ namespace GroundCompiler
             Optimizer.Optimize(ast);
 
             Console.WriteLine("*** Convert AST to x86-64 assembly.");
-            Compiler compiler = new Compiler(generateGuiApplication: false);
+            Compiler compiler = new Compiler(template: usedTemplate);
             generatedCode = compiler.GenerateAssembly(ast);
 
             Assemble();
@@ -59,26 +61,54 @@ namespace GroundCompiler
         }
 
 
-        public void CheckAnnotations()
+        public void HandleDirective(int index)
         {
-            if (sourcecode!.StartsWith("//run"))
-                runAfterCompilation = true;
-
-            if (sourcecode.StartsWith("//debug"))
+            int endOfLine = sourcecode.IndexOf('\n', index);
+            string line = sourcecode.Substring(index, endOfLine-index);
+            if (line.StartsWith("#template"))
             {
-                runAfterCompilation = false;
-                generateDebugInfo = true;
+                string[] splits = line.Split();
+                usedTemplate = splits[1].Trim();
+            }
+        }
+
+        public void ClearLineAtIndex(int index)
+        {
+            int endOfLine = sourcecode.IndexOf('\n', index);
+            StringBuilder sb = new StringBuilder(sourcecode);
+
+            if (sourcecode[endOfLine - 1] == '\r')
+                endOfLine--;
+
+            for (int i = index; i < endOfLine; i++)
+                sb[i] = ' ';
+            sourcecode = sb.ToString();
+        }
+
+        public void CheckCompilerDirectives()
+        {
+            int sourcecodeCount = sourcecode.Length;
+            bool endMarkerFound = true;
+            for (int i = 0; i < sourcecodeCount; i++)
+            {
+                if (endMarkerFound && sourcecode[i] == '#')
+                {
+                    HandleDirective(i);
+                    ClearLineAtIndex(i);
+                } else
+                    endMarkerFound = false;
+
+                if (sourcecode[i] == '\n')
+                    endMarkerFound = true;
             }
         }
 
         public void Assemble()
         {
-            //Console.WriteLine("*** Write generated code to disk.");
-
             string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.asm"));
             string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.fas"));
             string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.lst"));
-
+             
             File.WriteAllText(outputAsmFilename, generatedCode);
 
             Console.WriteLine("*** Start assembler.");
@@ -178,14 +208,18 @@ namespace GroundCompiler
         }
 
 
+
         public void RunExecutable()
         {
             if (!runAfterCompilation)
                 return;
 
-            Console.WriteLine("*** Starting the executable.\r\n\r\n");
+            Console.WriteLine("*** Starting the executable.\r\n");
 
             string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.exe"));
+            if (usedTemplate == "gui")
+                startupFilename = Path.GetFullPath(Path.Combine(currentDir, "..\\..\\..\\..\\GroundOutput\\Ground.exe"));
+
             Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
         }
 

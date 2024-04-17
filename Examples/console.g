@@ -1,5 +1,5 @@
-//run console
 
+#template console
 
 // Loop test
 int loopNr = 3;

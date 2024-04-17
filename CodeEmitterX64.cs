@@ -14,13 +14,13 @@ namespace GroundCompiler
         public CPU_X86_64 cpu;
         public List<string> generatedCode;
         long labelCounter = 0;
-        bool generateGuiApplication = true;
+        string template;
 
-        public CodeEmitterX64(CPU_X86_64 cpu, bool generateGuiApplication)
+        public CodeEmitterX64(CPU_X86_64 cpu, string usedTemplate)
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
-            this.generateGuiApplication = generateGuiApplication;
+            this.template = usedTemplate;
         }
         public string GetGeneratedCode()
         {
@@ -31,7 +31,7 @@ namespace GroundCompiler
         public void Codeline(string text) { Writeline($"  {text}"); }
         public string NewLabel() { return $"L{labelCounter++}"; }
 
-        private string GetAsmFile() => this.generateGuiApplication ? File.ReadAllText("..\\..\\..\\base_gui.asm.txt") : File.ReadAllText("..\\..\\..\\base_console.asm.txt");
+        private string GetAsmFile() => File.ReadAllText($"..\\..\\..\\Templates\\{this.template}.fasm");
         public void BeforeMainCode() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[0]);
         public void AfterMainCode() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[1]);
         public void AfterFunctions() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[2]);
