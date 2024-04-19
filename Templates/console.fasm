@@ -164,8 +164,8 @@ start:
 
 
   mov	rsp, rbp
-  pop	rbp
   invoke ExitProcess, 0
+  pop	rbp
   ret
 
 
