@@ -18,14 +18,13 @@ namespace GroundCompiler
         {
             string fileName, fullPath;
             if (args.Length == 0) {
-                //fileName = "sudoku.g";
-                fileName = "console.g";
+                fileName = "console.g";  // console.g, sudoku.g
                 fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}"));
+                fileName = fileName.Substring(0, fileName.Length - 2);
             } else {
                 fileName = args[0];
                 if (fileName.EndsWith(".g",StringComparison.InvariantCultureIgnoreCase))
                     fileName = fileName.Substring(0,fileName.Length-2);
-
                 fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), fileName+".g"));
             }
 
