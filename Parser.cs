@@ -269,6 +269,7 @@ namespace GroundCompiler
 
         public Statement ParseStatement()
         {
+            if (Match(TokenType.Dll)) return DllDeclaration();
             if (Match(TokenType.Class)) return ClassDeclaration();
             if (Match(TokenType.Group)) return GroupDeclaration();
             if (Match(TokenType.Function)) return FunctionDeclaration("function");
@@ -474,28 +475,15 @@ namespace GroundCompiler
             {
                 Token token = NextToken();
                 return new Expression.Literal(token.Datatype!, (bool)token.Value!);
-                // Token peekToken = Peek();
-                // if (peekToken.Value != null)
-                //    Token token = NextToken();
             }
-            if (Match(TokenType.Null)) return new Expression.Literal(null);
+            if (Match(TokenType.Null))
+                return new Expression.Literal(null);
 
             if (Check(Datatype.TypeEnum.Number, Datatype.TypeEnum.String))
             {
                 Token token = NextToken();
                 return new Expression.Literal(token.Datatype!, token.Value!);
             }
-
-            /*
-            if (Match(SUPER))
-            {
-                var keyword = Previous();
-                Consume(DOT, "Expected '.' after 'super'.");
-                var method = Consume(IDENTIFIER, "Expected superclass method name.");
-                return new Expr.Super(keyword, method);
-            }
-            if (Match(THIS)) return new Expr.This(Previous());
-            */
 
             if (Check(TokenType.Identifier))
                 return new Expression.Variable(NextToken());
@@ -515,18 +503,20 @@ namespace GroundCompiler
         }
 
 
+        private DllStatement DllDeclaration()
+        {
+            var groupname = Consume(TokenType.Identifier, "Expect groupname.");
+            Consume(TokenType.Function, "Expect function keyword.");
+            var functionStatement = FunctionDeclaration("function");
+
+            var result = new DllStatement(groupname.Lexeme, functionStatement);
+            return result;
+        }
+
+
         private ClassStatement ClassDeclaration()
         {
             var name = Consume(TokenType.Identifier, "Expect class name before body.");
-
-            /*
-            Expression? superclass = null;
-            if (Match(TokenType.COLON))
-            {
-                consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expression.Variable(previous());
-            }
-            */
 
             Consume(TokenType.LeftBrace, "Expect '{' before class body.");
             var methods = new List<Statement.FunctionStatement>();
@@ -593,6 +583,10 @@ namespace GroundCompiler
 
                 return theAsmFunction;
             }
+
+            if (Match(TokenType.SemiColon))
+                return new FunctionStatement(name, parameters);
+
             Consume(TokenType.LeftBrace, "FunctionDeclaration: Expected '{' before " + kind + " body.");
 
             var body = new Statement.BlockStatement(Block());

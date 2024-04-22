@@ -184,11 +184,13 @@ namespace GroundCompiler
             {
                 if (symbol is Symbol.HardcodedFunctionSymbol)
                     continue;
+                if (symbol is Symbol.DllFunctionSymbol)
+                    continue;
                 if (symbol is Symbol.FunctionSymbol)
                 {
                     Symbol.FunctionSymbol theFunction = (Symbol.FunctionSymbol)symbol;
-                    result.Add(theFunction.FunctionStatement);
-                    var childFunctionSymbols = theFunction.FunctionStatement.GetScope()!.GetFunctionStatements();
+                    result.Add(theFunction.FunctionStmt);
+                    var childFunctionSymbols = theFunction.FunctionStmt.GetScope()!.GetFunctionStatements();
                     foreach (var childFunctionSymbol in childFunctionSymbols)
                         result.Add(childFunctionSymbol);
                 }
@@ -282,6 +284,18 @@ namespace GroundCompiler
                 Compiler.Error($"{name} already defined.");
 
             var newElement = new Scope.Symbol.GroupSymbol(name, groupStatement);
+            Symboltable[name] = newElement;
+            return newElement;
+        }
+
+        public DllFunctionSymbol DefineDllFunction(Statement.FunctionStatement functionStatement, Datatype? resultDatatype = null)
+        {
+            string name = functionStatement.Name.Lexeme;
+            string id = IdFor(name, "function");
+            if (Symboltable.ContainsKey(id))
+                Compiler.Error($"{name} already defined.");
+
+            var newElement = new Scope.Symbol.DllFunctionSymbol(name, functionStatement, resultDatatype);
             Symboltable[name] = newElement;
             return newElement;
         }
@@ -484,24 +498,33 @@ namespace GroundCompiler
 
             public class FunctionSymbol : Symbol
             {
-                public Statement.FunctionStatement FunctionStatement;
+                public Statement.FunctionStatement FunctionStmt;
 
                 public FunctionSymbol(string name, Statement.FunctionStatement functionStatement)
                 {
                     Name = name;
-                    FunctionStatement = functionStatement;
+                    FunctionStmt = functionStatement;
                     Symboltype = "function";
+                }
+            }
+
+            public class DllFunctionSymbol : FunctionSymbol
+            {
+                public DllFunctionSymbol(string name, Statement.FunctionStatement functionStatement, Datatype? resultDatatype = null) : base(name, functionStatement)
+                {
+                    if (resultDatatype != null)
+                        this.FunctionStmt.ResultDatatype = resultDatatype;
                 }
             }
 
 
             public class HardcodedFunctionSymbol : FunctionSymbol
             {
-                public HardcodedFunctionSymbol(string name, Datatype? resultDatatype) : base(name, new FunctionStatement()) {
-                    this.FunctionStatement.Name.Lexeme = name;
-                    this.FunctionStatement.Properties["hardcoded"] = true;
+                public HardcodedFunctionSymbol(string name, Datatype? resultDatatype = null) : base(name, new FunctionStatement()) {
+                    this.FunctionStmt.Name.Lexeme = name;
+                    this.FunctionStmt.Properties["hardcoded"] = true;
                     if (resultDatatype != null)
-                        this.FunctionStatement.ResultDatatype = resultDatatype;
+                        this.FunctionStmt.ResultDatatype = resultDatatype;
                 }
             }
 

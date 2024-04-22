@@ -25,6 +25,7 @@ namespace GroundCompiler.AstNodes
             R VisitorExpression(ExpressionStatement stmt);
             R VisitorFunction(FunctionStatement stmt);
             R VisitorClass(ClassStatement stmt);
+            R VisitorDll(DllStatement stmt);
             R VisitorGroup(GroupStatement stmt);
             R VisitorReturn(ReturnStatement stmt);
             R VisitorBreak(BreakStatement stmt);
@@ -64,90 +65,51 @@ namespace GroundCompiler.AstNodes
             public void AddHardcodedFunctions()
             {
                 // group msvcrt
-                var msvcrtToken = new Token(TokenType.Identifier);
-                msvcrtToken.Lexeme = "msvcrt";
+                var nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "msvcrt";
 
-                List<FunctionStatement> msvcrtStmts = new List<FunctionStatement>();
-                GroupStatement msvcrtGroup = new GroupStatement(msvcrtToken, msvcrtStmts);
-                msvcrtGroup.Properties["don't generate"] = true;
-                msvcrtGroup.Parent = this;
-                this.Scope.DefineGroup(msvcrtGroup);
+                List<FunctionStatement> functionStmts = new List<FunctionStatement>();
+                GroupStatement group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
 
-                var bytePointerDatatype = Datatype.GetDatatype("byte[]");
-                bytePointerDatatype.IsValueType = true;
+                HardcodedFunctionSymbol fn = group.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
+                fn.FunctionStmt.Parent = group;
 
-                HardcodedFunctionSymbol fn = msvcrtGroup.Scope.DefineHardcodedFunction("fopen");
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("mode", Datatype.GetDatatype("string")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
 
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fputs");
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fclose");
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("fwrite");
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("buffer", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("count", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("calloc", bytePointerDatatype);
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("number", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("free", bytePointerDatatype);
-                fn.FunctionStatement.Parameters.Add(new FunctionParameter("ptr", Datatype.GetDatatype("int")));
-                fn.FunctionStatement.Parent = msvcrtGroup;
-
-                fn = msvcrtGroup.Scope.DefineHardcodedFunction("getch", Datatype.GetDatatype("int"));
-                fn.FunctionStatement.Parent = msvcrtGroup;
 
                 // group gc
-                var gcToken = new Token(TokenType.Identifier);
-                gcToken.Lexeme = "gc";
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "gc";
 
-                List<FunctionStatement> gcFunctionStmts = new List<FunctionStatement>();
-                GroupStatement gcGroup = new GroupStatement(gcToken, gcFunctionStmts);
-                gcGroup.Properties["don't generate"] = true;
-                gcGroup.Parent = this;
-                this.Scope.DefineGroup(gcGroup);
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
 
-                gcGroup.Scope.DefineHardcodedFunction("input_int");
-                gcGroup.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
+                group.Scope.DefineHardcodedFunction("input_int");
+                group.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
 
-                HardcodedFunctionSymbol fn_GC_ReadAllText = gcGroup.Scope.DefineHardcodedFunction("ReadAllText", Datatype.GetDatatype("string"));
-                fn_GC_ReadAllText.FunctionStatement.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
-                fn_GC_ReadAllText.FunctionStatement.Parent = gcGroup;
+                fn = group.Scope.DefineHardcodedFunction("ReadAllText", Datatype.GetDatatype("string"));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+                fn.FunctionStmt.Parent = group;
 
+                fn = this.Scope.DefineHardcodedFunction("print");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
+                fn = this.Scope.DefineHardcodedFunction("println");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
+                fn = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
 
-                HardcodedFunctionSymbol print = this.Scope.DefineHardcodedFunction("print");
-                print.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
-
-                HardcodedFunctionSymbol println = this.Scope.DefineHardcodedFunction("println");
-                println.FunctionStatement.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
-
-                HardcodedFunctionSymbol fn_charstr = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
-                fn_charstr.FunctionStatement.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
-
-
-                HardcodedFunctionSymbol fn_GC_Replace = this.Scope.DefineHardcodedFunction("GC_Replace", Datatype.GetDatatype("string"));
-                fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("string")));
-                fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
-                fn_GC_Replace.FunctionStatement.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
-
+                fn = this.Scope.DefineHardcodedFunction("GC_Replace", Datatype.GetDatatype("string"));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("string")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
 
                 this.Scope.DefineHardcodedFunction("GC_WaitVBL");
                 this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
@@ -179,6 +141,30 @@ namespace GroundCompiler.AstNodes
                 var fontPtrDatatype = Datatype.GetDatatype("byte[]", new List<UInt64> { 256, 256 });
                 fontPtrDatatype.IsValueType = true;
                 this.Scope.DefineHardcodedVariable("GC_ScreenFont", fontPtrDatatype);
+
+
+
+                // group sdl2
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "sdl2";
+
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
+
+
+
+                // group g
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "g";
+
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
             }
 
             public override void Initialize()
@@ -235,7 +221,10 @@ namespace GroundCompiler.AstNodes
                     Initializer.Initialize();
 
                     // Hardcoded Arrays are valuetype. That must be respected in assigned variables.
-                    if (ResultType.Contains(Datatype.TypeEnum.Array) && Initializer.ExprType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
+                    //if (ResultType.Contains(Datatype.TypeEnum.Array) && Initializer.ExprType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
+                    // Why is the line above removed: when we call a DLL function, the result is never a array type, because function have no result type.
+                    // We should declare a returntype for a function, but the solution beneath is a shortcut.
+                    if (ResultType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
                     {
                         ResultType.IsValueType = true;
                         varSymbol!.DataType = ResultType;
@@ -358,6 +347,45 @@ namespace GroundCompiler.AstNodes
             public override R Accept<R>(IVisitor<R> visitor)
             {
                 return visitor.VisitorWhile(this);
+            }
+        }
+
+
+        public class DllStatement : Statement
+        {
+            public DllStatement(string groupName, FunctionStatement fStmt)
+            {
+                GroupName = groupName;
+                FunctionStmt = fStmt;
+                FunctionStmt.Properties["group"] = GroupName;
+            }
+
+            public override void Initialize()
+            {
+                if (FunctionStmt != null) {
+                    FunctionStmt.Properties["dll"] = true;
+                    FunctionStmt.Parent = this;
+                    FunctionStmt.Initialize();
+                }
+                base.Initialize();
+
+                var scope = this.GetScope();
+                var theGroup = scope?.GetVariable(GroupName);
+                if (theGroup != null)
+                {
+                    theGroup.GetGroupStatement().Scope.DefineDllFunction(FunctionStmt!);
+                }
+
+                //scope!.DefineDllFunction(FunctionStmt!);
+            }
+
+            public string GroupName { get; }
+            public FunctionStatement FunctionStmt { get; }
+
+            [DebuggerStepThrough]
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitorDll(this);
             }
         }
 
@@ -553,11 +581,12 @@ namespace GroundCompiler.AstNodes
                 this.Scope = new Scope(this);
             }
 
-            public FunctionStatement(Token name, List<FunctionParameter> parameters, Statement.BlockStatement body)
+            public FunctionStatement(Token name, List<FunctionParameter> parameters, Statement.BlockStatement? body = null)
             {
                 Name = name;
                 Parameters = parameters;
-                body.Parent = this;
+                if (body != null)
+                    body.Parent = this;
                 Body = body;
                 this.Scope = new Scope(this);
             }
@@ -569,7 +598,8 @@ namespace GroundCompiler.AstNodes
 
                 classStatement = Parent as ClassStatement;
                 groupStatement = Parent as GroupStatement;
-                Scope.Parent?.DefineFunction(this);
+                if (!this.Properties.ContainsKey("dll"))
+                    Scope.Parent?.DefineFunction(this);
 
                 base.Initialize();
 
@@ -598,7 +628,7 @@ namespace GroundCompiler.AstNodes
             public List<FunctionParameter> Parameters { get; set; }
             public Datatype? ResultDatatype;
 
-            public Statement.BlockStatement Body { get; }
+            public Statement.BlockStatement? Body { get; }
 
             public bool AssemblyOnlyFunctionWithNoParameters() => this.Properties.ContainsKey("assembly only function") && this.Properties.ContainsKey("zero parameters");
 

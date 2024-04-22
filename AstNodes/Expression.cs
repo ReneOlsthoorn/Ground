@@ -60,7 +60,7 @@ namespace GroundCompiler.AstNodes
                     // method
                     if (theVar is Scope.Symbol.FunctionSymbol funcSymbol)
                     {
-                        var resultDatatype = funcSymbol.FunctionStatement.ResultDatatype;
+                        var resultDatatype = funcSymbol.FunctionStmt.ResultDatatype;
                         if (resultDatatype != null)
                             ExprType = resultDatatype;
                     }
@@ -353,14 +353,21 @@ namespace GroundCompiler.AstNodes
 
             public override void Initialize()
             {
+                string? elementType = null;
                 if (Elements != null) { 
                     foreach (var element in Elements)
                     {
                         element.Parent = this;
                         element.Initialize();
+                        if (elementType == null)
+                            elementType = element.ExprType.Name;
+                        else if (element.ExprType.Name != elementType)
+                            Compiler.Error("All elements in a List must have the same type");
                     }
                 }
                 base.Initialize();
+                if (elementType != null)
+                    this.ExprType = Datatype.GetDatatype($"{elementType}[]");
             }
 
             [DebuggerStepThrough]
@@ -395,6 +402,7 @@ namespace GroundCompiler.AstNodes
                         expr.Initialize();
                     }
                 }
+                this.ExprType = Member?.ExprType.Base ?? Datatype.Default;
                 base.Initialize();
             }
 
@@ -658,8 +666,8 @@ namespace GroundCompiler.AstNodes
                 var symbol = GetSymbol(functionName, scope!);
 
                 if (symbol is Scope.Symbol.HardcodedFunctionSymbol hardCodedFunction) { 
-                    if (hardCodedFunction.FunctionStatement.ResultDatatype != null)
-                        ExprType = hardCodedFunction.FunctionStatement.ResultDatatype!;
+                    if (hardCodedFunction.FunctionStmt.ResultDatatype != null)
+                        ExprType = hardCodedFunction.FunctionStmt.ResultDatatype!;
                 }
 
                 foreach (var arg in Arguments)
@@ -668,9 +676,22 @@ namespace GroundCompiler.AstNodes
                     {
                         var currentScope = exprGet.GetScope();
                         var variableExpr = exprGet.Object as Expression.Variable;
-                        var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
-                        var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
-                        arg.ExprType = instVar.ResultType;
+                        var variableSymbol = currentScope!.GetVariable(variableExpr!.Name.Lexeme);
+
+                        if (variableExpr!.Name.Lexeme == "g")
+                            arg.ExprType = Datatype.Default;
+                        else if (variableSymbol is Symbol.GroupSymbol groupSymbol)
+                        {
+                            var groupScope = groupSymbol.GroupStatement.GetScope();
+                            var groupVar = groupScope.GetVariable(exprGet.Name.Lexeme);
+                            arg.ExprType = groupVar.GetDatatype();
+                        }
+                        else
+                        {
+                            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
+                            arg.ExprType = instVar.ResultType;
+                        }
                     }
                 }
             }

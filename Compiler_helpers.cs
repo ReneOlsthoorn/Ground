@@ -169,6 +169,10 @@ namespace GroundCompiler
                         emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
                 }
             }
+            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+            {
+                Compiler.Error("Not implemented yet.");
+            }
         }
 
 

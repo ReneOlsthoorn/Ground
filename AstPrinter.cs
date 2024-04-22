@@ -60,6 +60,10 @@ namespace GroundCompiler
         {
             return "(assembly)";
         }
+        public string VisitorDll(Statement.DllStatement stmt)
+        {
+            return "(dll)";
+        }
 
         public string VisitorPoke(Statement.PokeStatement stmt)
         {

@@ -32,7 +32,7 @@ namespace GroundCompiler.AstNodes
 
         public AstNode? FindParentType(Type typeToFind)
         {
-            if (this.GetType() == typeToFind)
+            if (this.GetType().IsAssignableTo(typeToFind))
                 return this;
 
             if (Parent != null)

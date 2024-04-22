@@ -16,16 +16,20 @@ namespace GroundCompiler
 
         static void Main(string[] args)
         {
+            string currentDir = System.IO.Directory.GetCurrentDirectory();
             string fileName, fullPath;
-            if (args.Length == 0) {
-                fileName = "console.g";  // console.g, sudoku.g
-                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\Ground\\Examples\\{fileName}"));
+            if (args.Length == 0)
+            {
+                fileName = "console.g";  //console.g, sudoku.g
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 fileName = fileName.Substring(0, fileName.Length - 2);
-            } else {
+            }
+            else
+            {
                 fileName = args[0];
-                if (fileName.EndsWith(".g",StringComparison.InvariantCultureIgnoreCase))
-                    fileName = fileName.Substring(0,fileName.Length-2);
-                fullPath = Path.GetFullPath(Path.Combine(System.IO.Directory.GetCurrentDirectory(), fileName+".g"));
+                if (fileName.EndsWith(".g", StringComparison.InvariantCultureIgnoreCase))
+                    fileName = fileName.Substring(0, fileName.Length - 2);
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName + ".g"));
             }
 
             Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath };
@@ -60,15 +64,33 @@ namespace GroundCompiler
         }
 
 
-        public void HandleDirective(int index)
+        public bool HandleDirective(int index)
         {
             int endOfLine = sourcecode.IndexOf('\n', index);
             string line = sourcecode.Substring(index, endOfLine-index);
             if (line.StartsWith("#template"))
             {
-                string[] splits = line.Split();
-                usedTemplate = splits[1].Trim();
+                usedTemplate = line.Split()[1].Trim();
+                ClearLineAtIndex(index);
+                return false;
             }
+            if (line.StartsWith("#include"))
+            {
+                string fileToInclude = line.Split()[1].Trim();
+                ClearLineAtIndex(index);
+                IncludeFileAtIndex(index, fileToInclude);
+                return true;
+            }
+            return false;
+        }
+
+        public void IncludeFileAtIndex(int index, string fileName)
+        {
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Include\\{fileName}"));
+            string theText = File.ReadAllText(fullPath);
+            StringBuilder sb = new StringBuilder(sourcecode);
+            sb.Insert(index, theText);
+            sourcecode = sb.ToString();
         }
 
         public void ClearLineAtIndex(int index)
@@ -88,26 +110,34 @@ namespace GroundCompiler
         {
             int sourcecodeCount = sourcecode.Length;
             bool endMarkerFound = true;
-            for (int i = 0; i < sourcecodeCount; i++)
+            bool endReached = false;
+            while (!endReached)
             {
-                if (endMarkerFound && sourcecode[i] == '#')
+                for (int i = 0; i < sourcecodeCount; i++)
                 {
-                    HandleDirective(i);
-                    ClearLineAtIndex(i);
-                } else
-                    endMarkerFound = false;
+                    if (endMarkerFound && sourcecode[i] == '#')
+                        if (HandleDirective(i))
+                            break;
+                        else
+                            endMarkerFound = false;
 
-                if (sourcecode[i] == '\n')
-                    endMarkerFound = true;
+                    if (sourcecode[i] == '\n')
+                        endMarkerFound = true;
+
+                    if (i == sourcecodeCount - 1)
+                        endReached = true;
+                }
             }
         }
 
         public void Assemble()
         {
+            //Console.WriteLine("*** Write generated code to disk.");
+
             string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.asm"));
             string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.fas"));
             string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.lst"));
-             
+
             File.WriteAllText(outputAsmFilename, generatedCode);
 
             Console.WriteLine("*** Start assembler.");
@@ -207,7 +237,6 @@ namespace GroundCompiler
         }
 
 
-
         public void RunExecutable()
         {
             if (!runAfterCompilation)
@@ -216,8 +245,6 @@ namespace GroundCompiler
             Console.WriteLine("*** Starting the executable.\r\n");
 
             string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.exe"));
-            if (usedTemplate == "gui")
-                startupFilename = Path.GetFullPath(Path.Combine(currentDir, "..\\..\\..\\..\\GroundOutput\\Ground.exe"));
 
             Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
         }

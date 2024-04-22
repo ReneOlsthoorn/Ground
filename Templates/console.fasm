@@ -654,7 +654,6 @@ StoreBytes:
 
 
 
-
 ; HARDCODED LIBRARY FUNCTIONS
 
 ; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
@@ -703,38 +702,6 @@ _f_print:
   ret   G_STACKSPACE_1_PARAM
 
 
-filename@_f_fopen@msvcrt equ rbp+G_PARAMETER1
-mode@_f_fopen@msvcrt equ rbp+G_PARAMETER2
-_f_fopen@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   rax, qword [filename@_f_fopen@msvcrt]
-  call  GetMemoryPointerFromIndex
-  mov   rcx, rax
-  mov   rax, qword [mode@_f_fopen@msvcrt]
-  call  GetMemoryPointerFromIndex
-  mov   rdx, rax
-  sub   rsp, 20h
-  call  [msvcrt_fopen]
-  add   rsp, 20h
-  mov   rsp, rbp
-  pop   rbp
-  ret   G_STACKSPACE_2_PARAM
-
-
-stream@_f_fclose@msvcrt equ rbp+G_PARAMETER1
-_f_fclose@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   rcx, qword [stream@_f_fclose@msvcrt]
-  sub   rsp, 20h
-  call  [msvcrt_fclose]
-  add   rsp, 20h
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
-
-
 intvalue@_f_chr$ equ rbp+G_PARAMETER1
 _f_chr$:
   push  rbp
@@ -748,23 +715,6 @@ _f_chr$:
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_1_PARAM
-
-
-input@_f_fputs@msvcrt equ rbp+G_PARAMETER1
-file@_f_fputs@msvcrt equ rbp+G_PARAMETER2
-_f_fputs@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   rax, qword [input@_f_fputs@msvcrt]
-  call  GetMemoryPointerFromIndex
-  mov   rcx, rax
-  mov   rdx, qword [file@_f_fputs@msvcrt]
-  sub   rsp, 20h
-  call  [msvcrt_fputs]
-  add   rsp, 20h
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_2_PARAM
 
 
 filename@_f_ReadAllText@gc equ rbp+G_PARAMETER1
@@ -819,17 +769,6 @@ _f_ReadAllText@gc:
   retn  G_STACKSPACE_1_PARAM
 
 
-source@_f_GC_Replace equ rbp+G_PARAMETER1
-search@_f_GC_Replace equ rbp+G_PARAMETER2
-replace@_f_GC_Replace equ rbp+G_PARAMETER3
-_f_GC_Replace:
-  push  rbp
-  mov   rbp, rsp
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_3_PARAM
-
-
 stream@_f_fgets@msvcrt equ rbp+G_PARAMETER1
 _f_fgets@msvcrt:
   push  rbp
@@ -850,58 +789,16 @@ _f_fgets@msvcrt:
   retn  G_STACKSPACE_1_PARAM
 
 
-number@_f_calloc@msvcrt equ rbp+G_PARAMETER1
-size@_f_calloc@msvcrt equ rbp+G_PARAMETER2
-_f_calloc@msvcrt:
+source@_f_GC_Replace equ rbp+G_PARAMETER1
+search@_f_GC_Replace equ rbp+G_PARAMETER2
+replace@_f_GC_Replace equ rbp+G_PARAMETER3
+_f_GC_Replace:
   push  rbp
   mov   rbp, rsp
-  mov   rcx, qword [number@_f_calloc@msvcrt]
-  mov   rdx, qword [size@_f_calloc@msvcrt]
-  sub   rsp, 20h
-  call  [msvcrt_calloc]
-  add   rsp, 20h
+; not yet implemented
   mov   rsp, rbp
   pop   rbp
-  retn  G_STACKSPACE_2_PARAM
-
-
-ptr@_f_free@msvcrt equ rbp+G_PARAMETER1
-_f_free@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   rcx, qword [ptr@_f_free@msvcrt]
-  sub   rsp, 20h
-  call  [msvcrt_free]
-  add   rsp, 20h
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
-
-
-buffer@_f_fwrite@msvcrt equ rbp+G_PARAMETER1
-size@_f_fwrite@msvcrt equ rbp+G_PARAMETER2
-count@_f_fwrite@msvcrt equ rbp+G_PARAMETER3
-stream@_f_fwrite@msvcrt equ rbp+G_PARAMETER4
-_f_fwrite@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   rcx, qword [buffer@_f_fwrite@msvcrt]
-  mov   rdx, qword [size@_f_fwrite@msvcrt]
-  mov   r8, qword [count@_f_fwrite@msvcrt]
-  mov   r9, qword [stream@_f_fwrite@msvcrt]
-  sub   rsp, 20h
-  call  [msvcrt_fwrite]
-  add   rsp, 20h
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_4_PARAM
-
-
-_f_getch@msvcrt:
-  push  rbp
-  cinvoke msvcrt_getch
-  pop   rbp
-  ret   G_STACKSPACE_0_PARAM
+  retn  G_STACKSPACE_3_PARAM
 
 
 
@@ -927,7 +824,6 @@ section '.idata' import data readable writeable
           msvcrt_getch,  '_getch'
 
   include 'api\kernel32.inc'
-
 
 
 section '.data' data readable writeable

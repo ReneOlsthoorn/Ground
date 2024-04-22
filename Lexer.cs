@@ -122,6 +122,7 @@ namespace GroundCompiler
                     token.AddType(theType);
             }
 
+            if (sLower == "dll") { fill(token, sLower, TokenType.Dll); return; }
             if (sLower == "class") { fill(token, sLower, TokenType.Class); return; }
             if (sLower == "group") { fill(token, sLower, TokenType.Group); return; }
             if (sLower == "and") { fill(token, sLower, TokenType.Operator, TokenType.LogicalAnd); return; }

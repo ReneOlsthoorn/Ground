@@ -110,11 +110,11 @@ namespace GroundCompiler
 
         public void CallFunction(FunctionSymbol f, AstNodes.Expression expr)
         {
-            bool needsTmpReference = f.FunctionStatement.ResultDatatype?.IsReferenceType ?? false;
+            bool needsTmpReference = f.FunctionStmt.ResultDatatype?.IsReferenceType ?? false;
             if (needsTmpReference)
                 cpu.ReserveRegister("rcx");
 
-            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStatement.Name.Lexeme, f.FunctionStatement.GetGroupOrClassName());
+            string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStmt.Name.Lexeme, f.FunctionStmt.GetGroupOrClassName());
             Codeline($"call  {assemblyFunctionname}");
 
             if (needsTmpReference)
@@ -129,6 +129,12 @@ namespace GroundCompiler
         {
             Codeline($"mov   rax, {indexSpaceRownr}");
         }
+
+        public void LoadHardcodedGroupVariable(string name)
+        {
+            Codeline($"mov   rax, {name}");
+        }
+
 
         public void LoadNull()
         {
@@ -603,6 +609,11 @@ namespace GroundCompiler
             string part1 = functionName;
             string part2 = parName;
             return $"{part2}@{part1}" + ((groupName != null) ? $"@{groupName}" : "");
+        }
+
+        public string AssemblyVariableNameForHardcodedGroupVariable(string group, string variableName)
+        {
+            return $"{group}_{variableName}";
         }
 
         public void CleanDereferenced()

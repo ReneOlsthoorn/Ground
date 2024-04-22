@@ -1,5 +1,7 @@
 
 #template console
+#include msvcrt.g
+
 
 // Loop test
 int loopNr = 3;
@@ -26,6 +28,7 @@ if (outsideInt != 102) {
     println("nesting has failed");
 }
 
+
 // Optimize check
 println(9*8*7*6*5*4*3*2*1 + " will be optimized to 362880.");
 
@@ -33,6 +36,11 @@ println(9*8*7*6*5*4*3*2*1 + " will be optimized to 362880.");
 // Array test
 int[] array = [ 1, 2, 4, 8, 16, 32 ];
 println("Array[2] = 4 => " + array[2]);
+
+
+// string Array test
+string[] strArray = [ "Hello", "World" ];
+println("Array[1] = World => " + strArray[1]);
 
 
 // Function test
@@ -166,6 +174,7 @@ while (textLine != null) {
 msvcrt.fclose(tmpFile);
 
 
+// array tests
 int[4] testArray = [ 1, 2, 3, 4 ];
 function fn(int i) {
 	if (i > 3) { return true; }
@@ -175,6 +184,8 @@ function fn(int i) {
 bool testArrayResult = fn(0);
 println("testArrayResult (true) = " + testArrayResult);
 
+
+// group tests
 group testgroup {
     function gfun1() {
         println("gfun1");
@@ -184,5 +195,19 @@ group testgroup {
     }
 }
 testgroup.gfun2();
+
+
+// msvcrt tests
+tmpFilename = "write.bin";
+tmpFile = msvcrt.fopen(tmpFilename, "wb");
+int arraySize = 10*1024;
+byte[] ptr = msvcrt.calloc(1,arraySize);
+i64[] ptr2 = ptr;
+ptr2[0] = 0xfffffe02;
+println(ptr[1]);
+msvcrt.fwrite(ptr, arraySize, 1, tmpFile);
+msvcrt.fclose(tmpFile);
+msvcrt.free(ptr);
+
 
 println("End.");

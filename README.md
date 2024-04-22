@@ -144,6 +144,9 @@ focus away from the compiler.
 With the special #template directive, the programmer can choose a generation template. The default is console. See the
 directory Templates for the console.fasm template.
 
+### include a file
+With the #include directive, you can include DLL definitions or other code into your sourcefile
+
 ### Only 64-bit
 The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
 they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since Windows 7,
@@ -160,10 +163,11 @@ registry at: Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Sessio
 ## An Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
 I want to take a moment here to bring credits to that platform. Recently, I took time to remember my old Commodore 64 
-and Amiga 500 days. I was heavily time-invested in the Amiga 500, because it seemed to be the successor of the C64. 
-However, the platform did not update for a long time. The Commodore Amiga was released in 1985, but the next model for 
-the masses was the Amiga 1200 released in 1992, that is 7 years later. I really felt let down by Commodore in 1990/1991.
-As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
-Fortunately, the good thing I did was to move to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now, 
-30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
-and choose your moment to upgrade. We are truly blessed with this platform. This must be said!
+and Amiga 500 days. Back then, I was heavily invested in the Amiga 500, because it seemed to be the successor of the 
+C64. However, the platform did not upgrade for a long time. The Commodore Amiga was released in 1985, but the next 
+model for the masses was the Amiga 1200 released in 1992, that is a massive 7 years later. I really felt let down by 
+Commodore in 1990/1991. As a programmer, you have intellectual- and time investments in a platform and when it becomes 
+inactive you feel lost. Fortunately, the good thing was I moved to the Wintel platform and bought an ESCOM 486DX2 
+66 MHz PC in 1994. Now, 30 years and numerous PC upgrades later, the platform is still a good choice. It has no 
+vendor lock-in and you can pick and choose your moment to upgrade. We are truly blessed with this platform. This must 
+be said!

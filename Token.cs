@@ -62,7 +62,8 @@ namespace GroundCompiler
         Print,        // print statement
         Function,     // function statement
         Class,        // class statement
-        Group         // group statement
+        Group,        // group statement
+        Dll           // Dll statement
     }
 
 

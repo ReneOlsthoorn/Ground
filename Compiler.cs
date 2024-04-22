@@ -41,7 +41,7 @@ namespace GroundCompiler
             mainProc.MainCallback = () =>
             {
                 emitter.EmitFixedStringIndexSpaceEntries(prog.Scope.GetRootScope().GetStringSymbols());
-                VisitorBlock(prog.Body);
+                VisitorBlock(prog.Body!);
                 emitter.AfterMainCode();
                 EmitFunctions(prog.Scope.GetFunctionStatements());
                 EmitClasses(prog.Scope.GetClassSymbols());
@@ -129,21 +129,10 @@ namespace GroundCompiler
             }
             return null;
         }
-
-
-        public object? VisitorClass(Statement.ClassStatement stmt)
-        {
-            // We do not generate the classes at the place it is defined.
-            // Compiler>>EmitClasses emits the classes.
-            return null;
-        }
-
-
-        public object? VisitorGroup(Statement.GroupStatement stmt)
-        {
-            return null;
-        }
-
+        
+        public object? VisitorClass(Statement.ClassStatement stmt) => null;  // We do not generate the classes at the place it is defined. Compiler>>EmitClasses emits the classes.
+        public object? VisitorGroup(Statement.GroupStatement stmt) => null;
+        public object? VisitorDll(Statement.DllStatement stmt) => null;
 
         public object? VisitorReturn(Statement.ReturnStatement stmt)
         {
@@ -283,8 +272,33 @@ namespace GroundCompiler
         {
             var currentScope = expr.GetScope();
             var variableExpr = expr.Object as Expression.Variable;
-            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
-            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+
+            ClassStatement? classStatement = null;
+            VarStatement? instVar = null;
+
+            if (variableExpr!.Name.Lexeme == "g")
+            {
+                emitter.LoadHardcodedGroupVariable(expr.Name.Lexeme);
+                return null;
+            }
+
+            var variableSymbol = currentScope!.GetVariable(variableExpr!.Name.Lexeme);
+            if (variableSymbol is Symbol.GroupSymbol groupSymbol)
+            {
+                var groupScope = groupSymbol.GroupStatement.GetScope();
+                var groupVar = groupScope.GetVariable(expr.Name.Lexeme);
+                if (groupVar is Symbol.HardcodedVariable hardCodedVar)
+                {
+                    string varName = emitter.AssemblyVariableNameForHardcodedGroupVariable(groupSymbol.Name, hardCodedVar.Name);
+                    emitter.LoadHardcodedGroupVariable(varName);
+                }
+                return null;
+            }
+            else
+            {
+                classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+            }
 
             if (variableExpr.Name.Lexeme == "this")
             {
@@ -471,40 +485,91 @@ namespace GroundCompiler
                     theFunction = GetSymbol(functionName, scope!) as Scope.Symbol.FunctionSymbol;
                 }
             }
+            var dllFunctionSymbol = theFunction as Symbol.DllFunctionSymbol;
 
             int nrArguments = expr.Arguments.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
             if (nrArguments % 2 == 1)
                 emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
 
-            List<FunctionParameter> fPars = theFunction!.FunctionStatement.Parameters;
+            List<FunctionParameter> fPars = theFunction!.FunctionStmt.Parameters;
             for (int i = (nrArguments-3); i >= 0; i--)
             {
                 var arg = expr.Arguments[i];
                 EmitExpression(arg);
+                if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType)
+                    emitter.GetMemoryPointerFromIndex();
+
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
                 emitter.Push();
             }
 
-            // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
-            if (levelsDeep == 0)
-                emitter.Codeline("mov   rax, rbp");         // normal parent frame
-            else { 
-                int loopNr = levelsDeep - 1;
-                emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
-                for (int i = 0; i < loopNr; i++)
-                    emitter.Codeline("mov   rax, [rax]");
+            bool pushLexicalParent = (dllFunctionSymbol == null);
+            bool pushThis = (dllFunctionSymbol == null);
+
+            if (pushLexicalParent)
+            {
+                // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
+                if (levelsDeep == 0)
+                    emitter.Codeline("mov   rax, rbp");         // normal parent frame
+                else
+                {
+                    int loopNr = levelsDeep - 1;
+                    emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
+                    for (int i = 0; i < loopNr; i++)
+                        emitter.Codeline("mov   rax, [rax]");
+                }
+                emitter.Push();
             }
-            emitter.Push();
 
-            // Add "this" or null if there is no class instance. Position: [rbp+16] // first parameter
-            if (instVarName != null)
-                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(instVarName, currentScope?.Owner));
-            else
-                emitter.LoadNull();
-            emitter.Push();
+            if (pushThis)
+            {
+                // Add "this" or null if there is no class instance. Position: [rbp+16] // first parameter
+                if (instVarName != null)
+                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(instVarName, currentScope?.Owner));
+                else
+                    emitter.LoadNull();
+                emitter.Push();
+            }
 
-            emitter.CallFunction(theFunction!, expr);
+            if (dllFunctionSymbol != null)
+            {
+                nrArguments = expr.Arguments.Count;
+                if (nrArguments % 2 == 1)
+                    nrArguments++;
+
+                if (nrArguments > 0)
+                {
+                    cpu.ReserveRegister("rcx");
+                    emitter.Pop();
+                    emitter.Codeline("mov   rcx, rax");
+                    cpu.FreeRegister("rcx");
+                    cpu.ReserveRegister("rdx");
+                    emitter.Pop();
+                    emitter.Codeline("mov   rdx, rax");
+                    cpu.FreeRegister("rdx");
+                }
+                if (nrArguments > 2)
+                {
+                    cpu.ReserveRegister("r8");
+                    emitter.Pop();
+                    emitter.Codeline("mov   r8, rax");
+                    cpu.FreeRegister("r8");
+                    cpu.ReserveRegister("r9");
+                    emitter.Pop();
+                    emitter.Codeline("mov   r9, rax");
+                    cpu.FreeRegister("r9");
+                }
+                int stackToReserve = 32;
+                string hexStackToReserve = stackToReserve.ToString("X");
+                emitter.Codeline($"sub   rsp, {hexStackToReserve}h");
+                string groupName = (string)dllFunctionSymbol.FunctionStmt.Properties["group"];
+                string functionName = (string)dllFunctionSymbol.FunctionStmt.Name.Lexeme;
+                emitter.Codeline($"call  [{groupName}_{functionName}]");
+                emitter.Codeline($"add   rsp, {hexStackToReserve}h");
+            } else
+                emitter.CallFunction(theFunction!, expr);
+
             return null;
         }
 
