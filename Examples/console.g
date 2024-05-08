@@ -1,13 +1,14 @@
 
 #template console
 #include msvcrt.g
-
+#include kernel32.g
 
 // Loop test
 int loopNr = 3;
 string tmp = "test";
 for (int i = 1; i < loopNr+1; i++) {
 	println(i + " " + tmp);
+    kernel32.Sleep(500);
 }
 
 
@@ -34,8 +35,12 @@ println(9*8*7*6*5*4*3*2*1 + " will be optimized to 362880.");
 
 
 // Array test
-int[] array = [ 1, 2, 4, 8, 16, 32 ];
+int[] array = [ 1, 2, 4, 8, 16, 0x10000ffff ];
 println("Array[2] = 4 => " + array[2]);
+u32* word = &array[5];
+println(*word);
+byte* theByte = &array[5];
+println(*theByte);
 
 
 // string Array test
@@ -201,13 +206,13 @@ testgroup.gfun2();
 tmpFilename = "write.bin";
 tmpFile = msvcrt.fopen(tmpFilename, "wb");
 int arraySize = 10*1024;
-byte[] ptr = msvcrt.calloc(1,arraySize);
-i64[] ptr2 = ptr;
+byte[] pointer = msvcrt.calloc(1,arraySize);
+i64[] ptr2 = pointer;
 ptr2[0] = 0xfffffe02;
-println(ptr[1]);
-msvcrt.fwrite(ptr, arraySize, 1, tmpFile);
+//println(ptr[1]);
+msvcrt.fwrite(pointer, arraySize, 1, tmpFile);
 msvcrt.fclose(tmpFile);
-msvcrt.free(ptr);
+msvcrt.free(pointer);
 
 
 println("End.");

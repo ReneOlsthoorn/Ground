@@ -480,8 +480,8 @@ namespace GroundCompiler
 
             public class GroupSymbol : Symbol
             {
-                public Statement.GroupStatement GroupStatement;
-                public GroupSymbol(string name, Statement.GroupStatement groupStatement)
+                public Statement.GroupStatement? GroupStatement;
+                public GroupSymbol(string name, Statement.GroupStatement? groupStatement = null)
                 {
                     Name = name;
                     GroupStatement = groupStatement;

@@ -3,81 +3,50 @@ entry start
 stack 80000h, 80000h
 
 include 'win64a.inc'
-
-GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT equ 1000
-GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT equ 2000
-
-GC_INDEXSPACE_ROWSIZE = 32
-GC_INDEXSPACE_SIZE_OFFSET = 8
-GC_INDEXSPACE_NRREFS_OFFSET = 16
-
-G_REFCOUNT_LINKED_LIST_ROWSIZE = 16
-G_REFCOUNT_LINKED_LIST_NEXT = 8
-G_FIRST_REFCOUNT_PTR equ 8
-G_LAST_REFCOUNT_PTR equ 16
-G_FIRST_TMPREFCOUNT_PTR equ 24
-G_LAST_TMPREFCOUNT_PTR equ 32
-
-; Below are the offsets on the stack in a Ground generated function. Relative to rbp+.
-G_PARAMETER_THIS equ 16
-G_PARAMETER_LEXPARENT equ 24
-G_PARAMETER1 equ 32
-G_PARAMETER2 equ 40
-G_PARAMETER3 equ 48
-G_PARAMETER4 equ 56
-G_PARAMETER5 equ 64
-G_PARAMETER6 equ 72
-
-; Below is the amount of stackspace that needs to be cleaned after a Ground generated function.
-G_STACKSPACE_0_PARAM equ 16
-G_STACKSPACE_1_PARAM equ 32
-G_STACKSPACE_2_PARAM equ 32
-G_STACKSPACE_3_PARAM equ 48
-G_STACKSPACE_4_PARAM equ 48
-; no parameters pushes 16 bytes on the stack: the lexical parent frame on the stack, and the class instance (which is null in case of a normal function)
-; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+include '..\..\..\Templates\part_equates.fasm'
+include '..\..\..\Templates\part_macros.fasm'
 
 
 section '.text' code readable executable
 start:
   push	rbp
   mov	rbp, rsp
+  mov   [main_rbp], rbp
 
-  invoke GetStdHandle, STD_OUTPUT_HANDLE
+  invoke kernel32_GetStdHandle, STD_OUTPUT_HANDLE
   mov	[GetStdHandle_outputhandle], rax
 
-  invoke GetStdHandle, STD_INPUT_HANDLE
+  invoke kernel32_GetStdHandle, STD_INPUT_HANDLE
   mov	[GetStdHandle_inputhandle], rax
 
-  invoke GetProcessHeap
+  invoke kernel32_GetProcessHeap
   mov	[processHeapHandle], rax
-
 
   mov	rax, 4 * 1024 * 1024
   mov	[variableSpaceSize], rax
-  invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [variableSpaceSize]
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [variableSpaceSize]
   mov	[variableSpacePointer], rax
   mov	[variableSpaceNeedle], rax
 
   mov   rax, [indexSpaceNrElements]
   mov   rdx, GC_INDEXSPACE_ROWSIZE
   mul   rdx
-  mov	[indexSpaceSize], rax
-  invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [indexSpaceSize]
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
   mov	[indexSpacePointer], rax
-  mov	[maxIndexSpacePointer], rax
+  mov	[indexSpaceMax], rax
+  mov   [indexSpaceLevel], rax
 
   mov   rax, [referenceSpaceNrElements]
   mov   rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
   mul   rdx
-  mov	[referenceSpaceSize], rax
-  invoke HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [referenceSpaceSize]
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
   mov	[referenceSpacePointer], rax
-  mov	[maxReferenceSpacePointer], rax
+  mov	[referenceSpaceMax], rax
+  mov	[referenceSpaceLevel], rax
 
 
 ; Set the CurrentExeDir as FixedString at position 0 (zero).
-  invoke GetModuleFileNameA, 0, currentExeDirChars, 256
+  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
   mov	rcx, currentExeDirChars
   call	StringLength    ; rax stringlength
   mov   r8, currentExeDirChars
@@ -115,7 +84,7 @@ start:
   call	PrintNumber
 
   lea   rcx, [indexchecker_message]
-  mov   rdx, [maxIndexSpacePointer]
+  mov   rdx, [indexSpaceMax]
   sub   rdx, [indexSpacePointer]
   mov   r8, GC_INDEXSPACE_ROWSIZE
   mov   rax, rdx
@@ -128,7 +97,7 @@ start:
   add   rsp, 20h
 
   lea   rcx, [refchecker_message]
-  mov   rdx, [maxReferenceSpacePointer]
+  mov   rdx, [referenceSpaceMax]
   sub   rdx, [referenceSpacePointer]
   mov   r8, G_REFCOUNT_LINKED_LIST_ROWSIZE
   mov   rax, rdx
@@ -158,13 +127,13 @@ start:
 .endloop:
 
 
-  invoke HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
-  invoke HeapFree, [processHeapHandle], 0, [indexSpacePointer]
-  invoke HeapFree, [processHeapHandle], 0, [variableSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
 
 
   mov	rsp, rbp
-  invoke ExitProcess, 0
+  invoke kernel32_ExitProcess, 0
   pop	rbp
   ret
 
@@ -175,6 +144,8 @@ start:
 ; *** END FUNCTIONS AND CLASSES ***
 
 
+include '..\..\..\Templates\part_memory.fasm'
+
 
 PrintScreenString:
 ;input rax: pointer to string
@@ -183,7 +154,7 @@ PrintScreenString:
   mov	rcx, rax
   call	StringLength
   mov	r9, rax
-  invoke WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
+  invoke kernel32_WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
   pop   rcx r9 r8
   ret
 
@@ -192,454 +163,12 @@ ReadChar:
   push	rbp             ; fastcall 16-byte stack alignment
   lea	rax, [tmpCharSpace]
   mov	r8, 1
-  invoke ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
+  invoke kernel32_ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
   pop	rbp
   ret
 
 
-Insert_CString:
-  push  rsi rdi rcx r8 r9
-;INPUT:  rax contains the string
-  mov   rsi, rax
-  mov   rcx, rax
-  call  StringLength
-  add   rax, 1
-  mov   rcx, rax
-  mov   r8, rax
-  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  mov   r9, rcx
-  mov	rdi, rax
-  mov	rcx, r8
-  rep	movsb			; copy string 1
-  mov   rax, r9
-  pop   r9 r8 rcx rdi rsi
-  ret
-
-
-AddCombinedStrings:
-;INPUT: rcx = ptr to first string indexspace rownr
-;       rdx = ptr to second string indexspace rownr
-;OUTPUT:rax = INDEXSPACE rownr
-  push	r12 rsi rdi		; fastcall 16-byte stack alignment
-  shl	rcx, 5
-  add	rcx, [indexSpacePointer]
-  mov	rcx, [rcx]		; memptr first string in rcx
-  shl	rdx, 5
-  add	rdx, [indexSpacePointer]
-  mov	rdx, [rdx]		; memptr second string in rdx
-  mov	r8, rcx			; memptr first string in r8
-  mov	r9, rdx			; memptr second string in r9
-  call	StringLength
-  mov	r10, rax		; size first string in r10
-  mov	rcx, r9
-  call	StringLength
-  mov	r11, rax		; size second string in r11
-  add	rax, r10
-  mov	rcx, rax		; total size in rcx
-  inc	rcx				; zero-terminated
-  call	GC_Allocate
-; rax contains the memory ptr
-; rcx bevat INDEXSPACE rownr
-  mov	r12, rcx		; prepare for copy
-  mov	rdi, rax
-  mov	rsi, r8
-  mov	rcx, r10
-  rep	movsb			; copy string 1
-  mov	rsi, r9
-  mov	rcx, r11
-  rep	movsb			; copy string 2
-  mov	byte [rdi], 0	; zero-terminated
-  mov	rax, r12
-  pop	rdi rsi r12
-  ret
-
-
-GC_Allocate:
-;INPUT:  rcx contains the requested size
-;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  push	rsi r8
-  and	ecx, 0xffffff80 ; 128 bytes alignment
-  add   rcx, 128
-  mov	rsi, [indexSpacePointer]
-  sub	rsi, GC_INDEXSPACE_ROWSIZE
-  xor	edx, edx
-  xor	eax, eax
-  dec	eax
-.rowloop:
-  add	rsi, GC_INDEXSPACE_ROWSIZE
-  inc	eax
-  cmp	qword [rsi], 0
-  je	.request_new_block
-
-; BEGIN GATHER maxIndexSpacePointer
-  mov   r8, [maxIndexSpacePointer]
-  cmp   r8, rsi
-  jge   .noIncreaseMaxIndexPointer
-  mov   [maxIndexSpacePointer], rsi
-.noIncreaseMaxIndexPointer:
-
-  cmp	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 0
-  jne	.rowloop
-  cmp	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
-  jl	.rowloop
-  mov	rdx, [rsi]
-  jmp	.reuse_found_block
-.request_new_block:
-  mov	rdx, [variableSpaceNeedle]
-  mov	qword [rsi], rdx
-  mov	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
-  add	qword [variableSpaceNeedle], rcx
-.reuse_found_block:
-  mov	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1  ; by default, an allocation gets a referencecount of 1.
-  mov	rcx, rax				; INDEXSPACE rownr in rcx
-  mov	rax, rdx				; memptr in rax
-  pop	r8 rsi
-  ret
-
-
-AddReference:
-  push	rbp
-; Add a reference to the INDEXSPACE rownr (rax) in stack refcount list (rcx)
-; rax contains INDEXSPACE rownr
-; rcx must contain the base of the stack of the function. base-G_FIRST_REFCOUNT_PTR = start_reference_list(0 = no elements)  base-G_LAST_REFCOUNT_PTR = last_element_of_reference
-  mov	rdx, [rcx-G_LAST_REFCOUNT_PTR]
-  cmp	rdx, 0
-  jne	.findEmptySpace
-  mov	rdx, [referenceSpacePointer]					; set start
-.findEmptySpace:
-; BEGIN GATHER maxReferenceSpacePointer
-  mov   r8, [maxReferenceSpacePointer]
-  cmp   r8, rdx
-  jge   .noIncreaseMaxRefIndex
-  mov   [maxReferenceSpacePointer], rdx
-.noIncreaseMaxRefIndex:
-  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
-  cmp	r8, 0
-  je	.newRowFoundInReferenceSpace
-  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
-  cmp	qword [rcx-G_LAST_REFCOUNT_PTR], 0				; when it is a new reference list, then we make big steps to prevent collisions with other reference lists.
-  jne	.findEmptySpace
-  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE*10
-; LATER NOG EEN referenceSpacePointer SIZE CHECK DOEN!
-  jmp	.findEmptySpace
-.newRowFoundInReferenceSpace:
-  mov	r8, [rcx-G_LAST_REFCOUNT_PTR]
-  cmp	r8, 0
-  jne	.addNewRowToLinkedList
-  mov	[rcx-G_FIRST_REFCOUNT_PTR], rdx
-  jmp	.setLastRefcount
-.addNewRowToLinkedList:
-  mov	r8, [rcx-G_LAST_REFCOUNT_PTR]
-  mov	[r8+G_REFCOUNT_LINKED_LIST_NEXT], rdx
-.setLastRefcount:
-  mov	qword [rdx], rax
-  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], -1		; end-marker
-  mov	[rcx-G_LAST_REFCOUNT_PTR], rdx
-  call  AddReferenceCount
-  pop	rbp
-  ret
-
-
-RemoveReference:
-; rax contains INDEXSPACE rownr
-; rcx must contain the base of the stack of the function
-  push	rax
-  mov	rdx, [rcx-G_FIRST_REFCOUNT_PTR]
-  cmp	rdx, 0
-  je	.exit
-  xor	r9d, r9d
-  xor	r10d, r10d		; de oude rdx
-  xor	r11d, r11d      ; teller
-.loop:
-  mov	r8, [rdx]
-  mov	r9, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
-  cmp	r8, rax			; index gelijk?
-  jne	.geenMatchVolgende
-; MATCH!!!!!!
-  call	DecrementReferenceCount
-  mov	qword [rdx], 0
-  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
-  cmp	r9, -1					; einde marker in deze rij?
-  je	.lastElementMatch
-  cmp	r11d, 0					; eerste marker?
-  je	.eersteTerugzetten
-  mov	qword [r10+G_REFCOUNT_LINKED_LIST_NEXT], r9
-  jmp	.exit
-.eersteTerugzetten:
-  mov	rax, r9
-  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], rax
-  jmp	.exit
-.lastElementMatch:
-  cmp	r11d, 0			; eerste element?
-  je	.removeList
-  mov	qword [r10+G_REFCOUNT_LINKED_LIST_NEXT], -1
-  mov	qword [rcx-G_LAST_REFCOUNT_PTR], r10
-  jmp	.exit
-.removeList:
-  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], 0
-  mov	qword [rcx-G_LAST_REFCOUNT_PTR], 0
-  jmp	.exit
-.geenMatchVolgende:
-  cmp	r9, -1			; einde marker in next?
-  je	.exit
-  mov	r10, rdx		; oude rdx opslaan in r10
-  mov	rdx, r9			; next naar rdx
-  inc	r11d			; teller verhogen
-  jmp	.loop
-.exit:
-  pop	rax
-  ret
-
-
-AddTmpReference:
-  push	rbp
-; Add a reference to the INDEXSPACE rownr (rax) in stack refcount list (rcx)
-; rax contains INDEXSPACE rownr
-; rcx bevat de base van de stack adres van de functie.
-  mov	rdx, [rcx-G_LAST_TMPREFCOUNT_PTR]
-  cmp	rdx, 0
-  jne	.findEmptySpace
-  mov	rdx, [referenceSpacePointer]					; set start
-.findEmptySpace:
-; BEGIN GATHER maxReferenceSpacePointer
-  mov   r8, [maxReferenceSpacePointer]
-  cmp   r8, rdx
-  jge   .noIncreaseMaxRefIndex
-  mov   [maxReferenceSpacePointer], rdx
-.noIncreaseMaxRefIndex:
-  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
-  cmp	r8, 0
-  je	.newRowFoundInReferenceSpace
-  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
-  cmp	qword [rcx-G_LAST_TMPREFCOUNT_PTR], 0			; when it is a new reference list, then we make big steps to prevent collisions with other reference lists.
-  jne	.findEmptySpace
-  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE*10
-; LATER NOG EEN referenceSpacePointer SIZE CHECK DOEN!
-  jmp	.findEmptySpace
-.newRowFoundInReferenceSpace:
-  mov	r8, [rcx-G_LAST_TMPREFCOUNT_PTR]
-  cmp	r8, 0
-  jne	.addNewRowToLinkedList
-  mov	[rcx-G_FIRST_TMPREFCOUNT_PTR], rdx
-  jmp	.setLastRefcount
-.addNewRowToLinkedList:
-  mov	r8, [rcx-G_LAST_TMPREFCOUNT_PTR]
-  mov	[r8+G_REFCOUNT_LINKED_LIST_NEXT], rdx
-.setLastRefcount:
-  mov	qword [rdx], rax
-  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], -1		; end-marker
-  mov	[rcx-G_LAST_TMPREFCOUNT_PTR], rdx
-  pop	rbp
-  ret
-
-
-AddReferenceCount:
-  push	rax
-  shl	rax, 5
-  add	rax, [indexSpacePointer]
-  cmp	qword [rax+GC_INDEXSPACE_SIZE_OFFSET], 0   ; check if it is a fixed string
-  je	.exit
-  add	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 1
-.exit:
-  pop	rax
-  ret
-
-
-DecrementReferenceCount:
-  push	rax
-  shl	rax, 5
-  add	rax, [indexSpacePointer]
-  cmp	qword [rax+GC_INDEXSPACE_SIZE_OFFSET], 0   ; check if it is a fixed string
-  je	.exit
-  cmp	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 0
-  je	.exit
-  sub	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 1
-.exit:
-  pop	rax
-  ret
-
-
-RemoveDereferenced:
-; rcx bevat de base van de stack adres van de functie.
-  push	rsi
-  mov	rsi, [indexSpacePointer]
-  mov	rdx, [rcx-G_FIRST_REFCOUNT_PTR]
-  cmp	rdx, 0
-  je	.exitRemoveDereference
-.loop:
-  mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
-  shl	r8, 5
-  mov	r9d, [rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET]
-  cmp	r9d, 0
-  je	.nextReference
-  sub	r9d, 1
-  mov	[rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET], r9d
-.nextReference:
-  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
-  mov	qword [rdx], 0
-  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
-  cmp	r8, -1
-  je	.endLoop
-  mov	rdx, r8
-  jmp	.loop
-.endLoop:
-  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], 0
-  mov	qword [rcx-G_LAST_REFCOUNT_PTR], 0
-.exitRemoveDereference:
-  pop	rsi
-  ret
-
-
-RemoveTmpDereferenced:
-; rcx bevat de base van de stack adres van de functie.
-  push	rsi
-  mov	rsi, [indexSpacePointer]
-  mov	rdx, [rcx-G_FIRST_TMPREFCOUNT_PTR]
-  cmp	rdx, 0
-  je	.exitRemoveDereference
-.loop:
-  mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
-  shl	r8, 5
-  mov	r9d, [rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET]
-  cmp	r9d, 0
-  je	.nextReference
-  sub	r9d, 1
-  mov	[rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET], r9d
-.nextReference:
-  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
-  mov	qword [rdx], 0
-  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
-  cmp	r8, -1
-  je	.endLoop
-  mov	rdx, r8
-  jmp	.loop
-.endLoop:
-  mov	qword [rcx-G_FIRST_TMPREFCOUNT_PTR], 0
-  mov	qword [rcx-G_LAST_TMPREFCOUNT_PTR], 0
-.exitRemoveDereference:
-  pop	rsi
-  ret
-
-
-AddFixedString:
-; rcx = pointer naar de fixed_memory
-  push	rsi
-  mov	rsi, [indexSpacePointer]
-  sub	rsi, GC_INDEXSPACE_ROWSIZE
-.rowloop:
-  add	rsi, GC_INDEXSPACE_ROWSIZE
-  cmp	qword [rsi], 0
-  jne	.rowloop
-  mov	qword [rsi], rcx
-  mov   dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1
-  pop	rsi
-  ret
-
-
-GetMemoryPointerFromIndex:
-  shl	rax, 5
-  add	rax, [indexSpacePointer]
-  mov	rax, [rax]
-  ret
-
-
-PrintNumber:
-  push	rbp					; win32 16-byte stack alignment
-  mov	rbp, rsp
-  sub	rsp, 0x10			; the 16 byte alignment forces us to reserve a full 16 bytes for the needed 2 bytes.
-  push	rdx r8
-  xor	edx, edx			; edx:eax = number
-  idiv	rcx					; rax = quotient, rdx = remainder
-  test	eax, eax			; Is quotient zero?
-  je	@F					; yes, don't display it
-  call	PrintNumber			; Display the quotient
-@@:
-  lea	r8d, [edx+'0']
-  lea	rax, [rbp - 0x10]
-  mov	[rax], r8b
-  mov	byte [rax+1], 0		; zero-terminated
-  call	PrintScreenString	; Display the remainder
-  pop	r8 rdx
-  mov	rsp, rbp
-  pop	rbp
-  ret
-
-
-IntegerToString:
-; rax = int value to convert
-; result INDEXSPACE rownr in rax
-  push	rbx             ; win32 stack 16-byte alignment
-  xor	ebx, ebx        ; clear the ebx, I will use as counter for stack pushes
-.push_chars:
-  xor	edx, edx        ; clear edx
-  mov	ecx, 10         ; ecx is divisor, divide by 10
-  div	rcx             ; divide edx by ecx, result in eax remainder in edx
-  add	edx, '0'        ; add 0x30 to edx convert int => ascii
-  push	rdx             ; push result to stack
-  inc	rbx             ; increment my stack push counter
-  test	eax, eax        ; is eax 0?
-  jnz	.push_chars     ; if eax not 0 repeat
-  mov	rcx, rbx
-  add	rcx, 1          ; zero-terminated
-  call	GC_Allocate		; result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
-  mov	rdi, rax
-  mov	r8, rcx
-.pop_chars:
-  pop	rax             ; pop result from stack into eax
-  stosb                 ; store contents of eax in at the address of num which is in EDI
-  dec	rbx             ; decrement my stack push counter
-  cmp	rbx, 0          ; check if stack push counter is 0
-  jg	.pop_chars      ; not 0 repeat
-  xor	eax, eax		; store the string terminating zero byte
-  stosb
-  mov	rax, r8
-  pop	rbx
-  ret
-
-
-FloatToString:
-  push  r8 r9 rsi rdi r10
-  movq  rax, xmm0
-  cinvoke msvcrt_sprintf,tmpCharSpace,sprintf_float_template,rax
-  lea   rcx, [tmpCharSpace]
-  mov   rsi, rcx
-  call  StringLength
-  inc   rax
-  mov   r9, rax         ; r9 = string length
-  mov   rcx, rax
-  call  GC_Allocate		; rcx = requested size. result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
-  mov   r8, rcx         ; r8 = indexspace rownr
-  mov	rdi, rax
-  mov	rcx, r9
-  rep	movsb			; copy string
-  mov   rax, r8
-  pop   r10 rdi rsi r9 r8
-  ret
-
-
-BooleanToString:
-  cmp   al, 0
-  je   .notFalse
-  mov   rax, 1
-  jmp   .exitBooleanToString
-.notFalse:
-  mov   rax, 2
-.exitBooleanToString:
-  ret
-
-
-StringLength:
-; rcx = pointer to zero-terminated string
-; result in rax
-  xor	eax, eax
-  cmp	byte [rcx+rax], 0
-  je	.exit
-.loop:
-  inc	eax
-  cmp	byte [rcx+rax], 0
-  jne	.loop
-.exit:
-  ret
+include '..\..\..\Templates\part_string.fasm'
 
 
 StoreBytes:
@@ -653,197 +182,55 @@ StoreBytes:
   ret
 
 
-
-; HARDCODED LIBRARY FUNCTIONS
-
-; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
-; Extra storage in function?  push rbp;  mov rbp, rsp;  sub rsp, 8h;  mov [rbp-8h], rcx;  ...   mov rsp, rbp;  pop rbp;  ret;
-
-
-
-_f_input_int:
-  push  rbp
-  cinvoke msvcrt_scanf, scanf_int_read, scanf_int_result
-  mov   rax, [scanf_int_result]
-  pop   rbp
-  ret   G_STACKSPACE_0_PARAM      ; no parameters pushes the lexical parent frame on the stack, and the class instance (which is null in this case)
+; rcx = lockbit
+WaitForLock_Impl:
+  lea	rax, [LockObject64]
+  bt    qword [rax], rcx
+  jc    WaitForLock_Impl        ; when the bit is initialy set, we are not the first one requesting the lock. So, wait.
+WaitForLock_Keep:
+  lock bts qword [rax], rcx     ; when we are in the keep loop, we are one of the first to get the lock.
+  jc	WaitForLock_Keep
+  ret
 
 
-_f_input_string:
-  push  rbp
-  cinvoke msvcrt_scanf, scanf_string_read, tmpCharSpace
-  mov   rax, tmpCharSpace
-  call  Insert_CString
-  pop   rbp
-  ret   G_STACKSPACE_0_PARAM
+; rcx = lockbit
+FreeLock_Impl:
+  lea	rax, [LockObject64]
+  lock btr qword [rax], rcx
+  ret
 
 
-_f_println:
-  push  rbp
-  mov   rbp, rsp
-  mov   rax, qword [rbp+G_PARAMETER1]
-  call  GetMemoryPointerFromIndex
-  call	PrintScreenString
-  mov	rax, carriage_return_bytes
-  call	PrintScreenString
-  mov   rsp, rbp
-  pop   rbp
-  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
-
-
-_f_print:
-  push  rbp
-  mov   rbp, rsp
-  mov   rax, qword [rbp+G_PARAMETER1]
-  call  GetMemoryPointerFromIndex
-  call	PrintScreenString
-  mov   rsp, rbp
-  pop   rbp
-  ret   G_STACKSPACE_1_PARAM
-
-
-intvalue@_f_chr$ equ rbp+G_PARAMETER1
-_f_chr$:
-  push  rbp
-  mov   rbp, rsp
-  mov   rcx, 2
-  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  mov   rdx, qword [intvalue@_f_chr$]
-  mov   byte [rax], dl
-  mov   byte [rax+1], 0
-  mov   rax, rcx
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
-
-
-filename@_f_ReadAllText@gc equ rbp+G_PARAMETER1
-_f_ReadAllText@gc:
-  push  rbp
-  mov   rbp, rsp
-  push  r12 r13 r14 r15
-  mov   rax, qword [filename@_f_ReadAllText@gc]
-  call  GetMemoryPointerFromIndex
-  mov   rcx, rax
-  lea   rdx, [readalltext_openmode]
-  sub   rsp, 50h
-  call  [msvcrt_fopen]
-  mov   r12, rax     ; r12 = FILE*
-  mov   rcx, r12     ; p1 = FILE*
-  mov   rdx, 0       ; p2 = offset = 0
-  mov   r8, 2        ; p3 = SEEK_END        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
-  call  [msvcrt_fseek]
-
-  mov   rcx, r12     ; p1 = FILE*
-  call  [msvcrt_ftell]
-  mov   r13, rax     ; r13 = size
-
-  mov   rcx, r12     ; p1 = FILE*
-  mov   rdx, 0       ; p2 = offset = 0
-  mov   r8, 0        ; p3 = SEEK_SET        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
-  call  [msvcrt_fseek]
-
-  mov   rcx, r13
-  add   rcx, 1       ; Add trailing zero...
-  call  GC_Allocate  ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  mov   r14, rcx     ; r14 = index pointer block
-  mov   r15, rax     ; r15 = memory pointer block
-
-  mov   rcx, r15
-  mov   rdx, r13
-  mov   r8, 1
-  mov   r9, r12
-  call  [msvcrt_fread]
-
-  mov   byte [r15+r13], 0  ; r13 = content length (trailing zero not included!)
-
-  mov   rcx, r12     ; p1 = FILE*
-  call  [msvcrt_fclose]
-  add   rsp, 50h
-
-  mov   rax, r14
-
-  pop   r15 r14 r13 r12
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
-
-
-stream@_f_fgets@msvcrt equ rbp+G_PARAMETER1
-_f_fgets@msvcrt:
-  push  rbp
-  mov   rbp, rsp
-  mov   r8, qword [stream@_f_fgets@msvcrt]
-  lea   rcx, [tmpCharSpace]
-  mov   rdx, 255
-  sub   rsp, 30h
-  call  [msvcrt_fgets]
-  add   rsp, 30h
-  cmp   rax, 0
-  je    .eof
-  mov   rax, tmpCharSpace
-  call  Insert_CString
-.eof:
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
-
-
-source@_f_GC_Replace equ rbp+G_PARAMETER1
-search@_f_GC_Replace equ rbp+G_PARAMETER2
-replace@_f_GC_Replace equ rbp+G_PARAMETER3
-_f_GC_Replace:
-  push  rbp
-  mov   rbp, rsp
-; not yet implemented
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_3_PARAM
+include '..\..\..\Templates\part_hardcoded_library.fasm'
 
 
 
 section '.idata' import data readable writeable
-  library kernel32,'KERNEL32.DLL', \
+  library kernel32,'kernel32.dll', \
           msvcrt, 'msvcrt.dll'
 
-  import  msvcrt, \
-          msvcrt_sprintf,'sprintf', \
-          msvcrt_printf, 'printf', \
-          msvcrt_fopen,  'fopen', \
-          msvcrt_fclose, 'fclose', \
-          msvcrt_fwrite, 'fwrite', \
-          msvcrt_fputs,  'fputs', \
-          msvcrt_fseek,  'fseek', \
-          msvcrt_fread,  'fread', \
-          msvcrt_fgets,  'fgets', \
-          msvcrt_ftell,  'ftell', \
-          msvcrt_strcmp, 'strcmp', \
-          msvcrt_scanf,  'scanf', \
-          msvcrt_calloc, 'calloc', \
-          msvcrt_free,   'free', \
-          msvcrt_getch,  '_getch'
-
-  include 'api\kernel32.inc'
+  include '..\..\..\Include\kernel32_api.inc'
+  include '..\..\..\Include\msvcrt_api.inc'
 
 
 section '.data' data readable writeable
+main_rbp                dq 0
 processHeapHandle		dq 0
 GetStdHandle_outputhandle dq 0
 GetStdHandle_inputhandle  dq 0
 
 indexSpaceNrElements    dq GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT
-indexSpaceSize			dq 0
-indexSpacePointer		dq 0
-maxIndexSpacePointer    dq 0
+indexSpacePointer		dq 0        ; Pointer to the start of the memory
+indexSpaceMax           dq 0        ; Maximum pointer
+indexSpaceLevel         dq 0        ; Below the level, everything is occupied. So, when freeing up an index space the level must be adjusted.
 
 variableSpaceSize		dq 0
 variableSpacePointer	dq 0
 variableSpaceNeedle		dq 0
 
 referenceSpaceNrElements  dq GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT
-referenceSpaceSize		dq 0
 referenceSpacePointer	dq 0
-maxReferenceSpacePointer  dq 0
+referenceSpaceMax       dq 0
+referenceSpaceLevel     dq 0        ; Below the level, everything is occupied. So, when freeing up an referenceSpace the level must be adjusted.
 
 currentExeDir           dq 0    ; the index for the currentExeDir, which is zero.
 currentExeDirChars      db 256 dup(0)
@@ -854,6 +241,7 @@ align 8
 
 ResultBytesWritten      dq 0
 ResultBytesRead         dq 0
+LockObject64            dq 0
 
 scanf_int_result        dq 0
 scanf_int_read          db '%d',0

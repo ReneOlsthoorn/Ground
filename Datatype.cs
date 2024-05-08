@@ -12,6 +12,7 @@ namespace GroundCompiler
         {
             Allocated,
             Array,
+            Pointer,
             Number,
             Integer,
             Signed,
@@ -83,6 +84,7 @@ namespace GroundCompiler
 
         public static Dictionary<string, Datatype> Cached = new() {
             { "int",    Datatype.FromData("int",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
+            { "ptr",    Datatype.FromData("ptr",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
             { "i64",    Datatype.FromData("i64",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
             { "i32",    Datatype.FromData("i32",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:4) },
             { "i16",    Datatype.FromData("i16",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:2) },
@@ -99,6 +101,11 @@ namespace GroundCompiler
             { "bool",   Datatype.FromData("bool",   [ TypeEnum.Boolean ], isValueType:true, nrBytes:8) },
             { "string", Datatype.FromData("string", [ TypeEnum.String, TypeEnum.Array, TypeEnum.Allocated ], isValueType:false, nrBytes:8) }
         };
+
+        public static bool IsCompatible(Datatype type1, Datatype type2)
+        {
+            return ((type1.SizeInBytes == type2.SizeInBytes) && (type1.IsValueType && type2.IsValueType) && (type1.Contains(TypeEnum.Integer) && type2.Contains(TypeEnum.Integer)));
+        }
 
         public static void AddClass(ClassStatement classStatement)
         {
@@ -140,12 +147,20 @@ namespace GroundCompiler
 
             if (theType.EndsWith("[]"))
             {
-                Datatype arrayDatatype = Datatype.FromData(theType, new List<TypeEnum> { TypeEnum.Array, TypeEnum.Allocated }, false, 8);
+                Datatype arrayDatatype = Datatype.FromData(theType, new List<TypeEnum> { TypeEnum.Array, TypeEnum.Allocated }, isValueType: false, nrBytes: 8);
                 var baseTypeStr = theType.Substring(0, theType.IndexOf('['));
                 Datatype baseType = GetDatatype(baseTypeStr);
                 arrayDatatype.Base = baseType;
                 arrayDatatype.ArrayNrs = arraySizeList;
                 return arrayDatatype;
+            }
+            if (theType.EndsWith("*"))
+            {
+                Datatype pointerDatatype = Datatype.FromData(theType, new List<TypeEnum> { TypeEnum.Pointer }, isValueType: true, nrBytes: 8);
+                var baseTypeStr = theType.Substring(0, theType.IndexOf('*'));
+                Datatype baseType = GetDatatype(baseTypeStr);
+                pointerDatatype.Base = baseType;
+                return pointerDatatype;
             }
 
             if (!Cached.ContainsKey(theType))

@@ -156,7 +156,32 @@ namespace GroundCompiler.AstNodes
 
 
 
+                // group kernel32
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "kernel32";
+
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
+
+
+
+                // group sidelib
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "sidelib";
+
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
+
+
+
                 // group g
+                /*
                 nameToken = new Token(TokenType.Identifier);
                 nameToken.Lexeme = "g";
 
@@ -165,6 +190,7 @@ namespace GroundCompiler.AstNodes
                 group.Properties["don't generate"] = true;
                 group.Parent = this;
                 this.Scope.DefineGroup(group);
+                */
             }
 
             public override void Initialize()
@@ -242,6 +268,20 @@ namespace GroundCompiler.AstNodes
                     return true;
                 }
                 return base.ReplaceInternalAstNode(oldNode, newNode);
+            }
+
+            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            {
+                if (this.GetType() == typeToFind)
+                    yield return this;
+
+                foreach (AstNode node in Nodes)
+                    foreach (AstNode child in node.FindAllNodes(typeToFind))
+                        yield return child;
+
+                if (Initializer != null)
+                    foreach (AstNode child in Initializer.FindAllNodes(typeToFind))
+                        yield return child;
             }
 
             [DebuggerStepThrough]

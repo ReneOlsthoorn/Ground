@@ -1,0 +1,155 @@
+
+Insert_CString:
+  push  rsi rdi rcx r8 r9
+;INPUT:  rax contains the string
+  mov   rsi, rax
+  mov   rcx, rax
+  call  StringLength
+  add   rax, 1
+  mov   rcx, rax
+  mov   r8, rax
+  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+  mov   r9, rcx
+  mov	rdi, rax
+  mov	rcx, r8
+  rep	movsb			; copy string 1
+  mov   rax, r9
+  pop   r9 r8 rcx rdi rsi
+  ret
+
+
+AddCombinedStrings:
+;INPUT: rcx = ptr to first string indexspace rownr
+;       rdx = ptr to second string indexspace rownr
+;OUTPUT:rax = INDEXSPACE rownr
+  push	r12 rsi rdi		; fastcall 16-byte stack alignment
+  shl	rcx, 5
+  add	rcx, [indexSpacePointer]
+  mov	rcx, [rcx]		; memptr first string in rcx
+  shl	rdx, 5
+  add	rdx, [indexSpacePointer]
+  mov	rdx, [rdx]		; memptr second string in rdx
+  mov	r8, rcx			; memptr first string in r8
+  mov	r9, rdx			; memptr second string in r9
+  call	StringLength
+  mov	r10, rax		; size first string in r10
+  mov	rcx, r9
+  call	StringLength
+  mov	r11, rax		; size second string in r11
+  add	rax, r10
+  mov	rcx, rax		; total size in rcx
+  inc	rcx				; zero-terminated
+  call	GC_Allocate
+; rax contains the memory ptr
+; rcx bevat INDEXSPACE rownr
+  mov	r12, rcx		; prepare for copy
+  mov	rdi, rax
+  mov	rsi, r8
+  mov	rcx, r10
+  rep	movsb			; copy string 1
+  mov	rsi, r9
+  mov	rcx, r11
+  rep	movsb			; copy string 2
+  mov	byte [rdi], 0	; zero-terminated
+  mov	rax, r12
+  pop	rdi rsi r12
+  ret
+
+
+PrintNumber:
+  push	rbp					; win32 16-byte stack alignment
+  mov	rbp, rsp
+  sub	rsp, 0x10			; the 16 byte alignment forces us to reserve a full 16 bytes for the needed 2 bytes.
+  push	rdx r8
+  xor	edx, edx			; edx:eax = number
+  idiv	rcx					; rax = quotient, rdx = remainder
+  test	eax, eax			; Is quotient zero?
+  je	@F					; yes, don't display it
+  call	PrintNumber			; Display the quotient
+@@:
+  lea	r8d, [edx+'0']
+  lea	rax, [rbp - 0x10]
+  mov	[rax], r8b
+  mov	byte [rax+1], 0		; zero-terminated
+  call	PrintScreenString	; Display the remainder
+  pop	r8 rdx
+  mov	rsp, rbp
+  pop	rbp
+  ret
+
+
+IntegerToString:
+; rax = int value to convert
+; result INDEXSPACE rownr in rax
+  push	rbx             ; win32 stack 16-byte alignment
+  xor	ebx, ebx        ; clear the ebx, I will use as counter for stack pushes
+.push_chars:
+  xor	edx, edx        ; clear edx
+  mov	ecx, 10         ; ecx is divisor, divide by 10
+  div	rcx             ; divide edx by ecx, result in eax remainder in edx
+  add	edx, '0'        ; add 0x30 to edx convert int => ascii
+  push	rdx             ; push result to stack
+  inc	rbx             ; increment my stack push counter
+  test	eax, eax        ; is eax 0?
+  jnz	.push_chars     ; if eax not 0 repeat
+  mov	rcx, rbx
+  add	rcx, 1          ; zero-terminated
+  call	GC_Allocate		; result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
+  mov	rdi, rax
+  mov	r8, rcx
+.pop_chars:
+  pop	rax             ; pop result from stack into eax
+  stosb                 ; store contents of eax in at the address of num which is in EDI
+  dec	rbx             ; decrement my stack push counter
+  cmp	rbx, 0          ; check if stack push counter is 0
+  jg	.pop_chars      ; not 0 repeat
+  xor	eax, eax		; store the string terminating zero byte
+  stosb
+  mov	rax, r8
+  pop	rbx
+  ret
+
+
+FloatToString:
+  push  r8 r9 rsi rdi r10
+  movq  rax, xmm0
+  invoke msvcrt_sprintf,tmpCharSpace,sprintf_float_template,rax
+  lea   rcx, [tmpCharSpace]
+  mov   rsi, rcx
+  call  StringLength
+  inc   rax
+  mov   r9, rax         ; r9 = string length
+  mov   rcx, rax
+  call  GC_Allocate		; rcx = requested size. result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
+  mov   r8, rcx         ; r8 = indexspace rownr
+  mov	rdi, rax
+  mov	rcx, r9
+  rep	movsb			; copy string
+  mov   rax, r8
+  pop   r10 rdi rsi r9 r8
+  ret
+
+
+BooleanToString:
+  cmp   al, 0
+  je   .notFalse
+  mov   rax, 1
+  jmp   .exitBooleanToString
+.notFalse:
+  mov   rax, 2
+.exitBooleanToString:
+  ret
+
+
+StringLength:
+; rcx = pointer to zero-terminated string
+; result in rax
+  xor	eax, eax
+  cmp	byte [rcx+rax], 0
+  je	.exit
+.loop:
+  inc	eax
+  cmp	byte [rcx+rax], 0
+  jne	.loop
+.exit:
+  ret

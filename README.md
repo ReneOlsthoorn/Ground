@@ -16,8 +16,8 @@ inserted assembly makes optimization of the generated code hard.
 It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
 must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and gives 
 it the proper place: everywhere. However, the fastest performance is often not needed and "Ground" code is much more
-compact. That's why a lot of precalculation code can be done in the Ground language and only the optimized loops can 
-be hand-written x86-64.
+compact. That's why a lot of precalculation code can be done in the Ground language and the optimized loops can be 
+hand-written x86-64.
 
 Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...
 See file Examples\console.g to see some usage.
@@ -33,8 +33,8 @@ Add the <installation directory> to the System variables Path variable.
 ### Debugging with x64dbg:
 If you want to debug with x64dbg, also assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
 directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
-Ground will generate a x64dbg database file there. After compilation, you can load your .exe in x64dbg and you will see 
-the original sourcecode in the comment column of the debugger.
+Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
+the original sourcecode in the comment column of the debugger. Nice!
 
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
@@ -57,10 +57,10 @@ for all functions. Such a list cannot be kept on the stack, because there can be
 variable is assigned to a variable in a different scope/function it would mess up the stack.
 The reference space is used by two linked lists in a function: the RefCount list and the TmpRefCount list. Why 2 lists?
 The function must keep track of the temporary memory that is allocated in the expressions, so it can be freed with ease.
-The  RefCount list exists for values that are assigned to variables. Perhaps the lists can be merged, but then an extra 
+The RefCount list exists for values that are assigned to variables. Perhaps the lists can be merged, but then an extra 
 property must be added which tells the code that the variable is temporary. My choice was to create separate lists.
-The reference counting system has an overhead during runtime. So, I agree with the "Beef language" that it's more ideal
-to have no Garbage Collection or Reference Counting.
+The reference counting system has an overhead during runtime. So, I agree with the creator of the "Beef language" that 
+it's more ideal to have no Garbage Collection or Reference Counting.
 
 ### Details about the compiler
 There are several steps done before the generated .EXE file is executed:
@@ -83,8 +83,8 @@ For instance when the user adds a string and an integer, in the tree there be a 
 as a Left-side expression and the integer as a Right-side expression. In the Initialize phase, the correct expression 
 type will be determined, which is string in this case. This will not convert the Left-side and Right-side, but will only
 determine the correct type in the parent node.
-At the moment of Compilation, in the Compiler visitor loop, the Compiler will use this determined type to convert the
-Left-side and Right-side using emitted code. In our example: the integer will get extra code which will convert the
+At the moment of Compilation, in the Compiler.cs visitor loop, the Compiler will use this determined type to convert
+the Left-side and Right-side using emitted code. In our example: the integer will get extra code which will convert the
 integer to a string (see usage of EmitConversionCompatibleType in method VisitorBinaryExpr in sourcefile Compiler.cs).
 
 ### ParentScopeVariable
@@ -92,13 +92,6 @@ When the Parser is done, we have a tree of Statement or Expression subclassed ob
 usually have a reference to these objects. So, what kind of symbol is ParentScopeVariable? Well, it defines a usage 
 of a variable from another scope. So, the ParentScopeVariable knows how many levels down the original variable is. In
 the code generation process this is important.
-
-### Emitting x86-64 code:
-Emitting happens in the CodeEmitterX64 class. For different types, different codepaths are emitted. For instance in
-the method CodeEmitterX64>>PopSub() you see different code for different expression types. One for integer, one for
-float, one for strings. Why substract strings?  Well, that actually isn't the usecase. Normally the first part of a 
-comparison is a substraction. When the result is zero, the values are equal. For comparing strings however, this 
-substraction is skipped and a byte-for-byte string comparison is done.
 
 ### Stack- and Heap allocation:
 Normal variables and function parameters are allocated on the stack. This is also necessary because in multicore 
@@ -129,23 +122,25 @@ Samples:
 0x3100530331005303, 300,  2  -> occupied memoryblock of 300 bytes with 2 references
 ```
 
-### Code generation:
+### Emitting x86-64 code:
+Code generation/emitting happens in the CodeEmitterX64 class. For different types, different codepaths are emitted. 
+For instance in the method CodeEmitterX64>>PopSub() you see different code for different expression types. One for 
+integer, one for float, one for strings. Why substract strings?  Well, that actually isn't the case. Normally the 
+first part of a comparison is a substraction. When the result is zero, the values are equal. For comparing strings 
+however, this substraction is skipped and a byte-for-byte string comparison is done.
+
+### More details on code generation:
 RAX/XMM0 is used to exchange the value the store or to read. RDX helps in that process.
 Most functions start with "push rbp" followed by "mov rbp, rsp". This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at [rbp].
 
-Ground has two modes for PE(portable executable) file generation: Executable(.EXE) or Dynamic Link Library(.DLL).
-Ground has a console mode which generates an .EXE file, and an GUI mode which generates a .DLL file.
-The .DLL can be used by the Ground execution environment which opens a Window with SDL2 and runs the code with access
-to a character buffer, like the C64. This execution environment is not included, because it would really draw the 
-focus away from the compiler.
-
 ### Choosing a template
 With the special #template directive, the programmer can choose a generation template. The default is console. See the
-directory Templates for the console.fasm template.
+directory Templates for the console.fasm template. Use the sdl2 template for SDL2 applications without console window.
+A lot of functions are shared between the console.fasm and sdl2.fasm templates.
 
 ### include a file
-With the #include directive, you can include DLL definitions or other code into your sourcefile
+With the #include directive, you can include DLL definitions or other code into your sourcefile.
 
 ### Only 64-bit
 The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
@@ -154,20 +149,61 @@ which was released in 2009, the 64-bit version is pushed as the default. Nowaday
 version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
 
 ### Using MSVCRT
-When you compile a C program with Visual Studio, it links VCRUNTIME140.dll. That DLL is not default available on a
-system. So, the user needs to install the VCRuntime installer first. That is a hassle.
-The solution is simple: don't use the default C runtime, use MSVCRT.DLL!
+When you compile a C program with Visual Studio, it links VCRUNTIME140.dll. That DLL is not by default available on
+Windows. It also is a hassle for the users to manually install the VCRuntime. The way to avoid this is simple: don't 
+use the default C runtime, use MSVCRT.DLL!
 MSVCRT is available on all Windows version since winxp, I believe, so it is available. It is also a KnownDLL. See the
 registry at: Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs
 
+### Mixing of ground code and assembly
+The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
+So, there are a lot of ways to mix the two.
+First of all, you can use the asm { } everywhere. The assembly code between the brackets will literally be used.
+Second, there is a special group, called g, which directly refers to an assembly variable. The advantage is that you 
+stay in the ground language context.
+So g.SDL_WINDOWPOS_UNDEFINED will resolve to the SDL_WINDOWPOS_UNDEFINED equate.
+g.[pixels_p] will resolve to the content of the pixels_p variable.
+
+A powerful mixing is this:
+byte[61,36] screenArray = g.[screentext1_p];
+The content of the screentext1_p variable is put inside the screenArray and the coder can make statements like:
+screenArray[30,10] = "A";
+
+An other piece to investigate is:
+byte[56] event = [];
+u32* eventType = &event[0];
+if (*eventType == g.SDL_QUIT) { running = false; }
+
+The first line allocated 56 bytes. The second line creates a pointer of a u32 to the first element. The third line
+retrieves the value pointed to by eventType and compares it with SDL_QUIT.
+In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
+
+### GroundSideLibrary
+There is much C code which does a good job at complex tasks like unpacking a .PNG file. The GroundSideLibrary
+is a .DLL which contains all that C code and creates an interface for it.
+
 ## An Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
-I want to take a moment here to bring credits to that platform. Recently, I took time to remember my old Commodore 64 
+I want to take a moment here to give credits to that platform. Recently, I took time to remember my old Commodore 64 
 and Amiga 500 days. Back then, I was heavily invested in the Amiga 500, because it seemed to be the successor of the 
 C64. However, the platform did not upgrade for a long time. The Commodore Amiga was released in 1985, but the next 
-model for the masses was the Amiga 1200 released in 1992, that is a massive 7 years later. I really felt let down by 
-Commodore in 1990/1991. As a programmer, you have intellectual- and time investments in a platform and when it becomes 
-inactive you feel lost. Fortunately, the good thing was I moved to the Wintel platform and bought an ESCOM 486DX2 
-66 MHz PC in 1994. Now, 30 years and numerous PC upgrades later, the platform is still a good choice. It has no 
-vendor lock-in and you can pick and choose your moment to upgrade. We are truly blessed with this platform. This must 
-be said!
+model for the masses was the Amiga 1200 released in 1992. That was more than 7 years later. I really felt let down by 
+Commodore in 1990/1991. Later it became clear that Commodore had no focus on the Amiga in 1988,1989 and 1990. They were busy 
+with the PC-line, like releasing the PC-60-III, the CDTV project and the C-65 project. The C-65 had the new CSG-4510
+processor running at 3,5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip with 
+320x200 graphics with 256 colors. Not only had Commodore no focus on the Amiga, but they also neglected the Amiga 
+Ranger prototypes created by Jay Miner in 1988.
+As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
+Fortunately, the good thing was that I moved to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now,
+30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
+and choose your moment to upgrade. We are truly blessed with this platform. This must be said! This Ground compiler 
+project is an ode to the x86-64 Windows platform.
+
+### Running the smoothscroller.g
+You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
+folder and is called charset16x16.png.
+Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary
+Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip
+Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.
+
+![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.png?raw=true)

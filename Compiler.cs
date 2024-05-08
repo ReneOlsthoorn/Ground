@@ -278,7 +278,11 @@ namespace GroundCompiler
 
             if (variableExpr!.Name.Lexeme == "g")
             {
-                emitter.LoadHardcodedGroupVariable(expr.Name.Lexeme);
+                string theVariable = expr.Name.Lexeme;
+                if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
+                    theVariable = theVariable.Substring(1, (theVariable.Length - 2));
+
+                emitter.LoadHardcodedGroupVariable(theVariable);
                 return null;
             }
 
@@ -325,9 +329,27 @@ namespace GroundCompiler
         {
             var currentScope = expr.GetScope();
             EmitExpression(expr.Value);
-            emitter.Push();
 
             var variableExpr = expr.Object as Expression.Variable;
+
+            if (expr.Name.Contains(TokenType.Literal))
+            {
+                string theLiteralVariable = expr.Name.Lexeme;
+                if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
+                    theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+
+                emitter.StoreHardcodedGroupVariable(theLiteralVariable);
+                return null;
+            }
+
+            if (variableExpr?.Name.Lexeme == "g")
+            {
+                string theLiteralVariable = expr.Name.Lexeme;
+                emitter.StoreHardcodedGroupVariable($"[{theLiteralVariable}]");
+                return null;
+            }
+
+            emitter.Push();
             var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
             var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
@@ -342,7 +364,7 @@ namespace GroundCompiler
             emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
-            emitter.Codeline($"mov   {instVarReg}, rax");
+            emitter.StoreHardcodedGroupVariable(instVarReg);
             emitter.Pop();
 
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
@@ -619,7 +641,7 @@ namespace GroundCompiler
         }
 
 
-        // Unary, like !a or a++  Direction: Read/Write.
+        // Unary, like !a, a++, &a or *a. Direction: Read/Write.
         public object? VisitorUnaryExpr(Expression.Unary expr)
         {
             if (expr.Right is Expression.Variable  theVariable)
@@ -640,6 +662,15 @@ namespace GroundCompiler
                         emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
                         emitter.Pop();
                     }
+                    else if (localVarSymbol.DataType.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
+                    {
+                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                        emitter.LoadPointingTo(localVarSymbol.DataType.Base!.SizeInBytes);
+                    }
+                    else if (expr.Operator.Contains(TokenType.Ampersand))
+                    {
+                        emitter.LeaFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                    }
                 }
                 else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
                 {
@@ -657,6 +688,10 @@ namespace GroundCompiler
                         cpu.FreeRegister(reg);
                     }
                 }
+            }
+            else if (expr.Right is Expression.ArrayAccess arrayAccess)
+            {
+                ArrayAccess(arrayAccess, assignment: null, addressOf: true);
             }
             else if (expr.Operator.Contains(TokenType.Not))
             {

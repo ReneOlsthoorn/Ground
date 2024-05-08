@@ -118,6 +118,9 @@ namespace GroundCompiler
                 Match(TokenType.RightSquareBracket);
                 datatypeStr += "[]";
             }
+            if (Match(TokenType.Asterisk))
+                datatypeStr += "*";
+
             Datatype datatype = Datatype.GetDatatype(datatypeStr, arrayNrs);
             return datatype;
         }
@@ -397,10 +400,19 @@ namespace GroundCompiler
 
         private Expression Unary()
         {
-            if (Check(TokenType.Not) || Check(TokenType.Minus))
+            if (Check(TokenType.Not) || Check(TokenType.Minus) || Check(TokenType.Ampersand) || Check(TokenType.Asterisk))
             {
                 var op = NextToken();
                 var right = Unary();
+                if (op.Contains(TokenType.Minus) && right is Expression.Literal literal)
+                {
+                    Type theType = literal.Value!.GetType();
+                    if (literal.ExprType.Contains(Datatype.TypeEnum.Integer))
+                        literal.Value = -((long)literal.Value!);
+                    else if (literal.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        literal.Value = -((double)literal.Value!);
+                    return right;
+                }
                 return new Expression.Unary(op, right);
             }
             return Postfix();
@@ -426,6 +438,29 @@ namespace GroundCompiler
                     expr = FunctionCall(expr);
                 else if (Match(TokenType.Dot))
                 {
+                    if (Check(TokenType.Literal))
+                    {
+                        Token stringToken = Peek();
+                        if (stringToken.Datatype != null && stringToken.Datatype.Contains(Datatype.TypeEnum.String))
+                        {
+                            stringToken = NextToken();
+                            return new Expression.Get(expr, stringToken);
+                        }
+                    }
+                    if (Check(TokenType.LeftSquareBracket))
+                    {
+                        Token token = NextToken();
+                        token = NextToken();
+                        Consume(TokenType.RightSquareBracket, "Expected ]");
+
+                        Token newToken = new Token();
+                        newToken.Type = TokenType.Literal;
+                        newToken.Datatype = Datatype.GetDatatype("string");
+                        string s = $"[{token.Lexeme}]";
+                        newToken.Value = s;
+                        newToken.Lexeme = $"\"{s}\"";
+                        return new Expression.Get(expr, newToken);
+                    }
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
                     expr = new Expression.Get(expr, name);
                 }

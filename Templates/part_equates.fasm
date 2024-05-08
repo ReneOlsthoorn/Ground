@@ -1,0 +1,36 @@
+
+GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT equ 1000
+GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT equ 2000
+
+GC_INDEXSPACE_ROWSIZE = 32
+GC_INDEXSPACE_SIZE_OFFSET = 8
+GC_INDEXSPACE_NRREFS_OFFSET = 16
+
+G_REFCOUNT_LINKED_LIST_ROWSIZE = 16
+G_REFCOUNT_LINKED_LIST_NEXT = 8
+G_FIRST_REFCOUNT_PTR equ 8
+G_LAST_REFCOUNT_PTR equ 16
+G_FIRST_TMPREFCOUNT_PTR equ 24
+G_LAST_TMPREFCOUNT_PTR equ 32
+
+; Below are the offsets on the stack in a Ground generated function. Relative to rbp+.
+G_PARAMETER_THIS equ 16
+G_PARAMETER_LEXPARENT equ 24
+G_PARAMETER1 equ 32
+G_PARAMETER2 equ 40
+G_PARAMETER3 equ 48
+G_PARAMETER4 equ 56
+G_PARAMETER5 equ 64
+G_PARAMETER6 equ 72
+
+; Below is the amount of stackspace that needs to be cleaned after a Ground generated function.
+G_STACKSPACE_0_PARAM equ 16
+G_STACKSPACE_1_PARAM equ 32
+G_STACKSPACE_2_PARAM equ 32
+G_STACKSPACE_3_PARAM equ 48
+G_STACKSPACE_4_PARAM equ 48
+; no parameters pushes 16 bytes on the stack: the lexical parent frame on the stack, and the class instance (which is null in case of a normal function)
+; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+G_LOCKOBJECT_INDEXSPACE equ 0
+G_LOCKOBJECT_REFERENCESPACE equ 1

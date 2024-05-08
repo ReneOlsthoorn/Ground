@@ -20,7 +20,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "console.g";  //console.g, sudoku.g
+                fileName = "smoothscroller.g";  //console.g, sudoku.g, smoothscroller.g
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 fileName = fileName.Substring(0, fileName.Length - 2);
             }
@@ -108,11 +108,11 @@ namespace GroundCompiler
 
         public void CheckCompilerDirectives()
         {
-            int sourcecodeCount = sourcecode.Length;
             bool endMarkerFound = true;
             bool endReached = false;
             while (!endReached)
             {
+                int sourcecodeCount = sourcecode.Length;
                 for (int i = 0; i < sourcecodeCount; i++)
                 {
                     if (endMarkerFound && sourcecode[i] == '#')

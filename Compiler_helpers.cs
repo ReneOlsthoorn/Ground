@@ -138,6 +138,10 @@ namespace GroundCompiler
                     cpu.FreeRegister(reg);
                 }
             }
+            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+            {
+                emitter.LoadFunction(emitter.ConvertToAssemblyFunctionName(funcSymbol.Name));
+            }
             else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
             {
                 if (assignment != null)
@@ -177,7 +181,7 @@ namespace GroundCompiler
 
 
         // Array value is loaded (usually to register RAX) or stored (as part of an assignment)
-        public void ArrayAccess(Expression.ArrayAccess arrayExpr, Expression.Assignment? assignment = null)
+        public void ArrayAccess(Expression.ArrayAccess arrayExpr, Expression.Assignment? assignment = null, bool addressOf = false)
         {
             var currentScope = arrayExpr.GetScope();
             var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!);
@@ -245,7 +249,10 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg);
+                    if (addressOf)
+                        emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
+                    else
+                        emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg);
                 }
                 cpu.FreeRegister(baseReg);
                 cpu.FreeRegister(indexReg);

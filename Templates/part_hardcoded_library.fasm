@@ -1,0 +1,145 @@
+
+; HARDCODED LIBRARY FUNCTIONS
+
+; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
+; Extra storage in function?  push rbp;  mov rbp, rsp;  sub rsp, 8h;  mov [rbp-8h], rcx;  ...   mov rsp, rbp;  pop rbp;  ret;
+
+
+_f_input_int:
+  push  rbp
+  invoke msvcrt_scanf, scanf_int_read, scanf_int_result
+  mov   rax, [scanf_int_result]
+  pop   rbp
+  ret   G_STACKSPACE_0_PARAM      ; no parameters pushes the lexical parent frame on the stack, and the class instance (which is null in this case)
+
+
+_f_input_string:
+  push  rbp
+  invoke msvcrt_scanf, scanf_string_read, tmpCharSpace
+  mov   rax, tmpCharSpace
+  call  Insert_CString
+  pop   rbp
+  ret   G_STACKSPACE_0_PARAM
+
+
+_f_println:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  call  GetMemoryPointerFromIndex
+  call	PrintScreenString
+  mov	rax, carriage_return_bytes
+  call	PrintScreenString
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_print:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  call  GetMemoryPointerFromIndex
+  call	PrintScreenString
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM
+
+
+intvalue@_f_chr$ equ rbp+G_PARAMETER1
+_f_chr$:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, 2
+  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+  mov   rdx, qword [intvalue@_f_chr$]
+  mov   byte [rax], dl
+  mov   byte [rax+1], 0
+  mov   rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+filename@_f_ReadAllText@gc equ rbp+G_PARAMETER1
+_f_ReadAllText@gc:
+  push  rbp
+  mov   rbp, rsp
+  push  r12 r13 r14 r15
+  mov   rax, qword [filename@_f_ReadAllText@gc]
+  call  GetMemoryPointerFromIndex
+  mov   rcx, rax
+  lea   rdx, [readalltext_openmode]
+  sub   rsp, 50h
+  call  [msvcrt_fopen]
+  mov   r12, rax     ; r12 = FILE*
+  mov   rcx, r12     ; p1 = FILE*
+  mov   rdx, 0       ; p2 = offset = 0
+  mov   r8, 2        ; p3 = SEEK_END        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
+  call  [msvcrt_fseek]
+
+  mov   rcx, r12     ; p1 = FILE*
+  call  [msvcrt_ftell]
+  mov   r13, rax     ; r13 = size
+
+  mov   rcx, r12     ; p1 = FILE*
+  mov   rdx, 0       ; p2 = offset = 0
+  mov   r8, 0        ; p3 = SEEK_SET        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
+  call  [msvcrt_fseek]
+
+  mov   rcx, r13
+  add   rcx, 1       ; Add trailing zero...
+  call  GC_Allocate  ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+  mov   r14, rcx     ; r14 = index pointer block
+  mov   r15, rax     ; r15 = memory pointer block
+
+  mov   rcx, r15
+  mov   rdx, r13
+  mov   r8, 1
+  mov   r9, r12
+  call  [msvcrt_fread]
+
+  mov   byte [r15+r13], 0  ; r13 = content length (trailing zero not included!)
+
+  mov   rcx, r12     ; p1 = FILE*
+  call  [msvcrt_fclose]
+  add   rsp, 50h
+
+  mov   rax, r14
+
+  pop   r15 r14 r13 r12
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+stream@_f_fgets@msvcrt equ rbp+G_PARAMETER1
+_f_fgets@msvcrt:
+  push  rbp
+  mov   rbp, rsp
+  mov   r8, qword [stream@_f_fgets@msvcrt]
+  lea   rcx, [tmpCharSpace]
+  mov   rdx, 255
+  sub   rsp, 30h
+  call  [msvcrt_fgets]
+  add   rsp, 30h
+  cmp   rax, 0
+  je    .eof
+  mov   rax, tmpCharSpace
+  call  Insert_CString
+.eof:
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+source@_f_GC_Replace equ rbp+G_PARAMETER1
+search@_f_GC_Replace equ rbp+G_PARAMETER2
+replace@_f_GC_Replace equ rbp+G_PARAMETER3
+_f_GC_Replace:
+  push  rbp
+  mov   rbp, rsp
+; not yet implemented
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM

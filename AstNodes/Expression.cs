@@ -263,6 +263,9 @@ namespace GroundCompiler.AstNodes
 
         public Symbol? GetSymbol(string name, Scope scope)
         {
+            if (name == "g")
+                return new Symbol.GroupSymbol("g");
+
             var symbol = scope.GetVariable(name);
             if (symbol == null)
             {
@@ -328,6 +331,8 @@ namespace GroundCompiler.AstNodes
                         ExprType = (symbol as Scope.Symbol.FunctionParameterSymbol)!.DataType;
                     else if (symbol is Scope.Symbol.HardcodedVariable)
                         ExprType = (symbol as Scope.Symbol.HardcodedVariable)!.DataType;
+                    else if (symbol is Scope.Symbol.FunctionSymbol)
+                        ExprType = Datatype.GetDatatype("ptr");
                     else
                         ExprType = Datatype.Default;
                 }
@@ -361,13 +366,15 @@ namespace GroundCompiler.AstNodes
                         element.Initialize();
                         if (elementType == null)
                             elementType = element.ExprType.Name;
-                        else if (element.ExprType.Name != elementType)
+                        else if (element.ExprType.Name != elementType && !Datatype.IsCompatible(Datatype.GetDatatype(elementType), Datatype.GetDatatype(element.ExprType.Name)))
                             Compiler.Error("All elements in a List must have the same type");
                     }
                 }
                 base.Initialize();
                 if (elementType != null)
                     this.ExprType = Datatype.GetDatatype($"{elementType}[]");
+                else
+                    this.ExprType = Datatype.GetDatatype($"i64[]");
             }
 
             [DebuggerStepThrough]

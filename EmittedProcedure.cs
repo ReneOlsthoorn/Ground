@@ -135,8 +135,7 @@ namespace GroundCompiler
         public void EmitReleaseStackframe()
         {
             int stackToReclaim = 0;
-            if (FunctionStatement.Parameters.Count > 0)
-                stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
+            stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
 
             if (ProcedureName == "main")
                 return;

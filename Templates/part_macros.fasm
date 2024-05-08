@@ -1,0 +1,18 @@
+
+; *** MACRO'S ***
+macro WaitLock theLockBit
+{
+  push  rax rcx
+  mov   rcx, theLockBit
+  call  WaitForLock_Impl
+  pop   rcx rax
+}
+
+macro FreeLock theLockBit
+{
+  push  rax rcx
+  mov   rcx, theLockBit
+  call  FreeLock_Impl
+  pop   rcx rax
+}
+; *** END MACRO'S ***

@@ -130,10 +130,8 @@ namespace GroundCompiler
             Codeline($"mov   rax, {indexSpaceRownr}");
         }
 
-        public void LoadHardcodedGroupVariable(string name)
-        {
-            Codeline($"mov   rax, {name}");
-        }
+        public void LoadHardcodedGroupVariable(string name) => Codeline($"mov   rax, {name}");
+        public void StoreHardcodedGroupVariable(string name) => Codeline($"mov   {name}, rax");
 
 
         public void LoadNull()
@@ -429,7 +427,7 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
-            Codeline($"or   rax, {reg}");
+            Codeline($"or    rax, {reg}");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
         }
@@ -480,23 +478,25 @@ namespace GroundCompiler
             return "rcx";
         }
 
-        public void LoadFunctionVariable64(string variableName)
+        public void LoadPointingTo(int nrBytes)
         {
-            Codeline($"mov   rax, qword [rbp-{variableName}]");
+            var reg = cpu.GetTmpRegister();
+            Codeline($"mov   {reg}, rax");
+            Codeline($"xor   eax, eax");
+            Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{reg}]");
+            cpu.FreeRegister(reg);
         }
-        public void LoadFunctionVariableFloat64(string variableName)
+        public void LeaFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rbp-{variableName}]");
+        public void LoadFunctionVariable64(string variableName) => Codeline($"mov   rax, qword [rbp-{variableName}]");
+        public void LoadFunctionVariableFloat64(string variableName) => Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+        public void LoadParentFunctionVariable64(string variableName) => Codeline($"mov   rax, qword [rcx-{variableName}]");
+        public void LoadFunctionParameter64(string variableName) => Codeline($"mov   rax, qword [rbp+{variableName}]");
+
+        public void LoadFunction(string functionName)
         {
-            Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+            Codeline($"mov   rax, {functionName}");
         }
 
-        public void LoadParentFunctionVariable64(string variableName)
-        {
-            Codeline($"mov   rax, qword [rcx-{variableName}]");
-        }
-        public void LoadFunctionParameter64(string variableName)
-        {
-            Codeline($"mov   rax, qword [rbp+{variableName}]");
-        }
         public void StoreFunctionParameter64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -708,6 +708,10 @@ namespace GroundCompiler
         {
             Codeline($"xor   eax, eax");
             Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+        }
+        public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
+        {
+            Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
         }
 
     }

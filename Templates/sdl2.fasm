@@ -1,0 +1,579 @@
+format pe64 GUI 5.0
+entry start
+stack 80000h, 80000h
+
+include 'win64a.inc'
+include '..\..\..\Include\sdl2.inc'
+include '..\..\..\Templates\part_equates.fasm'
+include '..\..\..\Templates\part_macros.fasm'
+
+GC_Screen_DimX = 960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
+GC_Screem_DimY = 560
+GC_Screen_TextColumns = 60 + 1  ;one extra column at the far right for scrolling
+GC_Screen_TextRows = 35 + 1     ;one extra row at the bottom for scrolling
+GC_Screen_TextSize = GC_Screen_TextColumns * GC_Screen_TextRows
+Graphics_Tile_Width = 16
+Graphics_Tile_Height = 16
+Graphics_ScreenDIMx = (GC_Screen_TextColumns - 1) * Graphics_Tile_Width		;60x16=960   35x16=560    -> 60x35 16x16 chars.  (960x540 = 16:9 resolution)
+Graphics_ScreenDIMy = (GC_Screen_TextRows - 1) * Graphics_Tile_Height
+Graphics_ScreenPixelSize = 4
+Graphics_ScreenLineSize = Graphics_ScreenDIMx * Graphics_ScreenPixelSize
+Graphics_ScreenSize = Graphics_ScreenDIMx * Graphics_ScreenDIMy * Graphics_ScreenPixelSize
+TEXT1_FONT32 = 0
+TEXT1_FONT256 = 1
+TEXT4_FONT1024 = 2
+PIXEL4_BITMAP = 3
+
+section '.text' code readable executable
+start:
+  push	rbp
+  mov	rbp, rsp
+  mov   [main_rbp], rbp
+
+  invoke kernel32_GetStdHandle, STD_OUTPUT_HANDLE
+  mov	[GetStdHandle_outputhandle], rax
+
+  invoke kernel32_GetStdHandle, STD_INPUT_HANDLE
+  mov	[GetStdHandle_inputhandle], rax
+
+  invoke kernel32_GetProcessHeap
+  mov	[processHeapHandle], rax
+
+  mov	rax, 4 * 1024 * 1024
+  mov	[variableSpaceSize], rax
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [variableSpaceSize]
+  mov	[variableSpacePointer], rax
+  mov	[variableSpaceNeedle], rax
+
+  mov   rax, [indexSpaceNrElements]
+  mov   rdx, GC_INDEXSPACE_ROWSIZE
+  mul   rdx
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
+  mov	[indexSpacePointer], rax
+  mov	[indexSpaceMax], rax
+  mov   [indexSpaceLevel], rax
+
+  mov   rax, [referenceSpaceNrElements]
+  mov   rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mul   rdx
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
+  mov	[referenceSpacePointer], rax
+  mov	[referenceSpaceMax], rax
+  mov	[referenceSpaceLevel], rax
+
+
+; Set the CurrentExeDir as FixedString at position 0 (zero).
+  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  mov	rcx, currentExeDirChars
+  call	StringLength    ; rax stringlength
+  mov   r8, currentExeDirChars
+  mov   rcx, rax
+.currentExeDirloop:
+  mov   al, byte [r8+rcx]
+  cmp   al, '\'
+  je    .currentExeDirExitloop
+  cmp   al, '/'
+  je    .currentExeDirExitloop
+  mov   byte [r8+rcx], 0
+  dec   rcx
+  jnz   .currentExeDirloop
+  mov   byte [r8], 0
+.currentExeDirExitloop:
+  lea   rcx, [currentExeDirChars]   ; index 0
+  call  AddFixedString
+  lea   rcx, [bool_true_tostring]   ; index 1
+  call  AddFixedString
+  lea   rcx, [bool_false_tostring]  ; index 2
+  call  AddFixedString
+
+
+; *** GENERATED MAIN CODE ***
+;INSERTIONPOINT
+; *** END MAIN CODE ***
+
+
+; *** Print the maximum memory used
+  lea	rax, [memchecker_message]
+  call	PrintScreenString
+  mov	rax, [variableSpaceNeedle]
+  sub	rax, [variableSpacePointer]
+  mov	rcx, 10
+  call	PrintNumber
+
+  lea   rcx, [indexchecker_message]
+  mov   rdx, [indexSpaceMax]
+  sub   rdx, [indexSpacePointer]
+  mov   r8, GC_INDEXSPACE_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [indexSpaceNrElements]
+  sub   rsp, 20h
+  call  [msvcrt_printf]
+  add   rsp, 20h
+
+  lea   rcx, [refchecker_message]
+  mov   rdx, [referenceSpaceMax]
+  sub   rdx, [referenceSpacePointer]
+  mov   r8, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [referenceSpaceNrElements]
+  sub   rsp, 20h
+  call  [msvcrt_printf]
+  add   rsp, 20h
+
+; *** Print ' leak!' in case of a memory leak.
+  mov	rax, [indexSpacePointer]
+  sub	rax, GC_INDEXSPACE_ROWSIZE
+.loop:
+  add	rax, GC_INDEXSPACE_ROWSIZE
+  cmp	qword [rax], 0
+  je	.endloop
+  mov	rdx, qword [rax+GC_INDEXSPACE_SIZE_OFFSET]
+  cmp	rdx, 0
+  je	.loop
+  mov	rdx, qword [rax+GC_INDEXSPACE_NRREFS_OFFSET]
+  cmp	rdx, 0
+  je	.loop
+  lea	rax, [leak_message]
+  call	PrintScreenString
+.endloop:
+
+
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
+
+
+  mov	rsp, rbp
+  invoke kernel32_ExitProcess, 0
+  pop	rbp
+  ret
+
+
+
+; *** GENERATED FUNCTIONS AND CLASSES ***
+;INSERTIONPOINT
+; *** END FUNCTIONS AND CLASSES ***
+
+
+include '..\..\..\Templates\part_memory.fasm'
+
+
+PrintScreenString:
+;input rax: pointer to string
+  push	r8 r9 rcx       ; fastcall 16-byte stack alignment
+  mov	r8, rax
+  mov	rcx, rax
+  call	StringLength
+  mov	r9, rax
+  invoke kernel32_WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
+  pop   rcx r9 r8
+  ret
+
+
+ReadChar:
+  push	rbp             ; fastcall 16-byte stack alignment
+  lea	rax, [tmpCharSpace]
+  mov	r8, 1
+  invoke kernel32_ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
+  pop	rbp
+  ret
+
+
+include '..\..\..\Templates\part_string.fasm'
+
+
+StoreBytes:
+; rcx = nr of bytes
+; rdx = destination pointer
+; al = value to set
+  push	rdi
+  mov	rdi, rdx
+  rep	stosb		; Notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+  pop   rdi
+  ret
+
+
+; rcx = lockbit
+WaitForLock_Impl:
+  lea	rax, [LockObject64]
+  bt    qword [rax], rcx
+  jc    WaitForLock_Impl        ; when the bit is initialy set, we are not the first one requesting the lock. So, wait.
+WaitForLock_Keep:
+  lock bts qword [rax], rcx     ; when we are in the keep loop, we are one of the first to get the lock.
+  jc	WaitForLock_Keep
+  ret
+
+
+; rcx = lockbit
+FreeLock_Impl:
+  lea	rax, [LockObject64]
+  lock btr qword [rax], rcx
+  ret
+
+
+include '..\..\..\Templates\part_hardcoded_library.fasm'
+
+
+
+
+
+DrawAllCRTLines:
+  push	r12 r11 r13
+  xor	r12d, r12d
+  mov	r13, [screenmode]
+.loop:
+  mov	rcx, r12
+  mov	rax, [next_copperline]
+  cmp	rax, rcx  ; should we call the copper function? 
+  jne	@F
+  mov	rax, [user_copper_p]
+  cmp	eax, 0
+  jz	@F
+  push	rbp
+  mov	rbp, [main_rbp]
+  push  qword 0          ; Keep 16-byte stack alignment! (for win32)
+  mov   rax, rcx		; the copperline in the first parameter
+  push  rax
+  mov   rax, rbp
+  push  rax
+  xor   eax, eax
+  push  rax
+  mov	rax, [user_copper_p]
+  call	rax
+  pop	rbp
+@@:
+  mov	rcx, r12
+
+  cmp	r13d, 2
+  je	.mode2
+  cmp	r13d, 1
+  je	.mode1
+  call	DrawCRTLine_TEXT1_FONT32
+  jmp	.aftermode
+.mode1:
+  call	DrawCRTLine_TEXT1_FONT256
+  jmp	.aftermode
+.mode2:
+  call	DrawCRTLine_TEXT4_FONT1024
+.aftermode:
+  inc	r12d
+  cmp	r12d, GC_Screem_DimY
+  jnz	.loop
+  pop	r13 r11 r12
+  ret
+
+
+
+DrawCRTLine_TEXT1_FONT32:
+;rcx = y position to draw (yscroll not added yet)
+  push	rbp
+  mov	rbp, rsp
+  push	rsi rdi r11 r12 r13 r14 r15 rbx
+  mov	r15, [font32_charcolor_p]
+  mov	rdi, [pixels_p]
+  mov	r9, rcx
+  mov	rax, GC_Screen_DimX*4
+  mul	rcx
+  add	rdi, rax
+; rdi is the destination in the pixels_p
+
+  mov	rax, [yscroll]
+  add	r9, rax				; r9 = beam y-position with yscroll added
+
+; we delen door 16 om de screentext character te kunnen bepalen.
+  mov	rax, r9
+  shr	rax, 4
+  mov	rcx, GC_Screen_TextColumns
+  mul	rcx
+  mov	r15, rax
+  add	rax, [screentext1_p]
+  add	r15, [font32_charcolor_p]
+  mov	r10, rax			; r10 = ScreenTextPtr offset our character
+  and	r9d, 0fh			; r9 is the amount of y pixels within the character down.
+
+  xor	r14d, r14d
+  mov	r8, [xscroll]
+.loop:
+  mov	rsi, [font32_p]
+  xor	eax, eax
+  mov	al, [r10]			; r10 = ScreenTextPtr offset our character
+  shl	rax, 5				; each character is 32 bytes
+  add	rsi, rax
+
+  mov	rax, r9				; add the y-offset(r9)
+  shl	rax, 1
+  add	rsi, rax
+
+; prefill the color of no-pixel and color of pixel
+  xor	eax, eax
+
+  mov	al, [r15]
+  and	al, 0fh
+  mov	r13, [colortable_p]
+  mov	r12d, [r13+rax*4]	; r12d = color of pixel
+
+  xor	eax, eax
+  mov	al, [r15]
+  and	al, 0f0h
+  shr	al, 4
+  mov	ebx, [r13+rax*4]	; ebx = color of no-pixel
+
+.samechar_loop:
+  xor	eax, eax
+  mov	ax, [rsi]			; all bits of the line in ax
+
+  mov	rcx, r8				; x-offset(r8)
+  neg	ecx
+  add	ecx, 15
+  mov	r13, 1
+  shl	r13, cl
+  test	ax, r13w
+  jz	.backgroundcolor
+  mov	eax, r12d
+  jmp	.setColor
+.backgroundcolor:
+  mov	eax, ebx
+.setColor:
+  mov	[rdi], eax
+  add	rdi, 4
+
+  inc	r14d
+  cmp	r14d, GC_Screen_DimX
+  jz	.exit_loop
+  inc	r8d					; next pixel
+  cmp	r8d, 16
+  jnz	.samechar_loop
+  xor	r8d, r8d
+  inc	r10					; goto the next screencharacter 
+  inc	r15
+  jmp	.loop
+.exit_loop:
+  pop	rbx r15 r14 r13 r12 r11 rdi rsi
+  mov	rsp, rbp
+  pop	rbp
+  ret
+
+
+
+DrawCRTLine_TEXT1_FONT256:
+;rcx = y position to draw (yscroll not added yet)
+  push	rbp
+  mov	rbp, rsp
+  push  rsi rdi r11 r12 r13
+  mov	rdi, [pixels_p]
+  mov	r9, rcx
+  mov	rax, GC_Screen_DimX*4
+  mul	rcx
+  add	rdi, rax
+; rdi is the destination in the pixels_p
+
+  mov	rax, [yscroll]
+  add	r9, rax				; r9 = beam y-position with yscroll added
+
+; we delen door 16 om de screentext character te kunnen bepalen.
+  mov	rax, r9
+  shr	rax, 4
+  mov	rcx, GC_Screen_TextColumns
+  mul	rcx
+  add	rax, [screentext1_p]
+  mov	r10, rax			; r10 = ScreenTextPtr offset our character
+  and	r9d, 0fh			; r9 is the amount of y pixels within the character down.
+
+  xor	ecx, ecx
+  mov	r8, [xscroll]
+.loop:
+  mov	rsi, [font256_p]
+  xor	eax, eax
+  mov	al, [r10]			; r10 = ScreenTextPtr offset our character
+  shl	rax, 8				; each character is 256 bytes
+  add	rsi, rax
+  mov	rax, r9				; add the y-offset(r9)
+  shl	rax, 4
+  add	rsi, rax
+  mov	rax, r8				; add the x-offset(r8)
+  add	rsi, rax
+
+.samechar_loop:
+  xor	eax, eax
+  mov	al, [rsi]
+  mov	r13, [colortable_p]
+  mov	eax, [r13+rax*4]
+  mov	[rdi], eax
+  inc	rsi
+  add	rdi, 4
+
+  inc	ecx
+  cmp	ecx, GC_Screen_DimX
+  jz	.exit_loop
+  inc	r8d					; next pixel
+  cmp	r8d, 16
+  jnz	.samechar_loop
+  xor	r8d, r8d
+  inc	r10					; goto the next screencharacter 
+  jmp	.loop
+.exit_loop:
+  pop	r13 r12 r11 rdi rsi
+  mov	rsp, rbp
+  pop	rbp
+  ret
+
+
+
+DrawCRTLine_TEXT4_FONT1024:
+;rcx = y position to draw (yscroll not added yet)
+  push	rbp
+  mov	rbp, rsp
+  push	rsi rdi r11 r12 r13
+  mov	rdi, [pixels_p]
+  mov	r9, rcx
+  mov	rax, GC_Screen_DimX*4
+  mul	rcx
+  add	rdi, rax
+; rdi is the destination in the pixels_p
+
+  mov	rax, [yscroll]
+  add	r9, rax				; r9 = beam y-position with yscroll added
+
+; we delen door 16 om de screentext character te kunnen bepalen.
+  mov	rax, r9
+  shr	rax, 4
+  mov	rcx, GC_Screen_TextColumns
+  shl	rcx, 2				; 4 bytes per textcolumn
+  mul	rcx
+  add	rax, [screentext4_p]
+  mov	r10, rax			; r10 = ScreenTextPtr offset our character
+  and	r9d, 0fh			; r9 is the amount of y pixels within the character down.
+
+  xor	ecx, ecx
+  mov	r8, [xscroll]
+.loop:
+  mov	rsi, [font1024_p]
+  xor	eax, eax
+  mov	eax, [r10]			; r10 = ScreenTextPtr offset our character
+  shl	rax, 10				; each character is 1024 bytes
+  add	rsi, rax
+  mov	rax, r9				; add the y-offset(r9)
+  shl	rax, 6				; a char width = 16*4 = 64 bytes
+  add	rsi, rax
+  mov	rax, r8				; add the x-offset(r8)
+  shl	rax, 2
+  add	rsi, rax
+
+.samechar_loop:
+  mov	eax, [rsi]
+  mov	[rdi], eax
+  add	rsi, 4
+  add	rdi, 4
+;  movsd
+
+  inc	ecx
+  cmp	ecx, GC_Screen_DimX
+  jz	.exit_loop
+  inc	r8d					; next pixel
+  cmp	r8d, 16
+  jnz	.samechar_loop
+  xor	r8d, r8d
+  add	r10, 4				; goto the next screencharacter 
+  jmp	.loop
+.exit_loop:
+  pop	r13 r12 r11 rdi rsi
+  mov	rsp, rbp
+  pop	rbp
+  ret
+
+
+
+section '.idata' import data readable writeable
+  library kernel32,'kernel32.dll', \
+          msvcrt, 'msvcrt.dll', \
+		  sdl2, 'SDL2.dll', \
+		  sidelib, 'GroundSideLibrary.dll'
+
+  include '..\..\..\Include\kernel32_api.inc'
+  include '..\..\..\Include\msvcrt_api.inc'
+  include '..\..\..\Include\sdl2_api.inc'
+  include '..\..\..\Include\sidelib_api.inc'
+
+
+section '.data' data readable writeable
+main_rbp                dq 0
+processHeapHandle		dq 0
+GetStdHandle_outputhandle dq 0
+GetStdHandle_inputhandle  dq 0
+
+indexSpaceNrElements    dq GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT
+indexSpacePointer		dq 0        ; Pointer to the start of the memory
+indexSpaceMax           dq 0        ; Maximum pointer
+indexSpaceLevel         dq 0        ; Below the level, everything is occupied. So, when freeing up an index space the level must be adjusted.
+
+variableSpaceSize		dq 0
+variableSpacePointer	dq 0
+variableSpaceNeedle		dq 0
+
+referenceSpaceNrElements  dq GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT
+referenceSpacePointer	dq 0
+referenceSpaceMax       dq 0
+referenceSpaceLevel     dq 0        ; Below the level, everything is occupied. So, when freeing up an referenceSpace the level must be adjusted.
+
+currentExeDir           dq 0    ; the index for the currentExeDir, which is zero.
+currentExeDirChars      db 256 dup(0)
+
+tmpCharSpace            db 256 dup(0)
+
+align 8
+
+ResultBytesWritten      dq 0
+ResultBytesRead         dq 0
+LockObject64            dq 0
+
+scanf_int_result        dq 0
+scanf_int_read          db '%d',0
+scanf_string_read       db '%s',0
+sprintf_float_template  db '%.10f',0 
+readalltext_openmode    db 'rb',0
+bool_true_tostring      db 'true',0
+bool_false_tostring     db 'false',0
+
+carriage_return_bytes	db 13,10,0
+leak_message			db 13,10,'*** memoryleak! ***',0
+memchecker_message		db 13,10,'Variable memory used (bytes): ',0
+indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0
+refchecker_message		db 13,10,'Reference memory max: %d of total %d elements.',0
+
+align 8
+
+pixels_p			dq 0
+next_copperline		dq 0
+user_copper_p		dq 0
+screentext1_p		dq 0
+screentext4_p		dq 0
+font32_p			dq 0
+font256_p			dq 0
+font1024_p			dq 0
+colortable_p		dq 0
+font32_charcolor_p	dq 0
+
+frameCount		dq 0
+
+oldTicks		dq 0
+currentTicks	dq 0
+framesPassed	dq 0
+
+cursor_x		dq 0
+cursor_y		dq 0
+
+screenmode	dq 0
+xscroll		dq 0
+yscroll		dq 0
+StatusRunning		dq 0
+StatusPixelsLocked	dq 0
+StatusCrtLinesDrawn	dq 0
+
+; *** GENERATED VARIABLES PART ***
+

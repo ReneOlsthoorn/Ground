@@ -1,0 +1,383 @@
+
+GC_Allocate:
+;INPUT:  rcx contains the requested size
+;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
+  push	rsi r8
+  and	ecx, 0xffffff80 ; 128 bytes alignment
+  add   rcx, 128
+  mov	rsi, [indexSpaceLevel]        ; earlier: indexSpacePointer
+  mov   rax, rsi
+  sub   rax, [indexSpacePointer]
+  shr   rax, 5                          ; divide by GC_INDEXSPACE_ROWSIZE
+  sub	rsi, GC_INDEXSPACE_ROWSIZE
+  xor	edx, edx
+;  xor	eax, eax
+  dec	eax
+.rowloop:
+  add	rsi, GC_INDEXSPACE_ROWSIZE      ; NEXT ROW
+  inc	eax
+  cmp	qword [rsi], 0
+  je	.create_new_block
+
+  mov   r8, [indexSpaceMax]      ; Determine the indexSpaceMax
+  cmp   r8, rsi
+  jge   .noIncreaseMaxIndexPointer
+  mov   [indexSpaceMax], rsi
+.noIncreaseMaxIndexPointer:
+
+  mov   r8, [indexSpaceLevel]    ; Determine the indexSpaceLevel
+  cmp   r8, rsi
+  jge   .noIncreaseIndexLevel
+  mov   [indexSpaceLevel], rsi
+.noIncreaseIndexLevel:
+
+  cmp	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 0
+  jne	.rowloop
+  cmp	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
+  jl	.rowloop
+  mov	rdx, [rsi]
+  jmp	.reuse_found_block
+.create_new_block:
+  mov	rdx, [variableSpaceNeedle]
+  mov	qword [rsi], rdx
+  mov	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
+  add	qword [variableSpaceNeedle], rcx
+.reuse_found_block:
+  mov	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1  ; by default, an allocation gets a referencecount of 1.
+  mov	rcx, rax				; INDEXSPACE rownr in rcx
+  mov	rax, rdx				; memptr in rax
+  pop	r8 rsi
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
+  ret
+
+
+AddReference:
+  WaitLock  G_LOCKOBJECT_REFERENCESPACE
+  push	rbp
+; Add a reference to the INDEXSPACE rownr (rax) in stack refcount list (rcx)
+; rax contains INDEXSPACE rownr
+; rcx must contain the base of the stack of the function. base-G_FIRST_REFCOUNT_PTR = start_reference_list(0 = no elements)  base-G_LAST_REFCOUNT_PTR = last_element_of_reference
+
+  mov	rdx, [rcx-G_LAST_REFCOUNT_PTR]
+  cmp	rdx, 0
+  jne	.findEmptySpace
+  mov	rdx, [referenceSpaceLevel]					; set start  (was referenceSpacePointer)
+
+.findEmptySpace:
+
+  mov   r8, [referenceSpaceMax]                  ; Determine referenceSpaceMax
+  cmp   r8, rdx
+  jge   .noIncreaseMaxRefIndex
+  mov   [referenceSpaceMax], rdx
+.noIncreaseMaxRefIndex:
+
+  mov   r8, [referenceSpaceLevel]                  ; Determine referenceSpaceLevel
+  cmp   r8, rdx
+  jge   .noIncreaseRefSpaceLevel
+  mov   [referenceSpaceLevel], rdx
+.noIncreaseRefSpaceLevel:
+
+  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
+  cmp	r8, 0
+  je	.newRowFoundInReferenceSpace
+  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE             ; NEXT ROW
+  jmp	.findEmptySpace
+
+.newRowFoundInReferenceSpace:
+  mov	r8, [rcx-G_LAST_REFCOUNT_PTR]
+  cmp	r8, 0
+  jne	.addNewRowToLinkedList
+  mov	[rcx-G_FIRST_REFCOUNT_PTR], rdx
+  jmp	.setLastRefcount
+.addNewRowToLinkedList:
+  mov	r8, [rcx-G_LAST_REFCOUNT_PTR]
+  mov	[r8+G_REFCOUNT_LINKED_LIST_NEXT], rdx
+.setLastRefcount:
+  mov	qword [rdx], rax
+  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], -1		; end-marker
+  mov	[rcx-G_LAST_REFCOUNT_PTR], rdx
+  call  AddReferenceCount
+  pop	rbp
+  FreeLock  G_LOCKOBJECT_REFERENCESPACE
+  ret
+
+
+RemoveReference:
+; rax contains INDEXSPACE rownr
+; rcx must contain the base of the stack of the function
+  WaitLock  G_LOCKOBJECT_REFERENCESPACE
+  push	rax
+  mov	rdx, [rcx-G_FIRST_REFCOUNT_PTR]
+  cmp	rdx, 0
+  je	.exit
+  xor	r9d, r9d
+  xor	r10d, r10d		; de oude rdx
+  xor	r11d, r11d      ; teller
+.loop:
+  mov	r8, [rdx]
+  mov	r9, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
+  cmp	r8, rax			; index gelijk?
+  jne	.geenMatchVolgende
+; MATCH!!!!!!
+  call	DecrementReferenceCount
+  mov	qword [rdx], 0
+  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
+
+  push  r8                              ; ADJUST referenceSpaceLevel
+  mov   r8, [referenceSpaceLevel]
+  cmp   r8, rdx
+  jle   .no_levelchange
+  mov   [referenceSpaceLevel], rdx
+.no_levelchange:
+  pop   r8
+
+  cmp	r9, -1					; einde marker in deze rij?
+  je	.lastElementMatch
+  cmp	r11d, 0					; eerste marker?
+  je	.eersteTerugzetten
+  mov	qword [r10+G_REFCOUNT_LINKED_LIST_NEXT], r9
+  jmp	.exit
+.eersteTerugzetten:
+  mov	rax, r9
+  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], rax
+  jmp	.exit
+.lastElementMatch:
+  cmp	r11d, 0			; eerste element?
+  je	.removeList
+  mov	qword [r10+G_REFCOUNT_LINKED_LIST_NEXT], -1
+  mov	qword [rcx-G_LAST_REFCOUNT_PTR], r10
+  jmp	.exit
+.removeList:
+  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], 0
+  mov	qword [rcx-G_LAST_REFCOUNT_PTR], 0
+  jmp	.exit
+.geenMatchVolgende:
+  cmp	r9, -1			; einde marker in next?
+  je	.exit
+  mov	r10, rdx		; oude rdx opslaan in r10
+  mov	rdx, r9			; next naar rdx
+  inc	r11d			; teller verhogen
+  jmp	.loop
+.exit:
+  pop	rax
+  FreeLock  G_LOCKOBJECT_REFERENCESPACE
+  ret
+
+
+AddTmpReference:
+  WaitLock  G_LOCKOBJECT_REFERENCESPACE
+  push	rbp
+; Add a reference to the INDEXSPACE rownr (rax) in stack refcount list (rcx)
+; rax contains INDEXSPACE rownr
+; rcx bevat de base van de stack adres van de functie.
+  mov	rdx, [rcx-G_LAST_TMPREFCOUNT_PTR]
+  cmp	rdx, 0
+  jne	.findEmptySpace
+  mov	rdx, [referenceSpacePointer]					; set start
+.findEmptySpace:
+
+  mov   r8, [referenceSpaceMax]                  ; Determine referenceSpaceMax
+  cmp   r8, rdx
+  jge   .noIncreaseMaxRefIndex
+  mov   [referenceSpaceMax], rdx
+.noIncreaseMaxRefIndex:
+
+  mov   r8, [referenceSpaceLevel]                  ; Determine referenceSpaceLevel
+  cmp   r8, rdx
+  jge   .noIncreaseRefSpaceLevel
+  mov   [referenceSpaceLevel], rdx
+.noIncreaseRefSpaceLevel:
+
+  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]			; when NEXT = 0, then it's an empty row. An end marker is -1
+  cmp	r8, 0
+  je	.newRowFoundInReferenceSpace
+  add	rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  jmp	.findEmptySpace
+
+.newRowFoundInReferenceSpace:
+  mov	r8, [rcx-G_LAST_TMPREFCOUNT_PTR]
+  cmp	r8, 0
+  jne	.addNewRowToLinkedList
+  mov	[rcx-G_FIRST_TMPREFCOUNT_PTR], rdx
+  jmp	.setLastRefcount
+.addNewRowToLinkedList:
+  mov	r8, [rcx-G_LAST_TMPREFCOUNT_PTR]
+  mov	[r8+G_REFCOUNT_LINKED_LIST_NEXT], rdx
+.setLastRefcount:
+  mov	qword [rdx], rax
+  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], -1		; end-marker
+  mov	[rcx-G_LAST_TMPREFCOUNT_PTR], rdx
+  pop	rbp
+  FreeLock  G_LOCKOBJECT_REFERENCESPACE
+  ret
+
+
+AddReferenceCount:
+  push	rax
+  shl	rax, 5
+  add	rax, [indexSpacePointer]
+  cmp	qword [rax+GC_INDEXSPACE_SIZE_OFFSET], 0   ; check if it is a fixed string
+  je	.exit
+  add	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 1
+.exit:
+  pop	rax
+  ret
+
+
+DecrementReferenceCount:
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
+  push	rax
+  shl	rax, 5
+  add	rax, [indexSpacePointer]
+  cmp	qword [rax+GC_INDEXSPACE_SIZE_OFFSET], 0   ; check if it is a fixed string
+  je	.exit
+  cmp	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 0
+  je	.exit
+  sub	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 1
+  cmp	dword [rax+GC_INDEXSPACE_NRREFS_OFFSET], 0
+  jne   .exit
+
+  push  r8                              ; ADJUST IndexSpaceLevel
+  mov   r8, [indexSpaceLevel]
+  cmp   r8, rax
+  jle   .no_levelchange
+  mov   [indexSpaceLevel], rax
+.no_levelchange:
+  pop   r8
+
+.exit:
+  pop	rax
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
+  ret
+
+
+RemoveDereferenced:
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
+; rcx bevat de base van de stack adres van de functie.
+  push	rsi
+  mov	rsi, [indexSpacePointer]
+  mov	rdx, [rcx-G_FIRST_REFCOUNT_PTR]
+  cmp	rdx, 0
+  je	.exitRemoveDereference
+.loop:
+  mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
+  shl	r8, 5
+  mov	r9d, [rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET]
+  cmp	r9d, 0
+  je	.nextReference
+  sub	r9d, 1
+  mov	[rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET], r9d
+  cmp   r9d, 0
+  jne   .nextReference
+
+  push  r8 rax                          ; ADJUST IndexSpaceLevel
+  lea   rax, [rsi+r8]
+  mov   r8, [indexSpaceLevel]
+  cmp   r8, rax
+  jle   .no_levelchange
+  mov   [indexSpaceLevel], rax
+.no_levelchange:
+  pop   rax r8
+
+.nextReference:
+  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
+  mov	qword [rdx], 0
+  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
+
+  push  r8                              ; ADJUST referenceSpaceLevel
+  mov   r8, [referenceSpaceLevel]
+  cmp   r8, rdx
+  jle   .no_reflevelchange
+  mov   [referenceSpaceLevel], rdx
+.no_reflevelchange:
+  pop   r8
+
+  cmp	r8, -1
+  je	.endLoop
+  mov	rdx, r8
+  jmp	.loop
+.endLoop:
+  mov	qword [rcx-G_FIRST_REFCOUNT_PTR], 0
+  mov	qword [rcx-G_LAST_REFCOUNT_PTR], 0
+.exitRemoveDereference:
+  pop	rsi
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
+  ret
+
+
+RemoveTmpDereferenced:
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
+; rcx bevat de base van de stack adres van de functie.
+  push	rsi
+  mov	rsi, [indexSpacePointer]
+  mov	rdx, [rcx-G_FIRST_TMPREFCOUNT_PTR]
+  cmp	rdx, 0
+  je	.exitRemoveDereference
+.loop:
+  mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
+  shl	r8, 5
+  mov	r9d, [rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET]
+  cmp	r9d, 0
+  je	.nextReference
+  sub	r9d, 1
+  mov	[rsi+r8+GC_INDEXSPACE_NRREFS_OFFSET], r9d
+  cmp   r9d, 0
+  jne   .nextReference
+
+  push  r8 rax                          ; ADJUST IndexSpaceLevel
+  lea   rax, [rsi+r8]
+  mov   r8, [indexSpaceLevel]
+  cmp   r8, rax
+  jle   .no_levelchange
+  mov   [indexSpaceLevel], rax
+.no_levelchange:
+  pop   rax r8
+
+.nextReference:
+  mov	r8, [rdx+G_REFCOUNT_LINKED_LIST_NEXT]
+  mov	qword [rdx], 0
+  mov	qword [rdx+G_REFCOUNT_LINKED_LIST_NEXT], 0
+
+  push  r8                              ; ADJUST referenceSpaceLevel
+  mov   r8, [referenceSpaceLevel]
+  cmp   r8, rdx
+  jle   .no_reflevelchange
+  mov   [referenceSpaceLevel], rdx
+.no_reflevelchange:
+  pop   r8
+
+  cmp	r8, -1
+  je	.endLoop
+  mov	rdx, r8
+  jmp	.loop
+.endLoop:
+  mov	qword [rcx-G_FIRST_TMPREFCOUNT_PTR], 0
+  mov	qword [rcx-G_LAST_TMPREFCOUNT_PTR], 0
+.exitRemoveDereference:
+  pop	rsi
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
+  ret
+
+
+AddFixedString:
+; rcx = pointer naar de fixed_memory
+  push	rsi
+  mov	rsi, [indexSpacePointer]
+  sub	rsi, GC_INDEXSPACE_ROWSIZE
+.rowloop:
+  add	rsi, GC_INDEXSPACE_ROWSIZE
+  cmp	qword [rsi], 0
+  jne	.rowloop
+  mov	qword [rsi], rcx
+  mov   dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1
+  pop	rsi
+  ret
+
+
+GetMemoryPointerFromIndex:
+  shl	rax, 5
+  add	rax, [indexSpacePointer]
+  mov	rax, [rax]
+  ret
+
