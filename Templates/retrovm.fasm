@@ -165,15 +165,80 @@ include '..\..\..\Templates\part_memory.fasm'
 
 
 PrintScreenString:
-;input rax: pointer to string
-  push	r8 r9 rcx       ; fastcall 16-byte stack alignment
-  mov	r8, rax
-  mov	rcx, rax
-  call	StringLength
-  mov	r9, rax
-  invoke kernel32_WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
-  pop   rcx r9 r8
+;rax = string ptr
+  push	r12 r13 r15
+  mov	r13, rax
+.nextChar:
+  xor	eax, eax
+  mov	al, [r13]
+  cmp	al, 0
+  jz	.end
+  cmp	al, 13
+  jz	.incChar
+  cmp	al, 10
+  jz	.incChar
+  mov	r12, rax
+  mov	rax, [cursor_y]
+  mov	ecx, GC_Screen_TextColumns
+  mul	ecx
+  add	rax, [cursor_x]
+  add	rax, [screentext1_p]
+  mov	[rax], r12b
+  mov	rax, r12
+.incChar:
+  call	CalculateNextCursorPosition
+  inc	r13
+  jmp	.nextChar
+.end:
+  pop	r15 r13 r12
   ret
+
+
+CalculateNextCursorPosition:
+;al = the last character printed
+  push	r15
+  mov	rcx, [cursor_x]
+  mov	rdx, [cursor_y]
+  cmp	al, 13 ;\r
+  jne	@F
+  mov	ecx, 0
+  jmp	.exit
+@@:
+  cmp	al, 10 ;\n
+  jne	@F
+  inc	edx
+  jmp	.exit
+@@:
+  inc	ecx
+.exit:
+  cmp	ecx, GC_Screen_TextColumns-1
+  jl	@F
+  sub	ecx, GC_Screen_TextColumns-1
+  inc	edx
+@@:
+  cmp	edx, GC_Screen_TextRows-1
+  jl	@F
+; scroll the entire screen.
+  push	rsi rdi rcx
+  mov	rdi, [screentext1_p]
+  mov	rsi, rdi
+  add	rsi, GC_Screen_TextColumns
+  mov	ecx, GC_Screen_TextSize - GC_Screen_TextColumns
+  rep	movsb
+  mov	al, ' '
+  mov	rdi, [screentext1_p]
+  add	rdi, GC_Screen_TextSize - GC_Screen_TextColumns
+  mov	rcx, GC_Screen_TextColumns
+  rep	stosb
+  pop	rcx rdi rsi
+  dec	edx
+@@:
+  mov	[cursor_x], rcx
+  mov	[cursor_y], rdx
+  pop	r15
+  ret
+
+
 
 
 ReadChar:
@@ -487,6 +552,40 @@ DrawCRTLine_TEXT4_FONT1024:
   pop	rbp
   ret
 
+
+PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  ret
 
 
 section '.idata' import data readable writeable

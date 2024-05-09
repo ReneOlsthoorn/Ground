@@ -1,5 +1,5 @@
 
-#template sdl2
+#template retrovm
 
 #include msvcrt.g
 #include sdl2.g
@@ -44,24 +44,8 @@ g.[screentext4_p] = msvcrt.calloc(1, g.GC_Screen_TextSize * 4);
 g.[font32_charcolor_p] = msvcrt.calloc(1, g.GC_Screen_TextSize);
 
 u32[256] colors = g.[colortable_p];
-// https://codebase64.org/doku.php?id=base:commodore_vic-ii_color_analysis
-colors[0] = 0xff000000;  // First 16 colors are C-64 colors.
-colors[1] = 0xfff1f1f1;  // white
-colors[2] = 0xffac4749;  // red
-colors[3] = 0xff78d5d0;  // cyan
-colors[4] = 0xffac49c1;  // purple
-colors[5] = 0xff5dc158;  // green
-colors[6] = 0xff4044cb;  // blue
-colors[7] = 0xffe1e063;  // yellow
-colors[8] = 0xffaf6821;  // brown
-colors[9] = 0xff7E5500;  // dark brown
-colors[10] = 0xffd67d7f; // pink
-colors[11] = 0xff686868; // dark grey
-colors[12] = 0xff8f8f8f; // grey
-colors[13] = 0xffa0eb9c; // light gren
-colors[14] = 0xff8898ff; // light blue
-colors[15] = 0xffb9b9b9; // light grey
-colors[255] = 0xffffffff;
+#include retrovm_colortable.g
+insertColors(g.[colortable_p]);
 
 byte[61,36] screenArray = g.[screentext1_p];
 byte[61,36] colorsArray = g.[font32_charcolor_p];
@@ -89,13 +73,6 @@ for (int x = 0; x < GC_Screen_TextColumns; x++) {
     int choosenColor = colorPairs[(x / 12) % 5];
     colorLine(x, choosenColor);
 }
-
-
-byte[] screentext1 = g.[screentext1_p];
-byte[] font32_charcolor = g.[font32_charcolor_p];
-
-for (int i = 0; i < g.GC_Screen_TextSize; i++)
-	screentext1[i] = " ";
 
 // Fill the screen with the "rotating" character
 for (int y = 0; y < GC_Screen_TextRows; y++) {
@@ -139,6 +116,12 @@ function RotateChar(int theChar) asm {
   mov   ax, [r8+30]
   mov   [r8+28], ax
   mov   [r8+30], cx
+
+  mov   rcx, 15
+.loop:
+  ror   word [r8+rcx*2], 1
+  dec   rcx
+  jns   .loop
 }
 
 
@@ -210,7 +193,7 @@ while (StatusRunning)
                 scrollTextNeedle = 0;
             }
         }
-        if (xscrollNeedle % 2 == 0) {
+        if (frameCount % 2 == 0) {
             RotateChar(0x8f);
         }
 
