@@ -14,4 +14,6 @@
           msvcrt_scanf,  'scanf', \
           msvcrt_calloc, 'calloc', \
           msvcrt_free,   'free', \
+          msvcrt_sin,    'sin', \
+          msvcrt_cos,    'cos', \
           msvcrt_getch,  '_getch'

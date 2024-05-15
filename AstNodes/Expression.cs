@@ -677,6 +677,12 @@ namespace GroundCompiler.AstNodes
                         ExprType = hardCodedFunction.FunctionStmt.ResultDatatype!;
                 }
 
+                if (symbol is Scope.Symbol.DllFunctionSymbol dllFunction)
+                {
+                    if (dllFunction.FunctionStmt.ResultDatatype != null)
+                        ExprType = dllFunction.FunctionStmt.ResultDatatype!;
+                }
+
                 foreach (var arg in Arguments)
                 {
                     if (arg is Expression.Get exprGet)

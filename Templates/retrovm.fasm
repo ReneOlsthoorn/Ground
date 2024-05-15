@@ -88,7 +88,7 @@ start:
 
 
 ; *** GENERATED MAIN CODE ***
-;INSERTIONPOINT
+;GC_INSERTIONPOINT_MAIN
 ; *** END MAIN CODE ***
 
 
@@ -156,9 +156,9 @@ start:
 
 
 
-; *** GENERATED FUNCTIONS AND CLASSES ***
-;INSERTIONPOINT
-; *** END FUNCTIONS AND CLASSES ***
+; *** GENERATED PROCEDURES (GROUND FUNCTIONS AND CLASSES) ***
+;GC_INSERTIONPOINT_PROCEDURES
+; *** END PROCEDURES ***
 
 
 include '..\..\..\Templates\part_memory.fasm'
@@ -182,6 +182,39 @@ PrintScreenString:
   mov	ecx, GC_Screen_TextColumns
   mul	ecx
   add	rax, [cursor_x]
+  add	rax, [screentext1_p]
+  mov	[rax], r12b
+  mov	rax, r12
+.incChar:
+  call	CalculateNextCursorPosition
+  inc	r13
+  jmp	.nextChar
+.end:
+  pop	r15 r13 r12
+  ret
+
+
+PrintScreenColorString:
+;rax = string ptr
+;r8 = color (byte)
+  push	r12 r13 r15
+  mov	r15, [font32_charcolor_p]
+  mov	r13, rax
+.nextChar:
+  xor	eax, eax
+  mov	al, [r13]
+  cmp	al, 0
+  jz	.end
+  cmp	al, 13
+  jz	.incChar
+  cmp	al, 10
+  jz	.incChar
+  mov	r12, rax
+  mov	rax, [cursor_y]
+  mov	ecx, GC_Screen_TextColumns
+  mul	ecx
+  add	rax, [cursor_x]
+  mov	[r15+rax], r8b
   add	rax, [screentext1_p]
   mov	[rax], r12b
   mov	rax, r12
@@ -285,6 +318,18 @@ FreeLock_Impl:
 include '..\..\..\Templates\part_hardcoded_library.fasm'
 
 
+_f_colorprint:
+  push  rbp
+  mov   rbp, rsp
+  push	r8
+  mov   rax, qword [rbp+G_PARAMETER2]
+  call  GetMemoryPointerFromIndex
+  mov   r8, qword [rbp+G_PARAMETER1]
+  call	PrintScreenColorString
+  pop	r8
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
 
 
 
@@ -590,11 +635,13 @@ PlotSprite:
 
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
+          user32, 'user32.dll', \
           msvcrt, 'msvcrt.dll', \
 		  sdl2, 'SDL2.dll', \
 		  sidelib, 'GroundSideLibrary.dll'
 
   include '..\..\..\Include\kernel32_api.inc'
+  include '..\..\..\Include\user32_api.inc'
   include '..\..\..\Include\msvcrt_api.inc'
   include '..\..\..\Include\sdl2_api.inc'
   include '..\..\..\Include\sidelib_api.inc'
@@ -674,5 +721,7 @@ StatusRunning		dq 0
 StatusPixelsLocked	dq 0
 StatusCrtLinesDrawn	dq 0
 
-; *** GENERATED VARIABLES PART ***
 
+; *** GENERATED DATA ***
+;GC_INSERTIONPOINT_DATA
+; *** END DATA ***

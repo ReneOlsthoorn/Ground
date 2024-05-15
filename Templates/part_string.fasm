@@ -81,7 +81,15 @@ PrintNumber:
 IntegerToString:
 ; rax = int value to convert
 ; result INDEXSPACE rownr in rax
-  push	rbx             ; win32 stack 16-byte alignment
+  push	rbx r14 r15     ; win32 stack 16-byte alignment
+  test	rax, rax
+  js	.negative
+  xor	r15, r15
+  jmp	.not_negative
+.negative:
+  neg	rax
+  mov	r15, 1
+.not_negative:
   xor	ebx, ebx        ; clear the ebx, I will use as counter for stack pushes
 .push_chars:
   xor	edx, edx        ; clear edx
@@ -94,8 +102,17 @@ IntegerToString:
   jnz	.push_chars     ; if eax not 0 repeat
   mov	rcx, rbx
   add	rcx, 1          ; zero-terminated
+  test	r15, r15
+  jz	.niet_negatief
+  add	rcx, 1			; "-" sign
+.niet_negatief:
   call	GC_Allocate		; result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
   mov	rdi, rax
+  test	r15, r15
+  jz	.no_extra_sign
+  mov	al, '-'
+  stosb
+.no_extra_sign:
   mov	r8, rcx
 .pop_chars:
   pop	rax             ; pop result from stack into eax
@@ -106,7 +123,7 @@ IntegerToString:
   xor	eax, eax		; store the string terminating zero byte
   stosb
   mov	rax, r8
-  pop	rbx
+  pop	r15 r14 rbx
   ret
 
 

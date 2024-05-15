@@ -619,8 +619,19 @@ namespace GroundCompiler
                 return theAsmFunction;
             }
 
+            Token? resultType = null;
+
+            if (Match(TokenType.Colon))
+                if (Check(TokenType.Type))
+                    resultType = NextToken();
+
             if (Match(TokenType.SemiColon))
-                return new FunctionStatement(name, parameters);
+            {
+                var result = new FunctionStatement(name, parameters);
+                if (resultType != null)
+                    result.ResultDatatype = resultType.Datatype;
+                return result;
+            }
 
             Consume(TokenType.LeftBrace, "FunctionDeclaration: Expected '{' before " + kind + " body.");
 

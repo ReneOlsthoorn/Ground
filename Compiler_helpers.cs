@@ -286,6 +286,11 @@ namespace GroundCompiler
                 emitter.IntegerToFloat();
                 sourceExpr.ExprType = destinationDatatype;
             }
+            else if (destinationDatatype.Contains(Datatype.TypeEnum.Integer) && sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+            {
+                emitter.FloatToInteger();
+                sourceExpr.ExprType = destinationDatatype;
+            }
 
         }
 

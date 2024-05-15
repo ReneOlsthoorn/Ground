@@ -100,6 +100,10 @@ namespace GroundCompiler.AstNodes
                 fn = this.Scope.DefineHardcodedFunction("print");
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
+                fn = this.Scope.DefineHardcodedFunction("colorprint");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("color", Datatype.GetDatatype("byte")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
+
                 fn = this.Scope.DefineHardcodedFunction("println");
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
@@ -159,6 +163,18 @@ namespace GroundCompiler.AstNodes
                 // group kernel32
                 nameToken = new Token(TokenType.Identifier);
                 nameToken.Lexeme = "kernel32";
+
+                functionStmts = new List<FunctionStatement>();
+                group = new GroupStatement(nameToken, functionStmts);
+                group.Properties["don't generate"] = true;
+                group.Parent = this;
+                this.Scope.DefineGroup(group);
+
+
+
+                // group user32
+                nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = "user32";
 
                 functionStmts = new List<FunctionStatement>();
                 group = new GroupStatement(nameToken, functionStmts);

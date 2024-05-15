@@ -17,17 +17,27 @@ namespace GroundCompiler
         public CPU_X86_64 cpu;
         CodeEmitterX64 emitter;
         AstPrinter AstPrint = new AstPrinter();
-
+        readonly string CodeTemplateName;
 
         public Compiler(string template) {
+            CodeTemplateName = template;
             cpu = new CPU_X86_64();
-            emitter = new CodeEmitterX64(cpu, template);
+            emitter = new CodeEmitterX64(cpu);
         }
 
         public string GenerateAssembly(Statement stmt)
         {
+            // Gather the codeblocks
             EmitStatement(stmt);
-            return emitter.GetGeneratedCode();
+
+            // Read the codetemplate
+            string tmpl = File.ReadAllText($"..\\..\\..\\Templates\\{this.CodeTemplateName}.fasm");
+
+            // Fill in the blocks in the template
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_MAIN", string.Join("", emitter.GeneratedCode_Main) );
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_PROCEDURES", string.Join("", emitter.GeneratedCode_Procedures));
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_DATA", string.Join("", emitter.GeneratedCode_Data));
+            return tmpl;
         }
 
         public void EmitStatement(Statement? stmt) { stmt?.Accept(this); }
@@ -36,18 +46,20 @@ namespace GroundCompiler
 
         public object? VisitorProgramNode(ProgramNode prog)
         {
-            emitter.BeforeMainCode();
             var mainProc = new EmittedProcedure(functionStatement: prog, classStatement: null, emitter, "main");
             mainProc.MainCallback = () =>
             {
                 emitter.EmitFixedStringIndexSpaceEntries(prog.Scope.GetRootScope().GetStringSymbols());
                 VisitorBlock(prog.Body!);
-                emitter.AfterMainCode();
+                emitter.CloseGeneratedCode_Main();
+
                 EmitFunctions(prog.Scope.GetFunctionStatements());
                 EmitClasses(prog.Scope.GetClassSymbols());
-                emitter.AfterFunctions();
+                emitter.CloseGeneratedCode_Procedures();
+
                 emitter.EmitLiteralFloats(prog.Scope.GetLiteralFloatSymbols());
                 emitter.EmitStrings(prog.Scope.GetStringSymbols());
+                emitter.CloseGeneratedCode_Data();
             };
             mainProc.Emit();
             return null;
@@ -155,7 +167,20 @@ namespace GroundCompiler
 
         public object? VisitorAssembly(Statement.AssemblyStatement stmt)
         {
-            emitter.Writeline(stmt.LiteralAsmCode.StringValue.Trim('\r','\n'));     // assembly is passed as-is, so the \r\n must be removed in front and after the code.
+            string literal = stmt.LiteralAsmCode.StringValue.Trim('\r', '\n');  // assembly is passed as-is, so the \r\n must be removed in front and after the code.
+            if (stmt.LiteralAsmCode.Properties.ContainsKey("attributes"))
+            {
+                string attr = (string)stmt.LiteralAsmCode.Properties["attributes"]!;
+                if (attr == "data")
+                    emitter.GeneratedCode_Data.Add(literal + "\r\n");
+                else if (attr == "procedures")
+                    emitter.GeneratedCode_Procedures.Add(literal + "\r\n");
+                else if (attr == "main")
+                    emitter.GeneratedCode_Main.Add(literal + "\r\n");
+            }
+            else
+                emitter.Writeline(literal);
+
             return null;
         }
 
@@ -413,7 +438,7 @@ namespace GroundCompiler
                     emitter.PopMul(expr);
                     break;
                 case TokenType.Slash:
-                    emitter.PopDiv();
+                    emitter.PopDiv(expr);
                     break;
                 case TokenType.Ampersand:
                     emitter.PopBitwiseAnd();
@@ -438,11 +463,11 @@ namespace GroundCompiler
                     emitter.PopLessEqualToBoolean();
                     break;
                 case TokenType.IsEqual:
-                    emitter.PopSub();
+                    emitter.PopSub(expr);
                     emitter.LogicalNot();
                     break;
                 case TokenType.NotIsEqual:
-                    emitter.PopSub();
+                    emitter.PopSub(expr);
                     emitter.Logical();
                     break;
                 case TokenType.LogicalOr:

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GroundCompiler
 {
@@ -71,6 +72,7 @@ namespace GroundCompiler
                     if (SkipIfMatch("%",  token, TokenType.Operator, TokenType.Percentage, TokenType.Modulo)) break;
 
                     if (SkipIfMatch(";",  token, TokenType.Separator, TokenType.SemiColon)) break;
+                    if (SkipIfMatch(":",  token, TokenType.Separator, TokenType.Colon)) break;
                     if (SkipIfMatch(",",  token, TokenType.Separator, TokenType.Comma)) break;
                     if (SkipIfMatch(".",  token, TokenType.Separator, TokenType.Dot)) break;
                     if (SkipIfMatch("(",  token, TokenType.Separator, TokenType.OpenBracket)) break;
@@ -93,7 +95,12 @@ namespace GroundCompiler
 
                 if (token.Contains(TokenType.Assembly))
                 {
+                    int needleBegin = needle;
                     SkipUntil("{");
+                    int needleEnd = needle;
+                    string attributes = sourcecode.Substring(needleBegin, needleEnd - needleBegin).Trim();
+                    if (attributes.Length > 0)
+                        token.Properties["attributes"] = attributes;
                     NextChar();
                     string s = ReadMatching(IsNotRightBrace);
                     token.Value = s;

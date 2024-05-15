@@ -4,6 +4,7 @@
 #include msvcrt.g
 #include sdl2.g
 #include kernel32.g
+#include user32.g
 #include sidelib.g
 
 sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
@@ -34,7 +35,10 @@ g.[font32_p] = font32_p_original;
 g.[font256_p] = font256_p_original;
 
 byte[] font256OnDisk = sidelib.LoadImage("charset16x16.png");
-if (font256OnDisk == null) { return; }
+if (font256OnDisk == null) {
+	user32.MessageBox(null, "The font charset16x16.png cannot be found!", "Message", g.MB_OK);
+	return;
+}
 sidelib.ConvertFonts(font256OnDisk, g.[font256_p], g.[font32_p]);
 sidelib.FreeImage(font256OnDisk);
 

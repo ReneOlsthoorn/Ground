@@ -60,7 +60,8 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    negativeOffset += varSymbol.DataType.SizeInBytes;
+                    //negativeOffset += varSymbol.DataType.SizeInBytes;
+                    negativeOffset += 8;
 
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");

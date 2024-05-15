@@ -71,7 +71,7 @@ start:
 
 
 ; *** GENERATED MAIN CODE ***
-;INSERTIONPOINT
+;GC_INSERTIONPOINT_MAIN
 ; *** END MAIN CODE ***
 
 
@@ -139,9 +139,9 @@ start:
 
 
 
-; *** GENERATED FUNCTIONS AND CLASSES ***
-;INSERTIONPOINT
-; *** END FUNCTIONS AND CLASSES ***
+; *** GENERATED PROCEDURES (GROUND FUNCTIONS AND CLASSES) ***
+;GC_INSERTIONPOINT_PROCEDURES
+; *** END PROCEDURES ***
 
 
 include '..\..\..\Templates\part_memory.fasm'
@@ -257,6 +257,6 @@ memchecker_message		db 13,10,'Variable memory used (bytes): ',0
 indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0
 refchecker_message		db 13,10,'Reference memory max: %d of total %d elements.',0
 
-
-; *** GENERATED VARIABLES PART ***
-
+; *** GENERATED DATA ***
+;GC_INSERTIONPOINT_DATA
+; *** END DATA ***

@@ -12,29 +12,41 @@ namespace GroundCompiler
     public class CodeEmitterX64
     {
         public CPU_X86_64 cpu;
+        public List<string> GeneratedCode_Main;
+        public List<string> GeneratedCode_Procedures;
+        public List<string> GeneratedCode_Data;
         public List<string> generatedCode;
         long labelCounter = 0;
-        string template;
 
-        public CodeEmitterX64(CPU_X86_64 cpu, string usedTemplate)
+        public CodeEmitterX64(CPU_X86_64 cpu)
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
-            this.template = usedTemplate;
+            GeneratedCode_Main = new List<string>();
+            GeneratedCode_Procedures = new List<string>();
+            GeneratedCode_Data = new List<string>();
         }
-        public string GetGeneratedCode()
+
+        public void CloseGeneratedCode_Main()
         {
-            return string.Join("", generatedCode);
+            GeneratedCode_Main.AddRange(generatedCode);
+            generatedCode = new List<string>();
+        }
+        public void CloseGeneratedCode_Procedures()
+        {
+            GeneratedCode_Procedures.AddRange(generatedCode);
+            generatedCode = new List<string>();
+        }
+        public void CloseGeneratedCode_Data()
+        {
+            GeneratedCode_Data.AddRange(generatedCode);
+            generatedCode = new List<string>();
         }
 
         public void Writeline(string text) { generatedCode.Add(text + "\r\n"); }
         public void Codeline(string text) { Writeline($"  {text}"); }
         public string NewLabel() { return $"L{labelCounter++}"; }
 
-        private string GetAsmFile() => File.ReadAllText($"..\\..\\..\\Templates\\{this.template}.fasm");
-        public void BeforeMainCode() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[0]);
-        public void AfterMainCode() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[1]);
-        public void AfterFunctions() => generatedCode.Add(GetAsmFile().Split(";INSERTIONPOINT\r\n")[2]);
 
         public void EmitLiteralFloats(List<Scope.Symbol.FloatConstantSymbol> globalLiteralFloats)
         {
@@ -574,6 +586,11 @@ namespace GroundCompiler
         public void IntegerToFloat()
         {
             Codeline("cvtsi2sd xmm0, rax");
+        }
+
+        public void FloatToInteger()
+        {
+            Codeline("cvtsd2si rax, xmm0");
         }
 
         public void InsertLabel(string label)

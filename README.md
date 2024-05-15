@@ -206,6 +206,15 @@ Fortunately, the good thing was that I moved to the Wintel platform and bought a
 and choose your moment to upgrade. We are truly blessed with this platform. This must be said!  
 This Ground compiler project is an ode to the x86-64 Windows platform.
 
+### Running the mode7.g
+You will need 3 additional files to run the mode7.g sample. First, the font which is located in the Resources
+folder and is called ```playfield1024.png```.  
+Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
+Put the 3 files in de same folder as the generated mode7.exe and it will run.
+
+![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true)
+
 ### Running the smoothscroller.g
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
 folder and is called ```charset16x16.png```.  

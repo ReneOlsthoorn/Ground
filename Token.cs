@@ -38,6 +38,7 @@ namespace GroundCompiler
         GreaterEqual, // >=
         ShiftRight,   // >>
         SemiColon,    // ;
+        Colon,        // :
         OpenBracket,  // (
         CloseBracket, // )
         LeftSquareBracket,  // [
@@ -76,6 +77,7 @@ namespace GroundCompiler
             this.Lexeme = "";
             this.LineNumber = 0;
             this.Datatype = null;
+            this.Properties = new Dictionary<string, object?>();
         }
         public Token(params TokenType[] types) : this()
         {
@@ -87,6 +89,7 @@ namespace GroundCompiler
         public object? Value;
         public int LineNumber;
         public Datatype? Datatype;
+        public Dictionary<string, object?> Properties;
 
         public string StringValue
         {
