@@ -1,0 +1,246 @@
+format pe64 GUI 5.0
+entry start
+stack 80000h, 80000h
+
+include 'win64a.inc'
+include '..\..\..\Include\sdl2.inc'
+include '..\..\..\Templates\part_equates.fasm'
+include '..\..\..\Templates\part_macros.fasm'
+
+GC_Screen_DimX = 960
+GC_Screen_DimY = 560
+GC_ScreenPixelSize = 4
+GC_ScreenLineSize = GC_Screen_DimX * GC_ScreenPixelSize
+
+section '.text' code readable executable
+start:
+  push	rbp
+  mov	rbp, rsp
+  mov   [main_rbp], rbp
+
+  invoke kernel32_GetProcessHeap
+  mov	[processHeapHandle], rax
+
+  mov	rax, 4 * 1024 * 1024
+  mov	[variableSpaceSize], rax
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, [variableSpaceSize]
+  mov	[variableSpacePointer], rax
+  mov	[variableSpaceNeedle], rax
+
+  mov   rax, [indexSpaceNrElements]
+  mov   rdx, GC_INDEXSPACE_ROWSIZE
+  mul   rdx
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
+  mov	[indexSpacePointer], rax
+  mov	[indexSpaceMax], rax
+  mov   [indexSpaceLevel], rax
+
+  mov   rax, [referenceSpaceNrElements]
+  mov   rdx, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mul   rdx
+  invoke kernel32_HeapAlloc, [processHeapHandle], HEAP_ZERO_MEMORY, rax
+  mov	[referenceSpacePointer], rax
+  mov	[referenceSpaceMax], rax
+  mov	[referenceSpaceLevel], rax
+
+
+; Set the CurrentExeDir as FixedString at position 0 (zero).
+  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  mov	rcx, currentExeDirChars
+  call	StringLength    ; rax stringlength
+  mov   r8, currentExeDirChars
+  mov   rcx, rax
+.currentExeDirloop:
+  mov   al, byte [r8+rcx]
+  cmp   al, '\'
+  je    .currentExeDirExitloop
+  cmp   al, '/'
+  je    .currentExeDirExitloop
+  mov   byte [r8+rcx], 0
+  dec   rcx
+  jnz   .currentExeDirloop
+  mov   byte [r8], 0
+.currentExeDirExitloop:
+  lea   rcx, [currentExeDirChars]   ; index 0
+  call  AddFixedString
+  lea   rcx, [bool_true_tostring]   ; index 1
+  call  AddFixedString
+  lea   rcx, [bool_false_tostring]  ; index 2
+  call  AddFixedString
+
+
+; *** GENERATED MAIN CODE ***
+;GC_INSERTIONPOINT_MAIN
+; *** END MAIN CODE ***
+
+
+; *** Print the maximum memory used
+  mov	rax, [variableSpaceNeedle]
+  sub	rax, [variableSpacePointer]
+; for debug purposes: rax contains variableSpace used
+
+  mov   rdx, [indexSpaceMax]
+  sub   rdx, [indexSpacePointer]
+  mov   r8, GC_INDEXSPACE_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [indexSpaceNrElements]
+; for debug purposes: rdx = nr used index elements, r8 = total allowed index elements
+
+
+  mov   rdx, [referenceSpaceMax]
+  sub   rdx, [referenceSpacePointer]
+  mov   r8, G_REFCOUNT_LINKED_LIST_ROWSIZE
+  mov   rax, rdx
+  xor   edx, edx
+  div   r8
+  mov   rdx, rax
+  mov   r8, [referenceSpaceNrElements]
+; for debug purposes: rdx = nr used ref elements, r8 = total allowed ref elements
+
+
+; *** Print ' leak!' in case of a memory leak.
+  mov	rax, [indexSpacePointer]
+  sub	rax, GC_INDEXSPACE_ROWSIZE
+.loop:
+  add	rax, GC_INDEXSPACE_ROWSIZE
+  cmp	qword [rax], 0
+  je	.endloop
+  mov	rdx, qword [rax+GC_INDEXSPACE_SIZE_OFFSET]
+  cmp	rdx, 0
+  je	.loop
+  mov	rdx, qword [rax+GC_INDEXSPACE_NRREFS_OFFSET]
+  cmp	rdx, 0
+  je	.loop
+; at this point, there is a memory leak
+.endloop:
+
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
+  invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
+
+  mov	rax, [debugBestTicks]
+
+  mov	rsp, rbp
+  invoke kernel32_ExitProcess, 0
+  pop	rbp
+  ret
+
+
+; *** GENERATED PROCEDURES (GROUND FUNCTIONS AND CLASSES) ***
+;GC_INSERTIONPOINT_PROCEDURES
+; *** END PROCEDURES ***
+
+
+include '..\..\..\Templates\part_memory.fasm'
+include '..\..\..\Templates\part_string.fasm'
+include '..\..\..\Templates\part_utils.fasm'
+include '..\..\..\Templates\part_hardcoded_library.fasm'
+
+
+PrintScreenString:
+  ret
+
+
+PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  ret
+
+
+section '.idata' import data readable writeable
+  library kernel32,'kernel32.dll', \
+          user32, 'user32.dll', \
+          msvcrt, 'msvcrt.dll', \
+		  sdl2, 'SDL2.dll', \
+		  sidelib, 'GroundSideLibrary.dll'
+
+  include '..\..\..\Include\kernel32_api.inc'
+  include '..\..\..\Include\user32_api.inc'
+  include '..\..\..\Include\msvcrt_api.inc'
+  include '..\..\..\Include\sdl2_api.inc'
+  include '..\..\..\Include\sidelib_api.inc'
+
+
+section '.data' data readable writeable
+main_rbp                dq 0
+processHeapHandle		dq 0
+
+indexSpaceNrElements    dq GC_INDEX_SPACE_NR_ELEMENTS_DEFAULT
+indexSpacePointer		dq 0        ; Pointer to the start of the memory
+indexSpaceMax           dq 0        ; Maximum pointer
+indexSpaceLevel         dq 0        ; Below the level, everything is occupied. So, when freeing up an index space the level must be adjusted.
+
+variableSpaceSize		dq 0
+variableSpacePointer	dq 0
+variableSpaceNeedle		dq 0
+
+referenceSpaceNrElements  dq GC_REFERENCE_SPACE_NR_ELEMENTS_DEFAULT
+referenceSpacePointer	dq 0
+referenceSpaceMax       dq 0
+referenceSpaceLevel     dq 0        ; Below the level, everything is occupied. So, when freeing up an referenceSpace the level must be adjusted.
+
+currentExeDir           dq 0    ; the index for the currentExeDir, which is zero.
+currentExeDirChars      db 256 dup(0)
+
+tmpCharSpace            db 256 dup(0)	; needed for some hardcoded_library functions
+
+align 8
+
+ResultBytesWritten      dq 0
+ResultBytesRead         dq 0
+LockObject64            dq 0
+
+scanf_int_result        dq 0
+scanf_int_read          db '%d',0
+scanf_string_read       db '%s',0
+sprintf_float_template  db '%.10f',0 
+readalltext_openmode    db 'rb',0
+bool_true_tostring      db 'true',0
+bool_false_tostring     db 'false',0
+carriage_return_bytes	db 13,10,0
+
+align 8
+
+pixels_p				dq 0
+frameCount				dq 0
+oldTicks				dq 0
+currentTicks			dq 0
+framesPassed			dq 0
+debugBestTicks			dq 0xffff   ; large value, so every frame will be better
+
+
+; *** GENERATED DATA ***
+;GC_INSERTIONPOINT_DATA
+; *** END DATA ***

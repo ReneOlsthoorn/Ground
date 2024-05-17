@@ -1,5 +1,5 @@
-//Mode7 example. See here the proof that depth is a division.
-//This version is not optimized. The innerloop runs in 5ms on my PC.  See mode7_optimized.g to see how each statement in the innerloop can be replaced by x86-64.
+//Mode7 example. See here the proof that depth is a division and that some statements in the innerloop code can be replaced by x86-64.
+//This version is optimized. The innerloop runs in 3ms on my PC.
 
 #template sdl2
 
@@ -64,16 +64,70 @@ while (StatusRunning)
 		float fEndY = fWorldY - (msvcrt.sin(fWorldAngle - fFoVHalf) * distance);
 
 		for (int x = 0; x < g.GC_Screen_DimX; x++) {
-			float fSampleWidth = x / float_ScreenDIMx;
-			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
-			float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);
+
+			//float fSampleWidth = x / float_ScreenDIMx;
+			float fSampleWidth;
+			asm {
+				mov	rax, [x@main]
+				cvtsi2sd xmm0, rax
+				movq  xmm1, qword [float_960]
+				divsd xmm0, xmm1
+				movq [fSampleWidth@main], xmm0
+			}
+
+			//float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
+			float fSampleX;
+			asm {
+				movq xmm2, [fStartX@main]
+				movq xmm1, [fEndX@main]
+				subsd xmm1, xmm2
+				movq xmm0, [fSampleWidth@main]
+				mulsd xmm0, xmm1
+				addsd xmm0, xmm2
+				movq [fSampleX@main], xmm0
+			}
+
+			//float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);
+			float fSampleY;
+			asm {
+				movq xmm2, [fStartY@main]
+				movq xmm1, [fEndY@main]
+				subsd xmm1, xmm2
+				movq xmm0, [fSampleWidth@main]
+				mulsd xmm0, xmm1
+				addsd xmm0, xmm2
+				movq [fSampleY@main], xmm0
+			}
+
 			int iSampleX = fSampleX;
 			int iSampleY = fSampleY;
-
 			u32 pixelColor = 0;
-			if ((iSampleX >= 0) and (iSampleX < 1024) and (iSampleY >= 0) and (iSampleY < 1024)) {
-				pixelColor = racetrack[iSampleX, iSampleY];
+
+			//if ((iSampleX >= 0) and (iSampleX < 1024) and (iSampleY >= 0) and (iSampleY < 1024)) {
+			//	pixelColor = racetrack[iSampleX, iSampleY];
+			//}
+			asm {
+				mov	edx, [pixelColor@main]
+				mov	rax, [iSampleX@main]
+				cmp	rax, 0
+				jl	.pixelColorExit
+				cmp	rax, 1024
+				jge	.pixelColorExit
+				mov	rax, [iSampleY@main]
+				cmp	rax, 0
+				jl	.pixelColorExit
+				cmp	rax, 1024
+				jge	.pixelColorExit
+
+				mov	rcx, [racetrack_p]
+				mov	rax, [iSampleY@main]
+				shl	rax, 10
+				add rax, [iSampleX@main]
+				mov	edx, [rcx+rax*4]
+.pixelColorExit:
+				mov	[pixelColor@main], edx
 			}
+
 			pixels[x, y] = pixelColor;
 		}
 	}

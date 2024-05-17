@@ -225,7 +225,7 @@ namespace GroundCompiler
                 return "str_" + name;
 
             if (datatype == "const float")
-                return "float_" + name.Replace(".","_");
+                return "float_" + name.Replace(".","_").Replace("-","min");
 
             return name;
         }

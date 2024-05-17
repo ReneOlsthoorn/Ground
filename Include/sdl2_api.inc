@@ -200,6 +200,7 @@ import sdl2,\
        sdl2_SDL_GetThreadID,'SDL_GetThreadID',\
        sdl2_SDL_GetThreadName,'SDL_GetThreadName',\
        sdl2_SDL_GetTicks,'SDL_GetTicks',\
+       sdl2_SDL_GetTicks64,'SDL_GetTicks64',\
        sdl2_SDL_GetTouchDevice,'SDL_GetTouchDevice',\
        sdl2_SDL_GetTouchFinger,'SDL_GetTouchFinger',\
        sdl2_SDL_GetVersion,'SDL_GetVersion',\

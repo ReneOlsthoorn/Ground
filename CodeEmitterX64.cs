@@ -239,10 +239,10 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq   {floatReg}, xmm0");
+                Codeline($"movq  {floatReg}, xmm0");
                 Codeline($"movq  xmm0, qword [rsp]");
                 Codeline($"add   rsp, 16");
-                Codeline($"addsd   xmm0, {floatReg}");
+                Codeline($"addsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -253,6 +253,28 @@ namespace GroundCompiler
             Codeline($"add   rax, {reg}");
             cpu.FreeRegister(reg);
         }
+
+
+        public void PopCompare(AstNodes.Expression? expr, string trueJmpCondition = "je")
+        {
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            {
+                var exitLabel = NewLabel();
+
+                var floatReg = cpu.GetTmpFloatRegister();
+                Codeline($"movq  {floatReg}, xmm0");
+                Codeline($"movq  xmm0, qword [rsp]");
+                Codeline($"add   rsp, 16");
+                Codeline($"mov   rax, 1");
+                Codeline($"comisd xmm0, {floatReg}");
+                Codeline($"{trueJmpCondition}    {exitLabel}");
+                Codeline($"mov   rax, 0");
+                Codeline($"jmp   {exitLabel}");
+                cpu.FreeRegister(floatReg);
+                InsertLabel(exitLabel);
+            }
+        }
+
 
         public void PopSub(AstNodes.Expression? expr = null)
         {
@@ -291,10 +313,10 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq   {floatReg}, xmm0");
+                Codeline($"movq  {floatReg}, xmm0");
                 Codeline($"movq  xmm0, qword [rsp]");
                 Codeline($"add   rsp, 16");
-                Codeline($"subsd   xmm0, {floatReg}");
+                Codeline($"subsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -314,10 +336,10 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq   {floatReg}, xmm0");
+                Codeline($"movq  {floatReg}, xmm0");
                 Codeline($"movq  xmm0, qword [rsp]");
                 Codeline($"add   rsp, 16");
-                Codeline($"mulsd   xmm0, {floatReg}");
+                Codeline($"mulsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -334,10 +356,10 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq   {floatReg}, xmm0");
+                Codeline($"movq  {floatReg}, xmm0");
                 Codeline($"movq  xmm0, qword [rsp]");
                 Codeline($"add   rsp, 16");
-                Codeline($"divsd   xmm0, {floatReg}");
+                Codeline($"divsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -422,8 +444,8 @@ namespace GroundCompiler
             Codeline($"neg   rax");         // if rax != 0 => carry flag is set
             Codeline($"mov   eax, 0");
             Codeline($"adc   eax, 0");
-            // int64 rax 0, bool rax becomes 0
-            // int64 rax != 0, bool rax becomes 1
+            // input int64 rax == 0, output bool rax -> 0
+            // input int64 rax != 0, output bool rax -> 1
         }
 
         public void LogicalNot()
@@ -431,8 +453,8 @@ namespace GroundCompiler
             Codeline($"neg   rax");         // if rax != 0 => carry flag is set
             Codeline($"mov   eax, 1");
             Codeline($"sbb   eax, 0");
-            // int64 rax 0, bool rax becomes 1
-            // int64 rax != 0, bool rax becomes 0
+            // input int64 rax == 0, output bool rax -> 1
+            // input int64 rax != 0, output bool rax -> 0
         }
 
         public void PopOr()

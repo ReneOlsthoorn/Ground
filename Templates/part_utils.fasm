@@ -1,0 +1,28 @@
+
+StoreBytes:
+; rcx = nr of bytes
+; rdx = destination pointer
+; al = value to set
+  push	rdi
+  mov	rdi, rdx
+  rep	stosb		; Notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+  pop   rdi
+  ret
+
+
+; rcx = lockbit
+WaitForLock_Impl:
+  lea	rax, [LockObject64]
+  bt    qword [rax], rcx
+  jc    WaitForLock_Impl        ; when the bit is initialy set, we are not the first one requesting the lock. So, wait.
+WaitForLock_Keep:
+  lock bts qword [rax], rcx     ; when we are in the keep loop, we are one of the first to get the lock.
+  jc	WaitForLock_Keep
+  ret
+
+
+; rcx = lockbit
+FreeLock_Impl:
+  lea	rax, [LockObject64]
+  lock btr qword [rax], rcx
+  ret

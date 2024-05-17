@@ -451,24 +451,46 @@ namespace GroundCompiler
                     emitter.PopBitwiseOr();
                     break;
                 case TokenType.Greater:
-                    emitter.PopGreaterToBoolean();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "ja");
+                    else
+                        emitter.PopGreaterToBoolean();
                     break;
                 case TokenType.GreaterEqual:
-                    emitter.PopGreaterEqualToBoolean();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "jae");
+                    else
+                        emitter.PopGreaterEqualToBoolean();
                     break;
                 case TokenType.Less:
-                    emitter.PopLessToBoolean();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "jb");
+                    else
+                        emitter.PopLessToBoolean();
                     break;
                 case TokenType.LessEqual:
-                    emitter.PopLessEqualToBoolean();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "jbe");
+                    else
+                        emitter.PopLessEqualToBoolean();
                     break;
                 case TokenType.IsEqual:
-                    emitter.PopSub(expr);
-                    emitter.LogicalNot();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "je");
+                    else
+                    {
+                        emitter.PopSub(expr);
+                        emitter.LogicalNot();
+                    }
                     break;
                 case TokenType.NotIsEqual:
-                    emitter.PopSub(expr);
-                    emitter.Logical();
+                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompare(expr, "jne");
+                    else
+                    {
+                        emitter.PopSub(expr);
+                        emitter.Logical();
+                    }
                     break;
                 case TokenType.LogicalOr:
                     emitter.PopOr();

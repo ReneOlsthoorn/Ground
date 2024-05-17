@@ -12,3 +12,5 @@ dll sdl2 function SDL_RenderPresent(ptr renderer);
 dll sdl2 function SDL_DestroyTexture(ptr texture);
 dll sdl2 function SDL_DestroyRenderer(ptr renderer);
 dll sdl2 function SDL_DestroyWindow(ptr window);
+dll sdl2 function SDL_GetTicks();
+dll sdl2 function SDL_GetTicks64();
