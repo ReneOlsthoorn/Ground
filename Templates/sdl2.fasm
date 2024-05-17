@@ -121,8 +121,6 @@ start:
   invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
   invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
 
-  mov	rax, [debugBestTicks]
-
   mov	rsp, rbp
   invoke kernel32_ExitProcess, 0
   pop	rbp
@@ -221,6 +219,7 @@ align 8
 ResultBytesWritten      dq 0
 ResultBytesRead         dq 0
 LockObject64            dq 0
+pixels_p				dq 0
 
 scanf_int_result        dq 0
 scanf_int_read          db '%d',0
@@ -232,14 +231,6 @@ bool_false_tostring     db 'false',0
 carriage_return_bytes	db 13,10,0
 
 align 8
-
-pixels_p				dq 0
-frameCount				dq 0
-oldTicks				dq 0
-currentTicks			dq 0
-framesPassed			dq 0
-debugBestTicks			dq 0xffff   ; large value, so every frame will be better
-
 
 ; *** GENERATED DATA ***
 ;GC_INSERTIONPOINT_DATA

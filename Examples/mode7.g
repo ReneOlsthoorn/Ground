@@ -13,13 +13,25 @@ ptr window = sdl2.SDL_CreateWindow("Mode 7", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WI
 ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
 ptr texture = sdl2.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 
+int frameCount = 0;
 u32[960, 560] pixels = null;
 byte[56] event = [];
 u32* eventType = &event[0];
-int pitch = g.GC_ScreenLineSize;
-
-int frameCount = 0;
 bool StatusRunning = true;
+int nMapSize = 1024;
+float fWorldX = 132.8;
+float fWorldY = 651.5;
+float fWorldAngle = 3.141592 / 2.0;		// pi/2
+float fNear = nMapSize * 0.025;
+float fFar = nMapSize * 0.60;
+float fFoVHalf = 3.141592 / 4.0;		// 180 degrees divided by four = 45 degrees. De FOV = 90, so start = -45 degrees, end = +45 degrees.
+float space_y = 100.0;
+float scale_y = 200.0;
+int horizon = 15;
+float float_ScreenDIMx = 960.0;
+int pitch = g.GC_ScreenLineSize;
+int loopStartTicks = 0;
+int debugBestTicks = 0xffff;
 
 asm data {racetrack_p dq 0}
 g.[racetrack_p] = sidelib.LoadImage("playfield1024.png");
@@ -29,18 +41,6 @@ if (g.[racetrack_p] == null) {
 }
 sidelib.FlipRedAndGreenInImage(g.[racetrack_p], 1024, 1024);
 u32[1024, 1024] racetrack = g.[racetrack_p];
-
-int nMapSize = 1024;
-float fWorldX = 132.8;
-float fWorldY = 651.5;
-float fWorldAngle = 3.141592 / 2.0;  // pi/2
-float fNear = nMapSize * 0.025;
-float fFar = nMapSize * 0.60;
-float fFoVHalf = 3.141592 / 4.0;  //180 degrees divided by four = 45 degrees. De FOV = 90, so start = -45 degrees, end = +45 degrees.
-float space_y = 100.0;
-float scale_y = 200.0;
-int horizon = 15;
-float float_ScreenDIMx = 960.0;
 
 while (StatusRunning)
 {
@@ -52,9 +52,7 @@ while (StatusRunning)
 
 	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
-
-	asm data {loopStartTicks dq 0}
-	g.[loopStartTicks] = sdl2.SDL_GetTicks();
+	loopStartTicks = sdl2.SDL_GetTicks();
 
 	for (int y = 0; y < g.GC_Screen_DimY; y++) {
 		float distance = space_y * scale_y / (y + horizon);
@@ -78,9 +76,9 @@ while (StatusRunning)
 		}
 	}
 
-	int currentTicks = sdl2.SDL_GetTicks() - g.[loopStartTicks];
-	if (currentTicks < g.[debugBestTicks]) {
-		g.[debugBestTicks] = currentTicks;
+	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
+	if (currentTicks < debugBestTicks) {
+		debugBestTicks = currentTicks;
 	}
 
 	sdl2.SDL_UnlockTexture(texture);
@@ -104,3 +102,6 @@ sdl2.SDL_DestroyWindow(window);
 sdl2.SDL_Quit();
 
 sidelib.FreeImage(g.[racetrack_p]);
+
+string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+user32.MessageBox(null, showStr, "Message", g.MB_OK);

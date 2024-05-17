@@ -7,6 +7,34 @@ The code that "Ground" generates is poured in an assembly template which can be 
 small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
 external code will be loaded at load-time. The usage of the known system DLL's is promoted.
 
+The strength of Ground is the ability to replace a Ground statement with x86-64. So for example we have the following
+code in mode7.g:
+```
+		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+			float fSampleWidth = x / float_ScreenDIMx;
+			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
+			...
+```
+
+We can replace a statement with x86-64:
+```
+		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+			float fSampleWidth = x / float_ScreenDIMx;
+
+			//float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
+			float fSampleX;
+			asm {
+				movq xmm2, [fStartX@main]
+				movq xmm1, [fEndX@main]
+				subsd xmm1, xmm2
+				movq xmm0, [fSampleWidth@main]
+				mulsd xmm0, xmm1
+				addsd xmm0, xmm2
+				movq [fSampleX@main], xmm0
+			}
+			...
+```
+
 Diving into this software will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format and Compiler Design.
 
@@ -15,9 +43,8 @@ nowadays C compilers do not allow the mixing of C and assembly in the same funct
 inserted assembly makes optimization of the generated code hard.  
 It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
 must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and gives 
-it the proper place: everywhere. However, the fastest performance is often not needed and "Ground" code is much more
-compact. That's why a lot of precalculation code can be done in the Ground language and the optimized loops can be 
-hand-written x86-64.
+it the proper place: everywhere. Ground code is more compact, so typical usage of x86-64 is done in innerloops.  
+See Examples\mode7_optimized.g for an example of innerloop optimization.
 
 Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...
 See file Examples\console.g to see some usage.  
@@ -206,16 +233,17 @@ Fortunately, the good thing was that I moved to the Wintel platform and bought a
 and choose your moment to upgrade. We are truly blessed with this platform. This must be said!  
 This Ground compiler project is an ode to the x86-64 Windows platform.
 
-### Running the mode7.g
+### Running the mode7.g example
 You will need 3 additional files to run the mode7.g sample. First, the font which is located in the Resources
 folder and is called ```playfield1024.png```.  
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
-Put the 3 files in de same folder as the generated mode7.exe and it will run.
+Put the 3 files in de same folder as the generated mode7.exe and it will run. The mode7.g is the unoptimized version.
+The innerloop needs 5ms to complete each frame. The mode7_optimized is the optimized version and has an innerloop of 2ms.
 
 ![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true)
 
-### Running the smoothscroller.g
+### Running the smoothscroller.g example
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
 folder and is called ```charset16x16.png```.  
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
