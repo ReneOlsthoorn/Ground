@@ -95,10 +95,7 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    if (localVarSymbol.DataType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.LoadFunctionVariableFloat64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                    else
-                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
                 }
             }
             else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
@@ -119,7 +116,7 @@ namespace GroundCompiler
                     if (parentSymbol.DataType.IsReferenceType)
                     {
                         reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                        emitter.LoadParentFunctionVariable64(assemblyVarName);
+                        emitter.LoadParentFunctionVariable64(assemblyVarName, parentSymbol.DataType);
                         emitter.RemoveReference();
                         cpu.FreeRegister(reg);
                     }
@@ -128,13 +125,13 @@ namespace GroundCompiler
                     if (parentSymbol.DataType.IsReferenceType)
                         emitter.AddReference(assignment.RightOfEqualSign);
 
-                    emitter.StoreParentFunctionParameter64(assemblyVarName);
+                    emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
                     cpu.FreeRegister(reg);
                 }
                 else
                 {
                     reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
                     cpu.FreeRegister(reg);
                 }
             }
@@ -227,7 +224,7 @@ namespace GroundCompiler
                     targetType = parentSymbol!.DataType.Base;
                     elementSizeInBytes = parentSymbol!.DataType.Base!.SizeInBytes;
                     var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol.TheScopeStatement));
+                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol.TheScopeStatement), parentSymbol.DataType);
                     cpu.FreeRegister(reg);
                 }
                 else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)

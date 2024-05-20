@@ -143,6 +143,7 @@ kernel32.CreateThread(null, 0x10000, g.Thread2Startup, null, 0, &threadId);
 asm {
   jmp	AfterThread2Startup
 Thread2Startup:
+  push	rbp
   mov	rax, [main_rbp]
   mov	rbp, rax
 }

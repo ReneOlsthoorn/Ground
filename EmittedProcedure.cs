@@ -52,7 +52,7 @@ namespace GroundCompiler
                 if (varSymbol.DataType.Types.Contains(Datatype.TypeEnum.CustomClass))
                 {
                     ClassStatement classStatement = varSymbol.DataType.Properties["classStatement"] as ClassStatement;
-                    negativeOffset += 8; //varSymbol.DataType.SizeInBytes;
+                    negativeOffset += 8; // Not varSymbol.DataType.SizeInBytes; // See explanation in CodeEmitterX64>>StoreFunctionVariable64
 
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
@@ -60,8 +60,7 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    //negativeOffset += varSymbol.DataType.SizeInBytes;
-                    negativeOffset += 8;
+                    negativeOffset += 8; // Not varSymbol.DataType.SizeInBytes; // See explanation in CodeEmitterX64>>StoreFunctionVariable64
 
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");

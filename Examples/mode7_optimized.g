@@ -5,11 +5,12 @@
 
 #include msvcrt.g
 #include sdl2.g
+#include kernel32.g
 #include user32.g
 #include sidelib.g
 
 sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
-ptr window = sdl2.SDL_CreateWindow("Mode 7", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
+ptr window = sdl2.SDL_CreateWindow("Mode 7 optimized", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
 ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
 ptr texture = sdl2.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 
@@ -18,6 +19,8 @@ u32[960, 560] pixels = null;
 byte[56] event = [];
 u32* eventType = &event[0];
 bool StatusRunning = true;
+bool thread1Busy = false;
+bool thread2Busy = false;
 int nMapSize = 1024;
 float fWorldX = 132.8;
 float fWorldY = 651.5;
@@ -42,21 +45,9 @@ if (g.[racetrack_p] == null) {
 sidelib.FlipRedAndGreenInImage(g.[racetrack_p], 1024, 1024);
 u32[1024, 1024] racetrack = g.[racetrack_p];
 
-while (StatusRunning)
-{
-	while (sdl2.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_QUIT) {
-			StatusRunning = false;
-		}
-	}
 
-	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
-	g.[pixels_p] = pixels;
-	loopStartTicks = sdl2.SDL_GetTicks();
-
-	asm data {pixel_p_loop dq 0}
-	g.[pixel_p_loop] = g.[pixels_p];
-	for (int y = 0; y < g.GC_Screen_DimY; y++) {
+function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
+	for (int y = pStartY; y < pEndY; y++) {
 		float distance = space_y * scale_y / (y + horizon);
 		float fStartX = fWorldX + (msvcrt.cos(fWorldAngle + fFoVHalf) * distance);
 		float fStartY = fWorldY - (msvcrt.sin(fWorldAngle + fFoVHalf) * distance);
@@ -68,35 +59,35 @@ while (StatusRunning)
 			//float fSampleWidth = x / float_ScreenDIMx;
 			float fSampleWidth;
 			asm {
-				mov	rax, [x@main]
+				mov	rax, [x@Innerloop]
 				cvtsi2sd xmm0, rax
 				movq  xmm1, qword [float_960]
 				divsd xmm0, xmm1
-				movq [fSampleWidth@main], xmm0
+				movq [fSampleWidth@Innerloop], xmm0
 			}
 
 			//float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 			float fSampleX;
 			asm {
-				movq xmm2, [fStartX@main]
-				movq xmm1, [fEndX@main]
+				movq xmm2, [fStartX@Innerloop]
+				movq xmm1, [fEndX@Innerloop]
 				subsd xmm1, xmm2
-				movq xmm0, [fSampleWidth@main]
+				movq xmm0, [fSampleWidth@Innerloop]
 				mulsd xmm0, xmm1
 				addsd xmm0, xmm2
-				movq [fSampleX@main], xmm0
+				movq [fSampleX@Innerloop], xmm0
 			}
 
 			//float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);
 			float fSampleY;
 			asm {
-				movq xmm2, [fStartY@main]
-				movq xmm1, [fEndY@main]
+				movq xmm2, [fStartY@Innerloop]
+				movq xmm1, [fEndY@Innerloop]
 				subsd xmm1, xmm2
-				movq xmm0, [fSampleWidth@main]
+				movq xmm0, [fSampleWidth@Innerloop]
 				mulsd xmm0, xmm1
 				addsd xmm0, xmm2
-				movq [fSampleY@main], xmm0
+				movq [fSampleY@Innerloop], xmm0
 			}
 
 			int iSampleX = fSampleX;
@@ -107,37 +98,73 @@ while (StatusRunning)
 			//	pixelColor = racetrack[iSampleX, iSampleY];
 			//}
 			asm {
-				mov	edx, [pixelColor@main]
-				mov	rax, [iSampleX@main]
+				mov	edx, [pixelColor@Innerloop]
+				mov	rax, [iSampleX@Innerloop]
 				cmp	rax, 0
 				jl	.pixelColorExit
 				cmp	rax, 1024
 				jge	.pixelColorExit
-				mov	rax, [iSampleY@main]
+				mov	rax, [iSampleY@Innerloop]
 				cmp	rax, 0
 				jl	.pixelColorExit
 				cmp	rax, 1024
 				jge	.pixelColorExit
 
 				mov	rcx, [racetrack_p]
-				mov	rax, [iSampleY@main]
+				mov	rax, [iSampleY@Innerloop]
 				shl	rax, 10
-				add rax, [iSampleX@main]
+				add rax, [iSampleX@Innerloop]
 				mov	edx, [rcx+rax*4]
 .pixelColorExit:
-				mov	[pixelColor@main], edx
+				mov	[pixelColor@Innerloop], edx
 			}
 
 			//pixels[x, y] = pixelColor;
 			asm {
-				mov	edx, [pixelColor@main]
-				mov rax, [pixel_p_loop]
+				mov	edx, [pixelColor@Innerloop]
+				mov rax, [myPixel_p@Innerloop]
 				mov [rax], edx
 				add	rax, 4
-				mov	[pixel_p_loop], rax
+				mov	[myPixel_p@Innerloop], rax
 			}
 		}
 	}
+}
+
+function Thread2() {
+	while (StatusRunning) {
+		if (thread2Busy) {
+			int halfHeight = g.GC_Screen_DimY / 2;
+			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * halfHeight * g.GC_ScreenPixelSize);
+            Innerloop(halfHeight, g.GC_Screen_DimY, threadPixel_p);
+			thread2Busy = false;
+		}
+	}
+}
+
+GC_CreateThread(Thread2);
+
+while (StatusRunning)
+{
+	while (sdl2.SDL_PollEvent(&event[0])) {
+		if (*eventType == g.SDL_QUIT) {
+			StatusRunning = false;
+		}
+	}
+
+	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
+	g.[pixels_p] = pixels;
+
+	thread1Busy = StatusRunning;
+	thread2Busy = StatusRunning;
+
+	if (thread1Busy) {
+		loopStartTicks = sdl2.SDL_GetTicks();
+		ptr threadPixel_p = g.[pixels_p];
+		Innerloop(0, g.GC_Screen_DimY / 2, threadPixel_p);
+		thread1Busy = false;
+	}
+	while (thread2Busy) { }
 
 	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks) {

@@ -1,9 +1,9 @@
 # Ground
 
 "Ground" is a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language to be 
-added anywhere in the code. Variables and parameters in the "Ground" code can easily be accessed in assembly due to 
-special symbolic constants which are generated.  
-The code that "Ground" generates is poured in an assembly template which can be freely chosen. This will result in
+added anywhere in the code. Mixing Ground- and assembly code is possible by using the generated symbolic constants for
+each local Ground variable.  
+The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
 external code will be loaded at load-time. The usage of the known system DLL's is promoted.
 
@@ -239,7 +239,8 @@ folder and is called ```playfield1024.png```.
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
 Put the 3 files in de same folder as the generated mode7.exe and it will run. The mode7.g is the unoptimized version.
-The innerloop needs 5ms to complete each frame. The mode7_optimized is the optimized version and has an innerloop of 2ms.
+The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is the 
+optimized version and has an innerloop of 1ms.
 
 ![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true)
 

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
@@ -159,12 +161,12 @@ namespace GroundCompiler
 
         public void LoadBoolean(bool value)
         {
-            Codeline($"mov   rax, { (value ? 1 : 0) }");
+            Codeline($"mov   rax, {(value ? 1 : 0)}");
         }
 
         public void LoadConstantFloat64(string name)
         {
-            Codeline($"movq  xmm0, qword [{ name }]");
+            Codeline($"movq  xmm0, qword [{name}]");
         }
 
         public void LoadConstantUInt64(UInt64 value)
@@ -522,8 +524,21 @@ namespace GroundCompiler
         }
         public void LeaFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rbp-{variableName}]");
         public void LoadFunctionVariable64(string variableName) => Codeline($"mov   rax, qword [rbp-{variableName}]");
+        public void LoadFunctionVariable64(string variableName, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+            else
+                Codeline($"mov   rax, qword [rbp-{variableName}]");
+        }
         public void LoadFunctionVariableFloat64(string variableName) => Codeline($"movq  xmm0, qword [rbp-{variableName}]");
-        public void LoadParentFunctionVariable64(string variableName) => Codeline($"mov   rax, qword [rcx-{variableName}]");
+        public void LoadParentFunctionVariable64(string variableName, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  xmm0, qword [rcx-{variableName}]");
+            else
+                Codeline($"mov   rax, qword [rcx-{variableName}]");
+        }
         public void LoadFunctionParameter64(string variableName) => Codeline($"mov   rax, qword [rbp+{variableName}]");
 
         public void LoadFunction(string functionName)
@@ -544,12 +559,22 @@ namespace GroundCompiler
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
                 Codeline($"movq  qword [rbp-{variableName}], xmm0");
             else
+            {
+                // You might ask why only rax is used and not eax, ax, al based on the datatype. Like this:
+                // string reg = cpu.RAX_Register_Sized(datatype.SizeInBytes);
+                // Because a byte in de stack will misalign the stack horribly. And also, local variables are
+                // not arrays, so they take not so much space. It is not like the programmer will be defining 300
+                // byte variables. In that case, an array is created by the programmer those objects are a pointer.
                 Codeline($"mov   qword [rbp-{variableName}], rax");
+            }
         }
 
-        public void StoreParentFunctionParameter64(string variableName)
+        public void StoreParentFunctionParameter64(string variableName, Datatype datatype)
         {
-            Codeline($"mov   [rcx-{variableName}], rax");
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  qword [rcx-{variableName}], xmm0");
+            else
+                Codeline($"mov   [rcx-{variableName}], rax");
         }
 
         public void StoreInstanceVar(string instVar, string reg, Datatype datatype)

@@ -273,7 +273,7 @@ namespace GroundCompiler.AstNodes
                 if (symbol == null)
                     Compiler.Error($"Symbol {name} does not exist.");
 
-                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol)
+                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol || symbol is Symbol.GroupSymbol)
                     return symbol;
 
                 // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.
@@ -652,7 +652,7 @@ namespace GroundCompiler.AstNodes
                     if (functionNameGet.Object is Expression.Variable functionNameVar)
                     {
                         string funcName = functionNameVar.Name.Lexeme;
-                        var theSymbol = scope.GetVariable(funcName);
+                        var theSymbol = scope.GetVariableAnywhere(funcName);
 
                         var theClass = theSymbol.GetClassStatement();
                         if (theClass != null)

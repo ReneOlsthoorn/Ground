@@ -527,6 +527,29 @@ namespace GroundCompiler
                     needleScope = needleScope.Parent;
                     levelsDeep++;
                 }
+
+                if (functionNameVariable.Name.Lexeme == "GC_CreateThread")
+                {
+                    string threadName = ((Expression.Variable)expr.Arguments[0]).Name.Lexeme;
+
+                    // Total exception to the rule: Creating a Thread.
+                    emitter.Codeline($"invoke kernel32_CreateThread, 0, 0x10000, _f_Generated_{threadName}_Startup, 0, 0, 0");
+                    emitter.Codeline($"jmp   _f_Generated_{threadName}_AfterStartup");
+                    emitter.Writeline($"_f_Generated_{threadName}_Startup:");
+                    emitter.Codeline($"push  rbp");
+                    emitter.Codeline($"mov   rax, [main_rbp]");
+                    emitter.Codeline($"mov   rbp, rax");
+                    emitter.Codeline($"push  rax");
+                    emitter.Codeline($"push  qword 0");
+                    emitter.Codeline($"call  _f_Thread2");
+                    emitter.Codeline($"mov   rcx, 0");
+                    emitter.Codeline($"mov   rdx, 0");
+                    emitter.Codeline($"sub   rsp, 0x20");
+                    emitter.Codeline($"call  [kernel32_ExitThread]");
+                    emitter.Codeline($"add   rsp, 0x20");
+                    emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
+                    return null;
+                }
             }
 
             // When we have an methodcall, we use the scope from the class
@@ -535,7 +558,7 @@ namespace GroundCompiler
                 if (functionNameGet.Object is Expression.Variable functionNameVar)
                 {
                     string funcName = functionNameVar.Name.Lexeme;
-                    var theSymbol = scope!.GetVariable(funcName);
+                    var theSymbol = scope!.GetVariableAnywhere(funcName);
 
                     var theClass = theSymbol!.GetClassStatement();
                     if (theClass != null)
@@ -724,13 +747,13 @@ namespace GroundCompiler
                     if (parentSymbol.DataType.Contains(TypeEnum.Integer) && expr.Postfix)
                     {
                         var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                        emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                        emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
                         emitter.Push();
                         if (expr.Operator.Contains(TokenType.PlusPlus))
                             emitter.IncrementCurrent();
                         if (expr.Operator.Contains(TokenType.MinusMinus))
                             emitter.DecrementCurrent();
-                        emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                        emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
                         emitter.Pop();
                         cpu.FreeRegister(reg);
                     }

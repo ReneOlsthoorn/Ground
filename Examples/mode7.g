@@ -42,18 +42,8 @@ if (g.[racetrack_p] == null) {
 sidelib.FlipRedAndGreenInImage(g.[racetrack_p], 1024, 1024);
 u32[1024, 1024] racetrack = g.[racetrack_p];
 
-while (StatusRunning)
-{
-	while (sdl2.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_QUIT) {
-			StatusRunning = false;
-		}
-	}
 
-	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
-	g.[pixels_p] = pixels;
-	loopStartTicks = sdl2.SDL_GetTicks();
-
+function Innerloop() {
 	for (int y = 0; y < g.GC_Screen_DimY; y++) {
 		float distance = space_y * scale_y / (y + horizon);
 		float fStartX = fWorldX + (msvcrt.cos(fWorldAngle + fFoVHalf) * distance);
@@ -75,6 +65,22 @@ while (StatusRunning)
 			pixels[x, y] = pixelColor;
 		}
 	}
+}
+
+
+while (StatusRunning)
+{
+	while (sdl2.SDL_PollEvent(&event[0])) {
+		if (*eventType == g.SDL_QUIT) {
+			StatusRunning = false;
+		}
+	}
+
+	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
+	g.[pixels_p] = pixels;
+	loopStartTicks = sdl2.SDL_GetTicks();
+
+	Innerloop();
 
 	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks) {
