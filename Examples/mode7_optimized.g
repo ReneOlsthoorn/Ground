@@ -21,6 +21,8 @@ u32* eventType = &event[0];
 bool StatusRunning = true;
 bool thread1Busy = false;
 bool thread2Busy = false;
+bool thread3Busy = false;
+bool thread4Busy = false;
 int nMapSize = 1024;
 float fWorldX = 132.8;
 float fWorldY = 651.5;
@@ -134,15 +136,39 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 function Thread2() {
 	while (StatusRunning) {
 		if (thread2Busy) {
-			int halfHeight = g.GC_Screen_DimY / 2;
-			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * halfHeight * g.GC_ScreenPixelSize);
-            Innerloop(halfHeight, g.GC_Screen_DimY, threadPixel_p);
+			int quarterHeight = g.GC_Screen_DimY / 4;
+			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * quarterHeight * g.GC_ScreenPixelSize);
+            Innerloop(quarterHeight, quarterHeight*2, threadPixel_p);
 			thread2Busy = false;
 		}
 	}
 }
 
+function Thread3() {
+	while (StatusRunning) {
+		if (thread3Busy) {
+			int quarterHeight = g.GC_Screen_DimY / 4;
+			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * (quarterHeight*2) * g.GC_ScreenPixelSize);
+            Innerloop(quarterHeight*2, quarterHeight*3, threadPixel_p);
+			thread3Busy = false;
+		}
+	}
+}
+
+function Thread4() {
+	while (StatusRunning) {
+		if (thread4Busy) {
+			int quarterHeight = g.GC_Screen_DimY / 4;
+			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * (quarterHeight*3) * g.GC_ScreenPixelSize);
+            Innerloop(quarterHeight*3, g.GC_Screen_DimY, threadPixel_p);
+			thread4Busy = false;
+		}
+	}
+}
+
 GC_CreateThread(Thread2);
+GC_CreateThread(Thread3);
+GC_CreateThread(Thread4);
 
 while (StatusRunning)
 {
@@ -157,14 +183,19 @@ while (StatusRunning)
 
 	thread1Busy = StatusRunning;
 	thread2Busy = StatusRunning;
+	thread3Busy = StatusRunning;
+	thread4Busy = StatusRunning;
 
 	if (thread1Busy) {
 		loopStartTicks = sdl2.SDL_GetTicks();
 		ptr threadPixel_p = g.[pixels_p];
-		Innerloop(0, g.GC_Screen_DimY / 2, threadPixel_p);
+		int quarterHeight = g.GC_Screen_DimY / 4;
+		Innerloop(0, quarterHeight, threadPixel_p);
 		thread1Busy = false;
 	}
 	while (thread2Busy) { }
+	while (thread3Busy) { }
+	while (thread4Busy) { }
 
 	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks) {

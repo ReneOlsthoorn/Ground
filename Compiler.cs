@@ -541,7 +541,7 @@ namespace GroundCompiler
                     emitter.Codeline($"mov   rbp, rax");
                     emitter.Codeline($"push  rax");
                     emitter.Codeline($"push  qword 0");
-                    emitter.Codeline($"call  _f_Thread2");
+                    emitter.Codeline($"call  _f_{threadName}");
                     emitter.Codeline($"mov   rcx, 0");
                     emitter.Codeline($"mov   rdx, 0");
                     emitter.Codeline($"sub   rsp, 0x20");
