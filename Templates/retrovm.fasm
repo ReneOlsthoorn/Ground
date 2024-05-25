@@ -9,6 +9,7 @@ include '..\..\..\Templates\part_macros.fasm'
 
 GC_Screen_DimX = 960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
 GC_Screen_DimY = 560
+GC_ScreenPixelSize = 4
 GC_Screen_TextColumns = 60 + 1  ;one extra column at the far right for scrolling
 GC_Screen_TextRows = 35 + 1     ;one extra row at the bottom for scrolling
 GC_Screen_TextSize = GC_Screen_TextColumns * GC_Screen_TextRows
