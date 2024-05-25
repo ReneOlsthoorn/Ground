@@ -5,8 +5,13 @@
 
 #include msvcrt.g
 #include sdl2.g
+#include kernel32.g
 #include user32.g
 #include sidelib.g
+
+ptr thread1Handle = kernel32.GetCurrentThread();
+int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
+kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
 ptr window = sdl2.SDL_CreateWindow("Mode 7", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
@@ -108,6 +113,8 @@ sdl2.SDL_DestroyWindow(window);
 sdl2.SDL_Quit();
 
 sidelib.FreeImage(g.[racetrack_p]);
+
+kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 
 string showStr = "Best innerloop time: " + debugBestTicks + "ms";
 user32.MessageBox(null, showStr, "Message", g.MB_OK);

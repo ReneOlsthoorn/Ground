@@ -16,4 +16,5 @@
           msvcrt_free,   'free', \
           msvcrt_sin,    'sin', \
           msvcrt_cos,    'cos', \
+          msvcrt_sqrt,    'sqrt', \
           msvcrt_getch,  '_getch'

@@ -14,6 +14,7 @@ namespace GroundCompiler
     public class CodeEmitterX64
     {
         public CPU_X86_64 cpu;
+        public List<string> GeneratedCode_Equates;
         public List<string> GeneratedCode_Main;
         public List<string> GeneratedCode_Procedures;
         public List<string> GeneratedCode_Data;
@@ -24,6 +25,7 @@ namespace GroundCompiler
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
+            GeneratedCode_Equates = new List<string>();
             GeneratedCode_Main = new List<string>();
             GeneratedCode_Procedures = new List<string>();
             GeneratedCode_Data = new List<string>();

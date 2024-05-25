@@ -9,6 +9,10 @@
 #include user32.g
 #include sidelib.g
 
+ptr thread1Handle = kernel32.GetCurrentThread();
+int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
+kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
+
 sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
 ptr window = sdl2.SDL_CreateWindow("Mode 7 optimized", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
 ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
@@ -21,8 +25,6 @@ u32* eventType = &event[0];
 bool StatusRunning = true;
 bool thread1Busy = false;
 bool thread2Busy = false;
-bool thread3Busy = false;
-bool thread4Busy = false;
 int nMapSize = 1024;
 float fWorldX = 132.8;
 float fWorldY = 651.5;
@@ -136,39 +138,17 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 function Thread2() {
 	while (StatusRunning) {
 		if (thread2Busy) {
-			int quarterHeight = g.GC_Screen_DimY / 4;
-			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * quarterHeight * g.GC_ScreenPixelSize);
-            Innerloop(quarterHeight, quarterHeight*2, threadPixel_p);
+			int halfHeight = g.GC_Screen_DimY / 2;
+			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * halfHeight * g.GC_ScreenPixelSize);
+            Innerloop(halfHeight, g.GC_Screen_DimY, threadPixel_p);
 			thread2Busy = false;
 		}
 	}
 }
 
-function Thread3() {
-	while (StatusRunning) {
-		if (thread3Busy) {
-			int quarterHeight = g.GC_Screen_DimY / 4;
-			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * (quarterHeight*2) * g.GC_ScreenPixelSize);
-            Innerloop(quarterHeight*2, quarterHeight*3, threadPixel_p);
-			thread3Busy = false;
-		}
-	}
-}
 
-function Thread4() {
-	while (StatusRunning) {
-		if (thread4Busy) {
-			int quarterHeight = g.GC_Screen_DimY / 4;
-			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * (quarterHeight*3) * g.GC_ScreenPixelSize);
-            Innerloop(quarterHeight*3, g.GC_Screen_DimY, threadPixel_p);
-			thread4Busy = false;
-		}
-	}
-}
-
-GC_CreateThread(Thread2);
-GC_CreateThread(Thread3);
-GC_CreateThread(Thread4);
+ptr thread2Handle = GC_CreateThread(Thread2);
+kernel32.SetThreadPriority(thread2Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 while (StatusRunning)
 {
@@ -183,19 +163,15 @@ while (StatusRunning)
 
 	thread1Busy = StatusRunning;
 	thread2Busy = StatusRunning;
-	thread3Busy = StatusRunning;
-	thread4Busy = StatusRunning;
 
 	if (thread1Busy) {
 		loopStartTicks = sdl2.SDL_GetTicks();
 		ptr threadPixel_p = g.[pixels_p];
-		int quarterHeight = g.GC_Screen_DimY / 4;
-		Innerloop(0, quarterHeight, threadPixel_p);
+		int halfHeight = g.GC_Screen_DimY / 2;
+		Innerloop(0, halfHeight, threadPixel_p);
 		thread1Busy = false;
 	}
 	while (thread2Busy) { }
-	while (thread3Busy) { }
-	while (thread4Busy) { }
 
 	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks) {
@@ -223,6 +199,8 @@ sdl2.SDL_DestroyWindow(window);
 sdl2.SDL_Quit();
 
 sidelib.FreeImage(g.[racetrack_p]);
+
+kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 
 string showStr = "Best innerloop time: " + debugBestTicks + "ms";
 user32.MessageBox(null, showStr, "Message", g.MB_OK);

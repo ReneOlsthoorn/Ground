@@ -8,7 +8,7 @@ include '..\..\..\Templates\part_equates.fasm'
 include '..\..\..\Templates\part_macros.fasm'
 
 GC_Screen_DimX = 960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
-GC_Screem_DimY = 560
+GC_Screen_DimY = 560
 GC_Screen_TextColumns = 60 + 1  ;one extra column at the far right for scrolling
 GC_Screen_TextRows = 35 + 1     ;one extra row at the bottom for scrolling
 GC_Screen_TextSize = GC_Screen_TextColumns * GC_Screen_TextRows
@@ -23,6 +23,9 @@ TEXT1_FONT32 = 0
 TEXT1_FONT256 = 1
 TEXT4_FONT1024 = 2
 PIXEL4_BITMAP = 3
+
+; *** GENERATED EQUATES CODE ***
+;GC_INSERTIONPOINT_EQUATES
 
 section '.text' code readable executable
 start:
@@ -340,7 +343,7 @@ DrawAllCRTLines:
   call	DrawCRTLine_TEXT4_FONT1024
 .aftermode:
   inc	r12d
-  cmp	r12d, GC_Screem_DimY
+  cmp	r12d, GC_Screen_DimY
   jnz	.loop
   pop	r13 r11 r12
   ret
@@ -352,6 +355,13 @@ DrawCRTLine_TEXT1_FONT32:
   push	rbp
   mov	rbp, rsp
   push	rsi rdi r11 r12 r13 r14 r15 rbx
+  sub	rsp, 0x10
+
+  mov	rax, GC_Screen_DimX*4
+  mul	rcx
+  add	rax, [bg_image_p]
+  mov	[rsp+8], rax        ; pointer naar bg_image_p op y positie is nu berekend.
+
   mov	r15, [font32_charcolor_p]
   mov	rdi, [pixels_p]
   mov	r9, rcx
@@ -380,6 +390,21 @@ DrawCRTLine_TEXT1_FONT32:
   mov	rsi, [font32_p]
   xor	eax, eax
   mov	al, [r10]			; r10 = ScreenTextPtr offset our character
+
+
+  cmp	al, 0xff
+  jne	.no_special_bg_character
+  mov	rsi, [rsp+8]
+
+  mov	rcx, 16
+  rep	movsd
+  add	r14d, 15
+  mov   r8d, 15
+
+  jmp	.afterCharacterHandled
+.no_special_bg_character:
+
+
   shl	rax, 5				; each character is 32 bytes
   add	rsi, rax
 
@@ -420,6 +445,7 @@ DrawCRTLine_TEXT1_FONT32:
   mov	[rdi], eax
   add	rdi, 4
 
+.afterCharacterHandled:
   inc	r14d
   cmp	r14d, GC_Screen_DimX
   jz	.exit_loop
@@ -429,8 +455,14 @@ DrawCRTLine_TEXT1_FONT32:
   xor	r8d, r8d
   inc	r10					; goto the next screencharacter 
   inc	r15
+
+  mov	rax, [rsp+8]
+  add	rax, 16*4
+  mov	[rsp+8], rax
+
   jmp	.loop
 .exit_loop:
+  add   rsp, 0x10
   pop	rbx r15 r14 r13 r12 r11 rdi rsi
   mov	rsp, rbp
   pop	rbp
@@ -671,6 +703,7 @@ font256_p			dq 0
 font1024_p			dq 0
 colortable_p		dq 0
 font32_charcolor_p	dq 0
+bg_image_p			dq 0
 
 frameCount		dq 0
 

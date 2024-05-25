@@ -34,6 +34,7 @@ namespace GroundCompiler
             string tmpl = File.ReadAllText($"..\\..\\..\\Templates\\{this.CodeTemplateName}.fasm");
 
             // Fill in the blocks in the template
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_EQUATES", string.Join("", emitter.GeneratedCode_Equates));
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_MAIN", string.Join("", emitter.GeneratedCode_Main) );
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_PROCEDURES", string.Join("", emitter.GeneratedCode_Procedures));
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_DATA", string.Join("", emitter.GeneratedCode_Data));
@@ -177,6 +178,8 @@ namespace GroundCompiler
                     emitter.GeneratedCode_Procedures.Add(literal + "\r\n");
                 else if (attr == "main")
                     emitter.GeneratedCode_Main.Add(literal + "\r\n");
+                else if (attr == "equates")
+                    emitter.GeneratedCode_Equates.Add(literal + "\r\n");
             }
             else
                 emitter.Writeline(literal);

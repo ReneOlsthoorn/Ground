@@ -12,6 +12,9 @@ GC_Screen_DimY = 560
 GC_ScreenPixelSize = 4
 GC_ScreenLineSize = GC_Screen_DimX * GC_ScreenPixelSize
 
+; *** GENERATED EQUATES CODE ***
+;GC_INSERTIONPOINT_EQUATES
+
 section '.text' code readable executable
 start:
   push	rbp

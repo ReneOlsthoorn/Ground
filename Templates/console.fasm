@@ -6,6 +6,8 @@ include 'win64a.inc'
 include '..\..\..\Templates\part_equates.fasm'
 include '..\..\..\Templates\part_macros.fasm'
 
+; *** GENERATED EQUATES CODE ***
+;GC_INSERTIONPOINT_EQUATES
 
 section '.text' code readable executable
 start:

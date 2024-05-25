@@ -115,7 +115,7 @@ namespace GroundCompiler.AstNodes
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
 
-                this.Scope.DefineHardcodedFunction("GC_CreateThread");
+                this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
                 this.Scope.DefineHardcodedFunction("GC_WaitVBL");
                 this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextRows", Datatype.GetDatatype("int"));

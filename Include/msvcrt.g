@@ -8,3 +8,4 @@ dll msvcrt function free(ptr memory);
 dll msvcrt function getch();
 dll msvcrt function sin(float angle) : float;
 dll msvcrt function cos(float angle) : float;
+dll msvcrt function sqrt(float x) : float;
