@@ -353,15 +353,14 @@ DrawAllCRTLines:
 
 DrawCRTLine_TEXT1_FONT32:
 ;rcx = y position to draw (yscroll not added yet)
-  push	rbp
+  push	rbp rsi rdi r11 r12 r13 r14 r15 rbx
   mov	rbp, rsp
-  push	rsi rdi r11 r12 r13 r14 r15 rbx
   sub	rsp, 0x10
 
   mov	rax, GC_Screen_DimX*4
   mul	rcx
   add	rax, [bg_image_p]
-  mov	[rsp+8], rax        ; pointer naar bg_image_p op y positie is nu berekend.
+  mov	[rbp-8], rax        ; pointer naar bg_image_p op y positie is nu berekend.
 
   mov	r15, [font32_charcolor_p]
   mov	rdi, [pixels_p]
@@ -385,6 +384,8 @@ DrawCRTLine_TEXT1_FONT32:
   mov	r10, rax			; r10 = ScreenTextPtr offset our character
   and	r9d, 0fh			; r9 is the amount of y pixels within the character down.
 
+  mov	rdx, [rbp-8]		; entering innerloop area, rdx can be used and is filled with the bg_image_p
+
   xor	r14d, r14d
   mov	r8, [xscroll]
 .loop:
@@ -392,19 +393,21 @@ DrawCRTLine_TEXT1_FONT32:
   xor	eax, eax
   mov	al, [r10]			; r10 = ScreenTextPtr offset our character
 
-
-  cmp	al, 0xff
+  cmp	al, 0xff			; special bg_image character
   jne	.no_special_bg_character
-  mov	rsi, [rsp+8]
-
-  mov	rcx, 16
-  rep	movsd
-  add	r14d, 15
-  mov   r8d, 15
-
-  jmp	.afterCharacterHandled
+.special_bg_character_loop:
+  mov	eax, dword [rdx]
+  mov	dword [rdi], eax
+  add	rdi, 4
+  add	rdx, 4
+  inc	r14d
+  cmp	r14d, GC_Screen_DimX
+  jz	.exit_loop
+  inc	r8d					; next pixel
+  cmp	r8d, 16
+  jnz	.special_bg_character_loop
+  jmp	.afterSpecialBgImageCharHandled
 .no_special_bg_character:
-
 
   shl	rax, 5				; each character is 32 bytes
   add	rsi, rax
@@ -445,28 +448,21 @@ DrawCRTLine_TEXT1_FONT32:
 .setColor:
   mov	[rdi], eax
   add	rdi, 4
-
-.afterCharacterHandled:
+  add	rdx, 4			; next pixel in bg_image
   inc	r14d
   cmp	r14d, GC_Screen_DimX
   jz	.exit_loop
   inc	r8d					; next pixel
   cmp	r8d, 16
   jnz	.samechar_loop
+.afterSpecialBgImageCharHandled:
   xor	r8d, r8d
   inc	r10					; goto the next screencharacter 
   inc	r15
-
-  mov	rax, [rsp+8]
-  add	rax, 16*4
-  mov	[rsp+8], rax
-
   jmp	.loop
 .exit_loop:
-  add   rsp, 0x10
-  pop	rbx r15 r14 r13 r12 r11 rdi rsi
   mov	rsp, rbp
-  pop	rbp
+  pop	rbx r15 r14 r13 r12 r11 rdi rsi rbp
   ret
 
 

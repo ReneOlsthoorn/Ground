@@ -206,6 +206,7 @@ while (StatusRunning)
             screenArray[g.GC_Screen_TextColumns-1, whichLineToScroll] = scrollText[scrollTextNeedle++];
             if (scrollText[scrollTextNeedle] == 0) {
                 scrollTextNeedle = 0;
+				println("The Retro VM actually draws\r\nthe entire screen every frame,\r\nlike the legendary VIC-2 Chip\r\nfrom the Commodore 64.\r\n\r\nThe Retro VM has a textbuffer\r\nthat is able to scroll,\r\nand also to smoothscroll.\r\nIt also has Copper look-a-like functionality,\r\ninspired by the Amiga 500.\r\n");
             }
         }
         if (frameCount % 3 == 0) {
