@@ -11,6 +11,23 @@ for (int i = 1; i < loopNr+1; i++) {
     kernel32.Sleep(500);
 }
 
+//65535 test
+i = 0x1ffff;
+u16* ptr1 = &i;
+u16 j = *ptr1;
+println(j);
+
+ptr theStartpoint = g.startpoint;
+u16 j2 = *(theStartpoint+8);
+println(j2);
+
+asm data {
+startpoint dq 0x2ffff
+ dq 0x1ffff
+ dd 1
+ dd 2
+ dq 3
+}
 
 // Nested functions test
 int outsideInt = 100;

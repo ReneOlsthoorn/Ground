@@ -120,11 +120,17 @@ namespace GroundCompiler
 
         public void EmitCreateStackframe()
         {
+            // When entering a function, the stack is always unaligned, because the returnaddress is on the stack.
+            // So StackPos is always -8 when starting a procedure.
+            Emitter.StackPos = -8;
+
             if (FunctionStatement.AssemblyOnlyFunctionWithNoParameters())
                 return;
 
             if (ProcedureName != "main")
                 Emitter.CreateStackframe();
+            else
+                Emitter.StackPush();    // All templates solve the stack unalignment at the start with a push rbp. 
 
             int spaceToReserve = AmountStackSpaceToReserve();
             if (spaceToReserve > 0)

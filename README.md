@@ -36,7 +36,7 @@ We can replace a statement with x86-64:
 ```
 
 Diving into this software will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
-format and Compiler Design.
+format, the x64 calling convention and Compiler Design.
 
 The C programming language is 50 years old at this moment. It is a nice language to do low-level programming, but 
 nowadays C compilers do not allow the mixing of C and assembly in the same function. The reason is obvious: manual 

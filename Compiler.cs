@@ -267,7 +267,7 @@ namespace GroundCompiler
             UInt64 nrBytesToAllocate = list.ExprType.BytesToAllocate(); //  sizeEachElement * list.Elements.Count;
             emitter.Allocate(nrBytesToAllocate);
             emitter.PushAllocateIndexElement();
-            string baseReg = cpu.GetTmpRegister();
+            string baseReg = cpu.GetRestoredRegister();
             emitter.MoveCurrentToRegister(baseReg);
             for (int i = 0; i < list.Elements.Count; i++)
             {
@@ -584,7 +584,13 @@ namespace GroundCompiler
 
             int nrArguments = expr.Arguments.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
             if (nrArguments % 2 == 1)
-                emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
+            {
+                if (dllFunctionSymbol == null || (expr.Arguments.Count > 4))
+                {
+                    emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
+                    emitter.StackPush();
+                }
+            }
 
             List<FunctionParameter> fPars = theFunction!.FunctionStmt.Parameters;
             for (int i = (nrArguments-3); i >= 0; i--)
@@ -596,7 +602,7 @@ namespace GroundCompiler
 
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
-                emitter.Push();
+                emitter.Push(arg);
             }
 
             bool pushLexicalParent = (dllFunctionSymbol == null);
@@ -630,42 +636,90 @@ namespace GroundCompiler
             if (dllFunctionSymbol != null)
             {
                 nrArguments = expr.Arguments.Count;
-                if (nrArguments % 2 == 1)
-                    nrArguments++;
-
                 if (nrArguments > 0)
                 {
-                    cpu.ReserveRegister("rcx");
-                    emitter.Pop();
-                    emitter.Codeline("mov   rcx, rax");
-                    cpu.FreeRegister("rcx");
-                    cpu.ReserveRegister("rdx");
-                    emitter.Pop();
-                    emitter.Codeline("mov   rdx, rax");
-                    cpu.FreeRegister("rdx");
+                    InsertFastCallArgument(0, expr.Arguments[0]);
+                    if (nrArguments > 1)
+                        InsertFastCallArgument(1, expr.Arguments[1]);
                 }
                 if (nrArguments > 2)
                 {
-                    cpu.ReserveRegister("r8");
-                    emitter.Pop();
-                    emitter.Codeline("mov   r8, rax");
-                    cpu.FreeRegister("r8");
-                    cpu.ReserveRegister("r9");
-                    emitter.Pop();
-                    emitter.Codeline("mov   r9, rax");
-                    cpu.FreeRegister("r9");
+                    InsertFastCallArgument(2, expr.Arguments[2]);
+                    if (nrArguments > 3)
+                        InsertFastCallArgument(3, expr.Arguments[3]);
                 }
                 int stackToReserve = 32;
+                if (!emitter.IsAlign16(emitter.StackPos - stackToReserve))
+                    stackToReserve += 8;    // align the stack to 16 bytes
                 string hexStackToReserve = stackToReserve.ToString("X");
                 emitter.Codeline($"sub   rsp, {hexStackToReserve}h");
+                emitter.StackSub(stackToReserve);
                 string groupName = (string)dllFunctionSymbol.FunctionStmt.Properties["group"];
                 string functionName = (string)dllFunctionSymbol.FunctionStmt.Name.Lexeme;
                 emitter.Codeline($"call  [{groupName}_{functionName}]");
                 emitter.Codeline($"add   rsp, {hexStackToReserve}h");
-            } else
+                emitter.StackAdd(stackToReserve);
+                // If we have more than 4 parameters, than we need to free those stack parameters.
+                if (nrArguments > 4)
+                {
+                    int extraToRelease = (((nrArguments - (4 + 1)) * 8) & 0xfff0) + 16;
+                    emitter.Codeline($"add   rsp, {extraToRelease}");
+                    emitter.StackPop(extraToRelease);
+                }
+            }
+            else
                 emitter.CallFunction(theFunction!, expr);
 
             return null;
+        }
+
+
+        private void InsertFastCallArgument(int index, Expression expr)
+        {
+            string theRegister = "rax";
+
+            if (expr.ExprType.Contains(TypeEnum.FloatingPoint))
+            {
+                switch (index)
+                {
+                    case 0:
+                        theRegister = "xmm0";
+                        break;
+                    case 1:
+                        theRegister = "xmm1";
+                        break;
+                    case 2:
+                        theRegister = "xmm2";
+                        break;
+                    case 3:
+                        theRegister = "xmm3";
+                        break;
+                }
+                cpu.ReserveRegister(theRegister);
+                emitter.Pop(expr, theRegister);
+                cpu.FreeRegister(theRegister);
+            }
+            else
+            {
+                switch (index)
+                {
+                    case 0:
+                        theRegister = "rcx";
+                        break;
+                    case 1:
+                        theRegister = "rdx";
+                        break;
+                    case 2:
+                        theRegister = "r8";
+                        break;
+                    case 3:
+                        theRegister = "r9";
+                        break;
+                }
+                cpu.ReserveRegister("rcx");
+                emitter.Pop(expr, theRegister);
+                cpu.FreeRegister("rcx");
+            }
         }
 
 
@@ -714,7 +768,7 @@ namespace GroundCompiler
         }
 
 
-        // Unary, like !a, a++, &a or *a. Direction: Read/Write.
+        // Unary, like -a, !a, a++, &a or *a. Direction: Read/Write.
         public object? VisitorUnaryExpr(Expression.Unary expr)
         {
             if (expr.Right is Expression.Variable  theVariable)
@@ -735,10 +789,25 @@ namespace GroundCompiler
                         emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
                         emitter.Pop();
                     }
+                    else if (localVarSymbol.DataType.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
+                    {
+                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                        emitter.Negation(expr.Right);
+                    }
+                    else if (localVarSymbol.DataType.Contains(TypeEnum.FloatingPoint) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
+                    {
+                        emitter.LoadFunctionVariableFloat64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                        emitter.Negation(expr.Right);
+                    }
                     else if (localVarSymbol.DataType.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
                     {
                         emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
                         emitter.LoadPointingTo(localVarSymbol.DataType.Base!.SizeInBytes);
+                    }
+                    else if (localVarSymbol.DataType.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
+                    {
+                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+                        emitter.LoadPointingTo(localVarSymbol.DataType.SizeInBytes);
                     }
                     else if (expr.Operator.Contains(TokenType.Ampersand))
                     {
@@ -765,6 +834,14 @@ namespace GroundCompiler
             else if (expr.Right is Expression.ArrayAccess arrayAccess)
             {
                 ArrayAccess(arrayAccess, assignment: null, addressOf: true);
+            }
+            else if (expr.Right is Expression.Grouping groupStmt)
+            {
+                if (expr.Operator.Contains(TokenType.Asterisk))
+                {
+                    EmitExpression(expr.Right);
+                    emitter.LoadPointingTo(groupStmt.ExprType.SizeInBytes);
+                }
             }
             else if (expr.Operator.Contains(TokenType.Not))
             {

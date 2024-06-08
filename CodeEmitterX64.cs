@@ -19,6 +19,9 @@ namespace GroundCompiler
         public List<string> GeneratedCode_Procedures;
         public List<string> GeneratedCode_Data;
         public List<string> generatedCode;
+        // When entering a function, the stack is always unaligned, because the returnaddress is on the stack.
+        // So StackPos is always -8 when starting a procedure.
+        public long StackPos = -8;  // position of the stack for align16 purposes. Resetted in EmitProcedure>>EmitCreateStackframe()
         long labelCounter = 0;
 
         public CodeEmitterX64(CPU_X86_64 cpu)
@@ -96,12 +99,14 @@ namespace GroundCompiler
         public void CreateStackframe()
         {
             Codeline($"push  rbp");         // this line makes the value at [rbp] always the parent
+            StackPush();  // now, the stack is aligned, because when starting a function, the stack is always unaligned.
             Codeline($"mov   rbp, rsp");
         }
 
         public void ReserveStackspace(int stackSpaceNeeded, bool insertRefCountBlock = true)
         {
             Codeline($"sub   rsp, {stackSpaceNeeded}");
+            StackSub(stackSpaceNeeded);
             if (insertRefCountBlock)
             {
                 Codeline($"mov   qword [rbp-G_FIRST_REFCOUNT_PTR], 0");
@@ -116,7 +121,10 @@ namespace GroundCompiler
             if (!noFrameRestoration)
             {
                 Codeline($"mov   rsp, rbp");
+                // the intial "mov rbp, rsp" statement is done with an aligned stack, so the stackpos is -16
+                StackPos = -16;
                 Codeline($"pop   rbp");
+                StackPop();
             }
             if (returnPop > 0)
                 Codeline($"retn  {returnPop}\r\n");
@@ -199,19 +207,27 @@ namespace GroundCompiler
             if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
                 PushFloat();
             else
+            {
                 Codeline($"push  rax");
+                StackPush();
+            }
         }
 
         public void PushFloat()
         {
-            Codeline($"sub   rsp, 16");
+            Codeline($"sub   rsp, 8");
+            StackSub();
             Codeline($"movq  qword [rsp], xmm0");
         }
 
-        public void PopFloat()
+        public void PopFloat(string? register = null)
         {
-            Codeline($"movq  xmm0, qword [rsp]");
-            Codeline($"add   rsp, 16");
+            string usedRegister = "xmm0";
+            if (register != null)
+                usedRegister = register;
+            Codeline($"movq  {usedRegister}, qword [rsp]");
+            Codeline($"add   rsp, 8");
+            StackAdd();
         }
 
         public void PopAddStrings(AstNodes.Expression? expr = null)
@@ -219,6 +235,7 @@ namespace GroundCompiler
             cpu.ReserveRegister("rcx");
             cpu.ReserveRegister("rdx");
             Codeline("pop   rcx");
+            StackPop();
             Codeline("mov   rdx, rax");
             Codeline("call  AddCombinedStrings");       // rcx wijst naar eerste string, rdx wijst naar tweede string
             Codeline("mov   rcx, rbp");
@@ -244,8 +261,7 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq  {floatReg}, xmm0");
-                Codeline($"movq  xmm0, qword [rsp]");
-                Codeline($"add   rsp, 16");
+                PopFloat("xmm0");
                 Codeline($"addsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
@@ -254,6 +270,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"mov   {reg}, rax");
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"add   rax, {reg}");
             cpu.FreeRegister(reg);
         }
@@ -267,8 +284,7 @@ namespace GroundCompiler
 
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq  {floatReg}, xmm0");
-                Codeline($"movq  xmm0, qword [rsp]");
-                Codeline($"add   rsp, 16");
+                PopFloat("xmm0");
                 Codeline($"mov   rax, 1");
                 Codeline($"comisd xmm0, {floatReg}");
                 Codeline($"{trueJmpCondition}    {exitLabel}");
@@ -294,6 +310,7 @@ namespace GroundCompiler
                 Codeline($"jne    {strCmpLabel}");
                 Codeline($"mov    rcx, rax");
                 Codeline($"pop    rax");
+                StackPop();
                 InsertLabel(secondArgNull);
                 Codeline($"sub    rax, rcx");
                 Codeline($"jmp    {nullExitLabel}");
@@ -301,6 +318,7 @@ namespace GroundCompiler
                 Codeline($"call   GetMemoryPointerFromIndex");
                 Codeline($"mov    rcx, rax");
                 Codeline($"pop    rax");
+                StackPop();
                 Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
                 Codeline($"je     {secondArgNull}");
                 Codeline($"call   GetMemoryPointerFromIndex");
@@ -318,8 +336,7 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq  {floatReg}, xmm0");
-                Codeline($"movq  xmm0, qword [rsp]");
-                Codeline($"add   rsp, 16");
+                PopFloat("xmm0");
                 Codeline($"subsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
@@ -328,6 +345,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"mov   {reg}, rax");
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"sub   rax, {reg}");
             cpu.FreeRegister(reg);
         }
@@ -341,8 +359,7 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq  {floatReg}, xmm0");
-                Codeline($"movq  xmm0, qword [rsp]");
-                Codeline($"add   rsp, 16");
+                PopFloat("xmm0");
                 Codeline($"mulsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
@@ -351,6 +368,7 @@ namespace GroundCompiler
             cpu.ReserveRegister("rdx");
             Codeline($"mov   rdx, rax");
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
             cpu.FreeRegister("rdx");
         }
@@ -361,8 +379,7 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 Codeline($"movq  {floatReg}, xmm0");
-                Codeline($"movq  xmm0, qword [rsp]");
-                Codeline($"add   rsp, 16");
+                PopFloat("xmm0");
                 Codeline($"divsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
@@ -373,6 +390,7 @@ namespace GroundCompiler
             Codeline($"mov   {reg}, rax");
             Codeline($"xor   rdx, rdx");    // always clean rdx before division
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"div   {reg}");
             cpu.FreeRegister("rdx");
             cpu.FreeRegister(reg);
@@ -383,6 +401,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"mov   {reg}, rax");
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"and   rax, {reg}");
             cpu.FreeRegister(reg);
         }
@@ -394,6 +413,7 @@ namespace GroundCompiler
             Codeline($"mov   {reg}, rax");
             Codeline($"xor   edx, edx");        // always clean rdx before division
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"div   {reg}");
             Codeline($"mov   eax, edx");
             cpu.FreeRegister("rdx");
@@ -405,6 +425,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"mov   {reg}, rax");
             Codeline($"pop   rax");
+            StackPop();
             Codeline($"or   rax, {reg}");
             cpu.FreeRegister(reg);
         }
@@ -413,6 +434,7 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");             // expr 3 > 2.
+            StackPop();
             Codeline($"sub   rax, {reg}");        // sub 2, 3 (2 - 3) -> carry is set
             Codeline($"mov   eax, 0");
             Codeline($"adc   eax, 0");          // carry is added as 1, so result = 1 (value true).
@@ -424,6 +446,7 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
+            StackPop();
             Codeline($"sub   {reg}, rax");
             Codeline($"mov   eax, 0");
             Codeline($"adc   eax, 0");
@@ -465,6 +488,7 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
+            StackPop();
             Codeline($"or    rax, {reg}");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
@@ -474,9 +498,20 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
+            StackPop();
             Codeline($"and   rax, {reg}");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
+        }
+
+        public void Negation(AstNodes.Expression? expr = null)
+        {
+            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            {
+                Codeline($"xorps   xmm0, xword [Negation_XMM]");
+            }
+            else 
+                Codeline($"neg   rax");
         }
 
         public void JumpToLabelIfTrue(string label)
@@ -749,16 +784,23 @@ namespace GroundCompiler
         public void PushAllocateIndexElement()
         {
             Codeline("push  rcx");
+            StackPush();
         }
 
-        public void Pop(AstNodes.Expression? expr = null)
+        public void Pop(AstNodes.Expression? expr = null, string? register = null)
         {
             if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
-                PopFloat();
+                PopFloat(register);
             else
-                Codeline("pop   rax");
+            {
+                Codeline($"pop   {((register == null) ? "rax" : register)}");
+                StackPop();
+            }
         }
-        public void PopAllocateIndexElement() => Codeline("pop   rax");
+        public void PopAllocateIndexElement() {
+            Codeline("pop   rax");
+            StackPop();
+        }
 
         public void MoveCurrentToRegister(string reg) => Codeline($"mov   {reg}, rax");
 
@@ -780,5 +822,21 @@ namespace GroundCompiler
             Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
         }
 
+        public void resizeCurrent(int newNrBytes)
+        {
+            if (newNrBytes == 1)
+                Codeline($"and   rax, 0xff");
+            else if (newNrBytes == 2)
+                Codeline($"and   rax, 0xffff");
+            else if (newNrBytes == 4)
+                Codeline($"mov   eax, eax");
+        }
+
+        public bool IsAlign16() => IsAlign16(this.StackPos);
+        public bool IsAlign16(long stackposition) => (((-stackposition) % 16) == 0);
+        public void StackAdd(int size = 8) => StackPos += size;
+        public void StackSub(int size = 8) => StackPos -= size;
+        public void StackPush(int size = 8) => StackSub(size);
+        public void StackPop(int size = 8) => StackAdd(size);
     }
 }

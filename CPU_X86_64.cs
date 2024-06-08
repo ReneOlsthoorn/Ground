@@ -29,6 +29,18 @@ namespace GroundCompiler
             return "";
         }
 
+        public string GetRestoredRegister(string usage = "")
+        {
+            foreach (var reg in _restoredRegisters)
+                if (!reservedRegisters.ContainsKey(reg))
+                {
+                    reservedRegisters[reg] = usage;
+                    return reg;
+                }
+            Compiler.Error("No free register in GetRestoredRegister.");
+            return "";
+        }
+
         public string GetTmpFloatRegister(string usage = "")
         {
             foreach (var reg in _tmpFloatRegisters)

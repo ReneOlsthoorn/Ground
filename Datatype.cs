@@ -115,7 +115,7 @@ namespace GroundCompiler
             foreach (VarStatement vs in classStatement.InstanceVariables)
                 sizeInBytes += vs.ResultType.SizeInBytes;
 
-            var newDatatype = Datatype.FromData(name, [ TypeEnum.CustomClass ], true, sizeInBytes);
+            var newDatatype = Datatype.FromData(name, [ TypeEnum.CustomClass ], false, sizeInBytes);
             newDatatype.Properties["classStatement"] = classStatement;
             Cached.Add(name, newDatatype);
         }

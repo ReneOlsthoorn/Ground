@@ -187,7 +187,7 @@ namespace GroundCompiler
             if (arrayExpr.Accessor != null)
             {
                 var varSymbol = symbol as Scope.Symbol.VariableSymbol;
-                string indexReg = cpu.GetTmpRegister();
+                string indexReg = cpu.GetRestoredRegister();
                 for (int i = 0; i < arrayExpr.Accessor.Count; i++)
                 {
                     if (i > 0)
@@ -237,11 +237,12 @@ namespace GroundCompiler
                 if (varSymbol!.DataType.IsReferenceType)
                     emitter.GetMemoryPointerFromIndex();
 
-                string baseReg = cpu.GetTmpRegister();
+                string baseReg = cpu.GetRestoredRegister();
                 emitter.MoveCurrentToRegister(baseReg);
                 if (assignment != null)
                 {
                     EmitExpression(assignment.RightOfEqualSign, targetType);
+                    EmitConversionCompatibleType(assignment.RightOfEqualSign, targetType, copyDatatypeToSource: false);
                     emitter.StoreCurrentInBasedIndex(elementSizeInBytes, baseReg, indexReg);
                 }
                 else
@@ -257,7 +258,7 @@ namespace GroundCompiler
         }
 
 
-        public void EmitConversionCompatibleType(Expression sourceExpr, Datatype destinationDatatype)
+        public void EmitConversionCompatibleType(Expression sourceExpr, Datatype destinationDatatype, bool copyDatatypeToSource = true)
         {
             if (sourceExpr is Expression.Literal literalExpr)
             {
@@ -276,19 +277,25 @@ namespace GroundCompiler
                 else if (sourceDatatype.Contains(Datatype.TypeEnum.Boolean))
                     emitter.BooleanToString(sourceExpr);
 
-                sourceExpr.ExprType = destinationDatatype;
+                if (copyDatatypeToSource)
+                    sourceExpr.ExprType = destinationDatatype;
             }
             else if (destinationDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && sourceDatatype.Contains(Datatype.TypeEnum.Integer))
             {
                 emitter.IntegerToFloat();
-                sourceExpr.ExprType = destinationDatatype;
+                if (copyDatatypeToSource)
+                    sourceExpr.ExprType = destinationDatatype;
             }
             else if (destinationDatatype.Contains(Datatype.TypeEnum.Integer) && sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 emitter.FloatToInteger();
-                sourceExpr.ExprType = destinationDatatype;
+                if (copyDatatypeToSource)
+                    sourceExpr.ExprType = destinationDatatype;
             }
-
+            else if (sourceDatatype.Contains(Datatype.TypeEnum.Integer) && destinationDatatype.Contains(Datatype.TypeEnum.Integer) && destinationDatatype.SizeInBytes < sourceDatatype.SizeInBytes)
+            {
+                emitter.resizeCurrent(destinationDatatype.SizeInBytes);
+            }
         }
 
 

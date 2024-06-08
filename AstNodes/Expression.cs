@@ -249,7 +249,12 @@ namespace GroundCompiler.AstNodes
 
             public override void Initialize()
             {
-                if (Right != null) { Right.Parent = this; Right.Initialize(); }
+                if (Right != null) {
+                    Right.Parent = this;
+                    Right.Initialize();
+                    this.ExprType = Right.ExprType;
+                }                
+
                 base.Initialize();
             }
 

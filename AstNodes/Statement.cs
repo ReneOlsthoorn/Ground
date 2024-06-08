@@ -147,67 +147,24 @@ namespace GroundCompiler.AstNodes
                 fontPtrDatatype.IsValueType = true;
                 this.Scope.DefineHardcodedVariable("GC_ScreenFont", fontPtrDatatype);
 
+                AddDynamicDLL("sdl2");
+                AddDynamicDLL("sdl2_image");
+                AddDynamicDLL("kernel32");
+                AddDynamicDLL("user32");
+                AddDynamicDLL("sidelib");
+                AddDynamicDLL("chipmunk");
+            }
 
+            public void AddDynamicDLL(string dllName)
+            {
+                var nameToken = new Token(TokenType.Identifier);
+                nameToken.Lexeme = dllName;
 
-                // group sdl2
-                nameToken = new Token(TokenType.Identifier);
-                nameToken.Lexeme = "sdl2";
-
-                functionStmts = new List<FunctionStatement>();
-                group = new GroupStatement(nameToken, functionStmts);
+                var functionStmts = new List<FunctionStatement>();
+                var group = new GroupStatement(nameToken, functionStmts);
                 group.Properties["don't generate"] = true;
                 group.Parent = this;
                 this.Scope.DefineGroup(group);
-
-
-
-                // group kernel32
-                nameToken = new Token(TokenType.Identifier);
-                nameToken.Lexeme = "kernel32";
-
-                functionStmts = new List<FunctionStatement>();
-                group = new GroupStatement(nameToken, functionStmts);
-                group.Properties["don't generate"] = true;
-                group.Parent = this;
-                this.Scope.DefineGroup(group);
-
-
-
-                // group user32
-                nameToken = new Token(TokenType.Identifier);
-                nameToken.Lexeme = "user32";
-
-                functionStmts = new List<FunctionStatement>();
-                group = new GroupStatement(nameToken, functionStmts);
-                group.Properties["don't generate"] = true;
-                group.Parent = this;
-                this.Scope.DefineGroup(group);
-
-
-
-                // group sidelib
-                nameToken = new Token(TokenType.Identifier);
-                nameToken.Lexeme = "sidelib";
-
-                functionStmts = new List<FunctionStatement>();
-                group = new GroupStatement(nameToken, functionStmts);
-                group.Properties["don't generate"] = true;
-                group.Parent = this;
-                this.Scope.DefineGroup(group);
-
-
-
-                // group g
-                /*
-                nameToken = new Token(TokenType.Identifier);
-                nameToken.Lexeme = "g";
-
-                functionStmts = new List<FunctionStatement>();
-                group = new GroupStatement(nameToken, functionStmts);
-                group.Properties["don't generate"] = true;
-                group.Parent = this;
-                this.Scope.DefineGroup(group);
-                */
             }
 
             public override void Initialize()

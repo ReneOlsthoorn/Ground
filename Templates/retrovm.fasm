@@ -644,6 +644,8 @@ section '.idata' import data readable writeable
 
 
 section '.data' data readable writeable
+Negation_XMM            db 0,0,0,0,0,0,0,80h
+                        db 0,0,0,0,0,0,0,80h
 main_rbp                dq 0
 processHeapHandle		dq 0
 GetStdHandle_outputhandle dq 0
