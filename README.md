@@ -254,3 +254,8 @@ Put the 3 files in de same folder as the generated smoothscroller.exe and it wil
 You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 
 ![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true)
+
+### The chipmunk_tennis.g example
+There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
+
+![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true)
