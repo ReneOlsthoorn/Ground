@@ -175,12 +175,10 @@ include '..\..\..\Templates\part_hardcoded_library.fasm'
 
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
-          msvcrt, 'msvcrt.dll', \
-          chipmunk, 'chipmunk.dll'
+          msvcrt, 'msvcrt.dll'
 
   include '..\..\..\Include\kernel32_api.inc'
   include '..\..\..\Include\msvcrt_api.inc'
-  include '..\..\..\Include\chipmunk_api.inc'
 
 
 section '.data' data readable writeable
