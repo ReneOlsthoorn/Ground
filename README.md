@@ -7,6 +7,8 @@ The code that Ground generates is poured in an assembly template which can be fr
 small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
 external code will be loaded at load-time. The usage of the known system DLL's is promoted.
 
+![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true)
+
 The strength of Ground is the ability to replace a Ground statement with x86-64. So for example we have the following
 code in mode7.g:
 ```
@@ -252,8 +254,6 @@ Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/G
 Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
 Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.  
 You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
-
-![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true)
 
 ### The chipmunk_tennis.g example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
