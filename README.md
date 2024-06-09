@@ -4,8 +4,7 @@
 added anywhere in the code. Mixing Ground- and assembly code is possible by using the generated symbolic constants for
 each local Ground variable.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
-small .EXE files when the template is chosen wisely. There is another reason why the .EXE will remain small: all 
-external code will be loaded at load-time. The usage of the known system DLL's is promoted.
+small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, like msvcrt, is promoted.
 
 ![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true)
 
