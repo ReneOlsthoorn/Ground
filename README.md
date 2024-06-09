@@ -4,11 +4,14 @@
 added anywhere in the code. Mixing Ground- and assembly code is possible by using the generated symbolic constants for
 each local Ground variable.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
-small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, like msvcrt, is promoted.
+small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" 
+template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
+the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, 
+like msvcrt, is promoted.
 
 ![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true)
 
-The strength of Ground is the ability to replace a Ground statement with x86-64. So for example we have the following
+The central concept of Ground is the ability to replace a statement with x86-64. So for example we have the following
 code in mode7.g:
 ```
 		for (int x = 0; x < g.GC_Screen_DimX; x++) {
@@ -36,22 +39,22 @@ We can replace a statement with x86-64:
 			...
 ```
 
-Diving into this software will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
+Diving into this language will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format, the x64 calling convention and Compiler Design.
 
 The C programming language is 50 years old at this moment. It is a nice language to do low-level programming, but 
 nowadays C compilers do not allow the mixing of C and assembly in the same function. The reason is obvious: manual 
 inserted assembly makes optimization of the generated code hard.  
 It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
-must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and gives 
-it the proper place: everywhere. Ground code is more compact, so typical usage of x86-64 is done in innerloops.  
+must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and allows 
+it everywhere. The Ground code is more compact, so typical usage of x86-64 is in innerloops.  
 See Examples\mode7_optimized.g for an example of innerloop optimization.
 
 Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...
 See file Examples\console.g to see some usage.  
-Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
-At this moment, you should only use the Ground language if you understand the compiler, because you might need to fix 
-a shortcoming here and there.
+It has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
+The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
+possible as can be seen in the sudoku.g example.
 
 ### Installing Fasm 1.73:
 Ground uses FASM to assemble the generated code. Download Fasm at https://flatassembler.net/fasmw17332.zip.
@@ -227,7 +230,7 @@ In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 There is much C code which does a good job at complex tasks like unpacking a .PNG file. The GroundSideLibrary
 is a .DLL which contains all that C code and creates an interface for it.
 
-## An Ode to the x86-64 Windows PC
+## Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old Commodore 64 and Amiga 500 days. Back then, I was heavily invested in the 
@@ -238,13 +241,17 @@ Later it became clear that Commodore had no focus on the Amiga in 1988,1989 and 
 like releasing the PC-60-III, the CDTV project and the C-65 project. The C-65 had the new CSG-4510 processor running 
 at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels and 
 256 colors.  
-Not only had Commodore no focus on the Amiga, but they also neglected the Amiga Ranger prototypes created by Jay Miner 
+Not only was there no focus on the Amiga, but Commodore also neglected the Amiga Ranger prototypes created by Jay Miner 
 in 1988.  
 As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
 Fortunately, the good thing was that I moved to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now,
 30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
-and choose your moment to upgrade. We are truly blessed with this platform. This must be said!  
-This Ground compiler project is an ode to the x86-64 Windows platform.
+and choose your moment to upgrade. We were truly blessed with this platform for 30 years. This must be said!
+
+### State of Ground : Alpha
+The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
+Ground is created to facilitate the production of compact high performance code. It's a language for expert demo coders.  
+Ground will always be Alpha!
 
 ### Running the smoothscroller.g example
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
