@@ -77,9 +77,9 @@ Put the 3 files in de same folder as the generated mode7.exe and it will run.
 You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
 The mode7_optimized is the optimized version and has an innerloop of 1ms.
-
+<p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
-
+</p>
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
 
@@ -264,6 +264,6 @@ You can also download all the necessary files and example executables at: https:
 
 ### The chipmunk_tennis.g example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
-
+<p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
-
+</p>
