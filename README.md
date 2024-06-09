@@ -9,7 +9,7 @@ template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create you
 the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, 
 like msvcrt, is promoted.
 
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="600" />
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" />
 
 The central concept of Ground is the ability to replace a statement with x86-64. So for example we have the following
 code in mode7.g:
@@ -77,7 +77,7 @@ You can also download all the necessary files and example executables at: https:
 The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
 The mode7_optimized is the optimized version and has an innerloop of 1ms.
 
-![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true)
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
 
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
@@ -264,4 +264,5 @@ You can also download all the necessary files and example executables at: https:
 ### The chipmunk_tennis.g example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
 
-![alt text](https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true)
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
+
