@@ -8,8 +8,9 @@ small .EXE files when the template is chosen wisely. For instance, there is a "c
 template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
 the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, 
 like msvcrt, is promoted.
-
+<p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" />
+</p>
 
 The central concept of Ground is the ability to replace a statement with x86-64. So for example we have the following
 code in mode7.g:
