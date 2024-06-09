@@ -253,7 +253,13 @@ namespace GroundCompiler.AstNodes
                     Right.Parent = this;
                     Right.Initialize();
                     this.ExprType = Right.ExprType;
-                }                
+
+                    if (Operator.Contains(TokenType.Asterisk))
+                        if (this.ExprType.Base == null)
+                            this.ExprType = Datatype.Default;
+                        else
+                            this.ExprType = this.ExprType.Base;
+                }
 
                 base.Initialize();
             }
@@ -520,6 +526,8 @@ namespace GroundCompiler.AstNodes
                     this.ExprType = Datatype.GetDatatype("string");
                 else if (Left.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || Right.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                     this.ExprType = Datatype.GetDatatype("float");
+                else if (Left.ExprType.Name == "ptr" || Right.ExprType.Name == "ptr")
+                    this.ExprType = Datatype.GetDatatype("ptr");
             }
 
             public override IEnumerable<AstNode> AllNodes()
