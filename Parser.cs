@@ -293,7 +293,7 @@ namespace GroundCompiler
         {
             Token peekToken = Peek();
             bool isACustomClass = Datatype.ContainsDatatype(peekToken.Lexeme);
-            if (isACustomClass)
+            if (isACustomClass && (!peekToken.Contains(TokenType.Type)))
                 peekToken.AddType(TokenType.Type);
 
             return isACustomClass;
@@ -598,7 +598,10 @@ namespace GroundCompiler
             {
                 do
                 {
-                    Datatype datatype = ConsumeDatatype("FunctionDeclaration parameter");
+                    Datatype datatype = Datatype.Default;
+                    if (Check(TokenType.Type) || (Check(TokenType.Identifier) && IsCustomClass()))
+                        datatype = ConsumeDatatype("FunctionDeclaration parameter");
+
                     var parameterName = Consume(TokenType.Identifier, "FunctionDeclaration: Expected parameter name.");
                     FunctionParameter parameter = new FunctionParameter(parameterName.Lexeme, datatype);
                     parameters.Add(parameter);

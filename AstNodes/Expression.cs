@@ -685,6 +685,12 @@ namespace GroundCompiler.AstNodes
 
                 var symbol = GetSymbol(functionName, scope!);
 
+                if (symbol is Scope.Symbol.ClassSymbol classConstructorFunction)
+                {
+                    var dt = Datatype.GetDatatype(classConstructorFunction.Name);
+                    this.ExprType = dt;
+                }
+
                 if (symbol is Scope.Symbol.HardcodedFunctionSymbol hardCodedFunction) { 
                     if (hardCodedFunction.FunctionStmt.ResultDatatype != null)
                         ExprType = hardCodedFunction.FunctionStmt.ResultDatatype!;

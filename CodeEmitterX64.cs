@@ -154,8 +154,9 @@ namespace GroundCompiler
             Codeline($"mov   rax, {indexSpaceRownr}");
         }
 
+        public void RegisterMove(string reg1, string reg2) => Codeline($"mov   {reg2}, {reg1}");
         public void LoadHardcodedGroupVariable(string name) => Codeline($"mov   rax, {name}");
-        public void StoreHardcodedGroupVariable(string name) => Codeline($"mov   {name}, rax");
+        public void StoreCurrent(string name) => Codeline($"mov   {name}, rax");
 
 
         public void LoadNull()

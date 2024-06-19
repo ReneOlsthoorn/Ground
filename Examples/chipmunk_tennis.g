@@ -55,44 +55,20 @@ class CpVect {
 	float x;
 	float y;
 }
-
-CpVect gravity;
-gravity.x = 0.0;
-gravity.y = -300.0;
+CpVect cpvzero = CpVect(0.0, 0.0);
 
 ptr space = chipmunk.cpSpaceNew();
-chipmunk.cpSpaceSetGravity(space, gravity);
+chipmunk.cpSpaceSetGravity(space, CpVect(0.0, -300.0));
 
-CpVect p1;
-p1.x = -20.0;
-p1.y = 250.0;
-
-CpVect p2;
-p2.x = 900.0;
-p2.y = 0.0;
-
-ptr groundShape = chipmunk.cpSegmentShapeNew(chipmunk.cpSpaceGetStaticBody(space), p1, p2, 10);
+ptr groundShape = chipmunk.cpSegmentShapeNew(chipmunk.cpSpaceGetStaticBody(space), CpVect(-20.0, 250.0), CpVect(900.0, 0.0), 10);
 chipmunk.cpShapeSetFriction(groundShape, 1);
 chipmunk.cpSpaceAddShape(space, groundShape);
 chipmunk.cpShapeSetElasticity(groundShape, 0.9);
 
-
-CpVect p3;
-p3.x = -20.0;
-p3.y = 0.0;
-
-CpVect p4;
-p4.x = 960.0;
-p4.y = 250.0;
-
-ptr groundShape2 = chipmunk.cpSegmentShapeNew(chipmunk.cpSpaceGetStaticBody(space), p3, p4, 10);
+ptr groundShape2 = chipmunk.cpSegmentShapeNew(chipmunk.cpSpaceGetStaticBody(space), CpVect(-20.0, 0.0), CpVect(960.0, 250.0), 10);
 chipmunk.cpShapeSetFriction(groundShape2, 1);
 chipmunk.cpSpaceAddShape(space, groundShape2);
 chipmunk.cpShapeSetElasticity(groundShape2, 0.9);
-
-CpVect cpvzero;
-cpvzero.x = 0.0;
-cpvzero.y = 0.0;
 
 float radius = 16.0;
 float mass = 1.0;
@@ -101,9 +77,7 @@ float moment = chipmunk.cpMomentForCircle(mass, 0.0, radius, cpvzero);
 ptr[4] ballBodies = [];
 ptr[4] ballShapes = [];
 
-CpVect p5;
-p5.x = 0.0;
-p5.y = 450.0;
+CpVect p5 = CpVect(0.0, 450.0);
 
 for (int b = 0 ; b < 12; b++) {
 	ballBodies[b] = chipmunk.cpSpaceAddBody(space, chipmunk.cpBodyNew(mass, moment));

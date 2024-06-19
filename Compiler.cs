@@ -340,7 +340,14 @@ namespace GroundCompiler
                 emitter.LoadFunctionParameter64(theName);
             }
             else
-                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
+            {
+                if (variableSymbol is Symbol.ParentScopeVariable parentSymbol)
+                    Compiler.Error("implement parentsymbol in VisitorGetExpr!");
+                else if (variableSymbol is Symbol.FunctionParameterSymbol  funcPar)
+                    emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
+                else
+                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
+            }
 
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
@@ -366,14 +373,14 @@ namespace GroundCompiler
                 if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
                     theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
 
-                emitter.StoreHardcodedGroupVariable(theLiteralVariable);
+                emitter.StoreCurrent(theLiteralVariable);
                 return null;
             }
 
             if (variableExpr?.Name.Lexeme == "g")
             {
                 string theLiteralVariable = expr.Name.Lexeme;
-                emitter.StoreHardcodedGroupVariable($"[{theLiteralVariable}]");
+                emitter.StoreCurrent($"[{theLiteralVariable}]");
                 return null;
             }
 
@@ -392,7 +399,7 @@ namespace GroundCompiler
             emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
-            emitter.StoreHardcodedGroupVariable(instVarReg);
+            emitter.StoreCurrent(instVarReg);
             emitter.Pop();
 
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
@@ -516,6 +523,40 @@ namespace GroundCompiler
 
             string? instVarName = null;
             int levelsDeep = 0;
+
+            if (expr.ExprType.Contains(Datatype.TypeEnum.CustomClass))
+            {
+                // It is a constructor for a class. Allocate memory for this new temporary class instance.
+                UInt64 nrBytesToAllocate = (UInt64)expr.ExprType.SizeInBytes;
+                emitter.Allocate(nrBytesToAllocate);
+                string indexSpaceRegister = cpu.GetRestoredRegister();
+                emitter.RegisterMove("rcx", indexSpaceRegister);
+                string memPtrRegister = cpu.GetRestoredRegister();
+                emitter.RegisterMove("rax", memPtrRegister);
+                emitter.Make_IndexSpaceNr_Current();
+                emitter.Push();  // push the indexspacenr of the allocated memory
+
+                var reg = emitter.Gather_CurrentStackframe();
+                emitter.AddTmpReference(expr);
+                cpu.FreeRegister(reg);
+
+                var funcNameVar = expr.FunctionName as Expression.Variable;
+                var theClassSymbol = scope!.GetVariable(funcNameVar!.Name.Lexeme) as Symbol.ClassSymbol;
+                int nrFunctionArg = expr.Arguments.Count;
+                int nrClassInstVars = theClassSymbol!.ClassStatement.InstanceVariables.Count;
+                for (int argNr = 0; argNr < nrClassInstVars; argNr++)
+                {
+                    Expression argExpr = expr.Arguments[argNr];
+                    EmitExpression(argExpr);
+
+                    var instVarStmt = theClassSymbol!.ClassStatement.InstanceVariables[argNr];
+                    emitter.StoreInstanceVar($"{instVarStmt.Name.Lexeme}@{theClassSymbol!.ClassStatement.Name.Lexeme}", memPtrRegister, argExpr.ExprType);
+                }
+                emitter.Pop();  // pop the indexspacenr of the allocated memory
+                cpu.FreeRegister(memPtrRegister);
+                cpu.FreeRegister(indexSpaceRegister);
+                return null;
+            }
 
             if (expr.FunctionName is Expression.Variable functionNameVariable)
             {
