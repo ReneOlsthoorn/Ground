@@ -528,6 +528,10 @@ namespace GroundCompiler.AstNodes
                     this.ExprType = Datatype.GetDatatype("float");
                 else if (Left.ExprType.Name == "ptr" || Right.ExprType.Name == "ptr")
                     this.ExprType = Datatype.GetDatatype("ptr");
+
+                // override bubbling the datatypes with a boolean if a == or other boolean result operator is used.
+                if (Operator.Contains(TokenType.BooleanResultOperator))
+                    this.ExprType = Datatype.GetDatatype("bool");
             }
 
             public override IEnumerable<AstNode> AllNodes()
@@ -700,6 +704,11 @@ namespace GroundCompiler.AstNodes
                 {
                     if (dllFunction.FunctionStmt.ResultDatatype != null)
                         ExprType = dllFunction.FunctionStmt.ResultDatatype!;
+                }
+                if (symbol is Scope.Symbol.FunctionSymbol theFunction)
+                {
+                    if (theFunction.FunctionStmt.ResultDatatype != null)
+                        ExprType = theFunction.FunctionStmt.ResultDatatype!;
                 }
 
                 foreach (var arg in Arguments)

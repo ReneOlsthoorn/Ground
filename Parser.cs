@@ -43,6 +43,7 @@ namespace GroundCompiler
             return false;
         }
 
+        // 2 chars are peeked. The ++ operator, for instance, has 2 characters.
         private bool CheckPlus2(params TokenType[] types)
         {
             if (IsAtEnd()) return false;
@@ -333,58 +334,15 @@ namespace GroundCompiler
             return expr;
         }
 
-        private Expression Or()
-        {
-            var expr = And();
-            while (Check(TokenType.LogicalOr))
-            {
-                var op = NextToken();
-                var right = And();
-                expr = new Expression.Binary(expr, op, right);    // expr = new Expression.Logical(expr, op, right);
-            }
-            return expr;
-        }
-
-        private Expression And()
-        {
-            var expr = Equality();
-            while (Check(TokenType.LogicalAnd))
-            {
-                var op = NextToken();
-                var right = Equality();
-                expr = new Expression.Binary(expr, op, right);    // expr = new Expression.Logical(expr, op, right);
-            }
-            return expr;
-        }
-
-        private Expression Equality()
-        {
-            return ParseLeftAssociativeBinaryOperation(Comparison, TokenType.NotIsEqual, TokenType.IsEqual);
-        }
-
-        private Expression Comparison()
-        {
-            return ParseLeftAssociativeBinaryOperation(Addition, TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual);
-        }
-
-        private Expression Addition()
-        {
-            return ParseLeftAssociativeBinaryOperation(BitwiseOr, TokenType.Minus, TokenType.Plus);
-        }
-        private Expression BitwiseOr()
-        {
-            return ParseLeftAssociativeBinaryOperation(BitwiseAnd, TokenType.ArithmeticOr);
-        }
-
-        private Expression BitwiseAnd()
-        {
-            return ParseLeftAssociativeBinaryOperation(Multiplication, TokenType.Ampersand);
-        }
-
-        private Expression Multiplication()
-        {
-            return ParseLeftAssociativeBinaryOperation(Unary, TokenType.Slash, TokenType.Asterisk, TokenType.Modulo);
-        }
+        private Expression Or() => ParseLeftAssociativeBinaryOperation(And, TokenType.LogicalOr);
+        private Expression And() => ParseLeftAssociativeBinaryOperation(Equality, TokenType.LogicalAnd);
+        private Expression Equality() => ParseLeftAssociativeBinaryOperation(Comparison, TokenType.NotIsEqual, TokenType.IsEqual);
+        private Expression Comparison() => ParseLeftAssociativeBinaryOperation(Shifting, TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual);
+        private Expression Shifting() => ParseLeftAssociativeBinaryOperation(Addition, TokenType.ShiftLeft, TokenType.ShiftRight);
+        private Expression Addition() => ParseLeftAssociativeBinaryOperation(BitwiseOr, TokenType.Minus, TokenType.Plus);
+        private Expression BitwiseOr() => ParseLeftAssociativeBinaryOperation(BitwiseAnd, TokenType.ArithmeticOr);
+        private Expression BitwiseAnd() => ParseLeftAssociativeBinaryOperation(Multiplication, TokenType.Ampersand);
+        private Expression Multiplication() => ParseLeftAssociativeBinaryOperation(Unary, TokenType.Slash, TokenType.Asterisk, TokenType.Modulo);
 
         private Expression ParseLeftAssociativeBinaryOperation(Func<Expression> higherPrecedence, params TokenType[] tokenTypes)
         {
@@ -639,7 +597,10 @@ namespace GroundCompiler
             Consume(TokenType.LeftBrace, "FunctionDeclaration: Expected '{' before " + kind + " body.");
 
             var body = new Statement.BlockStatement(Block());
-            return new FunctionStatement(name, parameters, body);
+            var theFunctionStatement = new FunctionStatement(name, parameters, body);
+            if (resultType != null)
+                theFunctionStatement.ResultDatatype = resultType.Datatype;
+            return theFunctionStatement;
         }
 
 

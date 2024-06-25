@@ -267,3 +267,9 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
 </p>
+
+### The Travelling Through Stars example
+3D travelling through stars.
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Stars.png?raw=true" width="500" />
+</p>

@@ -14,6 +14,7 @@ namespace GroundCompiler
         Type,
         Separator,
         Operator,
+        BooleanResultOperator,
         Literal,
         Comment,
         Poke,

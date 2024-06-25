@@ -46,25 +46,25 @@ namespace GroundCompiler
                     }
                     if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
                     if (IsDigit(c))           { ReadNumber(token);                     break; }
-                    if (SkipIfMatch("==", token, TokenType.Operator, TokenType.IsEqual)) break;
-                    if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.NotIsEqual)) break;
+                    if (SkipIfMatch("==", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.IsEqual)) break;
+                    if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.NotIsEqual)) break;
                     if (SkipIfMatch("+=", token, TokenType.Operator, TokenType.AddAssign)) break;
                     if (SkipIfMatch("++", token, TokenType.Operator, TokenType.PlusPlus)) break;
                     if (SkipIfMatch("-=", token, TokenType.Operator, TokenType.SubtractAssign)) break;
                     if (SkipIfMatch("--", token, TokenType.Operator, TokenType.MinusMinus)) break;
-                    if (SkipIfMatch(">=", token, TokenType.Operator, TokenType.GreaterEqual)) break;
-                    if (SkipIfMatch("<=", token, TokenType.Operator, TokenType.LessEqual)) break;
+                    if (SkipIfMatch(">=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.GreaterEqual)) break;
+                    if (SkipIfMatch("<=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LessEqual)) break;
                     if (SkipIfMatch(">>", token, TokenType.Operator, TokenType.ShiftRight)) break;
                     if (SkipIfMatch("<<", token, TokenType.Operator, TokenType.ShiftLeft)) break;
-                    if (SkipIfMatch("&&", token, TokenType.Operator, TokenType.LogicalAnd)) break;
-                    if (SkipIfMatch("||", token, TokenType.Operator, TokenType.LogicalOr)) break;
+                    if (SkipIfMatch("&&", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalAnd)) break;
+                    if (SkipIfMatch("||", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalOr)) break;
 
                     if (SkipIfMatch("=",  token, TokenType.Operator, TokenType.Assign)) break;
                     if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.Not)) break;
                     if (SkipIfMatch("+",  token, TokenType.Operator, TokenType.Plus)) break;
                     if (SkipIfMatch("-",  token, TokenType.Operator, TokenType.Minus)) break;
-                    if (SkipIfMatch(">",  token, TokenType.Operator, TokenType.Greater)) break;
-                    if (SkipIfMatch("<",  token, TokenType.Operator, TokenType.Less)) break;
+                    if (SkipIfMatch(">",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Greater)) break;
+                    if (SkipIfMatch("<",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Less)) break;
                     if (SkipIfMatch("&",  token, TokenType.Operator, TokenType.Ampersand)) break;
                     if (SkipIfMatch("|",  token, TokenType.Operator, TokenType.ArithmeticOr)) break;
                     if (SkipIfMatch("*",  token, TokenType.Operator, TokenType.Asterisk)) break;

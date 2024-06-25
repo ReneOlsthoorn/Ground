@@ -200,6 +200,7 @@ namespace GroundCompiler
 
         public object? VisitorIf(IfStatement stmt)
         {
+            PrintAst(stmt);
             EmitExpression(stmt.Condition);
             string elseLabel = emitter.NewLabel();
             string doneLabel = emitter.NewLabel();
@@ -415,9 +416,11 @@ namespace GroundCompiler
             PrintAst(assignment);
 
             if (assignment.LeftOfEqualSign is Expression.Variable variableExpr)
-                VariableAccess(variableExpr, assignment);
+                VariableAssignment(variableExpr, assignment);
             else if (assignment.LeftOfEqualSign is Expression.ArrayAccess arrayExpr)
                 ArrayAccess(arrayExpr, assignment);
+            else if (assignment.LeftOfEqualSign is Expression.Unary unaryExpr)
+                UnaryAssignment(unaryExpr, assignment);
 
             return null;
         }
@@ -428,13 +431,13 @@ namespace GroundCompiler
         {
             PrintAst(expr);
 
-            EmitExpression(expr.Left);
-            EmitConversionCompatibleType(expr.Left, expr.ExprType);
+            EmitExpression(expr.Right);
+            EmitConversionCompatibleType(expr.Right, expr.ExprType);
 
             emitter.Push(expr);
 
-            EmitExpression(expr.Right);
-            EmitConversionCompatibleType(expr.Right, expr.ExprType);
+            EmitExpression(expr.Left);
+            EmitConversionCompatibleType(expr.Left, expr.ExprType);
 
             switch (expr.Operator.Type)
             {
@@ -507,6 +510,12 @@ namespace GroundCompiler
                     break;
                 case TokenType.LogicalAnd:
                     emitter.PopAnd();
+                    break;
+                case TokenType.ShiftLeft:
+                    emitter.PopShiftLeft();
+                    break;
+                case TokenType.ShiftRight:
+                    emitter.PopShiftRight();
                     break;
             }
 
@@ -766,7 +775,7 @@ namespace GroundCompiler
 
         public object? VisitorGroupingExpr(Expression.Grouping expr)
         {
-            expr.Expression.Accept(this);
+            EmitExpression(expr.Expression);
             return null;
         }
 
@@ -812,82 +821,75 @@ namespace GroundCompiler
         // Unary, like -a, !a, a++, &a or *a. Direction: Read/Write.
         public object? VisitorUnaryExpr(Expression.Unary expr)
         {
-            if (expr.Right is Expression.Variable  theVariable)
+            // &a , &p[0]
+            if (expr.Operator.Contains(TokenType.Ampersand))
             {
-                var currentScope = expr.GetScope();
-                var symbol = GetSymbol(theVariable.Name.Lexeme, currentScope!);
+                if (expr.Right is Expression.Variable theVariable)
+                    VariableAddressOf(theVariable);
+                else if (expr.Right is Expression.ArrayAccess arrayAccess)
+                    ArrayAccess(arrayAccess, assignment: null, addressOf: true);
+                else
+                    Compiler.Error("AddressOf can only be done on a variable.");
+                return null;
+            }
 
-                if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
-                {
-                    if (localVarSymbol.DataType.Contains(TypeEnum.Integer) && expr.Postfix)
-                    {
-                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                        emitter.Push();
-                        if (expr.Operator.Contains(TokenType.PlusPlus))
-                            emitter.IncrementCurrent();
-                        if (expr.Operator.Contains(TokenType.MinusMinus))
-                            emitter.DecrementCurrent();
-                        emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
-                        emitter.Pop();
-                    }
-                    else if (localVarSymbol.DataType.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
-                    {
-                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                        emitter.Negation(expr.Right);
-                    }
-                    else if (localVarSymbol.DataType.Contains(TypeEnum.FloatingPoint) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
-                    {
-                        emitter.LoadFunctionVariableFloat64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                        emitter.Negation(expr.Right);
-                    }
-                    else if (localVarSymbol.DataType.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
-                    {
-                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                        emitter.LoadPointingTo(localVarSymbol.DataType.Base!.SizeInBytes);
-                    }
-                    else if (localVarSymbol.DataType.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
-                    {
-                        emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                        emitter.LoadPointingTo(localVarSymbol.DataType.SizeInBytes);
-                    }
-                    else if (expr.Operator.Contains(TokenType.Ampersand))
-                    {
-                        emitter.LeaFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                    }
-                }
-                else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
-                {
-                    if (parentSymbol.DataType.Contains(TypeEnum.Integer) && expr.Postfix)
-                    {
-                        var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                        emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
-                        emitter.Push();
-                        if (expr.Operator.Contains(TokenType.PlusPlus))
-                            emitter.IncrementCurrent();
-                        if (expr.Operator.Contains(TokenType.MinusMinus))
-                            emitter.DecrementCurrent();
-                        emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
-                        emitter.Pop();
-                        cpu.FreeRegister(reg);
-                    }
-                }
-            }
-            else if (expr.Right is Expression.ArrayAccess arrayAccess)
+            // a++ , a--
+            if (expr.Postfix && (expr.Operator.Contains(TokenType.PlusPlus) || expr.Operator.Contains(TokenType.MinusMinus)))
             {
-                ArrayAccess(arrayAccess, assignment: null, addressOf: true);
-            }
-            else if (expr.Right is Expression.Grouping groupStmt)
-            {
-                if (expr.Operator.Contains(TokenType.Asterisk))
+                if (expr.Right is Expression.Variable theVariable)
                 {
-                    EmitExpression(expr.Right);
-                    emitter.LoadPointingTo(groupStmt.ExprType.SizeInBytes);
-                }
+                    VariableRead(theVariable);
+                    emitter.Push();
+                    if (expr.Operator.Contains(TokenType.PlusPlus))
+                        emitter.IncrementCurrent();
+                    if (expr.Operator.Contains(TokenType.MinusMinus))
+                        emitter.DecrementCurrent();
+                    VariableWrite(theVariable);
+                    emitter.Pop();
+                } else
+                    Compiler.Error("a++ or a-- can only be done on a variable.");
+                return null;
             }
-            else if (expr.Operator.Contains(TokenType.Not))
+
+            Datatype exprDatatype = Datatype.Default;
+
+            if (expr.Right is Expression.Grouping groupStmt)
             {
-                expr.Right.Accept(this);
+                EmitExpression(expr.Right);
+                exprDatatype = groupStmt.ExprType;
+            } else if (expr.Right is Expression.Variable theVariable)
+            {
+                VariableRead(theVariable);
+                exprDatatype = theVariable.ExprType;
+            } else
+                EmitExpression(expr.Right);
+
+            // -a
+            if ((exprDatatype.Contains(TypeEnum.Integer) || exprDatatype.Contains(TypeEnum.FloatingPoint)) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
+            {
+                emitter.Negation(expr.Right);
+                return null;
+            }
+
+            // !a
+            if (expr.Operator.Contains(TokenType.Not))
+            {
                 emitter.LogicalNot();
+                return null;
+            }
+
+            // *a  (a = int*)
+            if (exprDatatype.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
+            {
+                emitter.LoadPointingTo(exprDatatype.Base!);
+                return null;
+            }
+
+            // *a  (a = ptr)
+            if (exprDatatype.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
+            {
+                emitter.LoadPointingTo(exprDatatype);
+                return null;
             }
 
             return null;
@@ -897,7 +899,7 @@ namespace GroundCompiler
         // Variable. Direction: Read
         public object? VisitorVariableExpr(Expression.Variable variableExpr)
         {
-            VariableAccess(variableExpr);
+            VariableRead(variableExpr);
             return null;
         }
 

@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Linq;
+using static GroundCompiler.AstNodes.Expression;
 using static GroundCompiler.AstNodes.Statement;
+using static GroundCompiler.Datatype;
 using static GroundCompiler.Scope;
 
 namespace GroundCompiler
@@ -72,8 +74,76 @@ namespace GroundCompiler
         }
 
 
-        // Variable value is loaded (usually to register RAX) or stored (as part of an assignment)
-        public void VariableAccess(Expression.Variable variableExpr, Expression.Assignment? assignment = null)
+        public void VariableRead(Expression.Variable variableExpr)
+        {
+            var currentScope = variableExpr.GetScope();
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            string reg;
+
+            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+                emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
+            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+                emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
+            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+            {
+                reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
+                emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
+                cpu.FreeRegister(reg);
+            }
+            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+                emitter.LoadFunction(emitter.ConvertToAssemblyFunctionName(funcSymbol.Name));
+            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+            {
+                if (symbol.Name == "GC_ScreenText")
+                    emitter.LoadSystemVarsVariable("screentext1_p");
+
+                if (symbol.Name == "GC_ScreenColors")
+                    emitter.LoadSystemVarsVariable("font32_charcolor_p");
+
+                if (symbol.Name == "GC_ScreenText_U32")
+                    emitter.LoadSystemVarsVariable("screentext4_p");
+
+                if (symbol.Name == "GC_Colortable")
+                    emitter.LoadSystemVarsVariable("colortable_p");
+
+                if (symbol.Name == "GC_ScreenFont")
+                    emitter.LoadSystemVarsVariable("font256_p");
+
+                if (symbol.Name == "GC_Screen_TextRows")
+                    emitter.LoadAssemblyConstant("GC_Screen_TextRows");
+
+                if (symbol.Name == "GC_CurrentExeDir")
+                    emitter.LoadAssemblyVariable("currentExeDir");
+
+                if (symbol.Name == "GC_Screen_TextColumns")
+                    emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
+            }
+            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+        }
+
+
+        public void VariableWrite(Expression.Variable variableExpr)
+        {
+            var currentScope = variableExpr.GetScope();
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+
+            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+                emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
+            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+                emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
+            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+                emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
+            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+        }
+
+
+        public void VariableAssignment(Expression.Variable variableExpr, Expression.Assignment assignment)
         {
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
@@ -81,99 +151,102 @@ namespace GroundCompiler
 
             if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
             {
-                if (assignment != null)
+                EmitExpression(assignment.RightOfEqualSign);
+                EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
+                if (localVarSymbol!.DataType.IsReferenceType)
                 {
-                    EmitExpression(assignment.RightOfEqualSign);
-                    EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
-                    if (localVarSymbol!.DataType.IsReferenceType)
-                    {
-                        reg = emitter.Gather_CurrentStackframe();
-                        emitter.AddReference(assignment.RightOfEqualSign);
-                        cpu.FreeRegister(reg);
-                    }
-                    emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
+                    reg = emitter.Gather_CurrentStackframe();
+                    emitter.AddReference(assignment.RightOfEqualSign);
+                    cpu.FreeRegister(reg);
                 }
-                else
-                {
-                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
-                }
+                emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
             }
             else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
             {
-                if (assignment != null)
-                {
-                    EmitExpression(assignment.RightOfEqualSign);
-                    emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
-                }
-                else
-                    emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol));
+                EmitExpression(assignment.RightOfEqualSign);
+                emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
             }
             else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
             {
-                if (assignment != null)
+                var assemblyVarName = emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement);
+                if (parentSymbol.DataType.IsReferenceType)
                 {
-                    var assemblyVarName = emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement);
-                    if (parentSymbol.DataType.IsReferenceType)
-                    {
-                        reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                        emitter.LoadParentFunctionVariable64(assemblyVarName, parentSymbol.DataType);
-                        emitter.RemoveReference();
-                        cpu.FreeRegister(reg);
-                    }
-                    EmitExpression(assignment.RightOfEqualSign);
                     reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                    if (parentSymbol.DataType.IsReferenceType)
-                        emitter.AddReference(assignment.RightOfEqualSign);
+                    emitter.LoadParentFunctionVariable64(assemblyVarName, parentSymbol.DataType);
+                    emitter.RemoveReference();
+                    cpu.FreeRegister(reg);
+                }
+                EmitExpression(assignment.RightOfEqualSign);
+                reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
+                if (parentSymbol.DataType.IsReferenceType)
+                    emitter.AddReference(assignment.RightOfEqualSign);
 
-                    emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
-                    cpu.FreeRegister(reg);
-                }
-                else
-                {
-                    reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
-                    cpu.FreeRegister(reg);
-                }
+                emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
+                cpu.FreeRegister(reg);
             }
             else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
-            {
-                emitter.LoadFunction(emitter.ConvertToAssemblyFunctionName(funcSymbol.Name));
-            }
+                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
             else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
-            {
-                if (assignment != null)
-                    EmitExpression(assignment.RightOfEqualSign);
-                else
-                {
-                    if (symbol.Name == "GC_ScreenText")
-                        emitter.LoadSystemVarsVariable("screentext1_p");
-
-                    if (symbol.Name == "GC_ScreenColors")
-                        emitter.LoadSystemVarsVariable("font32_charcolor_p");
-
-                    if (symbol.Name == "GC_ScreenText_U32")
-                        emitter.LoadSystemVarsVariable("screentext4_p");
-
-                    if (symbol.Name == "GC_Colortable")
-                        emitter.LoadSystemVarsVariable("colortable_p");
-
-                    if (symbol.Name == "GC_ScreenFont")
-                        emitter.LoadSystemVarsVariable("font256_p");
-
-                    if (symbol.Name == "GC_Screen_TextRows")
-                        emitter.LoadAssemblyConstant("GC_Screen_TextRows");
-
-                    if (symbol.Name == "GC_CurrentExeDir")
-                        emitter.LoadAssemblyVariable("currentExeDir");
-
-                    if (symbol.Name == "GC_Screen_TextColumns")
-                        emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
-                }
-            }
+                EmitExpression(assignment.RightOfEqualSign);
             else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
+        }
+
+
+        public void VariableAddressOf(Expression.Variable variableExpr)
+        {
+            var currentScope = variableExpr.GetScope();
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            string reg;
+
+            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+                emitter.LeaFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
+            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+                emitter.LeaFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol));
+            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
             {
-                Compiler.Error("Not implemented yet.");
+                reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
+                emitter.LeaParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
+                cpu.FreeRegister(reg);
             }
+            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+        }
+
+
+        public void UnaryAssignment(Expression.Unary expr, Expression.Assignment assignment)
+        {
+            EmitExpression(assignment.RightOfEqualSign);
+            EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
+            emitter.Push();
+
+            Datatype exprDatatype = Datatype.Default;
+
+            if (expr.Right is Expression.Grouping groupStmt)
+            {
+                EmitExpression(expr.Right);
+                exprDatatype = groupStmt.ExprType;
+            }
+            else if (expr.Right is Expression.Variable theVariable)
+            {
+                VariableRead(theVariable);
+                exprDatatype = theVariable.ExprType;
+            }
+
+            if (expr.Operator.Contains(TokenType.Asterisk))
+            {
+                // *a  (a = int*)
+                if (exprDatatype.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
+                    emitter.StorePointingTo(exprDatatype.Base!);
+                // *a  (a = ptr)
+                else if (exprDatatype.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
+                    emitter.StorePointingTo(exprDatatype);
+            } else
+                Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
         }
 
 
@@ -203,9 +276,10 @@ namespace GroundCompiler
 
                     if (multiplier > 1)
                     {
-                        emitter.Push(expr);
-                        emitter.LoadConstantUInt64(multiplier);
-                        emitter.PopMul(expr);
+                        cpu.ReserveRegister("rdx");
+                        emitter.Codeline($"mov   rdx, {multiplier}");
+                        emitter.Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
+                        cpu.FreeRegister("rdx");
                     }
                     if (i > 0)
                         emitter.PopAdd(expr);
@@ -243,14 +317,14 @@ namespace GroundCompiler
                 {
                     EmitExpression(assignment.RightOfEqualSign, targetType);
                     EmitConversionCompatibleType(assignment.RightOfEqualSign, targetType, copyDatatypeToSource: false);
-                    emitter.StoreCurrentInBasedIndex(elementSizeInBytes, baseReg, indexReg);
+                    emitter.StoreCurrentInBasedIndex(elementSizeInBytes, baseReg, indexReg, targetType);
                 }
                 else
                 {
                     if (addressOf)
                         emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
                     else
-                        emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg);
+                        emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
                 }
                 cpu.FreeRegister(baseReg);
                 cpu.FreeRegister(indexReg);

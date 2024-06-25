@@ -180,10 +180,6 @@ namespace GroundCompiler
             Codeline($"movq  xmm0, qword [{name}]");
         }
 
-        public void LoadConstantUInt64(UInt64 value)
-        {
-            Codeline($"mov   rax, {value}");
-        }
         public void LoadAssemblyVariable(string name) => Codeline($"mov   rax, [{name}]");
         public void LoadAssemblyConstant(string name) => Codeline($"mov   rax, {name}");
 
@@ -235,9 +231,9 @@ namespace GroundCompiler
         {
             cpu.ReserveRegister("rcx");
             cpu.ReserveRegister("rdx");
-            Codeline("pop   rcx");
+            Codeline("mov   rcx, rax");
+            Codeline("pop   rdx");
             StackPop();
-            Codeline("mov   rdx, rax");
             Codeline("call  AddCombinedStrings");       // rcx wijst naar eerste string, rdx wijst naar tweede string
             Codeline("mov   rcx, rbp");
             AddTmpReference(expr!);
@@ -261,16 +257,14 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq  {floatReg}, xmm0");
-                PopFloat("xmm0");
+                PopFloat($"{floatReg}");
                 Codeline($"addsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
 
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"add   rax, {reg}");
             cpu.FreeRegister(reg);
@@ -284,8 +278,7 @@ namespace GroundCompiler
                 var exitLabel = NewLabel();
 
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq  {floatReg}, xmm0");
-                PopFloat("xmm0");
+                PopFloat($"{floatReg}");
                 Codeline($"mov   rax, 1");
                 Codeline($"comisd xmm0, {floatReg}");
                 Codeline($"{trueJmpCondition}    {exitLabel}");
@@ -309,8 +302,7 @@ namespace GroundCompiler
                 cpu.ReserveRegister("rdx");
                 Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
                 Codeline($"jne    {strCmpLabel}");
-                Codeline($"mov    rcx, rax");
-                Codeline($"pop    rax");
+                Codeline($"pop    rcx");
                 StackPop();
                 InsertLabel(secondArgNull);
                 Codeline($"sub    rax, rcx");
@@ -336,16 +328,14 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq  {floatReg}, xmm0");
-                PopFloat("xmm0");
+                PopFloat($"{floatReg}");
                 Codeline($"subsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
 
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"sub   rax, {reg}");
             cpu.FreeRegister(reg);
@@ -359,16 +349,14 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq  {floatReg}, xmm0");
-                PopFloat("xmm0");
+                PopFloat($"{floatReg}");
                 Codeline($"mulsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
 
             cpu.ReserveRegister("rdx");
-            Codeline($"mov   rdx, rax");
-            Codeline($"pop   rax");
+            Codeline($"pop   rdx");
             StackPop();
             Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
             cpu.FreeRegister("rdx");
@@ -379,8 +367,7 @@ namespace GroundCompiler
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
-                Codeline($"movq  {floatReg}, xmm0");
-                PopFloat("xmm0");
+                PopFloat($"{floatReg}");
                 Codeline($"divsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
@@ -388,9 +375,8 @@ namespace GroundCompiler
 
             var reg = cpu.GetTmpRegister();
             cpu.ReserveRegister("rdx");
-            Codeline($"mov   {reg}, rax");
             Codeline($"xor   rdx, rdx");    // always clean rdx before division
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"div   {reg}");
             cpu.FreeRegister("rdx");
@@ -400,8 +386,7 @@ namespace GroundCompiler
         public void PopBitwiseAnd()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"and   rax, {reg}");
             cpu.FreeRegister(reg);
@@ -411,9 +396,8 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             cpu.ReserveRegister("rdx");
-            Codeline($"mov   {reg}, rax");
             Codeline($"xor   edx, edx");        // always clean rdx before division
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"div   {reg}");
             Codeline($"mov   eax, edx");
@@ -424,8 +408,7 @@ namespace GroundCompiler
         public void PopBitwiseOr()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
-            Codeline($"pop   rax");
+            Codeline($"pop   {reg}");
             StackPop();
             Codeline($"or   rax, {reg}");
             cpu.FreeRegister(reg);
@@ -436,7 +419,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");             // expr 3 > 2.
             StackPop();
-            Codeline($"sub   rax, {reg}");        // sub 2, 3 (2 - 3) -> carry is set
+            Codeline($"sub   {reg}, rax");        // sub 2, 3 (2 - 3) -> carry is set
             Codeline($"mov   eax, 0");
             Codeline($"adc   eax, 0");          // carry is added as 1, so result = 1 (value true).
             // bool rax 1 = true, bool rax 0 = false;
@@ -448,7 +431,7 @@ namespace GroundCompiler
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
             StackPop();
-            Codeline($"sub   {reg}, rax");
+            Codeline($"sub   rax, {reg}");
             Codeline($"mov   eax, 0");
             Codeline($"adc   eax, 0");
             // bool rax 1 = true, bool rax 0 = false;
@@ -505,6 +488,24 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
+        public void PopShiftLeft()
+        {
+            cpu.ReserveRegister("rcx");
+            Codeline($"pop   rcx");
+            StackPop();
+            Codeline($"shl   rax, cl");
+            cpu.FreeRegister("rcx");
+        }
+
+        public void PopShiftRight()
+        {
+            cpu.ReserveRegister("rcx");
+            Codeline($"pop   rcx");
+            StackPop();
+            Codeline($"shr   rax, cl");
+            cpu.FreeRegister("rcx");
+        }
+
         public void Negation(AstNodes.Expression? expr = null)
         {
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -552,12 +553,28 @@ namespace GroundCompiler
             return "rcx";
         }
 
-        public void LoadPointingTo(int nrBytes)
+        public void LoadPointingTo(Datatype datatype)
         {
+            var nrBytes = datatype.SizeInBytes;
             var reg = cpu.GetTmpRegister();
             Codeline($"mov   {reg}, rax");
             Codeline($"xor   eax, eax");
-            Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{reg}]");
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq   xmm0, [{reg}]");
+            else
+                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{reg}]");
+            cpu.FreeRegister(reg);
+        }
+        public void StorePointingTo(Datatype datatype)
+        {
+            var nrBytes = datatype.SizeInBytes;
+            var reg = cpu.GetTmpRegister();
+            Codeline($"mov   {reg}, rax");
+            Pop();
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq   [{reg}], xmm0");
+            else
+                Codeline($"mov   [{reg}], {cpu.RAX_Register_Sized(nrBytes)}");
             cpu.FreeRegister(reg);
         }
         public void LeaFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rbp-{variableName}]");
@@ -570,6 +587,7 @@ namespace GroundCompiler
                 Codeline($"mov   rax, qword [rbp-{variableName}]");
         }
         public void LoadFunctionVariableFloat64(string variableName) => Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+        public void LeaParentFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rcx-{variableName}]");
         public void LoadParentFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -577,7 +595,15 @@ namespace GroundCompiler
             else
                 Codeline($"mov   rax, qword [rcx-{variableName}]");
         }
+        public void LeaFunctionParameter64(string variableName) => Codeline($"lea   rax, qword [rbp+{variableName}]");
         public void LoadFunctionParameter64(string variableName) => Codeline($"mov   rax, qword [rbp+{variableName}]");
+        public void LoadFunctionParameter64(string variableName, Datatype datatype)
+        {
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq  xmm0, qword [rbp+{variableName}]");
+            else
+                Codeline($"mov   rax, qword [rbp+{variableName}]");
+        }
 
         public void LoadFunction(string functionName)
         {
@@ -809,14 +835,18 @@ namespace GroundCompiler
         {
             Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
         }
-        public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg)
+        public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq   rax, xmm0");  // below, the basereg+index cannot be done with xmm0
             Codeline($"mov   [{baseReg}+({indexReg}*{nrBytes})], {cpu.RAX_Register_Sized(nrBytes)}");
         }
-        public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg)
+        public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
             Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq   xmm0, rax");
         }
         public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
         {
