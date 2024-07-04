@@ -831,8 +831,10 @@ namespace GroundCompiler
 
         public void MoveCurrentToRegister(string reg) => Codeline($"mov   {reg}, rax");
 
-        public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index)
+        public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index, Datatype targetType)
         {
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
+                Codeline($"movq   rax, xmm0");  // below, the basereg+index cannot be done with xmm0
             Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
         }
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)

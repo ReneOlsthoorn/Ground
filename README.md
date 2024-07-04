@@ -1,8 +1,8 @@
 # Ground
 
-"Ground" is a C/Javascript look-a-like programming language for Windows which allows x86-64 assembly language to be 
-added anywhere in the code. Mixing Ground- and assembly code is possible by using the generated symbolic constants for
-each local Ground variable.  
+Compiler for programming language Ground. The compiler is created in C# and generates FASM x86-64 assembly code.
+The Ground language allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly code 
+is possible by using the generated symbolic constants for each local Ground variable.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" 
 template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
@@ -272,4 +272,9 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 3D travelling through stars.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Stars.png?raw=true" width="500" />
+</p>
+
+### The Plasma example with no colorcycling
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" />
 </p>

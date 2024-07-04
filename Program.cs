@@ -20,7 +20,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "console.g";  //console.g, sudoku.g, smoothscroller.g, smoothscroller_optimized.g, mode7.g, mode7_optimized.g, chipmunk_tennis.g, starfield.g
+                fileName = "console.g";  //console.g, sudoku.g, smoothscroller.g, smoothscroller_optimized.g, mode7.g, mode7_optimized.g, chipmunk_tennis.g, starfield.g, plasma_non_colorcycling.g 
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 fileName = fileName.Substring(0, fileName.Length - 2);
             }

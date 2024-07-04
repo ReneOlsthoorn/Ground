@@ -86,7 +86,7 @@ namespace GroundCompiler
             if (stmt.shouldCleanTmpDereferenced)
                 emitter.CleanTmpDereferenced();
 
-            if (stmt.shouldCleanDereferenced)
+            if (stmt.shouldCleanDereferenced && stmt.Parent is Statement.FunctionStatement)    // When CleanDereferenced() is done on normal loop blocks, the variables belonging to the same scope outside the loop will be freed. That is not wanted.
                 emitter.CleanDereferenced();
 
             return null;
@@ -277,7 +277,7 @@ namespace GroundCompiler
                     expr.ExprType = list.ExprType.Base;
 
                 EmitExpression(expr);
-                emitter.StoreCurrentInBasedIndex(sizeEachElement, baseReg, i);
+                emitter.StoreCurrentInBasedIndex(sizeEachElement, baseReg, i, expr.ExprType);
             }
             cpu.FreeRegister(baseReg);
             emitter.PopAllocateIndexElement();  // Now we have the INDEXSPACE rownr of the list in RAX
@@ -385,7 +385,7 @@ namespace GroundCompiler
                 return null;
             }
 
-            emitter.Push();
+            emitter.Push(expr.Value);
             var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
             var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
@@ -401,7 +401,8 @@ namespace GroundCompiler
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
-            emitter.Pop();
+            emitter.Pop(expr.Value);
+            EmitConversionCompatibleType(expr.Value, instVar.ResultType);
 
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
             cpu.FreeRegister(instVarReg);
