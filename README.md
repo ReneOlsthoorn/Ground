@@ -1,8 +1,9 @@
 # Ground
 
-Compiler for programming language Ground. The compiler is created in C# and generates FASM x86-64 assembly code.
-The Ground language allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly code 
-is possible by using the generated symbolic constants for each local Ground variable.  
+Compiler for the programming language Ground. The compiler is created in C# and generates FASM x86-64 assembly code.
+Ground allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly code is 
+possible by using the generated symbolic constants for each local Ground variable.  
+The primary usecase for Ground is creating highspeed programs, like a "demo".  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" 
 template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
@@ -66,7 +67,7 @@ Add the ```<installation directory>``` to the System variables Path variable.
 If you want to debug with x64dbg, also assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
 directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
 Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
-the original sourcecode in the comment column of the debugger. Nice!
+the original sourcecode in the comment column of the debugger.
 
 ### Running the mode7.g example
 You will need 3 additional files to run the mode7.g sample. First, the font which is located in the Resources
@@ -80,6 +81,7 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
 </p>
+
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
 
@@ -196,8 +198,8 @@ version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 co
 When you compile a C program with Visual Studio, it links ```VCRUNTIME140.dll```. That DLL is not by default available on
 Windows. It also is a hassle for the users to manually install the VCRuntime. The way to avoid this is simple: don't 
 use the default C runtime, use ```MSVCRT.DLL```!  
-MSVCRT is available on all Windows version since winxp, I believe, so it is available. It is also a KnownDLL. See the
-registry at: ```Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs```
+MSVCRT is available on all Windows version since Windows XP. It is also a KnownDLL. See the registry at:
+```Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs```
 
 ### Mixing of ground code and assembly
 The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
@@ -228,8 +230,10 @@ retrieves the value pointed to by eventType and compares it with SDL_QUIT.
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
 ### GroundSideLibrary
-There is much C code which does a good job at complex tasks like unpacking a .PNG file. The GroundSideLibrary
-is a .DLL which contains all that C code and creates an interface for it.
+There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
+Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
+done with existing C libraries. The GroundSideLibrary is a .DLL which contains all that C code and creates an 
+interface for it.
 
 ## Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
@@ -247,7 +251,10 @@ in 1988.
 As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
 Fortunately, the good thing was that I moved to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now,
 30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
-and choose your moment to upgrade. We were truly blessed with this platform for 30 years. This must be said!
+and choose your moment to upgrade. We were truly blessed with this platform for 30 years. This must be said!  
+At this moment in 2024, several expert users are migrating to Linux because Windows collects data about the usage of 
+your computer. I agree with those users that data collecting is not nice. However, it can be disabled. Search for 
+"How to disable Microsoft Compatibility Telemetry".
 
 ### State of Ground : Alpha
 The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
