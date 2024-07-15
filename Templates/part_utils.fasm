@@ -26,3 +26,31 @@ FreeLock_Impl:
   lea	rax, [LockObject64]
   lock btr qword [rax], rcx
   ret
+
+
+Utils_SetArray:
+	;rcx = nr of bytes
+	;rdx = destination pointer
+	;r8 = value
+    push rdi
+	mov rdi, rdx
+	mov rax, r8
+	rep stosb
+	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+	pop rdi
+    ret
+
+
+Utils_CopyArray:
+	;rcx = nr of bytes
+	;rdx = source pointer
+	;r8 = destination pointer
+    push rsi
+	push rdi
+	mov rsi, rdx;
+	mov rdi, r8;
+	rep movsb
+	; please notice: a rep movsb is as fast as rep movsq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+	pop rdi
+	pop rsi
+    ret

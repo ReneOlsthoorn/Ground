@@ -605,6 +605,28 @@ namespace GroundCompiler.AstNodes
                 this.Scope = new Scope(this);
             }
 
+            public void AddUsedRegister(string reg)
+            {
+                if (Properties.ContainsKey("in EmittedProcedure"))
+                {
+                    if (!Properties.ContainsKey("used registers"))
+                        Properties["used registers"] = new HashSet<string>();
+
+                    var regs = Properties["used registers"] as HashSet<string>;
+                    regs.Add(reg);
+                }
+            }
+
+            public List<string> UsedRegisters()
+            {
+                if (Properties.ContainsKey("used registers"))
+                {
+                    var regs = Properties["used registers"] as HashSet<string>;
+                    return new List<string>(regs);
+                }
+                return new List<string>();
+            }
+
             public override void Initialize()
             {
                 UpdateParentInNodes();

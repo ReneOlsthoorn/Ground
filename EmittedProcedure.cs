@@ -67,6 +67,14 @@ namespace GroundCompiler
                     Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }
             }
+
+            foreach (var reg in this.FunctionStatement.UsedRegisters())
+            {
+                negativeOffset += 8;
+                var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg);
+                Emitter.Writeline($"_register_{theName} equ rbp-{negativeOffset}");
+            }
+
             StackSpaceToReserve = (negativeOffset & 0xfff0) + 16;  // take care of a 16 byte stack alignment;
         }
 
@@ -96,24 +104,18 @@ namespace GroundCompiler
                 counter++;
             }
 
-            if (ProcedureName != "main")
-            {
-                theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName());
-                Emitter.Writeline($"{theName} equ G_PARAMETER_LEXPARENT");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName())} equ rbp+G_PARAMETER_LEXPARENT");
+            theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName());
+            Emitter.Writeline($"{theName} equ G_PARAMETER_LEXPARENT");
+            Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName())} equ rbp+G_PARAMETER_LEXPARENT");
 
-                theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName());
-                Emitter.Writeline($"{theName} equ G_PARAMETER_THIS");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())} equ rbp+G_PARAMETER_THIS");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
-            }
+            theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName());
+            Emitter.Writeline($"{theName} equ G_PARAMETER_THIS");
+            Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())} equ rbp+G_PARAMETER_THIS");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
         }
 
 
         public void EmitProcedureNameLabel()
         {
-            if (ProcedureName == "main")
-                return;
-
             Emitter.InsertLabel(Emitter.ConvertToAssemblyFunctionName(ProcedureName, GetGroupOrClassName()));
         }
 
@@ -137,32 +139,61 @@ namespace GroundCompiler
                 Emitter.ReserveStackspace(spaceToReserve, NeedsRefCount());
         }
 
+        public void EmitStoreUsedRegisterValues()
+        {
+            foreach (var reg in this.FunctionStatement.UsedRegisters())
+                Emitter.Codeline($"mov   [_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}], {reg}");
+        }
+
+        public void EmitRestoreUsedRegisterValues()
+        {
+            foreach (var reg in this.FunctionStatement.UsedRegisters())
+                Emitter.Codeline($"mov   {reg}, [_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}]");
+        }
 
         public void EmitReleaseStackframe()
         {
             int stackToReclaim = 0;
             stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
-
-            if (ProcedureName == "main")
-                return;
-
             Emitter.EndFunction(stackToReclaim, noFrameRestoration: FunctionStatement.AssemblyOnlyFunctionWithNoParameters());
+        }
+
+        public void EmitMain()
+        {
+            Emit_Equ_LocalVariables();
+            EmitCreateStackframe();
+
+            this.FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
+
+            if (MainCallback != null)
+                MainCallback();
         }
 
 
         public void Emit()
         {
-            Emit_Equ_LocalVariables();
-            Emit_Equ_FunctionParameters();
-            EmitProcedureNameLabel();
-            EmitCreateStackframe();
 
-            FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
+            this.FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
+            this.FunctionStatement.Properties["in EmittedProcedure"] = true;  // this allows a registration of used registers within a function
 
             if (MainCallback != null)
                 MainCallback();
 
+            var generatedCode = Emitter.CloseGeneratedCode();
+
+            Emit_Equ_LocalVariables();
+            Emit_Equ_FunctionParameters();
+            EmitProcedureNameLabel();
+            EmitCreateStackframe();
+            EmitStoreUsedRegisterValues();
+
+            Emitter.generatedCode.AddRange(generatedCode);
+
+            EmitRestoreUsedRegisterValues();
             EmitReleaseStackframe();
+
+            generatedCode = Emitter.CloseGeneratedCode();
+            Emitter.GeneratedCode_Procedures.AddRange(generatedCode);
         }
     }
 }

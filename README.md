@@ -275,8 +275,7 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
 </p>
 
-### The Travelling Through Stars example
-3D travelling through stars.
+### The 3D Travelling Through Stars example
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Stars.png?raw=true" width="500" />
 </p>
@@ -284,4 +283,9 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 ### The Plasma example with no colorcycling
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" />
+</p>
+
+### The Fire example
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" />
 </p>

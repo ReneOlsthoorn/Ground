@@ -49,6 +49,12 @@ namespace GroundCompiler
             GeneratedCode_Data.AddRange(generatedCode);
             generatedCode = new List<string>();
         }
+        public List<string> CloseGeneratedCode()
+        {
+            var result = generatedCode;
+            generatedCode = new List<string>();
+            return result;
+        }
 
         public void Writeline(string text) { generatedCode.Add(text + "\r\n"); }
         public void Codeline(string text) { Writeline($"  {text}"); }

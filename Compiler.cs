@@ -62,7 +62,7 @@ namespace GroundCompiler
                 emitter.EmitStrings(prog.Scope.GetStringSymbols());
                 emitter.CloseGeneratedCode_Data();
             };
-            mainProc.Emit();
+            mainProc.EmitMain();
             return null;
         }
 
@@ -268,7 +268,7 @@ namespace GroundCompiler
             UInt64 nrBytesToAllocate = list.ExprType.BytesToAllocate(); //  sizeEachElement * list.Elements.Count;
             emitter.Allocate(nrBytesToAllocate);
             emitter.PushAllocateIndexElement();
-            string baseReg = cpu.GetRestoredRegister();
+            string baseReg = cpu.GetRestoredRegister(list);
             emitter.MoveCurrentToRegister(baseReg);
             for (int i = 0; i < list.Elements.Count; i++)
             {
@@ -539,9 +539,9 @@ namespace GroundCompiler
                 // It is a constructor for a class. Allocate memory for this new temporary class instance.
                 UInt64 nrBytesToAllocate = (UInt64)expr.ExprType.SizeInBytes;
                 emitter.Allocate(nrBytesToAllocate);
-                string indexSpaceRegister = cpu.GetRestoredRegister();
+                string indexSpaceRegister = cpu.GetRestoredRegister(expr);
                 emitter.RegisterMove("rcx", indexSpaceRegister);
-                string memPtrRegister = cpu.GetRestoredRegister();
+                string memPtrRegister = cpu.GetRestoredRegister(expr);
                 emitter.RegisterMove("rax", memPtrRegister);
                 emitter.Make_IndexSpaceNr_Current();
                 emitter.Push();  // push the indexspacenr of the allocated memory

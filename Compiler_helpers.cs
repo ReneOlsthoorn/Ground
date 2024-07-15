@@ -260,7 +260,7 @@ namespace GroundCompiler
             if (arrayExpr.Accessor != null)
             {
                 var varSymbol = symbol as Scope.Symbol.VariableSymbol;
-                string indexReg = cpu.GetRestoredRegister();
+                string indexReg = cpu.GetRestoredRegister(arrayExpr);
                 for (int i = 0; i < arrayExpr.Accessor.Count; i++)
                 {
                     if (i > 0)
@@ -311,7 +311,7 @@ namespace GroundCompiler
                 if (varSymbol!.DataType.IsReferenceType)
                     emitter.GetMemoryPointerFromIndex();
 
-                string baseReg = cpu.GetRestoredRegister();
+                string baseReg = cpu.GetRestoredRegister(arrayExpr);
                 emitter.MoveCurrentToRegister(baseReg);
                 if (assignment != null)
                 {

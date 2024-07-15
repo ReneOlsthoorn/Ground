@@ -1,7 +1,9 @@
-﻿using System;
+﻿using GroundCompiler.AstNodes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static GroundCompiler.AstNodes.Statement;
 
 namespace GroundCompiler
 {
@@ -29,12 +31,17 @@ namespace GroundCompiler
             return "";
         }
 
-        public string GetRestoredRegister(string usage = "")
+        public string GetRestoredRegister(Expression? exp = null)
         {
             foreach (var reg in _restoredRegisters)
                 if (!reservedRegisters.ContainsKey(reg))
                 {
-                    reservedRegisters[reg] = usage;
+                    reservedRegisters[reg] = "";
+                    if (exp != null)
+                    {
+                        var functionStat = exp.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                        functionStat?.AddUsedRegister(reg);
+                    }
                     return reg;
                 }
             Compiler.Error("No free register in GetRestoredRegister.");
