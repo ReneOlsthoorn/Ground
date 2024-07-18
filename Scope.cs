@@ -435,6 +435,17 @@ namespace GroundCompiler
                     LevelsDeep = levelsDeep;
                     TheScopeStatement = theScopeStatement;
                 }
+
+                public override ClassStatement? GetClassStatement()
+                {
+                    if (DataType.Contains(Datatype.TypeEnum.CustomClass))
+                    {
+                        var theClassStatement = DataType.Properties["classStatement"];
+                        if (theClassStatement != null)
+                            return (ClassStatement)theClassStatement;
+                    }
+                    return null;
+                }
             }
 
 
@@ -540,6 +551,17 @@ namespace GroundCompiler
                     FunctionParameter = par;
                     TheFunction = theFunction;
                     Symboltype = "function par";
+                }
+
+                public override ClassStatement? GetClassStatement()
+                {
+                    if (DataType.Contains(Datatype.TypeEnum.CustomClass))
+                    {
+                        var theClassStatement = DataType.Properties["classStatement"];
+                        if (theClassStatement != null)
+                            return (ClassStatement)theClassStatement;
+                    }
+                    return null;
                 }
             }
 

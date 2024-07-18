@@ -172,10 +172,20 @@ namespace GroundCompiler
 
         public void Emit()
         {
+            var previousAddedCode = Emitter.CloseGeneratedCode();
+
+            /* There is a problem here: We want to know which registers are used in the generated code, so we can save
+             * their value at the start. Also, we want to align 16 the stack.
+             * Running the MainCallback() two times will not work, because the ExprType values of tree-elements are
+             * modified, so the second run will generate different/wrong code.
+             * We solve the align 16 problems by setting the StackPos to zero.
+             */
+            Emitter.StackPos = 0;  // when generating the code, assume an even stack.
 
             this.FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
             this.FunctionStatement.Properties["in EmittedProcedure"] = true;  // this allows a registration of used registers within a function
 
+            // Generate the code before the entrycode is even generated... This is risky, but works.
             if (MainCallback != null)
                 MainCallback();
 
@@ -187,13 +197,18 @@ namespace GroundCompiler
             EmitCreateStackframe();
             EmitStoreUsedRegisterValues();
 
+            var procedureEntryCode = Emitter.CloseGeneratedCode();
+
+            Emitter.generatedCode.AddRange(previousAddedCode);
+            Emitter.generatedCode.AddRange(procedureEntryCode);
             Emitter.generatedCode.AddRange(generatedCode);
 
             EmitRestoreUsedRegisterValues();
             EmitReleaseStackframe();
 
-            generatedCode = Emitter.CloseGeneratedCode();
-            Emitter.GeneratedCode_Procedures.AddRange(generatedCode);
+            var procedureExitCode = Emitter.CloseGeneratedCode();
+            Emitter.GeneratedCode_Procedures.AddRange(procedureExitCode);
         }
+
     }
 }

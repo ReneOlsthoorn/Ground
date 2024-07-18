@@ -341,14 +341,7 @@ namespace GroundCompiler
                 emitter.LoadFunctionParameter64(theName);
             }
             else
-            {
-                if (variableSymbol is Symbol.ParentScopeVariable parentSymbol)
-                    Compiler.Error("implement parentsymbol in VisitorGetExpr!");
-                else if (variableSymbol is Symbol.FunctionParameterSymbol  funcPar)
-                    emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
-                else
-                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
-            }
+                VariableRead(variableExpr);
 
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
@@ -397,7 +390,7 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
 
-            emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(variableExpr.Name.Lexeme, currentScope?.Owner));
+            VariableRead(variableExpr);
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
@@ -606,13 +599,20 @@ namespace GroundCompiler
                 }
             }
 
+            Expression.Variable? instVar = null;
+
             // When we have an methodcall, we use the scope from the class
             if (expr.FunctionName is Expression.Get functionNameGet)
             {
                 if (functionNameGet.Object is Expression.Variable functionNameVar)
                 {
+                    instVar = functionNameVar;
+
                     string funcName = functionNameVar.Name.Lexeme;
                     var theSymbol = scope!.GetVariableAnywhere(funcName);
+
+                    if (theSymbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+                        levelsDeep = parentSymbol.LevelsDeep;
 
                     var theClass = theSymbol!.GetClassStatement();
                     if (theClass != null)
@@ -677,10 +677,11 @@ namespace GroundCompiler
             if (pushThis)
             {
                 // Add "this" or null if there is no class instance. Position: [rbp+16] // first parameter
-                if (instVarName != null)
-                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(instVarName, currentScope?.Owner));
+                if (instVarName != null && instVar != null)
+                    VariableRead(instVar);
                 else
                     emitter.LoadNull();
+
                 emitter.Push();
             }
 
