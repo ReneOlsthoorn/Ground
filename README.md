@@ -1,9 +1,9 @@
 # Ground
 
-Compiler for the programming language Ground. The compiler is created in C# and generates FASM x86-64 assembly code.
-Ground allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly code is 
-possible by using the generated symbolic constants for each local Ground variable.  
-The primary usecase for Ground is creating highspeed programs, like a "demo".  
+Compiler for the programming language Ground. The compiler itself is created in C# and generates FASM x86-64 assembly.
+Ground allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly is 
+possible due to generated symbolic constants for each local Ground variable.  
+The primary usecase for Ground is creating highspeed programs.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" 
 template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
@@ -52,7 +52,7 @@ must be assembly or C. This creates a distance. Ground tries to close this gap. 
 it everywhere. The Ground code is more compact, so typical usage of x86-64 is in innerloops.  
 See Examples\mode7_optimized.g for an example of innerloop optimization.
 
-Ground has language constructs like Classes, Groups, Expressions, Statements, Functions, Strings, Floats, etc...
+Ground has language constructs like class, group, function, while, if, string, float, etc...
 See file Examples\console.g to see some usage.  
 It has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
@@ -63,8 +63,8 @@ Ground uses FASM to assemble the generated code. Download Fasm at https://flatas
 Set the INCLUDE environment variable to ```<installation directory>\INCLUDE```.
 Add the ```<installation directory>``` to the System variables Path variable.
 
-### Debugging with x64dbg:
-If you want to debug with x64dbg, also assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
+### Sourcecode visible while debugging in x64dbg:
+If you want to debug with x64dbg, assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
 directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
 Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
 the original sourcecode in the comment column of the debugger.
