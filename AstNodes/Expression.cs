@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Xml.Linq;
+﻿using System.Diagnostics;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
 
@@ -284,7 +280,7 @@ namespace GroundCompiler.AstNodes
                 if (symbol == null)
                     Compiler.Error($"Symbol {name} does not exist.");
 
-                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol || symbol is Symbol.GroupSymbol)
+                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol || symbol is Symbol.GroupSymbol || symbol is Symbol.ClassSymbol)
                     return symbol;
 
                 // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.

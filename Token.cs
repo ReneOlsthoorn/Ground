@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace GroundCompiler
 {
@@ -48,12 +45,15 @@ namespace GroundCompiler
         RightBrace,   // }
         Comma,        // ,
         Dot,          // .
+        RangeTo,      // ..
+        RangeUntil,   // ..<
         Asterisk,     // *
         Slash,        // / 
         Percentage,   // %
         Modulo,       // %
         While,        // while
         For,          // for
+        In,           // in
         Assembly,     // asm keyword
         Null,         // null
         LiteralAssemblyPiece, 

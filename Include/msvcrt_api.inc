@@ -15,6 +15,7 @@
           msvcrt_calloc, 'calloc', \
           msvcrt_free,   'free', \
           msvcrt_sin,    'sin', \
+          msvcrt_atan2,  'atan2', \
           msvcrt_cos,    'cos', \
           msvcrt_sqrt,    'sqrt', \
           msvcrt_getch,  '_getch'

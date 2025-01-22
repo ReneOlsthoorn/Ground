@@ -11,6 +11,16 @@ for (int i = 1; i < loopNr+1; i++) {
     kernel32.Sleep(500);
 }
 
+for (z in 1..4) {
+    println("Sugar coating for-loop with range to: " + z);
+    kernel32.Sleep(500);
+}
+
+for (y in 0 ..< 4) {
+    println("Sugar coating for-loop with range until: " + y);
+    kernel32.Sleep(500);
+}
+
 //65535 test
 i = 0x1ffff;
 u16* ptr1 = &i;

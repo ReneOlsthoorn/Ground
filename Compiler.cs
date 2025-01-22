@@ -1,10 +1,5 @@
 ﻿using GroundCompiler.AstNodes;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Globalization;
-using System.Text;
-using System.Xml.Linq;
 using static GroundCompiler.AstNodes.Expression;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Datatype;
@@ -390,7 +385,16 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
 
-            VariableRead(variableExpr);
+            if (variableExpr.Name.Lexeme == "this")
+            {
+                var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                string procName = functionStmt!.Name.Lexeme;
+                string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+                emitter.LoadFunctionParameter64(theName);
+            }
+            else
+                VariableRead(variableExpr);
+
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
@@ -544,15 +548,18 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
 
                 var funcNameVar = expr.FunctionName as Expression.Variable;
-                var theClassSymbol = scope!.GetVariable(funcNameVar!.Name.Lexeme) as Symbol.ClassSymbol;
+                var symbol = GetSymbol(funcNameVar!.Name.Lexeme, scope!);
+                var theClassSymbol = symbol as Symbol.ClassSymbol;
+
+                //GetVariableAnywhere
                 int nrFunctionArg = expr.Arguments.Count;
                 int nrClassInstVars = theClassSymbol!.ClassStatement.InstanceVariables.Count;
                 for (int argNr = 0; argNr < nrClassInstVars; argNr++)
                 {
                     Expression argExpr = expr.Arguments[argNr];
                     EmitExpression(argExpr);
-
                     var instVarStmt = theClassSymbol!.ClassStatement.InstanceVariables[argNr];
+                    EmitConversionCompatibleType(argExpr, instVarStmt.ResultType);
                     emitter.StoreInstanceVar($"{instVarStmt.Name.Lexeme}@{theClassSymbol!.ClassStatement.Name.Lexeme}", memPtrRegister, argExpr.ExprType);
                 }
                 emitter.Pop();  // pop the indexspacenr of the allocated memory

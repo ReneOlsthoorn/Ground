@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
 using static GroundCompiler.Scope.Symbol;
@@ -724,7 +719,7 @@ namespace GroundCompiler
 
         public string AssemblyVariableName(Scope.Symbol.FunctionParameterSymbol varSymbol)
         {
-            return AssemblyVariableNameForFunctionParameter(varSymbol.TheFunction.Name.Lexeme, varSymbol.FunctionParameter.Name);
+            return AssemblyVariableNameForFunctionParameter(varSymbol.TheFunction.Name.Lexeme, varSymbol.FunctionParameter.Name, varSymbol.TheFunction.GetGroupOrClassName());
         }
 
         public string AssemblyVariableName(string name, IScopeStatement? scopeStmt)

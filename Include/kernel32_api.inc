@@ -17,6 +17,9 @@
           kernel32_GetStdHandle,'GetStdHandle',\
           kernel32_GetSystemInfo,'GetSystemInfo',\
           kernel32_GetCurrentThread,'GetCurrentThread',\
+          kernel32_GetCurrentProcess,'GetCurrentProcess',\
+          kernel32_GetPriorityClass,'GetPriorityClass',\
+          kernel32_SetPriorityClass,'SetPriorityClass',\
           kernel32_GetThreadPriority,'GetThreadPriority',\
           kernel32_GetThreadPriorityBoost,'GetThreadPriorityBoost',\
           kernel32_GetCurrentThreadId,'GetCurrentThreadId',\

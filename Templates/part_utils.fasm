@@ -12,6 +12,7 @@ StoreBytes:
 
 ; rcx = lockbit
 WaitForLock_Impl:
+  pause
   lea	rax, [LockObject64]
   bt    qword [rax], rcx
   jc    WaitForLock_Impl        ; when the bit is initialy set, we are not the first one requesting the lock. So, wait.

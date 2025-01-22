@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.Xml.Linq;
-using GroundCompiler.AstNodes;
+﻿using GroundCompiler.AstNodes;
 using static GroundCompiler.AstNodes.Statement;
+
 
 namespace GroundCompiler
 {
@@ -43,7 +39,7 @@ namespace GroundCompiler
             return false;
         }
 
-        // 2 chars are peeked. The ++ operator, for instance, has 2 characters.
+        // the token after the current peek is checked.
         private bool CheckPlus2(params TokenType[] types)
         {
             if (IsAtEnd()) return false;
@@ -213,6 +209,42 @@ namespace GroundCompiler
                 initializer = null;
             else if (Check(TokenType.Type))
                 initializer = VariableDeclaration();
+            else if (Check(TokenType.Identifier) && CheckPlus2(TokenType.In))
+            {
+                // for (i in 1..10) { println(i); }
+                // The Kotlin for-loop is used as inspiration.
+                var rangeIdentifier = Consume(TokenType.Identifier, "For loop expected a identifier.");
+                if (Match(TokenType.In))
+                {
+                    var rangeDatatype = Datatype.GetDatatype("int");
+                    Expression.Binary rangeExpr = ParseExpression() as Expression.Binary;
+                    initializer = new Statement.VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.Left);
+
+                    Token rangeToOrUntilToken = new Token();
+                    rangeToOrUntilToken.Lexeme = rangeExpr.Operator.Lexeme == ".." ? "<=" : "<";
+                    rangeToOrUntilToken.Types = new List<TokenType> { TokenType.Operator, TokenType.BooleanResultOperator };
+                    if (rangeExpr.Operator.Lexeme == "..")
+                        rangeToOrUntilToken.Types.Add(TokenType.LessEqual);
+                    else
+                        rangeToOrUntilToken.Types.Add(TokenType.Less);
+
+                    var rangeConditionVariable = new Expression.Variable(rangeIdentifier);
+                    Expression rangeConditionExp = new Expression.Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.Right);
+
+                    Token incrementToken = new Token();
+                    incrementToken.Lexeme = "++";
+                    incrementToken.Types = new List<TokenType> { TokenType.Operator, TokenType.PlusPlus };
+                    Expression rangeIncrementExp = new Expression.Unary(incrementToken, rangeConditionVariable, postfix: true);
+
+                    Consume(TokenType.CloseBracket, "ForStatement: Expect ')' after 'for' clauses");
+
+                    var sugarBody = ParseStatement();
+                    sugarBody = new Statement.BlockStatement(new List<Statement> { sugarBody, new Statement.ExpressionStatement(rangeIncrementExp) });
+                    sugarBody = new Statement.WhileStatement(rangeConditionExp, sugarBody);
+                    sugarBody = new Statement.BlockStatement(new List<Statement> { initializer, sugarBody });
+                    return sugarBody;
+                }
+            }
             else
                 initializer = ExpressionStatement();
 
@@ -334,7 +366,8 @@ namespace GroundCompiler
             return expr;
         }
 
-        private Expression Or() => ParseLeftAssociativeBinaryOperation(And, TokenType.LogicalOr);
+        private Expression Or() => ParseLeftAssociativeBinaryOperation(Range, TokenType.LogicalOr);
+        private Expression Range() => ParseLeftAssociativeBinaryOperation(And, TokenType.RangeTo, TokenType.RangeUntil);
         private Expression And() => ParseLeftAssociativeBinaryOperation(Equality, TokenType.LogicalAnd);
         private Expression Equality() => ParseLeftAssociativeBinaryOperation(Comparison, TokenType.NotIsEqual, TokenType.IsEqual);
         private Expression Comparison() => ParseLeftAssociativeBinaryOperation(Shifting, TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual);

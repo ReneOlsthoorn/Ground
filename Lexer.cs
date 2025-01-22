@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using static System.Net.Mime.MediaTypeNames;
+﻿using System.Globalization;
+
 
 namespace GroundCompiler
 {
@@ -46,6 +41,7 @@ namespace GroundCompiler
                     }
                     if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
                     if (IsDigit(c))           { ReadNumber(token);                     break; }
+
                     if (SkipIfMatch("==", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.IsEqual)) break;
                     if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.NotIsEqual)) break;
                     if (SkipIfMatch("+=", token, TokenType.Operator, TokenType.AddAssign)) break;
@@ -58,6 +54,9 @@ namespace GroundCompiler
                     if (SkipIfMatch("<<", token, TokenType.Operator, TokenType.ShiftLeft)) break;
                     if (SkipIfMatch("&&", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalAnd)) break;
                     if (SkipIfMatch("||", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalOr)) break;
+
+                    if (SkipIfMatch("..<", token, TokenType.Operator, TokenType.RangeUntil)) break;
+                    if (SkipIfMatch("..", token, TokenType.Operator, TokenType.RangeTo)) break;
 
                     if (SkipIfMatch("=",  token, TokenType.Operator, TokenType.Assign)) break;
                     if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.Not)) break;
@@ -145,6 +144,7 @@ namespace GroundCompiler
             if (sLower == "break") { fill(token, sLower, TokenType.Keyword, TokenType.Break); return; }
             if (sLower == "null")  { fill(token, sLower, TokenType.Keyword, TokenType.Null); return; }
             if (sLower == "return") { fill(token, sLower, TokenType.Keyword, TokenType.Return); return; }
+            if (sLower == "in") { fill(token, sLower, TokenType.In); return; }
             if (sLower == "true" || sLower == "false")
             {
                 fill(token, sLower, TokenType.Literal);
@@ -163,10 +163,10 @@ namespace GroundCompiler
         }
 
 
-        public string ReadMatching(Func<char, bool> CharValidFunction)
+        public string ReadMatching(Func<char, char, bool> CharValidFunction)
         {
             int startPos = needle;
-            while (CharValidFunction(NextChar())) { }
+            while (CharValidFunction(NextChar(), FollowingChar())) { }
             int endPos = needle;
 
             return sourcecode.Substring(startPos, endPos - startPos);
@@ -307,6 +307,13 @@ namespace GroundCompiler
             needle -= 1;
             return CurrentChar();
         }
+        public char FollowingChar()
+        {
+            if ((needle + 1) >= sourcecode.Length)
+                return ' ';
+            return sourcecode[needle+1];
+        }
+
 
         public char CurrentChar()
         {
@@ -316,16 +323,16 @@ namespace GroundCompiler
             return sourcecode[needle];
         }
 
-        public bool IsDigit(char c) { return (c >= '0' && c <= '9'); }
-        public bool IsDigitOrPoint(char c) { return (c >= '0' && c <= '9') || c == '.'; }
-        public bool IsAlphabetical(char c) { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }
-        public bool IsIdentifierStart(char c) { return (IsAlphabetical(c) || (c == '_')); }
-        public bool IsIdentifierRest(char c) { return (IsIdentifierStart(c) || IsDigit(c) || (c == '$')); }
-        public bool IsNotStringEnd(char c) { return (c != '\"'); }
-        public bool IsNotGraveAccentStringEnd(char c) { return (c != '`'); }
-        public bool IsNotRightBrace(char c) { return (c != '}'); }
-        public bool IsSpace(char c) { return (c == ' ' || c == '\t' || c == '\r' || c == '\n'); }
-        public bool IsHexadecimalDigit(char c) { return (IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
+        public bool IsDigit(char c, char followingChar = ' ') { return (c >= '0' && c <= '9'); }
+        public bool IsDigitOrPoint(char c, char followingChar = ' ') { return (c >= '0' && c <= '9') || (c == '.' && followingChar != '.'); }
+        public bool IsAlphabetical(char c, char followingChar = ' ') { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }
+        public bool IsIdentifierStart(char c, char followingChar = ' ') { return (IsAlphabetical(c) || (c == '_')); }
+        public bool IsIdentifierRest(char c, char followingChar = ' ') { return (IsIdentifierStart(c) || IsDigit(c) || (c == '$')); }
+        public bool IsNotStringEnd(char c, char followingChar = ' ') { return (c != '\"'); }
+        public bool IsNotGraveAccentStringEnd(char c, char followingChar = ' ') { return (c != '`'); }
+        public bool IsNotRightBrace(char c, char followingChar = ' ') { return (c != '}'); }
+        public bool IsSpace(char c, char followingChar = ' ') { return (c == ' ' || c == '\t' || c == '\r' || c == '\n'); }
+        public bool IsHexadecimalDigit(char c, char followingChar = ' ') { return (IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
         static int HexadecimalValue(char c)
         {
             if (c >= '0' && c <= '9')
