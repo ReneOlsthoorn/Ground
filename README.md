@@ -44,7 +44,7 @@ We can replace a statement with x86-64:
 Diving into this language will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format, the x64 calling convention and Compiler Design.
 
-The C programming language is 50 years old at this moment. It is a nice language to do low-level programming, but 
+The C programming language is 50 years old at this moment. It is a well-known language to do low-level programming, but 
 nowadays C compilers do not allow the mixing of C and assembly in the same function. The reason is obvious: manual 
 inserted assembly makes optimization of the generated code hard.  
 It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
@@ -289,3 +289,10 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" />
 </p>
+
+### Changelog
+2025.01.29: Added kotlin for-loops:
+```
+for (i in 1..10)  { println(i); }  // from 1..10
+for (i in 0..<10) { println(i); }  // from 0..9
+```

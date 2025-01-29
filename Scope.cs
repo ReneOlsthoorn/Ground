@@ -226,11 +226,16 @@ namespace GroundCompiler
             return name;
         }
 
-        public Symbol.LocalVariableSymbol DefineVariable(string name, Datatype datatype)
+        public Symbol.LocalVariableSymbol DefineVariable(string name, Datatype datatype, bool allowSameType=false)
         {
             string id = IdFor(name, datatype.Name);
             if (Symboltable.ContainsKey(id))
+            {
+                if (allowSameType && Symboltable[id] is Symbol.LocalVariableSymbol localVariable)
+                    return localVariable;
+
                 Compiler.Error($"{name} already defined.");
+            }
 
             var newElement = new Symbol.LocalVariableSymbol(name, datatype);
             Symboltable[id] = newElement;

@@ -219,6 +219,7 @@ namespace GroundCompiler
                     var rangeDatatype = Datatype.GetDatatype("int");
                     Expression.Binary rangeExpr = ParseExpression() as Expression.Binary;
                     initializer = new Statement.VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.Left);
+                    initializer.Properties["for-loop-variable"] = true;
 
                     Token rangeToOrUntilToken = new Token();
                     rangeToOrUntilToken.Lexeme = rangeExpr.Operator.Lexeme == ".." ? "<=" : "<";

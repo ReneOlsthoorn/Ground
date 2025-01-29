@@ -4,21 +4,21 @@
 #include kernel32.g
 
 // Loop test
-int loopNr = 3;
+int loopNr = 4;
 string tmp = "test";
 for (int i = 1; i < loopNr+1; i++) {
 	println(i + " " + tmp);
-    kernel32.Sleep(500);
+    kernel32.Sleep(300);
 }
 
-for (z in 1..4) {
-    println("Sugar coating for-loop with range to: " + z);
-    kernel32.Sleep(500);
+for (i in 1..4) {
+    println("Syntax sugar  for (i in 1..4)  -> " + i);
+    kernel32.Sleep(300);
 }
 
-for (y in 0 ..< 4) {
-    println("Sugar coating for-loop with range until: " + y);
-    kernel32.Sleep(500);
+for (i in 0..<loopNr) {
+    println("Syntax sugar  for (i in 0 ..< loopNr) -> " + i);
+    kernel32.Sleep(300);
 }
 
 //65535 test

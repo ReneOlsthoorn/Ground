@@ -49,14 +49,14 @@ u32[1024, 1024] racetrack = g.[racetrack_p];
 
 
 function Innerloop() {
-	for (int y = 0; y < g.GC_Screen_DimY; y++) {
+	for (y in 0 ..< g.GC_Screen_DimY) {
 		float distance = space_y * scale_y / (y + horizon);
 		float fStartX = fWorldX + (msvcrt.cos(fWorldAngle + fFoVHalf) * distance);
 		float fStartY = fWorldY - (msvcrt.sin(fWorldAngle + fFoVHalf) * distance);
 		float fEndX = fWorldX + (msvcrt.cos(fWorldAngle - fFoVHalf) * distance);
 		float fEndY = fWorldY - (msvcrt.sin(fWorldAngle - fFoVHalf) * distance);
 
-		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+		for (x in 0 ..< g.GC_Screen_DimX) {
 			float fSampleWidth = x / float_ScreenDIMx;
 			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 			float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);

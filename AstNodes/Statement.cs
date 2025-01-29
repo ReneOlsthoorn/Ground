@@ -210,7 +210,8 @@ namespace GroundCompiler.AstNodes
             public override void Initialize()
             {
                 var scope = GetScope();
-                Scope.Symbol.VariableSymbol varSymbol = scope?.DefineVariable(Name.Lexeme, ResultType);
+                Scope.Symbol.VariableSymbol varSymbol = scope?.DefineVariable(Name.Lexeme, ResultType, allowSameType: Properties.ContainsKey("for-loop-variable"));
+
                 if (Initializer != null) { 
                     Initializer.Parent = this;
                     Initializer.Initialize();
