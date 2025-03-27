@@ -1,24 +1,19 @@
 
-; These are the flags which may be passed to SDL_Init().  You should
-; specify the subsystems which you will be using in your application.
-
-SDL_INIT_TIMER		= 0x00000001
 SDL_INIT_AUDIO		= 0x00000010
-SDL_INIT_VIDEO		= 0x00000020  ; SDL_INIT_VIDEO implies SDL_INIT_EVENTS
-SDL_INIT_JOYSTICK	= 0x00000200  ; SDL_INIT_JOYSTICK implies SDL_INIT_EVENTS
+SDL_INIT_VIDEO		= 0x00000020
+SDL_INIT_JOYSTICK	= 0x00000200
 SDL_INIT_HAPTIC 	= 0x00001000
-SDL_INIT_GAMECONTROLLER = 0x00002000  ; SDL_INIT_GAMECONTROLLER implies SDL_INIT_JOYSTICK
+SDL_INIT_GAMEPAD    = 0x00002000
 SDL_INIT_EVENTS 	= 0x00004000
-SDL_INIT_NOPARACHUTE	= 0x00100000  ; Don't catch fatal signals
-SDL_INIT_EVERYTHING	= \
-			  SDL_INIT_TIMER or SDL_INIT_AUDIO or SDL_INIT_VIDEO or SDL_INIT_EVENTS or \
-			  SDL_INIT_JOYSTICK or SDL_INIT_HAPTIC or SDL_INIT_GAMECONTROLLER
+SDL_INIT_SENSOR 	= 0x00008000
+SDL_INIT_CAMERA 	= 0x00010000
+
 
 ; The flags on a window
 
 SDL_WINDOW_FULLSCREEN	      = 0x00000001	; fullscreen window
 SDL_WINDOW_OPENGL	      = 0x00000002	; window usable with OpenGL context
-SDL_WINDOW_SHOWN	      = 0x00000004	; window is visible
+SDL_WINDOW_OCCLUDED	      = 0x00000004
 SDL_WINDOW_HIDDEN	      = 0x00000008	; window is not visible
 SDL_WINDOW_BORDERLESS	      = 0x00000010	; no window decoration
 SDL_WINDOW_RESIZABLE	      = 0x00000020	; window can be resized
@@ -27,9 +22,8 @@ SDL_WINDOW_MAXIMIZED	      = 0x00000080	; window is maximized
 SDL_WINDOW_INPUT_GRABBED      = 0x00000100	; window has grabbed input focus
 SDL_WINDOW_INPUT_FOCUS	      = 0x00000200	; window has input focus
 SDL_WINDOW_MOUSE_FOCUS	      = 0x00000400	; window has mouse focus
-SDL_WINDOW_FULLSCREEN_DESKTOP = SDL_WINDOW_FULLSCREEN or 0x00001000
-SDL_WINDOW_FOREIGN	      = 0x00000800	; window not created by SDL
-SDL_WINDOW_ALLOW_HIGHDPI      = 0x00002000	; window should be created
+SDL_WINDOW_EXTERNAL	      = 0x00000800
+SDL_WINDOW_HIGH_PIXEL_DENSITY      = 0x00002000
 
 ; Used to indicate that you don't care what the window position is.
 
@@ -40,13 +34,6 @@ SDL_WINDOWPOS_UNDEFINED       = SDL_WINDOWPOS_UNDEFINED_MASK or 0
 
 SDL_WINDOWPOS_CENTERED_MASK   = 0x2FFF0000
 SDL_WINDOWPOS_CENTERED	      = SDL_WINDOWPOS_CENTERED_MASK or 0
-
-; Flags used when creating a rendering context
-
-SDL_RENDERER_SOFTWARE	   = 0x00000001 ; The renderer is a software fallback
-SDL_RENDERER_ACCELERATED   = 0x00000002 ; The renderer uses hardware acceleration
-SDL_RENDERER_PRESENTVSYNC  = 0x00000004 ; Present is synchronized with the refresh rate
-SDL_RENDERER_TARGETTEXTURE = 0x00000008 ; The renderer supports rendering to texture
 
 
 ; The access pattern allowed for a texture.
@@ -61,7 +48,7 @@ SDL_TEXTUREMODULATE_NONE  = 0x00000000	; No modulation
 SDL_TEXTUREMODULATE_COLOR = 0x00000001	; srcC = srcC * color
 SDL_TEXTUREMODULATE_ALPHA = 0x00000002	; srcA = srcA * alpha
 
-; Flip constants for SDL_RenderCopyEx
+; Flip constants for SDL_RenderTextureRotated
 
 SDL_FLIP_NONE	    = 0x00000000	; Do not flip
 SDL_FLIP_HORIZONTAL = 0x00000001	; flip horizontally
@@ -273,60 +260,56 @@ AUDIO_F32SYS = AUDIO_F32LSB
 
 ; The types of events that can be delivered
 
-SDL_FIRSTEVENT		     = 0
-SDL_QUIT		     = 0x100	 ; User-requested quit
-SDL_APP_TERMINATING	     = 0x101	 ; The application is being terminated by the OS
+SDL_EVENT_FIRST		     = 0
+SDL_EVENT_QUIT		     = 0x100	 ; User-requested quit
+SDL_EVENT_TERMINATING	     = 0x101	 ; The application is being terminated by the OS
 					 ; Called on iOS in applicationWillTerminate()
 					 ; Called on Android in onDestroy()
-SDL_APP_LOWMEMORY	     = 0x102	 ; The application is low on memory free memory if possible.
+SDL_EVENT_LOW_MEMORY	     = 0x102	 ; The application is low on memory free memory if possible.
 					 ; Called on iOS in applicationDidReceiveMemoryWarning()
 					 ; Called on Android in onLowMemory()
-SDL_APP_WILLENTERBACKGROUND  = 0x103	 ; The application is about to enter the background
+SDL_EVENT_WILL_ENTER_BACKGROUND  = 0x103	 ; The application is about to enter the background
 					 ; Called on iOS in applicationWillResignActive()
 					 ; Called on Android in onPause()
-SDL_APP_DIDENTERBACKGROUND   = 0x104	 ; The application did enter the background and may not get CPU for some time
+SDL_EVENT_DID_ENTER_BACKGROUND   = 0x104	 ; The application did enter the background and may not get CPU for some time
 					 ; Called on iOS in applicationDidEnterBackground()
 					 ; Called on Android in onPause()
-SDL_APP_WILLENTERFOREGROUND  = 0x105	 ; The application is about to enter the foreground
+SDL_EVENT_WILL_ENTER_FOREGROUND  = 0x105	 ; The application is about to enter the foreground
 					 ; Called on iOS in applicationWillEnterForeground()
 					 ; Called on Android in onResume()
-SDL_APP_DIDENTERFOREGROUND   = 0x106	 ; The application is now interactive
+SDL_EVENT_DID_ENTER_FOREGROUND   = 0x106	 ; The application is now interactive
 					 ; Called on iOS in applicationDidBecomeActive()
 					 ; Called on Android in onResume()
-SDL_WINDOWEVENT 	     = 0x200	 ; Window state change
-SDL_SYSWMEVENT		     = 0x201	 ; System specific event
-SDL_KEYDOWN		     = 0x300	 ; Key pressed
-SDL_KEYUP		     = 0x301	 ; Key released
-SDL_TEXTEDITING 	     = 0x302	 ; Keyboard text editing (composition)
-SDL_TEXTINPUT		     = 0x303	 ; Keyboard text input
-SDL_MOUSEMOTION 	     = 0x400	 ; Mouse moved
-SDL_MOUSEBUTTONDOWN	     = 0x401	 ; Mouse button pressed
-SDL_MOUSEBUTTONUP	     = 0x402	 ; Mouse button released
-SDL_MOUSEWHEEL		     = 0x403	 ; Mouse wheel motion
-SDL_JOYAXISMOTION	     = 0x600	 ; Joystick axis motion
-SDL_JOYBALLMOTION	     = 0x601	 ; Joystick trackball motion
-SDL_JOYHATMOTION	     = 0x602	 ; Joystick hat position change
-SDL_JOYBUTTONDOWN	     = 0x603	 ; Joystick button pressed
-SDL_JOYBUTTONUP 	     = 0x604	 ; Joystick button released
-SDL_JOYDEVICEADDED	     = 0x605	 ; A new joystick has been inserted into the system
-SDL_JOYDEVICEREMOVED	     = 0x606	 ; An opened joystick has been removed
-SDL_CONTROLLERAXISMOTION     = 0x650	 ; Game controller axis motion
-SDL_CONTROLLERBUTTONDOWN     = 0x651	 ; Game controller button pressed
-SDL_CONTROLLERBUTTONUP	     = 0x652	 ; Game controller button released
-SDL_CONTROLLERDEVICEADDED    = 0x653	 ; A new Game controller has been inserted into the system
-SDL_CONTROLLERDEVICEREMOVED  = 0x654	 ; An opened Game controller has been removed
-SDL_CONTROLLERDEVICEREMAPPED = 0x655	 ; The controller mapping was updated
-SDL_FINGERDOWN		     = 0x700
-SDL_FINGERUP		     = 0x701
-SDL_FINGERMOTION	     = 0x702
-SDL_DOLLARGESTURE	     = 0x800
-SDL_DOLLARRECORD	     = 0x801
-SDL_MULTIGESTURE	     = 0x802
-SDL_CLIPBOARDUPDATE	     = 0x900	 ; The clipboard changed
-SDL_DROPFILE		     = 0x1000	 ; The system requests a file open
-SDL_RENDER_TARGETS_RESET     = 0x2000	 ; The render targets have been reset
-SDL_USEREVENT		     = 0x8000
-SDL_LASTEVENT		     = 0xFFFF
+
+SDL_EVENT_KEY_DOWN		     = 0x300	 ; Key pressed
+SDL_EVENT_KEY_UP		     = 0x301	 ; Key released
+SDL_EVENT_TEXT_EDITING 	     = 0x302	 ; Keyboard text editing (composition)
+SDL_EVENT_TEXT_INPUT		 = 0x303	 ; Keyboard text input
+SDL_EVENT_MOUSE_MOTION 	     = 0x400	 ; Mouse moved
+SDL_EVENT_MOUSE_BUTTON_DOWN	     = 0x401	 ; Mouse button pressed
+SDL_EVENT_MOUSE_BUTTON_UP	     = 0x402	 ; Mouse button released
+SDL_EVENT_MOUSE_WHEEL		     = 0x403	 ; Mouse wheel motion
+SDL_EVENT_JOYSTICK_AXIS_MOTION	     = 0x600	 ; Joystick axis motion
+SDL_EVENT_JOYSTICK_BALL_MOTION	     = 0x601	 ; Joystick trackball motion
+SDL_EVENT_JOYSTICK_HAT_MOTION	     = 0x602	 ; Joystick hat position change
+SDL_EVENT_JOYSTICK_BUTTON_DOWN	     = 0x603	 ; Joystick button pressed
+SDL_EVENT_JOYSTICK_BUTTON_UP 	     = 0x604	 ; Joystick button released
+SDL_EVENT_JOYSTICK_ADDED	     = 0x605	 ; A new joystick has been inserted into the system
+SDL_EVENT_JOYSTICK_REMOVED	     = 0x606	 ; An opened joystick has been removed
+SDL_EVENT_GAMEPAD_AXIS_MOTION     = 0x650	 ; Game controller axis motion
+SDL_EVENT_GAMEPAD_BUTTON_DOWN     = 0x651	 ; Game controller button pressed
+SDL_EVENT_GAMEPAD_BUTTON_UP	     = 0x652	 ; Game controller button released
+SDL_EVENT_GAMEPAD_ADDED    = 0x653	 ; A new Game controller has been inserted into the system
+SDL_EVENT_GAMEPAD_REMOVED  = 0x654	 ; An opened Game controller has been removed
+SDL_EVENT_GAMEPAD_REMAPPED = 0x655	 ; The controller mapping was updated
+SDL_EVENT_FINGER_DOWN		     = 0x700
+SDL_EVENT_FINGER_UP		     = 0x701
+SDL_EVENT_FINGER_MOTION	     = 0x702
+SDL_EVENT_CLIPBOARD_UPDATE	     = 0x900	 ; The clipboard changed
+SDL_EVENT_DROP_FILE		     = 0x1000	 ; The system requests a file open
+SDL_EVENT_RENDER_TARGETS_RESET     = 0x2000	 ; The render targets have been reset
+SDL_EVENT_USER		     = 0x8000
+SDL_EVENT_LAST		     = 0xFFFF
 
 ; Keyboard scancodes
 

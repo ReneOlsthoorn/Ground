@@ -115,6 +115,8 @@ namespace GroundCompiler.AstNodes
                 this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextRows", Datatype.GetDatatype("int"));
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextColumns", Datatype.GetDatatype("int"));
+                this.Scope.DefineHardcodedFunction("zero");
+                this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
 
                 // Usage:   byte[61,36] screenArray = GC_ScreenText;
                 var screenPtrDatatype = Datatype.GetDatatype("byte[]", new List<UInt64> { 61, 36 });
@@ -142,10 +144,11 @@ namespace GroundCompiler.AstNodes
                 fontPtrDatatype.IsValueType = true;
                 this.Scope.DefineHardcodedVariable("GC_ScreenFont", fontPtrDatatype);
 
-                AddDynamicDLL("sdl2");
-                AddDynamicDLL("sdl2_image");
+                AddDynamicDLL("sdl3");
+                AddDynamicDLL("sdl3_image");
                 AddDynamicDLL("kernel32");
                 AddDynamicDLL("user32");
+                AddDynamicDLL("gdi32");
                 AddDynamicDLL("sidelib");
                 AddDynamicDLL("chipmunk");
             }
@@ -678,6 +681,20 @@ namespace GroundCompiler.AstNodes
 
                 return false;
                 */
+            }
+
+            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            {
+                if (this.GetType() == typeToFind)
+                    yield return this;
+
+                foreach (AstNode node in Nodes)
+                    foreach (AstNode child in node.FindAllNodes(typeToFind))
+                        yield return child;
+
+                if (Body != null)
+                    foreach (AstNode child in Body.FindAllNodes(typeToFind))
+                        yield return child;
             }
 
 

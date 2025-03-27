@@ -3,7 +3,7 @@
 //https://lodev.org/cgtutor/plasma.html
 
 #include msvcrt.g
-#include sdl2.g
+#include sdl3.g
 #include kernel32.g
 #include user32.g
 #include sidelib.g
@@ -15,14 +15,16 @@ ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
-ptr window = sdl2.SDL_CreateWindow("Retro VM", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.Graphics_ScreenDIMx, g.Graphics_ScreenDIMy, g.SDL_WINDOW_SHOWN);
-ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
-ptr texture = sdl2.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.Graphics_ScreenDIMx, g.Graphics_ScreenDIMy);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+ptr window = sdl3.SDL_CreateWindow("Retro VM", g.Graphics_ScreenDIMx, g.Graphics_ScreenDIMy, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.Graphics_ScreenDIMx, g.Graphics_ScreenDIMy);
+sdl3.SDL_SetRenderVSync(renderer, 1);
 
 u32[] pixels = null;
-byte[56] event = [];
+byte[128] event = [];
 u32* eventType = &event[0];
+u32* eventScancode = &event[24];
 int pitch = g.Graphics_ScreenLineSize;
 int xscrollNeedle = 0;
 int scrollTextNeedle = 0;
@@ -55,7 +57,7 @@ class ColorRGB {
     int green;
     int blue;
     function ToInteger() {
-        return (65536 * this.red) + (256 * this.green) + this.blue;
+        return 0xff000000 + (65536 * this.red) + (256 * this.green) + this.blue;
     }
 }
 
@@ -233,18 +235,23 @@ function PlasmaCalculation() {
 
 while (StatusRunning)
 {
-	while (sdl2.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_QUIT) {
+	while (sdl3.SDL_PollEvent(&event[0])) {
+		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
+		}
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+				StatusRunning = false;
+			}
 		}
 	}
 
-	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
+	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 
 	g.[pixels_p] = pixels;
 	thread1Busy = StatusRunning;
 	thread2Busy = StatusRunning;
-	loopStartTicks = sdl2.SDL_GetTicks();
+	loopStartTicks = sdl3.SDL_GetTicks();
 
 	if (thread1Busy) {
         xscrollNeedle++;
@@ -263,7 +270,7 @@ while (StatusRunning)
 
 		PlasmaCalculation();
 
-		int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
+		int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
 		if (currentTicks < debugBestTicks) {
 			debugBestTicks = currentTicks;
 		}
@@ -272,17 +279,17 @@ while (StatusRunning)
 	}
 	while (thread2Busy) { }
 
-	sdl2.SDL_UnlockTexture(texture);
-	sdl2.SDL_RenderCopy(renderer, texture, null, null);
-	sdl2.SDL_RenderPresent(renderer);
+	sdl3.SDL_UnlockTexture(texture);
+	sdl3.SDL_RenderTexture(renderer, texture, null, null);
+	sdl3.SDL_RenderPresent(renderer);
 
 	asm { inc [frameCount] }
 }
 
-sdl2.SDL_DestroyTexture(texture);
-sdl2.SDL_DestroyRenderer(renderer);
-sdl2.SDL_DestroyWindow(window);
-sdl2.SDL_Quit();
+sdl3.SDL_DestroyTexture(texture);
+sdl3.SDL_DestroyRenderer(renderer);
+sdl3.SDL_DestroyWindow(window);
+sdl3.SDL_Quit();
 
 msvcrt.free(g.[font32_p]);
 msvcrt.free(g.[font256_p]);

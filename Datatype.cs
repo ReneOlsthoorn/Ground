@@ -73,9 +73,9 @@ namespace GroundCompiler
 
         /* Unrelated C++ notice:
            C++ int = 32 bits. So, int is not 64 bits in C++ x64!
-           C++ long = 32 bits.
+           C++ long = 32 bits(!).
            C++ long long = 64 bits.
-           C++ float = 32 bits.
+           C++ float = 32 bits = 4 bytes.
            C++ double = 64 bits.
          */
 

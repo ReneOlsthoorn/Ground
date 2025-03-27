@@ -1,55 +1,56 @@
 //Bob example.
 
-#template sdl2
+#template sdl3
 
 #include msvcrt.g
-#include sdl2.g
+#include sdl3.g
 #include kernel32.g
 #include user32.g
 #include sidelib.g
 #include chipmunk.g
 
-
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
-ptr window = sdl2.SDL_CreateWindow("Chipmunk physics engine usage", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
-ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+ptr window = sdl3.SDL_CreateWindow("Chipmunk physics engine usage", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+sdl3.SDL_SetRenderVSync(renderer, 1);
 
-byte[56] event = [];
+byte[128] event = [];
 u32* eventType = &event[0];
+u32* eventScancode = &event[24];
 bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 asm data {frameCount dq 0}
-u32[4] destRect = [];
+f32[4] destRect = [];
 
-ptr tennisSurface = sdl2_image.IMG_Load("de_tennisbaan.jpg");
+ptr tennisSurface = sdl3_image.IMG_Load("de_tennisbaan.jpg");
 if (tennisSurface == null) {
 	user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK);
 	return;
 }
-ptr tenniscourtTexture = sdl2.SDL_CreateTextureFromSurface(renderer, tennisSurface);
+ptr tenniscourtTexture = sdl3.SDL_CreateTextureFromSurface(renderer, tennisSurface);
 if (tenniscourtTexture == null) {
 	user32.MessageBox(null, "tenniscourtTexture not available!", "Message", g.MB_OK);
 	return;
 }
-sdl2.SDL_FreeSurface(tennisSurface);
+sdl3.SDL_DestroySurface(tennisSurface);
 
-ptr ballSurface = sdl2_image.IMG_Load("tennisbal_32x32.png");
+ptr ballSurface = sdl3_image.IMG_Load("tennisbal_32x32.png");
 if (ballSurface == null) {
 	user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK);
 	return;
 }
 
-ptr ballTexture = sdl2.SDL_CreateTextureFromSurface(renderer, ballSurface);
+ptr ballTexture = sdl3.SDL_CreateTextureFromSurface(renderer, ballSurface);
 if (ballTexture == null) {
 	user32.MessageBox(null, "ballTexture not available!", "Message", g.MB_OK);
 	return;
 }
-sdl2.SDL_FreeSurface(ballSurface);
+sdl3.SDL_DestroySurface(ballSurface);
 
 class CpVect {
 	float x;
@@ -96,14 +97,19 @@ float angle;
 
 while (StatusRunning)
 {
-	while (sdl2.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_QUIT) {
+	while (sdl3.SDL_PollEvent(&event[0])) {
+		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
+		}
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+				StatusRunning = false;
+			}
 		}
 	}
 
-	loopStartTicks = sdl2.SDL_GetTicks();
-	sdl2.SDL_RenderCopy(renderer, tenniscourtTexture, null, null);
+	loopStartTicks = sdl3.SDL_GetTicks();
+	sdl3.SDL_RenderTexture(renderer, tenniscourtTexture, null, null);
 
 	chipmunk.cpSpaceStep(space, timeStep);
 
@@ -118,24 +124,23 @@ while (StatusRunning)
 		destRect[3] = 32;
 
 		float theAngle = angle * (180.0 / 3.141592);
-		sdl2.SDL_RenderCopyEx(renderer, ballTexture, null, destRect, -theAngle, null, g.SDL_FLIP_NONE);
+		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, null, destRect, -theAngle, null, g.SDL_FLIP_NONE);
 	}
 
-	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
+	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks && currentTicks != 0) {
 		debugBestTicks = currentTicks;
 	}
 
-	sdl2.SDL_RenderPresent(renderer);
+	sdl3.SDL_RenderPresent(renderer);
 	asm { inc [frameCount] }
 }
 
 chipmunk.cpSpaceFree(space);
 
-sdl2.SDL_DestroyTexture(tenniscourtTexture);
-sdl2.SDL_DestroyRenderer(renderer);
-sdl2.SDL_DestroyWindow(window);
-sdl2.SDL_Quit();
+sdl3.SDL_DestroyRenderer(renderer);
+sdl3.SDL_DestroyWindow(window);
+sdl3.SDL_Quit();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 

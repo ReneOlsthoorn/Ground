@@ -196,7 +196,7 @@ namespace GroundCompiler
 
         public string VisitorSetExpr(Expression.Set expr)
         {
-            return Parenthesize2("=", expr.Object, expr.Name.Lexeme, expr.Value);
+            return Parenthesize2("=", expr.TheObject, expr.Name.Lexeme, expr.Value);
         }
 
         public string VisitorUnaryExpr(Expression.Unary expr)

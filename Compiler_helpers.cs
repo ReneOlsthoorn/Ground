@@ -352,7 +352,7 @@ namespace GroundCompiler
             }
             else if (destinationDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && sourceDatatype.Contains(Datatype.TypeEnum.Integer))
             {
-                emitter.IntegerToFloat();
+                emitter.IntegerToFloat(destinationDatatype.SizeInBytes);
                 if (copyDatatypeToSource)
                     sourceExpr.ExprType = destinationDatatype;
             }
@@ -365,6 +365,10 @@ namespace GroundCompiler
             else if (sourceDatatype.Contains(Datatype.TypeEnum.Integer) && destinationDatatype.Contains(Datatype.TypeEnum.Integer) && destinationDatatype.SizeInBytes < sourceDatatype.SizeInBytes)
             {
                 emitter.resizeCurrent(destinationDatatype.SizeInBytes);
+            }
+            else if (sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && destinationDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && destinationDatatype.SizeInBytes < sourceDatatype.SizeInBytes)
+            {
+                emitter.resizeCurrentFloatingPoint(sourceDatatype.SizeInBytes, destinationDatatype.SizeInBytes);
             }
         }
 

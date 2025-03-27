@@ -1,9 +1,9 @@
 // Starfield
 
-#template sdl2
+#template sdl3
 
 #include msvcrt.g
-#include sdl2.g
+#include sdl3.g
 #include kernel32.g
 #include user32.g
 #include sidelib.g
@@ -12,20 +12,21 @@ ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl2.SDL_Init(g.SDL_INIT_EVERYTHING);
-ptr window = sdl2.SDL_CreateWindow("Travelling Through Stars", g.SDL_WINDOWPOS_UNDEFINED, g.SDL_WINDOWPOS_UNDEFINED, g.GC_Screen_DimX, g.GC_Screen_DimY, g.SDL_WINDOW_SHOWN);
-ptr renderer = sdl2.SDL_CreateRenderer(window, -1, g.SDL_RENDERER_ACCELERATED or g.SDL_RENDERER_PRESENTVSYNC);
-ptr texture = sdl2.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+ptr window = sdl3.SDL_CreateWindow("Travelling Through Stars", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+sdl3.SDL_SetRenderVSync(renderer, 1);
 
 int frameCount = 0;
 u32[960, 560] pixels = null;
-byte[56] event = [];
+byte[128] event = [];
 u32* eventType = &event[0];
+u32* eventScancode = &event[24];
 bool StatusRunning = true;
 int pitch = g.GC_ScreenLineSize;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-
 
 int numberOfStars = 700;
 int SeedStarfield = 123123;
@@ -89,7 +90,7 @@ function StarField()
 {
 	for (int i = 0; i < numberOfStars; i++)
 	{
-		SetPixel(star_screenx[i], star_screeny[i], 0);
+		SetPixel(star_screenx[i], star_screeny[i], 0xff000000);
 		star_z[i] = star_z[i] - star_zv[i];
 		star_screenx[i] = ((star_x[i] / star_z[i]) * 6000.0) + 480.0;
 		star_screeny[i] = ((star_y[i] / star_z[i]) * 4000.0) + 280.0;
@@ -98,7 +99,7 @@ function StarField()
 		int y = star_screeny[i];
 
 		int brightness = 255 - (star_z[i] * 0.255);
-		u32 pixelColor = brightness or brightness << 8 or brightness << 16;
+		u32 pixelColor = 0xff000000 or brightness or brightness << 8 or brightness << 16;
 		SetPixel(x, y, pixelColor);
 
 		if ((x > 955) or (x < 5) or (y > 555) or (y < 5) or (star_z[i] < 0.0))
@@ -120,34 +121,39 @@ InitStarField();
 
 while (StatusRunning)
 {
-	while (sdl2.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_QUIT) {
+	while (sdl3.SDL_PollEvent(&event[0])) {
+		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
+		}
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+				StatusRunning = false;
+			}
 		}
 	}
 
-	sdl2.SDL_LockTexture(texture, null, &pixels, &pitch);
+	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
-	loopStartTicks = sdl2.SDL_GetTicks();
+	loopStartTicks = sdl3.SDL_GetTicks();
 
 	StarField();
 
-	int currentTicks = sdl2.SDL_GetTicks() - loopStartTicks;
-	if (currentTicks < debugBestTicks) {
+	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
+	if (currentTicks < debugBestTicks && currentTicks != 0) {
 		debugBestTicks = currentTicks;
 	}
 
-	sdl2.SDL_UnlockTexture(texture);
-	sdl2.SDL_RenderCopy(renderer, texture, null, null);
-	sdl2.SDL_RenderPresent(renderer);
+	sdl3.SDL_UnlockTexture(texture);
+	sdl3.SDL_RenderTexture(renderer, texture, null, null);
+	sdl3.SDL_RenderPresent(renderer);
 
 	frameCount++;
 }
 
-sdl2.SDL_DestroyTexture(texture);
-sdl2.SDL_DestroyRenderer(renderer);
-sdl2.SDL_DestroyWindow(window);
-sdl2.SDL_Quit();
+sdl3.SDL_DestroyTexture(texture);
+sdl3.SDL_DestroyRenderer(renderer);
+sdl3.SDL_DestroyWindow(window);
+sdl3.SDL_Quit();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 

@@ -647,7 +647,10 @@ namespace GroundCompiler
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
                 Codeline($"movq  qword [{reg}+{instVar}], xmm0");
             else
-                Codeline($"mov   qword [{reg}+{instVar}], rax");
+            {
+                var nrBytes = datatype.SizeInBytes;
+                Codeline($"mov   {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}], {cpu.RAX_Register_Sized(nrBytes)}");
+            }
         }
 
         public void LoadInstanceVar(string instVar, string reg, Datatype datatype)
@@ -655,7 +658,13 @@ namespace GroundCompiler
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
                 Codeline($"movq  xmm0, qword [{reg}+{instVar}]");
             else
-                Codeline($"mov   rax, qword [{reg}+{instVar}]");
+            {
+                var nrBytes = datatype.SizeInBytes;
+                if (nrBytes < 4)
+                    Codeline($"xor   rax, rax");
+
+                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
+            }
         }
 
         public void IncrementCurrent()
@@ -695,9 +704,10 @@ namespace GroundCompiler
             Codeline($"call  BooleanToString");
         }
 
-        public void IntegerToFloat()
+        public void IntegerToFloat(int destinationSize)
         {
             Codeline("cvtsi2sd xmm0, rax");
+            resizeCurrentFloatingPoint(sourceNrBytes: 8, destinationNrBytes: destinationSize);
         }
 
         public void FloatToInteger()
@@ -835,25 +845,45 @@ namespace GroundCompiler
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index, Datatype targetType)
         {
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq   rax, xmm0");  // below, the basereg+index cannot be done with xmm0
+                Codeline($"movq  rax, xmm0");  // below, the basereg+index cannot be done with xmm0
             Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
         }
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq   rax, xmm0");  // below, the basereg+index cannot be done with xmm0
+            {
+                if (targetType.SizeInBytes == 8)
+                    Codeline($"movq  rax, xmm0");  // below, the basereg+index cannot be done with xmm0
+                if (targetType.SizeInBytes == 4)
+                    Codeline($"movd  eax, xmm0");  // below, the basereg+index cannot be done with xmm0
+            }
             Codeline($"mov   [{baseReg}+({indexReg}*{nrBytes})], {cpu.RAX_Register_Sized(nrBytes)}");
         }
         public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
             Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
-            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 8))
                 Codeline($"movq   xmm0, rax");
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 4))
+            {
+                Codeline($"movd   xmm0, eax");
+                this.resizeCurrentFloatingPoint(sourceNrBytes: 4, destinationNrBytes: 8);
+            }
         }
         public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
         {
             Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
+        }
+
+        public void resizeCurrentFloatingPoint(int sourceNrBytes, int destinationNrBytes)
+        {
+            if (sourceNrBytes == 8 && destinationNrBytes == 8)
+                return;
+            if (sourceNrBytes == 8 && destinationNrBytes == 4)
+                Codeline($"cvtsd2ss  xmm0, xmm0");
+            if (sourceNrBytes == 4 && destinationNrBytes == 8)
+                Codeline($"cvtss2sd  xmm0, xmm0");
         }
 
         public void resizeCurrent(int newNrBytes)

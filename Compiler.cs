@@ -354,7 +354,7 @@ namespace GroundCompiler
             var currentScope = expr.GetScope();
             EmitExpression(expr.Value);
 
-            var variableExpr = expr.Object as Expression.Variable;
+            var variableExpr = expr.TheObject as Expression.Variable;
 
             if (expr.Name.Contains(TokenType.Literal))
             {
@@ -604,9 +604,41 @@ namespace GroundCompiler
                     emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
                     return null;
                 }
+
+                if (functionNameVariable.Name.Lexeme == "zero")
+                {
+                    var arg = expr.Arguments[0];
+                    if (arg is Expression.Variable theZeroVar)
+                    {
+                        int sizeInBytes = theZeroVar.ExprType.SizeInBytes;
+                        EmitExpression(arg);
+                        if (arg.ExprType.IsReferenceType)
+                            emitter.GetMemoryPointerFromIndex();
+
+                        emitter.Codeline($"push  rcx");  // rcx = nr of bytes
+                        emitter.Codeline($"push  rdx");  // rdx = destination pointer
+                        emitter.Codeline($"mov   rdx, rax");
+                        emitter.Codeline($"mov   rcx, {sizeInBytes}");
+                        emitter.Codeline($"xor   eax, eax");
+                        emitter.Codeline($"call  StoreBytes");
+                        emitter.Codeline($"pop   rdx");
+                        emitter.Codeline($"pop   rcx");
+                        return null;
+                    }
+                }
+
+                if (functionNameVariable.Name.Lexeme == "sizeof")
+                {
+                    var arg = expr.Arguments[0];
+                    if (arg is Expression.Variable theZeroVar)
+                    {
+                        int werwer = 1;
+                    }
+                }
+
             }
 
-            Expression.Variable? instVar = null;
+                Expression.Variable? instVar = null;
 
             // When we have an methodcall, we use the scope from the class
             if (expr.FunctionName is Expression.Get functionNameGet)

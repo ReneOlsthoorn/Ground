@@ -5,8 +5,8 @@ Ground allows x86-64 assembly language to be added anywhere in the code. Mixing 
 possible due to generated symbolic constants for each local Ground variable.  
 The primary usecase for Ground is creating highspeed programs.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
-small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl2" 
-template which loads the sdl2.dll and sdl_image.dll. Ofcourse you can create your own template. A second reason why 
+small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
+template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template. A second reason why 
 the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, 
 like msvcrt, is promoted.
 <p align="center">
@@ -73,7 +73,7 @@ the original sourcecode in the comment column of the debugger.
 You will need 3 additional files to run the mode7.g sample. First, the font which is located in the Resources
 folder and is called ```playfield1024.png```.  
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
+Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8-win32-x64.zip.
 Put the 3 files in de same folder as the generated mode7.exe and it will run.  
 You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
@@ -81,6 +81,9 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
 </p>
+
+### Variables
+Outside arrays or class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are the datatypes respected.
 
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
@@ -182,8 +185,8 @@ for the fastcall convention. This also means that the pointer for the parentfram
 
 ### Choosing a template
 With the special #template directive, the programmer can choose a generation template. The default is console. See the
-directory Templates for the console.fasm template. Use the sdl2 template for SDL2 applications without console window.
-A lot of functions are shared between the console.fasm and sdl2.fasm templates.
+directory Templates for the console.fasm template. Use the sdl3 template for SDL3 applications without console window.
+A lot of functions are shared between the console.fasm and sdl3.fasm templates.
 
 ### include a file
 With the #include directive, you can include DLL definitions or other code into your sourcefile.
@@ -265,7 +268,7 @@ Ground will always be Alpha!
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
 folder and is called ```charset16x16.png```.  
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-Third, the SDL2.dll in https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4-win32-x64.zip.  
+Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8-win32-x64.zip.  
 Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.  
 You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 

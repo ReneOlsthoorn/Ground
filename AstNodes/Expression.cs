@@ -90,7 +90,7 @@ namespace GroundCompiler.AstNodes
         // Set a property
         public class Set : Expression
         {
-            public Expression Object;
+            public Expression TheObject;
             public Token Name;
             public List<Expression>? Accessor;
             public Expression Value;
@@ -98,7 +98,7 @@ namespace GroundCompiler.AstNodes
 
             public Set(Expression @object, Token name, Expression value, Token assignmentOp)
             {
-                Object = @object;
+                TheObject = @object;
                 Name = name;
                 Value = value;
                 AssignmentOp = assignmentOp;
@@ -112,7 +112,7 @@ namespace GroundCompiler.AstNodes
 
             public override void Initialize()
             {
-                if (Object != null) { Object.Parent = this; Object.Initialize(); }
+                if (TheObject != null) { TheObject.Parent = this; TheObject.Initialize(); }
                 if (Value != null) { Value.Parent = this; Value.Initialize(); }
                 if (Accessor != null)
                 {
@@ -123,6 +123,29 @@ namespace GroundCompiler.AstNodes
                     }
                 }
                 base.Initialize();
+            }
+
+            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            {
+                if (this.GetType() == typeToFind)
+                    yield return this;
+
+                if (Value != null)
+                {
+                    foreach (AstNode child in Value.FindAllNodes(typeToFind))
+                        yield return child;
+                }
+            }
+
+            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(Value, oldNode))
+                {
+                    newNode.Parent = this;
+                    Value = (Expression)newNode;
+                    return true;
+                }
+                return false;
             }
 
             [DebuggerStepThrough]
@@ -603,8 +626,8 @@ namespace GroundCompiler.AstNodes
 
                 if (leftDatatype.Contains(Datatype.TypeEnum.Integer) && rightDatatype.Contains(Datatype.TypeEnum.Integer))
                 {
-                    var valueLeft = (long)leftLiteral!.Value;
-                    var valueRight = (long)rightLiteral!.Value;
+                    var valueLeft = Convert.ToInt64(leftLiteral!.Value);
+                    var valueRight = Convert.ToInt64(rightLiteral!.Value);
 
                     if (Operator.Contains(TokenType.Plus))
                         return new Expression.Literal(leftLiteral.ExprType, valueLeft + valueRight);
@@ -743,6 +766,25 @@ namespace GroundCompiler.AstNodes
                     foreach (AstNode child in arg.FindAllNodes(typeToFind))
                         yield return child;
                 }
+            }
+
+
+            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
+            {
+                if ((oldNode is Expression oldExpr) && (newNode is Expression newExpr))
+                {
+                    for (int i = 0; i < Arguments.Count; i++)
+                    {
+                        AstNode node = Arguments[i];
+                        if (Object.ReferenceEquals(node, oldNode))
+                        {
+                            newNode.Parent = this;
+                            Arguments[i] = newExpr;
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
 
             [DebuggerStepThrough]

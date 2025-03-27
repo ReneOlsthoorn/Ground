@@ -1,29 +1,83 @@
 ﻿using System;
+using System.Text;
 using GroundCompiler.AstNodes;
 
 namespace GroundCompiler
 {
     public class Optimizer
     {
-        public static void Optimize(AstNode rootNode)
+        public class NodeReplace
         {
-            foreach (Expression? expression in rootNode.FindAllNodes(typeof(Expression.Binary)))
-                SimplifyExpression(expression);
+            public NodeReplace(AstNode theParent, AstNode theOldNode, AstNode theNewNode) { this.ParentNode = theParent; this.OldNode = theOldNode; this.NewNode = theNewNode; }
+            public AstNode ParentNode;
+            public AstNode OldNode;
+            public AstNode NewNode;
         }
 
 
-        public static void SimplifyExpression(Expression? expr)
+        public static void Optimize(AstNode rootNode)
         {
-            if (expr == null) {  return; }
+            List<NodeReplace> toReplace = new();
+            foreach (Expression.FunctionCall functionCall in rootNode.FindAllNodes(typeof(Expression.FunctionCall)))
+                ResolveSizeOf(functionCall, ref toReplace);
+
+            foreach (var obj in toReplace)
+                obj.ParentNode.ReplaceInternalAstNode(obj.OldNode, obj.NewNode);
+
+            bool continueSimplify = true;
+            while (continueSimplify)
+            {
+                continueSimplify = false;
+                foreach (Expression? expression in rootNode.FindAllNodes(typeof(Expression.Binary)))
+                    if (SimplifyExpression(expression, ref toReplace))
+                    {
+                        continueSimplify = true;
+                        break;
+                    }
+            }
+        }
+
+
+        public static void ResolveSizeOf(Expression.FunctionCall functionCall, ref List<NodeReplace> toReplace)
+        {
+            if (functionCall.FunctionName is GroundCompiler.AstNodes.Expression.Variable functionVar)
+            {
+                if (functionVar.Name.Lexeme.ToLower() == "sizeof")
+                {
+                    int theSizeOf = 0;
+                    if (functionCall.Arguments[0] is GroundCompiler.AstNodes.Expression.Variable exprVar)
+                    {
+                        if (Datatype.ContainsDatatype(exprVar.Name.Lexeme))
+                        {
+                            var classExprType = Datatype.GetDatatype(exprVar.Name.Lexeme);
+                            theSizeOf = classExprType.SizeInBytes;
+                        } else
+                            theSizeOf = exprVar.ExprType.SizeInBytes;
+                    }
+                    var theResultLiteral = new Expression.Literal("int", theSizeOf);
+                    if (functionCall.Parent != null)
+                        toReplace.Add(new NodeReplace(functionCall.Parent!, functionCall, theResultLiteral));
+                }
+            }
+        }
+
+
+        public static bool SimplifyExpression(Expression? expr, ref List<NodeReplace> toReplace)
+        {
+            bool onceTrue = false;
+            if (expr == null) {  return false; }
             bool foundSimplification;
             do { 
                 foundSimplification = SimplifyExpressionOnce(expr);
                 EnsureValidGrouping(expr);
 
+                if (foundSimplification)
+                    onceTrue = true;
+
                 // maybe the expression
             } while (foundSimplification);
+            return onceTrue;
         }
-
 
         public static bool SimplifyExpressionOnce(Expression expr)
         {
@@ -51,7 +105,6 @@ namespace GroundCompiler
                 }
             }
         }
-
 
     }
 }
