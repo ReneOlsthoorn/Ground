@@ -224,11 +224,11 @@ screenArray[30,10] = "A";
 
 An other piece to investigate is:
 ```
-byte[56] event = [];
+byte[128] event = [];
 u32* eventType = &event[0];
 if (*eventType == g.SDL_QUIT) { running = false; }
 ```
-The first line allocated 56 bytes. The second line creates a pointer of a u32 to the first element. The third line
+The first line allocated 128 bytes. The second line creates a pointer of a u32 to the first element. The third line
 retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
@@ -299,4 +299,4 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 for (i in 1..10)  { println(i); }  // from 1..10
 for (i in 0..<10) { println(i); }  // from 0..9
 ```
-2025.03.27: SDL3 support.
+2025.03.27: SDL3 support and added win32-screengrab.g example.
