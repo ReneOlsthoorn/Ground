@@ -299,3 +299,4 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 for (i in 1..10)  { println(i); }  // from 1..10
 for (i in 0..<10) { println(i); }  // from 0..9
 ```
+2025.03.27: SDL3 support.
