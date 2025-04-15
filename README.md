@@ -232,6 +232,9 @@ The first line allocated 128 bytes. The second line creates a pointer of a u32 t
 retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
+### Some remarks
+At this moment, you can only declare a Class instance at the root level.
+
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
@@ -261,8 +264,7 @@ your computer. I agree with those users that data collecting is not nice. Howeve
 
 ### State of Ground : Alpha
 The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
-Ground is created to facilitate the production of compact high performance code. It's a language for expert demo coders.  
-Ground will always be Alpha!
+Ground is created to facilitate the production of compact high performance code. Ground will always be Alpha!
 
 ### Running the smoothscroller.g example
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
@@ -270,7 +272,7 @@ folder and is called ```charset16x16.png```.
 Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8-win32-x64.zip.  
 Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.  
-You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
+You can also download all the necessary files at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 
 ### The chipmunk_tennis.g example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
@@ -293,6 +295,11 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" />
 </p>
 
+### The Bertus game
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" />
+</p>
+
 ### Changelog
 2025.01.29: Added kotlin for-loops:
 ```
@@ -300,3 +307,4 @@ for (i in 1..10)  { println(i); }  // from 1..10
 for (i in 0..<10) { println(i); }  // from 0..9
 ```
 2025.03.27: SDL3 support and added win32-screengrab.g example.
+2025.04.15: Bertus game added.

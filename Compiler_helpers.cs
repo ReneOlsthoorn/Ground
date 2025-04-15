@@ -49,7 +49,7 @@ namespace GroundCompiler
                 var emittedProcedure = new EmittedProcedure(functionStatement: funcStatement, classStatement: null, emitter);
                 emittedProcedure.MainCallback = () =>
                 {
-                    VisitorBlock(funcStatement.Body);
+                    VisitorBlock(funcStatement.BodyNode);
                 };
                 emittedProcedure.Emit();
             }
@@ -63,7 +63,7 @@ namespace GroundCompiler
                 var emittedClass = new EmittedClass(classStatement, emitter);
                 emittedClass.MethodCallback = (aMethod) =>
                 {
-                    VisitorBlock(aMethod.Body);
+                    VisitorBlock(aMethod.BodyNode);
                 };
                 emittedClass.Emit();
             }
@@ -147,19 +147,19 @@ namespace GroundCompiler
 
             if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
             {
-                EmitExpression(assignment.RightOfEqualSign);
-                EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
+                EmitExpression(assignment.RightOfEqualSignNode);
+                EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
                 if (localVarSymbol!.DataType.IsReferenceType)
                 {
                     reg = emitter.Gather_CurrentStackframe();
-                    emitter.AddReference(assignment.RightOfEqualSign);
+                    emitter.AddReference(assignment.RightOfEqualSignNode);
                     cpu.FreeRegister(reg);
                 }
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
             }
             else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
             {
-                EmitExpression(assignment.RightOfEqualSign);
+                EmitExpression(assignment.RightOfEqualSignNode);
                 emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
             }
             else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
@@ -172,10 +172,10 @@ namespace GroundCompiler
                     emitter.RemoveReference();
                     cpu.FreeRegister(reg);
                 }
-                EmitExpression(assignment.RightOfEqualSign);
+                EmitExpression(assignment.RightOfEqualSignNode);
                 reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                 if (parentSymbol.DataType.IsReferenceType)
-                    emitter.AddReference(assignment.RightOfEqualSign);
+                    emitter.AddReference(assignment.RightOfEqualSignNode);
 
                 emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
                 cpu.FreeRegister(reg);
@@ -183,7 +183,7 @@ namespace GroundCompiler
             else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
                 Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
             else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
-                EmitExpression(assignment.RightOfEqualSign);
+                EmitExpression(assignment.RightOfEqualSignNode);
             else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
                 Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
         }
@@ -216,18 +216,18 @@ namespace GroundCompiler
 
         public void UnaryAssignment(Expression.Unary expr, Expression.Assignment assignment)
         {
-            EmitExpression(assignment.RightOfEqualSign);
-            EmitConversionCompatibleType(assignment.RightOfEqualSign, assignment.LeftOfEqualSign.ExprType);
+            EmitExpression(assignment.RightOfEqualSignNode);
+            EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
             emitter.Push();
 
             Datatype exprDatatype = Datatype.Default;
 
-            if (expr.Right is Expression.Grouping groupStmt)
+            if (expr.RightNode is Expression.Grouping groupStmt)
             {
-                EmitExpression(expr.Right);
+                EmitExpression(expr.RightNode);
                 exprDatatype = groupStmt.ExprType;
             }
-            else if (expr.Right is Expression.Variable theVariable)
+            else if (expr.RightNode is Expression.Variable theVariable)
             {
                 VariableRead(theVariable);
                 exprDatatype = theVariable.ExprType;
@@ -253,16 +253,16 @@ namespace GroundCompiler
             var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!);
             var targetType = Datatype.Default;
 
-            if (arrayExpr.Accessor != null)
+            if (arrayExpr.IndexNodes != null)
             {
                 var varSymbol = symbol as Scope.Symbol.VariableSymbol;
                 string indexReg = cpu.GetRestoredRegister(arrayExpr);
-                for (int i = 0; i < arrayExpr.Accessor.Count; i++)
+                for (int i = 0; i < arrayExpr.IndexNodes.Count; i++)
                 {
                     if (i > 0)
                         emitter.Push();  // save old index temp
 
-                    var expr = arrayExpr.Accessor[i];
+                    var expr = arrayExpr.IndexNodes[i];
                     EmitExpression(expr);
                     UInt64 multiplier = 1;
 
@@ -311,8 +311,8 @@ namespace GroundCompiler
                 emitter.MoveCurrentToRegister(baseReg);
                 if (assignment != null)
                 {
-                    EmitExpression(assignment.RightOfEqualSign, targetType);
-                    EmitConversionCompatibleType(assignment.RightOfEqualSign, targetType, copyDatatypeToSource: false);
+                    EmitExpression(assignment.RightOfEqualSignNode, targetType);
+                    EmitConversionCompatibleType(assignment.RightOfEqualSignNode, targetType, copyDatatypeToSource: false);
                     emitter.StoreCurrentInBasedIndex(elementSizeInBytes, baseReg, indexReg, targetType);
                 }
                 else

@@ -12,3 +12,4 @@ dll msvcrt function atan2(float y, float x) : float;
 dll msvcrt function sqrt(float x) : float;
 dll msvcrt function fread(ptr buffer, int sizeElement, int elementCount, ptr stream) : int;  // result = nr elements loaded
 dll msvcrt function printf(string format, int value);
+dll msvcrt function abs(int value) : int;

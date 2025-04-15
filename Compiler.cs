@@ -46,7 +46,7 @@ namespace GroundCompiler
             mainProc.MainCallback = () =>
             {
                 emitter.EmitFixedStringIndexSpaceEntries(prog.Scope.GetRootScope().GetStringSymbols());
-                VisitorBlock(prog.Body!);
+                VisitorBlock(prog.BodyNode!);
                 emitter.CloseGeneratedCode_Main();
 
                 EmitFunctions(prog.Scope.GetFunctionStatements());
@@ -115,19 +115,19 @@ namespace GroundCompiler
                     cpu.FreeRegister(reg);
                 }
 
-                if (stmt.Initializer != null)
+                if (stmt.InitializerNode != null)
                 {
                     // shortcut. A special list validator must be made.
-                    if (stmt.Initializer is Expression.List)
-                        stmt.Initializer!.ExprType = localVarSymbol.DataType;
+                    if (stmt.InitializerNode is Expression.List)
+                        stmt.InitializerNode!.ExprType = localVarSymbol.DataType;
 
-                    EmitExpression(stmt.Initializer);
-                    EmitConversionCompatibleType(stmt.Initializer!, localVarSymbol.DataType);
+                    EmitExpression(stmt.InitializerNode);
+                    EmitConversionCompatibleType(stmt.InitializerNode!, localVarSymbol.DataType);
 
-                    if (stmt.Initializer!.ExprType.IsReferenceType)
+                    if (stmt.InitializerNode!.ExprType.IsReferenceType)
                     {
                         var reg = emitter.Gather_CurrentStackframe();
-                        emitter.AddReference(stmt.Initializer);
+                        emitter.AddReference(stmt.InitializerNode);
                         cpu.FreeRegister(reg);
                     }
 
@@ -144,7 +144,7 @@ namespace GroundCompiler
 
         public object? VisitorReturn(Statement.ReturnStatement stmt)
         {
-            EmitExpression(stmt.Value);
+            EmitExpression(stmt.ReturnValueNode);
             if (stmt.FindParentType(typeof(FunctionStatement)) is FunctionStatement  fStmt)
             {
                 string returnLabel;
@@ -196,15 +196,15 @@ namespace GroundCompiler
         public object? VisitorIf(IfStatement stmt)
         {
             PrintAst(stmt);
-            EmitExpression(stmt.Condition);
+            EmitExpression(stmt.ConditionNode);
             string elseLabel = emitter.NewLabel();
             string doneLabel = emitter.NewLabel();
             emitter.JumpToLabelIfFalse(elseLabel);
-            EmitStatement(stmt.ThenBranch);
+            EmitStatement(stmt.ThenBranchNode);
             emitter.JumpToLabel(doneLabel);
             emitter.InsertLabel(elseLabel);
-            if (stmt.ElseBranch != null)
-                EmitStatement(stmt.ElseBranch);
+            if (stmt.ElseBranchNode != null)
+                EmitStatement(stmt.ElseBranchNode);
 
             emitter.InsertLabel(doneLabel);
             return null;
@@ -217,9 +217,9 @@ namespace GroundCompiler
             string doneLabel = emitter.NewLabel();
             whileStmt.Properties["breakLabel"] = doneLabel;
             emitter.InsertLabel(testLabel);
-            EmitExpression(whileStmt.Condition);
+            EmitExpression(whileStmt.ConditionNode);
             emitter.JumpToLabelIfFalse(doneLabel);
-            EmitStatement(whileStmt.Body);
+            EmitStatement(whileStmt.BodyNode);
             emitter.JumpToLabel(testLabel);
             emitter.InsertLabel(doneLabel);
             return null;
@@ -228,7 +228,7 @@ namespace GroundCompiler
 
         public object? VisitorExpression(ExpressionStatement stmt)
         {
-            EmitExpression(stmt.InnerExpression);
+            EmitExpression(stmt.ExpressionNode);
             return null;
         }
 
@@ -244,14 +244,14 @@ namespace GroundCompiler
         // Direction: Read
         public object? VisitorPoke(PokeStatement stmt)
         {
-            EmitExpression(stmt.ValueExpression);
+            EmitExpression(stmt.ValueExpressionNode);
             emitter.StoreSystemVarsVariable(stmt.VariableName, stmt.SizeType.SizeInBytes);
             return null;
         }
 
 
         // Expression like: [ 1, 2, 3, 4 ].  Direction: Read
-        public object? VisitorListExpr(Expression.List list)
+        public object? VisitorList(Expression.List list)
         {
             // ExprType in list contains the result datatype.
             // We need to fill RAX with an reference to the list
@@ -260,14 +260,14 @@ namespace GroundCompiler
                 Error("VisitListExpr: List is no Array");
 
             int sizeEachElement = list.ExprType.Base!.SizeInBytes;
-            UInt64 nrBytesToAllocate = list.ExprType.BytesToAllocate(); //  sizeEachElement * list.Elements.Count;
+            UInt64 nrBytesToAllocate = list.SizeInBytes();
             emitter.Allocate(nrBytesToAllocate);
             emitter.PushAllocateIndexElement();
             string baseReg = cpu.GetRestoredRegister(list);
             emitter.MoveCurrentToRegister(baseReg);
-            for (int i = 0; i < list.Elements.Count; i++)
+            for (int i = 0; i < list.ElementsNodes.Count; i++)
             {
-                Expression expr = list.Elements[i];
+                Expression expr = list.ElementsNodes[i];
                 if(list.ExprType.Contains(Datatype.TypeEnum.Array))
                     expr.ExprType = list.ExprType.Base;
 
@@ -284,7 +284,7 @@ namespace GroundCompiler
 
 
         // Array Access. Direction: Read
-        public object? VisitorArrayAccessExpr(Expression.ArrayAccess expr)
+        public object? VisitorArrayAccess(Expression.ArrayAccess expr)
         {
             ArrayAccess(expr);
             return null;
@@ -292,10 +292,10 @@ namespace GroundCompiler
 
 
         // Get a class property. Direction: Read.
-        public object? VisitorGetExpr(Expression.Get expr)
+        public object? VisitorPropertyGet(Expression.PropertyGet expr)
         {
             var currentScope = expr.GetScope();
-            var variableExpr = expr.Object as Expression.Variable;
+            var variableExpr = expr.ObjectNode as Expression.Variable;
 
             ClassStatement? classStatement = null;
             VarStatement? instVar = null;
@@ -325,7 +325,7 @@ namespace GroundCompiler
             else
             {
                 classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
-                instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             }
 
             if (variableExpr.Name.Lexeme == "this")
@@ -349,12 +349,12 @@ namespace GroundCompiler
 
 
         // Set a class property. Direction: Write.
-        public object? VisitorSetExpr(Expression.Set expr)
+        public object? VisitorPropertySet(Expression.PropertySet expr)
         {
             var currentScope = expr.GetScope();
-            EmitExpression(expr.Value);
+            EmitExpression(expr.ValueNode);
 
-            var variableExpr = expr.TheObject as Expression.Variable;
+            var variableExpr = expr.ObjectNode as Expression.Variable;
 
             if (expr.Name.Contains(TokenType.Literal))
             {
@@ -373,15 +373,15 @@ namespace GroundCompiler
                 return null;
             }
 
-            emitter.Push(expr.Value);
+            emitter.Push(expr.ValueNode);
             var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
-            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+            var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
             string reg;
             if (instVar!.ResultType.IsReferenceType)
             {
                 reg = emitter.Gather_CurrentStackframe();
-                emitter.AddReference(expr.Value);
+                emitter.AddReference(expr.ValueNode);
                 cpu.FreeRegister(reg);
             }
 
@@ -398,8 +398,8 @@ namespace GroundCompiler
             emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
-            emitter.Pop(expr.Value);
-            EmitConversionCompatibleType(expr.Value, instVar.ResultType);
+            emitter.Pop(expr.ValueNode);
+            EmitConversionCompatibleType(expr.ValueNode, instVar.ResultType);
 
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
             cpu.FreeRegister(instVarReg);
@@ -409,15 +409,15 @@ namespace GroundCompiler
 
 
         // Variable. Direction: Write.
-        public object? VisitorAssignmentExpr(Expression.Assignment assignment)
+        public object? VisitorAssignment(Expression.Assignment assignment)
         {
             PrintAst(assignment);
 
-            if (assignment.LeftOfEqualSign is Expression.Variable variableExpr)
+            if (assignment.LeftOfEqualSignNode is Expression.Variable variableExpr)
                 VariableAssignment(variableExpr, assignment);
-            else if (assignment.LeftOfEqualSign is Expression.ArrayAccess arrayExpr)
+            else if (assignment.LeftOfEqualSignNode is Expression.ArrayAccess arrayExpr)
                 ArrayAccess(arrayExpr, assignment);
-            else if (assignment.LeftOfEqualSign is Expression.Unary unaryExpr)
+            else if (assignment.LeftOfEqualSignNode is Expression.Unary unaryExpr)
                 UnaryAssignment(unaryExpr, assignment);
 
             return null;
@@ -425,17 +425,17 @@ namespace GroundCompiler
 
 
         // 1+1. Direction: Read.
-        public object? VisitorBinaryExpr(Expression.Binary expr)
+        public object? VisitorBinary(Expression.Binary expr)
         {
             PrintAst(expr);
 
-            EmitExpression(expr.Right);
-            EmitConversionCompatibleType(expr.Right, expr.ExprType);
+            EmitExpression(expr.RightNode);
+            EmitConversionCompatibleType(expr.RightNode, expr.ExprType);
 
             emitter.Push(expr);
 
-            EmitExpression(expr.Left);
-            EmitConversionCompatibleType(expr.Left, expr.ExprType);
+            EmitExpression(expr.LeftNode);
+            EmitConversionCompatibleType(expr.LeftNode, expr.ExprType);
 
             switch (expr.Operator.Type)
             {
@@ -521,7 +521,7 @@ namespace GroundCompiler
         }
 
 
-        public object? VisitorFunctionCallExpr(Expression.FunctionCall expr)
+        public object? VisitorFunctionCall(Expression.FunctionCall expr)
         {
             // normally, the scope of the functioncall is used.
             var currentScope = expr.GetScope();
@@ -547,18 +547,18 @@ namespace GroundCompiler
                 emitter.AddTmpReference(expr);
                 cpu.FreeRegister(reg);
 
-                var funcNameVar = expr.FunctionName as Expression.Variable;
+                var funcNameVar = expr.FunctionNameNode as Expression.Variable;
                 var symbol = GetSymbol(funcNameVar!.Name.Lexeme, scope!);
                 var theClassSymbol = symbol as Symbol.ClassSymbol;
 
                 //GetVariableAnywhere
-                int nrFunctionArg = expr.Arguments.Count;
-                int nrClassInstVars = theClassSymbol!.ClassStatement.InstanceVariables.Count;
+                int nrFunctionArg = expr.ArgumentNodes.Count;
+                int nrClassInstVars = theClassSymbol!.ClassStatement.InstanceVariableNodes.Count;
                 for (int argNr = 0; argNr < nrClassInstVars; argNr++)
                 {
-                    Expression argExpr = expr.Arguments[argNr];
+                    Expression argExpr = expr.ArgumentNodes[argNr];
                     EmitExpression(argExpr);
-                    var instVarStmt = theClassSymbol!.ClassStatement.InstanceVariables[argNr];
+                    var instVarStmt = theClassSymbol!.ClassStatement.InstanceVariableNodes[argNr];
                     EmitConversionCompatibleType(argExpr, instVarStmt.ResultType);
                     emitter.StoreInstanceVar($"{instVarStmt.Name.Lexeme}@{theClassSymbol!.ClassStatement.Name.Lexeme}", memPtrRegister, argExpr.ExprType);
                 }
@@ -568,7 +568,7 @@ namespace GroundCompiler
                 return null;
             }
 
-            if (expr.FunctionName is Expression.Variable functionNameVariable)
+            if (expr.FunctionNameNode is Expression.Variable functionNameVariable)
             {
                 theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
@@ -584,7 +584,7 @@ namespace GroundCompiler
 
                 if (functionNameVariable.Name.Lexeme == "GC_CreateThread")
                 {
-                    string threadName = ((Expression.Variable)expr.Arguments[0]).Name.Lexeme;
+                    string threadName = ((Expression.Variable)expr.ArgumentNodes[0]).Name.Lexeme;
 
                     // Total exception to the rule: Creating a Thread.
                     emitter.Codeline($"invoke kernel32_CreateThread, 0, 0x10000, _f_Generated_{threadName}_Startup, 0, 0, 0");
@@ -607,7 +607,7 @@ namespace GroundCompiler
 
                 if (functionNameVariable.Name.Lexeme == "zero")
                 {
-                    var arg = expr.Arguments[0];
+                    var arg = expr.ArgumentNodes[0];
                     if (arg is Expression.Variable theZeroVar)
                     {
                         int sizeInBytes = theZeroVar.ExprType.SizeInBytes;
@@ -626,24 +626,14 @@ namespace GroundCompiler
                         return null;
                     }
                 }
-
-                if (functionNameVariable.Name.Lexeme == "sizeof")
-                {
-                    var arg = expr.Arguments[0];
-                    if (arg is Expression.Variable theZeroVar)
-                    {
-                        int werwer = 1;
-                    }
-                }
-
             }
 
-                Expression.Variable? instVar = null;
+            Expression.Variable? instVar = null;
 
             // When we have an methodcall, we use the scope from the class
-            if (expr.FunctionName is Expression.Get functionNameGet)
+            if (expr.FunctionNameNode is Expression.PropertyGet functionNameGet)
             {
-                if (functionNameGet.Object is Expression.Variable functionNameVar)
+                if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
                 {
                     instVar = functionNameVar;
 
@@ -672,10 +662,10 @@ namespace GroundCompiler
             }
             var dllFunctionSymbol = theFunction as Symbol.DllFunctionSymbol;
 
-            int nrArguments = expr.Arguments.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
+            int nrArguments = expr.ArgumentNodes.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
             if (nrArguments % 2 == 1)
             {
-                if (dllFunctionSymbol == null || (expr.Arguments.Count > 4))
+                if (dllFunctionSymbol == null || (expr.ArgumentNodes.Count > 4))
                 {
                     emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
                     emitter.StackPush();
@@ -685,7 +675,7 @@ namespace GroundCompiler
             List<FunctionParameter> fPars = theFunction!.FunctionStmt.Parameters;
             for (int i = (nrArguments-3); i >= 0; i--)
             {
-                var arg = expr.Arguments[i];
+                var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
                 if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType)
                     emitter.GetMemoryPointerFromIndex();
@@ -726,18 +716,18 @@ namespace GroundCompiler
 
             if (dllFunctionSymbol != null)
             {
-                nrArguments = expr.Arguments.Count;
+                nrArguments = expr.ArgumentNodes.Count;
                 if (nrArguments > 0)
                 {
-                    InsertFastCallArgument(0, expr.Arguments[0]);
+                    InsertFastCallArgument(0, expr.ArgumentNodes[0]);
                     if (nrArguments > 1)
-                        InsertFastCallArgument(1, expr.Arguments[1]);
+                        InsertFastCallArgument(1, expr.ArgumentNodes[1]);
                 }
                 if (nrArguments > 2)
                 {
-                    InsertFastCallArgument(2, expr.Arguments[2]);
+                    InsertFastCallArgument(2, expr.ArgumentNodes[2]);
                     if (nrArguments > 3)
-                        InsertFastCallArgument(3, expr.Arguments[3]);
+                        InsertFastCallArgument(3, expr.ArgumentNodes[3]);
                 }
                 int stackToReserve = 32;
                 if (!emitter.IsAlign16(emitter.StackPos - stackToReserve))
@@ -814,14 +804,14 @@ namespace GroundCompiler
         }
 
 
-        public object? VisitorGroupingExpr(Expression.Grouping expr)
+        public object? VisitorGrouping(Expression.Grouping expr)
         {
-            EmitExpression(expr.Expression);
+            EmitExpression(expr.expression);
             return null;
         }
 
 
-        public object? VisitorLiteralExpr(Expression.Literal expr)
+        public object? VisitorLiteral(Expression.Literal expr)
         {
             if (expr.Value == null)
             {
@@ -853,21 +843,15 @@ namespace GroundCompiler
         }
 
 
-        public object? VisitorLogicalExpr(Expression.Logical expr)
-        {
-            return null;
-        }
-
-
         // Unary, like -a, !a, a++, &a or *a. Direction: Read/Write.
-        public object? VisitorUnaryExpr(Expression.Unary expr)
+        public object? VisitorUnary(Expression.Unary expr)
         {
             // &a , &p[0]
             if (expr.Operator.Contains(TokenType.Ampersand))
             {
-                if (expr.Right is Expression.Variable theVariable)
+                if (expr.RightNode is Expression.Variable theVariable)
                     VariableAddressOf(theVariable);
-                else if (expr.Right is Expression.ArrayAccess arrayAccess)
+                else if (expr.RightNode is Expression.ArrayAccess arrayAccess)
                     ArrayAccess(arrayAccess, assignment: null, addressOf: true);
                 else
                     Compiler.Error("AddressOf can only be done on a variable.");
@@ -877,7 +861,7 @@ namespace GroundCompiler
             // a++ , a--
             if (expr.Postfix && (expr.Operator.Contains(TokenType.PlusPlus) || expr.Operator.Contains(TokenType.MinusMinus)))
             {
-                if (expr.Right is Expression.Variable theVariable)
+                if (expr.RightNode is Expression.Variable theVariable)
                 {
                     VariableRead(theVariable);
                     emitter.Push();
@@ -894,21 +878,21 @@ namespace GroundCompiler
 
             Datatype exprDatatype = Datatype.Default;
 
-            if (expr.Right is Expression.Grouping groupStmt)
+            if (expr.RightNode is Expression.Grouping groupStmt)
             {
-                EmitExpression(expr.Right);
+                EmitExpression(expr.RightNode);
                 exprDatatype = groupStmt.ExprType;
-            } else if (expr.Right is Expression.Variable theVariable)
+            } else if (expr.RightNode is Expression.Variable theVariable)
             {
                 VariableRead(theVariable);
                 exprDatatype = theVariable.ExprType;
             } else
-                EmitExpression(expr.Right);
+                EmitExpression(expr.RightNode);
 
             // -a
             if ((exprDatatype.Contains(TypeEnum.Integer) || exprDatatype.Contains(TypeEnum.FloatingPoint)) && expr.Operator.Contains(TokenType.Minus) && !expr.Postfix)
             {
-                emitter.Negation(expr.Right);
+                emitter.Negation(expr.RightNode);
                 return null;
             }
 
@@ -938,7 +922,7 @@ namespace GroundCompiler
 
 
         // Variable. Direction: Read
-        public object? VisitorVariableExpr(Expression.Variable variableExpr)
+        public object? VisitorVariable(Expression.Variable variableExpr)
         {
             VariableRead(variableExpr);
             return null;

@@ -20,7 +20,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "sudoku.g";  //console.g, sudoku.g, smoothscroller.g, smoothscroller_optimized.g, mode7.g, mode7_optimized.g, chipmunk_tennis.g, starfield.g, plasma_non_colorcycling.g, fire.g, win32-screengrab.g
+                fileName = "sudoku.g";  //console.g, sudoku.g, smoothscroller.g, smoothscroller_optimized.g, mode7.g, mode7_optimized.g, chipmunk_tennis.g, starfield.g, plasma_non_colorcycling.g, fire.g, win32-screengrab.g bertus.g
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
@@ -49,10 +49,15 @@ namespace GroundCompiler
             var tokens = lexer.GetTokens();
             lexer.WriteDebugInfo(tokens);
 
-            Console.WriteLine("*** Convert tokens to AST (abstract syntax tree).");
+            Console.WriteLine("*** Convert tokens into an Abstract Syntax Tree.");
             var parser = new Parser(tokens);
             var ast = parser.GetAbstractSyntaxTree();
             parser.WriteDebugInfo(ast);
+
+            Console.WriteLine("*** Type Checking: Initialize the Abstract Syntax Tree.");
+            TypeChecker.Initialize(ast);
+            Console.WriteLine("*** Type Checking: Evaluate the Abstract Syntax Tree.");     
+            TypeChecker.Evaluate(ast);
 
             Console.WriteLine("*** Optimize the AST.");
             Optimizer.Optimize(ast);
@@ -89,6 +94,13 @@ namespace GroundCompiler
         public void IncludeFileAtIndex(int index, string fileName)
         {
             string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Include\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+
             string theText = File.ReadAllText(fullPath);
             StringBuilder sb = new StringBuilder(sourcecode);
             sb.Insert(index, theText);

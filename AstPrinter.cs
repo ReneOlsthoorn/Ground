@@ -28,7 +28,7 @@ namespace GroundCompiler
             //if (stmt.Superclass != null)
             //    builder.Append(" < " + Print(stmt.Superclass));
 
-            foreach (var method in stmt.Methods)
+            foreach (var method in stmt.FunctionNodes)
                 builder.Append(" " + Print(method));
 
             builder.Append(")");
@@ -40,7 +40,7 @@ namespace GroundCompiler
             var builder = new StringBuilder();
             builder.Append("(group " + stmt.Name.Lexeme);
 
-            foreach (var method in stmt.Methods)
+            foreach (var method in stmt.FunctionNodes)
                 builder.Append(" " + Print(method));
 
             builder.Append(")");
@@ -69,10 +69,10 @@ namespace GroundCompiler
 
         public string VisitorReturn(Statement.ReturnStatement stmt)
         {
-            if (stmt.Value == null)
+            if (stmt.ReturnValueNode == null)
                 return "(return)";
 
-            return Parenthesize("return", stmt.Value);
+            return Parenthesize("return", stmt.ReturnValueNode);
         }
 
 
@@ -91,30 +91,30 @@ namespace GroundCompiler
 
         public string VisitorVariableDeclaration(Statement.VarStatement stmt)
         {
-            if (stmt.Initializer == null)
+            if (stmt.InitializerNode == null)
                 return Parenthesize2(stmt.ResultType.Name, stmt.Name);
 
-            return Parenthesize2(stmt.ResultType.Name, stmt.Name, "=", stmt.Initializer);
+            return Parenthesize2(stmt.ResultType.Name, stmt.Name, "=", stmt.InitializerNode);
         }
 
 
         public string VisitorIf(Statement.IfStatement statement)
         {
-            if (statement.ElseBranch == null)
-                return Parenthesize2("if", statement.Condition, statement.ThenBranch);
+            if (statement.ElseBranchNode == null)
+                return Parenthesize2("if", statement.ConditionNode, statement.ThenBranchNode);
 
-            return Parenthesize2("if-else", statement.Condition, statement.ThenBranch, statement.ElseBranch);
+            return Parenthesize2("if-else", statement.ConditionNode, statement.ThenBranchNode, statement.ElseBranchNode);
         }
 
 
         public string VisitorWhile(Statement.WhileStatement stmt)
         {
-            return Parenthesize2("while", stmt.Condition, stmt.Body);
+            return Parenthesize2("while", stmt.ConditionNode, stmt.BodyNode);
         }
 
         public string VisitorExpression(Statement.ExpressionStatement stmt)
         {
-            return Parenthesize(";", stmt.InnerExpression);
+            return Parenthesize(";", stmt.ExpressionNode);
         }
 
         public string VisitorFunction(FunctionStatement stmt)
@@ -132,7 +132,7 @@ namespace GroundCompiler
 
             builder.Append(") ");
 
-            foreach (var body in stmt.Body.Nodes)
+            foreach (var body in stmt.BodyNode.Nodes)
                 builder.Append(((Statement)body).Accept(this));
 
             builder.Append(")");
@@ -151,36 +151,33 @@ namespace GroundCompiler
             return stmt.Accept(this);
         }
 
-        public string VisitorGetExpr(Expression.Get expr)
+        public string VisitorPropertyGet(Expression.PropertyGet expr)
         {
-            return Parenthesize2(".", expr.Object, expr.Name.Lexeme);
+            return Parenthesize2(".", expr.ObjectNode, expr.Name.Lexeme);
         }
 
-        public string VisitorAssignmentExpr(Expression.Assignment expr)
+        public string VisitorAssignment(Expression.Assignment expr)
         {
-            return Parenthesize2(expr.Operator.Lexeme, expr.LeftOfEqualSign, expr.RightOfEqualSign);
+            return Parenthesize2(expr.Operator.Lexeme, expr.LeftOfEqualSignNode, expr.RightOfEqualSignNode);
         }
 
-        public string VisitorBinaryExpr(Expression.Binary expr)
+        public string VisitorBinary(Expression.Binary expr)
         {
-            return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
+            return Parenthesize(expr.Operator.Lexeme, expr.LeftNode, expr.RightNode);
         }
 
 
-
-
-
-        public string VisitorFunctionCallExpr(Expression.FunctionCall expr)
+        public string VisitorFunctionCall(Expression.FunctionCall expr)
         {
-            return Parenthesize2("call", expr.FunctionName, expr.Arguments);
+            return Parenthesize2("call", expr.FunctionNameNode, expr.ArgumentNodes);
         }
 
-        public string VisitorGroupingExpr(Expression.Grouping expr)
+        public string VisitorGrouping(Expression.Grouping expr)
         {
-            return Parenthesize("group", expr.Expression);
+            return Parenthesize("group", expr.expression);
         }
 
-        public string VisitorLiteralExpr(Expression.Literal expr)
+        public string VisitorLiteral(Expression.Literal expr)
         {
             if (expr.Value == null) return "nil";
             if (expr.ExprType.Name == "string")
@@ -189,32 +186,27 @@ namespace GroundCompiler
             return expr.Value.ToString() ?? "";
         }
 
-        public string VisitorLogicalExpr(Expression.Logical expr)
+        public string VisitorPropertySet(Expression.PropertySet expr)
         {
-            return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
+            return Parenthesize2("=", expr.ObjectNode, expr.Name.Lexeme, expr.ValueNode);
         }
 
-        public string VisitorSetExpr(Expression.Set expr)
+        public string VisitorUnary(Expression.Unary expr)
         {
-            return Parenthesize2("=", expr.TheObject, expr.Name.Lexeme, expr.Value);
+            return Parenthesize(expr.Operator.Lexeme, expr.RightNode);
         }
 
-        public string VisitorUnaryExpr(Expression.Unary expr)
-        {
-            return Parenthesize(expr.Operator.Lexeme, expr.Right);
-        }
-
-        public string VisitorVariableExpr(Expression.Variable expr)
+        public string VisitorVariable(Expression.Variable expr)
         {
             return expr.Name.Lexeme;
         }
 
-        public string VisitorListExpr(Expression.List expr)
+        public string VisitorList(Expression.List expr)
         {
             return " [ LIST ] ";
         }
 
-        public string VisitorArrayAccessExpr(Expression.ArrayAccess access)
+        public string VisitorArrayAccess(Expression.ArrayAccess access)
         {
             return " access ";
         }

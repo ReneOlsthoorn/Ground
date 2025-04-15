@@ -45,6 +45,8 @@ namespace GroundCompiler
         public List<UInt64>? ArrayNrs = null;
         public Dictionary<string, object?> Properties;
 
+        public bool hasArrayDefinition => (ArrayNrs != null) && (ArrayNrs.Count > 0);
+
         public UInt64 BytesToAllocate()
         {
             UInt64 baseSizeInBytes = (UInt64)this.Base!.SizeInBytes;
@@ -82,6 +84,7 @@ namespace GroundCompiler
         public static Dictionary<string, Datatype> Cached = new() {
             { "int",    Datatype.FromData("int",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
             { "ptr",    Datatype.FromData("ptr",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
+            { "pointer",Datatype.FromData("pointer",[ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
             { "i64",    Datatype.FromData("i64",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
             { "i32",    Datatype.FromData("i32",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:4) },
             { "i16",    Datatype.FromData("i16",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:2) },
@@ -109,7 +112,7 @@ namespace GroundCompiler
             string name = classStatement.Name.Lexeme;
 
             int sizeInBytes = 0;
-            foreach (VarStatement vs in classStatement.InstanceVariables)
+            foreach (VarStatement vs in classStatement.InstanceVariableNodes)
                 sizeInBytes += vs.ResultType.SizeInBytes;
 
             var newDatatype = Datatype.FromData(name, [ TypeEnum.CustomClass ], false, sizeInBytes);

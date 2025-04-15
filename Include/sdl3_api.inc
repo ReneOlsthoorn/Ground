@@ -78,4 +78,10 @@ import sdl3,\
        sdl3_SDL_DestroyWindow,'SDL_DestroyWindow',\
        sdl3_SDL_Quit,'SDL_Quit',\
        sdl3_SDL_CreateTextureFromSurface,'SDL_CreateTextureFromSurface',\
+	   sdl3_SDL_ShowCursor,'SDL_ShowCursor',\
+	   sdl3_SDL_HideCursor,'SDL_HideCursor',\
+	   sdl3_SDL_RenderDebugText, 'SDL_RenderDebugText',\
+	   sdl3_SDL_SetRenderDrawColor, 'SDL_SetRenderDrawColor',\
+	   sdl3_SDL_RenderClear, 'SDL_RenderClear',\
+	   sdl3_SDL_SetRenderScale, 'SDL_SetRenderScale',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'

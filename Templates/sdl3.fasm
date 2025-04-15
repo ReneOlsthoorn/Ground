@@ -180,6 +180,116 @@ PlotSprite:
   ret
 
 
+source@_f_PlotSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSprite equ rbp+G_PARAMETER2
+width@_f_PlotSprite equ rbp+G_PARAMETER3
+height@_f_PlotSprite equ rbp+G_PARAMETER4
+_f_PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSprite]
+  mov   rdx, qword [destination@_f_PlotSprite]
+  mov   r8, qword [width@_f_PlotSprite]
+  mov   r9, qword [height@_f_PlotSprite]
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_4_PARAM
+
+
+source@_f_PlotSheetSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSheetSprite equ rbp+G_PARAMETER2
+width@_f_PlotSheetSprite equ rbp+G_PARAMETER3
+height@_f_PlotSheetSprite equ rbp+G_PARAMETER4
+sheetwidth@_f_PlotSheetSprite equ rbp+G_PARAMETER5
+_f_PlotSheetSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+;r13 = sheetwidth
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSheetSprite]
+  mov   rdx, qword [destination@_f_PlotSheetSprite]
+  mov   r8, qword [width@_f_PlotSheetSprite]
+  mov   r9, qword [height@_f_PlotSheetSprite]
+  push	rsi rdi r10 r15 r14 r13
+  mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
+  shl	r13d, 2
+
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r13
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r13 r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_5_PARAM
+
+
+_f_SDL3_ClearScreenPixels:
+  mov	rcx, GC_Screen_DimX*GC_Screen_DimY
+  mov	rdx, [pixels_p]
+  mov	eax, 0xff000000
+  push	rdi
+  mov	rdi, rdx
+  rep	stosd
+  pop   rdi
+  retn  16
+
+
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
           user32, 'user32.dll', \

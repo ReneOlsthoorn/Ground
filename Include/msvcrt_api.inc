@@ -18,4 +18,5 @@
           msvcrt_atan2,  'atan2', \
           msvcrt_cos,    'cos', \
           msvcrt_sqrt,    'sqrt', \
+          msvcrt_abs,    '_abs64', \
           msvcrt_getch,  '_getch'

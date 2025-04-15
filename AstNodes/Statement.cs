@@ -38,13 +38,8 @@ namespace GroundCompiler.AstNodes
 
             public BlockStatement(List<Statement> statements) : this()
             {
-                Nodes.AddRange(statements);
-            }
-
-            public override void Initialize()
-            {
-                UpdateParentInNodes();
-                base.Initialize();
+                foreach (Statement s in statements)
+                   AddNode(s);
             }
 
             [DebuggerStepThrough]
@@ -57,6 +52,8 @@ namespace GroundCompiler.AstNodes
 
         public class ProgramNode : FunctionStatement
         {
+            // The inheritance from FunctionStatement is not a very good match. For instance, the base.initializer cannot be called.
+
             public void AddHardcodedFunctions()
             {
                 // group msvcrt
@@ -72,8 +69,6 @@ namespace GroundCompiler.AstNodes
                 HardcodedFunctionSymbol fn = group.Scope.DefineHardcodedFunction("fgets", Datatype.GetDatatype("string"));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
                 fn.FunctionStmt.Parent = group;
-
-
 
                 // group gc
                 nameToken = new Token(TokenType.Identifier);
@@ -105,6 +100,19 @@ namespace GroundCompiler.AstNodes
                 fn = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
 
+                fn = this.Scope.DefineHardcodedFunction("PlotSprite");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("ptr")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("destination", Datatype.GetDatatype("ptr")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("width", Datatype.GetDatatype("int")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("height", Datatype.GetDatatype("int")));
+
+                fn = this.Scope.DefineHardcodedFunction("PlotSheetSprite");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("ptr")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("destination", Datatype.GetDatatype("ptr")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("width", Datatype.GetDatatype("int")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("height", Datatype.GetDatatype("int")));
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("sheetwidth", Datatype.GetDatatype("int")));
+
                 fn = this.Scope.DefineHardcodedFunction("GC_Replace", Datatype.GetDatatype("string"));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("string")));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
@@ -117,6 +125,7 @@ namespace GroundCompiler.AstNodes
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextColumns", Datatype.GetDatatype("int"));
                 this.Scope.DefineHardcodedFunction("zero");
                 this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
+                this.Scope.DefineHardcodedFunction("SDL3_ClearScreenPixels");
 
                 // Usage:   byte[61,36] screenArray = GC_ScreenText;
                 var screenPtrDatatype = Datatype.GetDatatype("byte[]", new List<UInt64> { 61, 36 });
@@ -168,25 +177,11 @@ namespace GroundCompiler.AstNodes
             public override void Initialize()
             {
                 AddHardcodedFunctions();
-                if (Body != null)
+                if (BodyNode != null)
                 {
-                    Body.Parent = this;
-                    Body.Initialize();
+                    BodyNode.Parent = this;
+                    BodyNode.Initialize();
                 }
-            }
-
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
-            {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (AstNode node in Nodes)
-                    foreach (AstNode child in node.FindAllNodes(typeToFind))
-                        yield return child;
-
-                if (Body != null)
-                    foreach (AstNode child in Body.FindAllNodes(typeToFind))
-                        yield return child;
             }
 
             [DebuggerStepThrough]
@@ -197,64 +192,63 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models a variable declaration like: int i = 10;   Or class instance like:  AClass inst;  (no constructor possible at this moment in time)
         public class VarStatement : Statement
         {
+            public Expression? InitializerNode;
+
+            public Datatype ResultType;
+            public Token Name;
+
             public VarStatement(Datatype theType, Token name, Expression? initializer)
             {
                 ResultType = theType;
                 Name = name;
-                Initializer = initializer;
+                InitializerNode = initializer;
             }
-
-            public Datatype ResultType;
-            public Token Name;
-            public Expression? Initializer;
 
             public override void Initialize()
             {
                 var scope = GetScope();
                 Scope.Symbol.VariableSymbol varSymbol = scope?.DefineVariable(Name.Lexeme, ResultType, allowSameType: Properties.ContainsKey("for-loop-variable"));
 
-                if (Initializer != null) { 
-                    Initializer.Parent = this;
-                    Initializer.Initialize();
+                if (InitializerNode != null) { 
+                    InitializerNode.Parent = this;
+                    InitializerNode.Initialize();
+
+                    if (InitializerNode is Expression.List listExpr)
+                        varSymbol.Properties["assigned element"] = listExpr;
 
                     // Hardcoded Arrays are valuetype. That must be respected in assigned variables.
                     //if (ResultType.Contains(Datatype.TypeEnum.Array) && Initializer.ExprType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
                     // Why is the line above removed: when we call a DLL function, the result is never a array type, because function have no result type.
                     // We should declare a returntype for a function, but the solution beneath is a shortcut.
-                    if (ResultType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
+                    if (ResultType.Contains(Datatype.TypeEnum.Array) && (!InitializerNode.ExprType.IsReferenceType))
                     {
                         ResultType.IsValueType = true;
                         varSymbol!.DataType = ResultType;
                     }
                 }
-                base.Initialize();
             }
 
-            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
             {
-                if (Object.ReferenceEquals(Initializer, oldNode))
+                if (Object.ReferenceEquals(InitializerNode, oldNode))
                 {
                     newNode.Parent = this;
-                    Initializer = (Expression)newNode;
+                    InitializerNode = (Expression)newNode;
                     return true;
                 }
-                return base.ReplaceInternalAstNode(oldNode, newNode);
+                return false;
             }
 
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            public override IEnumerable<AstNode> Nodes
             {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (AstNode node in Nodes)
-                    foreach (AstNode child in node.FindAllNodes(typeToFind))
-                        yield return child;
-
-                if (Initializer != null)
-                    foreach (AstNode child in Initializer.FindAllNodes(typeToFind))
-                        yield return child;
+                get
+                {
+                    if (InitializerNode != null)
+                        yield return InitializerNode;
+                }
             }
 
             [DebuggerStepThrough]
@@ -267,24 +261,54 @@ namespace GroundCompiler.AstNodes
 
         public class IfStatement : Statement
         {
+            public Expression ConditionNode;
+            public Statement ThenBranchNode;
+            public Statement? ElseBranchNode;
+
             public IfStatement(Expression condition, Statement thenBranch, Statement? elseBranch)
             {
-                Condition = condition;
-                ThenBranch = thenBranch;
-                ElseBranch = elseBranch;
+                ConditionNode = condition;
+                ThenBranchNode = thenBranch;
+                ElseBranchNode = elseBranch;
             }
 
-            public override void Initialize()
+            public override IEnumerable<AstNode> Nodes
             {
-                if (Condition != null) { Condition.Parent = this; Condition.Initialize(); }
-                if (ThenBranch != null) { ThenBranch.Parent = this; ThenBranch.Initialize(); }
-                if (ElseBranch != null) { ElseBranch.Parent = this; ElseBranch.Initialize(); }
-                base.Initialize();
+                get
+                {
+                    if (ConditionNode != null)
+                        yield return ConditionNode;
+
+                    if (ThenBranchNode != null)
+                        yield return ThenBranchNode;
+
+                    if (ElseBranchNode != null)
+                        yield return ElseBranchNode;
+                }
             }
 
-            public Expression Condition { get; }
-            public Statement ThenBranch { get; }
-            public Statement? ElseBranch { get; }
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ConditionNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ConditionNode = (Expression)newNode;
+                    return true;
+                }
+                if (Object.ReferenceEquals(ThenBranchNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ThenBranchNode = (Statement)newNode;
+                    return true;
+                }
+                if (Object.ReferenceEquals(ElseBranchNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ElseBranchNode = (Statement)newNode;
+                    return true;
+                }
+                return false;
+            }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
@@ -294,14 +318,15 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models assembly code. It is just a literal insert into the generated code.
         public class AssemblyStatement : Statement
         {
+            public Token LiteralAsmCode;
+
             public AssemblyStatement(Token asmToken)
             {
                 LiteralAsmCode = asmToken;
             }
-
-            public Token LiteralAsmCode;
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
@@ -311,23 +336,38 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        //Set a value direct into an assembly variable.   poke.q next_copperline, 0;
         public class PokeStatement : Statement
         {
+            public Expression? ValueExpressionNode;
+            public Datatype SizeType;
+            public string VariableName;
+
             public PokeStatement(Datatype theSize, string variableName, Expression valueExpr)
             {
                 SizeType = theSize;
                 VariableName = variableName;
-                ValueExpression = valueExpr;
+                ValueExpressionNode = valueExpr;
             }
 
-            public Datatype SizeType;
-            public string VariableName;
-            public Expression? ValueExpression;
-
-            public override void Initialize()
+            public override IEnumerable<AstNode> Nodes
             {
-                if (ValueExpression != null) { ValueExpression.Parent = this; ValueExpression.Initialize(); }
-                base.Initialize();
+                get
+                {
+                    if (ValueExpressionNode != null)
+                        yield return ValueExpressionNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ValueExpressionNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ValueExpressionNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
             }
 
             [DebuggerStepThrough]
@@ -340,21 +380,43 @@ namespace GroundCompiler.AstNodes
 
         public class WhileStatement : Statement
         {
+            public Expression ConditionNode;
+            public Statement BodyNode;
+
             public WhileStatement(Expression condition, Statement body)
             {
-                Condition = condition;
-                Body = body;
+                ConditionNode = condition;
+                BodyNode = body;
             }
 
-            public override void Initialize()
+            public override IEnumerable<AstNode> Nodes
             {
-                if (Condition != null) { Condition.Parent = this; Condition.Initialize(); }
-                if (Body != null) { Body.Parent = this; Body.Initialize(); }
-                base.Initialize();
+                get
+                {
+                    if (ConditionNode != null)
+                        yield return ConditionNode;
+
+                    if (BodyNode != null)
+                        yield return BodyNode;
+                }
             }
 
-            public Expression Condition { get; }
-            public Statement Body { get; }
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ConditionNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ConditionNode = (Expression)newNode;
+                    return true;
+                }
+                if (Object.ReferenceEquals(BodyNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    BodyNode = (Statement)newNode;
+                    return true;
+                }
+                return false;
+            }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
@@ -364,36 +426,52 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models a call to an external DLL, like:  dll sdl3_image function IMG_Load(string filename) : ptr;
         public class DllStatement : Statement
         {
+            public FunctionStatement FunctionStmtNode;
+            public string GroupName;
+
             public DllStatement(string groupName, FunctionStatement fStmt)
             {
                 GroupName = groupName;
-                FunctionStmt = fStmt;
-                FunctionStmt.Properties["group"] = GroupName;
+                FunctionStmtNode = fStmt;
+                FunctionStmtNode.Properties["group"] = GroupName;
             }
 
             public override void Initialize()
             {
-                if (FunctionStmt != null) {
-                    FunctionStmt.Properties["dll"] = true;
-                    FunctionStmt.Parent = this;
-                    FunctionStmt.Initialize();
+                if (FunctionStmtNode != null) {
+                    FunctionStmtNode.Properties["dll"] = true;
+                    FunctionStmtNode.Parent = this;
+                    FunctionStmtNode.Initialize();
                 }
-                base.Initialize();
 
                 var scope = this.GetScope();
                 var theGroup = scope?.GetVariable(GroupName);
                 if (theGroup != null)
-                {
-                    theGroup.GetGroupStatement().Scope.DefineDllFunction(FunctionStmt!);
-                }
-
-                //scope!.DefineDllFunction(FunctionStmt!);
+                    theGroup.GetGroupStatement()?.Scope.DefineDllFunction(FunctionStmtNode!);
             }
 
-            public string GroupName { get; }
-            public FunctionStatement FunctionStmt { get; }
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (FunctionStmtNode != null)
+                        yield return FunctionStmtNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(FunctionStmtNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    FunctionStmtNode = (FunctionStatement)newNode;
+                    return true;
+                }
+                return false;
+            }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
@@ -403,40 +481,67 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models a Class, including instance variables and functions.
+        // In WIN32 programming, you can define instance variables and use an instance of the class as a structure that can be filled.
         public class ClassStatement : Statement, IScopeStatement
         {
-            public ClassStatement(Token name, List<VarStatement> instanceVariables, List<FunctionStatement> methods)
+            public List<VarStatement> InstanceVariableNodes;
+            public List<FunctionStatement> FunctionNodes;
+
+            public Scope Scope;
+            public Token Name;
+
+            public ClassStatement(Token name, List<VarStatement> instanceVariables, List<FunctionStatement> theFunctions)
             {
                 Name = name;
-                InstanceVariables = instanceVariables;
-                Methods = methods;
+                InstanceVariableNodes = instanceVariables;
+                FunctionNodes = theFunctions;
                 this.Scope = new Scope(this);
             }
 
             public override void Initialize()
             {
-                UpdateParentInNodes();
                 this.Scope.Parent = Parent?.GetScope() ?? null;
-
                 Scope.Parent?.DefineClass(this);
                 base.Initialize();
+            }
 
-                foreach (var aFunctionStatement in Methods)
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
                 {
-                    aFunctionStatement.Parent = this;
-                    aFunctionStatement.Initialize();
-                }
-                foreach (var aVarStatement in InstanceVariables)
-                {
-                    aVarStatement.Parent = this;
-                    aVarStatement.Initialize();
+                    foreach (AstNode node in InstanceVariableNodes)
+                        yield return node;
+
+                    foreach (AstNode node in FunctionNodes)
+                        yield return node;
                 }
             }
 
-            public Scope Scope;
-            public Token Name;
-            public List<VarStatement> InstanceVariables;
-            public List<FunctionStatement> Methods;
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                for (int i = 0; i < InstanceVariableNodes.Count; i++)
+                {
+                    AstNode node = InstanceVariableNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
+                    {
+                        newNode.Parent = this;
+                        InstanceVariableNodes[i] = (VarStatement)newNode;
+                        return true;
+                    }
+                }
+                for (int i = 0; i < FunctionNodes.Count; i++)
+                {
+                    AstNode node = FunctionNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
+                    {
+                        newNode.Parent = this;
+                        FunctionNodes[i] = (FunctionStatement)newNode;
+                        return true;
+                    }
+                }
+                return false;
+            }
 
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
@@ -449,34 +554,53 @@ namespace GroundCompiler.AstNodes
         }
 
 
-
+        // groups multiple functions, so you can avoid name collisions.
+        // group msvcrt { function read() { }  function write() {} }
         public class GroupStatement : Statement, IScopeStatement
         {
-            public GroupStatement(Token name, List<FunctionStatement> methods)
+            public List<FunctionStatement> FunctionNodes;
+
+            public Scope Scope;
+            public Token Name;
+
+            public GroupStatement(Token name, List<FunctionStatement> theFunctions)
             {
                 Name = name;
-                Methods = methods;
+                FunctionNodes = theFunctions;
                 this.Scope = new Scope(this);
             }
 
             public override void Initialize()
             {
-                UpdateParentInNodes();
                 this.Scope.Parent = Parent?.GetScope() ?? null;
-
                 Scope.Parent?.DefineGroup(this);
-                base.Initialize();
 
-                foreach (var aFunctionStatement in Methods)
+                base.Initialize();
+            }
+
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
                 {
-                    aFunctionStatement.Parent = this;
-                    aFunctionStatement.Initialize();
+                    foreach (AstNode node in FunctionNodes)
+                        yield return node;
                 }
             }
 
-            public Scope Scope;
-            public Token Name;
-            public List<FunctionStatement> Methods;
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                for (int i = 0; i < FunctionNodes.Count; i++)
+                {
+                    AstNode node = FunctionNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
+                    {
+                        newNode.Parent = this;
+                        FunctionNodes[i] = (FunctionStatement)newNode;
+                        return true;
+                    }
+                }
+                return false;
+            }
 
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
@@ -489,20 +613,34 @@ namespace GroundCompiler.AstNodes
         }
 
 
-
+        // Models a Return statement, the last statement of a function() to return the result.
         public class ReturnStatement : Statement
         {
+            public Expression? ReturnValueNode;
+
             public ReturnStatement(Expression? value)
             {
-                Value = value;
+                ReturnValueNode = value;
             }
 
-            public Expression? Value;
-
-            public override void Initialize()
+            public override IEnumerable<AstNode> Nodes
             {
-                if (Value != null) { Value.Parent = this; Value.Initialize(); }
-                base.Initialize();
+                get
+                {
+                    if (ReturnValueNode != null)
+                        yield return ReturnValueNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ReturnValueNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ReturnValueNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
             }
 
             [DebuggerStepThrough]
@@ -513,14 +651,15 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models a Break statement, which can be used to break a While loop.
         public class BreakStatement : Statement
         {
+            public Token Keyword;
+
             public BreakStatement(Token keyword)
             {
                 Keyword = keyword;
             }
-
-            public Token Keyword;
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
@@ -530,31 +669,33 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // A statement that contains an expression, which can be an assignment or other expression. It is the last resort in Parser.ParseStatement.
         public class ExpressionStatement : Statement
         {
+            public Expression ExpressionNode;
+
             public ExpressionStatement(Expression expression)
             {
-                InnerExpression = expression;
+                ExpressionNode = expression;
             }
-
-            public override void Initialize()
+            public override IEnumerable<AstNode> Nodes
             {
-                if (InnerExpression != null) { InnerExpression.Parent = this; InnerExpression.Initialize(); }
-                base.Initialize();
-            }
-
-            public Expression InnerExpression { get; }
-
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
-            {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                if (InnerExpression != null)
+                get
                 {
-                    foreach (AstNode child in InnerExpression.FindAllNodes(typeToFind))
-                        yield return child;
+                    if (ExpressionNode != null)
+                        yield return ExpressionNode;
                 }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ExpressionNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ExpressionNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
             }
 
             [DebuggerStepThrough]
@@ -565,10 +706,10 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // A helper for FunctionStatement
         public class FunctionParameter
         {
             public string Name { get; }
-
             public Datatype TheType { get; }
 
             public FunctionParameter(string theName, Datatype theType)
@@ -579,8 +720,15 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        // Models functions like: function name(int i) { println("code"); }
         public class FunctionStatement : Statement, IScopeStatement
         {
+            public BlockStatement? BodyNode;
+
+            public Token Name;
+            public List<FunctionParameter> Parameters;
+            public Datatype? ResultDatatype;
+
             public Scope Scope;
             public ClassStatement? classStatement = null;
             public GroupStatement? groupStatement = null;
@@ -590,17 +738,16 @@ namespace GroundCompiler.AstNodes
                 Name = new();
                 Name.Lexeme = "main";
                 Parameters = new();
-                Body = new();
+                BodyNode = new();
                 this.Scope = new Scope(this);
             }
 
-            public FunctionStatement(Token name, List<FunctionParameter> parameters, Statement.BlockStatement? body = null)
+            public FunctionStatement(Token name, List<FunctionParameter> theParameters, Statement.BlockStatement? body = null)
             {
                 Name = name;
-                Parameters = parameters;
-                if (body != null)
-                    body.Parent = this;
-                Body = body;
+                Parameters = theParameters;
+                BodyNode = body;
+                UpdateParentInNodes();
                 this.Scope = new Scope(this);
             }
 
@@ -636,12 +783,10 @@ namespace GroundCompiler.AstNodes
                 if (!this.Properties.ContainsKey("dll"))
                     Scope.Parent?.DefineFunction(this);
 
-                base.Initialize();
-
-                if (Body != null) {
-                    Body.GetScope()?.DefineFunctionParameters(this);
-                    Body.Parent = this;
-                    Body.Initialize();
+                if (BodyNode != null)
+                {
+                    BodyNode.GetScope()?.DefineFunctionParameters(this);
+                    BodyNode.Initialize();
                 }
             }
 
@@ -659,12 +804,6 @@ namespace GroundCompiler.AstNodes
                 return null;
             }
 
-            public Token Name { get; }
-            public List<FunctionParameter> Parameters { get; set; }
-            public Datatype? ResultDatatype;
-
-            public Statement.BlockStatement? Body { get; }
-
             public bool AssemblyOnlyFunctionWithNoParameters() => this.Properties.ContainsKey("assembly only function") && this.Properties.ContainsKey("zero parameters");
 
             public bool NeedsRefcountStructure()
@@ -673,30 +812,34 @@ namespace GroundCompiler.AstNodes
                     return false;
 
                 return true;
-                /*  je kunt een statement als print("a"+1) maken en je hebt al reference counting.
+                /*  je kunt een statement als print("a"+1) maken en je hebt al reference counting. Dus voorlopig doen we true. Later kunnen we doen:
                 var varSymbols = this._functionStatement!.Body.GetScope()!.GetVariableSymbols();
                 foreach (var varSymbol in varSymbols)
                     if (varSymbol.DataType.IsReferenceType)
                         return true;
-
                 return false;
                 */
             }
 
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            public override IEnumerable<AstNode> Nodes
             {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (AstNode node in Nodes)
-                    foreach (AstNode child in node.FindAllNodes(typeToFind))
-                        yield return child;
-
-                if (Body != null)
-                    foreach (AstNode child in Body.FindAllNodes(typeToFind))
-                        yield return child;
+                get
+                {
+                    if (BodyNode != null)
+                        yield return BodyNode;
+                }
             }
 
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(BodyNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    BodyNode = (BlockStatement)newNode;
+                    return true;
+                }
+                return false;
+            }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)

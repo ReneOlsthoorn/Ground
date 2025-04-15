@@ -143,3 +143,4 @@ _f_GC_Replace:
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_3_PARAM
+

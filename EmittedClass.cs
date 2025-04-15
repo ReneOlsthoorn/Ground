@@ -21,7 +21,7 @@ namespace GroundCompiler
         {
             int result = 0;
 
-            foreach (var inst in ClassStatement.InstanceVariables)
+            foreach (var inst in ClassStatement.InstanceVariableNodes)
                 result += inst.ResultType.SizeInBytes;
 
             return result;
@@ -48,7 +48,7 @@ namespace GroundCompiler
         {
             Emit_Equ_InstanceVariables();
 
-            foreach (var aFunctionStatement in ClassStatement.Methods)
+            foreach (var aFunctionStatement in ClassStatement.FunctionNodes)
             {
                 var funcStatement = aFunctionStatement;
                 var emittedProcedure = new EmittedProcedure(functionStatement: funcStatement, classStatement: this.ClassStatement, Emitter);

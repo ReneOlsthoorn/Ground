@@ -350,6 +350,9 @@ DrawAllCRTLines:
   ret
 
 
+; FONT32 means 32 bytes per character. Every character is 16x16 pixels and 2x16 bytes, two bytes for every horizontal row. So 2 colors are possible.
+; Why are multiple colors per character possible? Because there is a font32_charcolor_p, which contains color information for the character. A value of $6e will give the
+; background the color 6 (blue) and the foreground pixel the value $e (which is light blue).
 
 DrawCRTLine_TEXT1_FONT32:
 ;rcx = y position to draw (yscroll not added yet)
@@ -466,7 +469,7 @@ DrawCRTLine_TEXT1_FONT32:
   ret
 
 
-
+; You will not see the font32_charcolor_p used in TEXT1_FONT256, because the colortable_p contains the color information for each byte. The byte is an index for this colortable_p.
 DrawCRTLine_TEXT1_FONT256:
 ;rcx = y position to draw (yscroll not added yet)
   push	rbp
@@ -530,7 +533,7 @@ DrawCRTLine_TEXT1_FONT256:
   ret
 
 
-
+; In TEXT1_FONT32, we got charactercolors and a colortable. In TEXT1_FONT256, we only have the colortable. In TEXT4_FONT1024, we have no colortable for each pixel is the 4-byte color.
 DrawCRTLine_TEXT4_FONT1024:
 ;rcx = y position to draw (yscroll not added yet)
   push	rbp
@@ -628,6 +631,105 @@ PlotSprite:
   pop	r14 r15 r10 rdi rsi
   ret
 
+  
+source@_f_PlotSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSprite equ rbp+G_PARAMETER2
+width@_f_PlotSprite equ rbp+G_PARAMETER3
+height@_f_PlotSprite equ rbp+G_PARAMETER4
+_f_PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSprite]
+  mov   rdx, qword [destination@_f_PlotSprite]
+  mov   r8, qword [width@_f_PlotSprite]
+  mov   r9, qword [height@_f_PlotSprite]
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_4_PARAM
+
+
+source@_f_PlotSheetSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSheetSprite equ rbp+G_PARAMETER2
+width@_f_PlotSheetSprite equ rbp+G_PARAMETER3
+height@_f_PlotSheetSprite equ rbp+G_PARAMETER4
+sheetwidth@_f_PlotSheetSprite equ rbp+G_PARAMETER5
+_f_PlotSheetSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+;r13 = sheetwidth
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSheetSprite]
+  mov   rdx, qword [destination@_f_PlotSheetSprite]
+  mov   r8, qword [width@_f_PlotSheetSprite]
+  mov   r9, qword [height@_f_PlotSheetSprite]
+  push	rsi rdi r10 r15 r14 r13
+  mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
+  shl	r13d, 2
+
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_Screen_DimX
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r13
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r13 r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_5_PARAM
+
 
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
@@ -720,6 +822,54 @@ StatusRunning		dq 0
 StatusPixelsLocked	dq 0
 StatusCrtLinesDrawn	dq 0
 
+; https://codebase64.org/doku.php?id=base:commodore_vic-ii_color_analysis
+colorpalette256	dd 0xff000000	; #000000  First 16 colors are C-64 colors.
+	dd 0xfff1f1f1	; #ffffff  white
+	dd 0xffac4749	; #993322  red
+	dd 0xff78d5d0	; #66ddee  cyan
+	dd 0xffac49c1	; #aa3399  purple
+	dd 0xff5dc158	; #55bb22  green
+	dd 0xff4044cb	; #1133aa  blue
+	dd 0xffe1e063	; #ffee55  yellow
+	dd 0xffaf6821	; #995511  brown
+	dd 0xff7E5500	; #663300  dark brown
+	dd 0xffd67d7f	; #dd6655  pink
+	dd 0xff686868	; #444444  dark grey
+	dd 0xff8f8f8f	; #777777  grey
+	dd 0xffa0eb9c	; #aaff77  light gren
+	dd 0xff8898ff	; #5577ff  light blue
+	dd 0xffb9b9b9	; #bbbbbb  light grey
+	; https://lospec.com/palette-list/commander-x16-default
+	dd 0xff111111,	0xff222222, 0xff333333,	0xff555555,	0xff666666, 0xff888888,	0xff999999,	0xffaaaaaa
+	dd 0xffcccccc,	0xffdddddd,	0xffeeeeee,	0xff222233,	0xff443355,	0xff665577,	0xff887799,	0xffaa99bb
+	dd 0xffccbbdd,	0xffeeddff,	0xff331133,	0xff442244,	0xff663366,	0xff885588,	0xffaa77aa,	0xffcc88cc
+	dd 0xffeeaaee,	0xff441133,	0xff552244,	0xff663355,	0xff774466,	0xff885577,	0xffaa6688,	0xffbb7799
+	dd 0xff550000,	0xff881111,	0xffaa3333,	0xffdd5555,	0xffff7788,	0xffffaaaa,	0xffffdddd,	0xff554444
+	dd 0xff665566,	0xff886677,	0xff998899,	0xffbb99aa,	0xffddbbcc,	0xffeeccdd,	0xff220000,	0xff331111
+	dd 0xff553333,	0xff774444,	0xff996666,	0xffbb8888,	0xffddaaaa,	0xff442211,	0xff553311,	0xff664422
+	dd 0xff775533,	0xff886644,	0xff997755,	0xffbb8866,	0xff331100,	0xff553300,	0xff885500,	0xffaa7711
+	dd 0xffddaa22,	0xffffdd44,	0xffffff77,	0xff332211,	0xff443333,	0xff665544,	0xff887766,	0xffaa9988
+	dd 0xffccbbaa,	0xffffddcc,	0xff221100,	0xff443311,	0xff554422,	0xff776633,	0xff998855,	0xffbbaa77
+	dd 0xffddcc99,	0xff223300,	0xff334400,	0xff445511,	0xff666622,	0xff777733,	0xff888844,	0xff999955
+	dd 0xff003300,	0xff225500,	0xff447700,	0xff66aa00,	0xff99cc11,	0xffbbff33,	0xffeeff55,	0xff444433
+	dd 0xff666644,	0xff777755,	0xff889966,	0xffaaaa88,	0xffcccc99,	0xffddddbb,	0xff001100,	0xff222200
+	dd 0xff334411,	0xff556622,	0xff668833,	0xff889955,	0xffaabb77,	0xff113300,	0xff224411,	0xff335511
+	dd 0xff446622,	0xff558833,	0xff669944,	0xff77aa55,	0xff004400,	0xff006600,	0xff118811,	0xff33bb22
+	dd 0xff55ee44,	0xff88ff77,	0xffaaff99,	0xff223311,	0xff334422,	0xff556644,	0xff778866,	0xff99aa88
+	dd 0xffbbccaa,	0xffddeecc,	0xff002200,	0xff114411,	0xff335533,	0xff447744,	0xff669966,	0xff88bb88
+	dd 0xffaaddaa,	0xff113322,	0xff114422,	0xff225533,	0xff336644,	0xff448866,	0xff559977,	0xff66aa88
+	dd 0xff003322,	0xff005544,	0xff117777,	0xff22aa99,	0xff44cccc,	0xff77ffff,	0xff99ffff,	0xff335544
+	dd 0xff446655,	0xff667766,	0xff779988,	0xff99aa99,	0xffaaccbb,	0xffcceedd,	0xff001111,	0xff002222
+	dd 0xff224444,	0xff336666,	0xff558877,	0xff669999,	0xff88bbbb,	0xff113344,	0xff224455,	0xff335566
+	dd 0xff446677,	0xff557788,	0xff6688aa,	0xff7799bb,	0xff001188,	0xff1133bb,	0xff2255dd,	0xff4477ff
+	dd 0xff77aaff,	0xff99ccff,	0xffccffff,	0xff112233,	0xff334455,	0xff556666,	0xff668888,	0xff88aaaa
+	dd 0xffaaccdd,	0xffddeeff,	0xff111144,	0xff223355,	0xff334477,	0xff556699,	0xff7788bb,	0xff99aadd
+	dd 0xffbbccff,	0xff222255,	0xff333377,	0xff444488,	0xff555599,	0xff6666aa,	0xff7777cc,	0xff8888dd
+	dd 0xff220099,	0xff4411cc,	0xff6633ff,	0xff8855ff,	0xffbb77ff,	0xffeeaaff,	0xffffddff,	0xff444466
+	dd 0xff555577,	0xff777799,	0xff8888aa,	0xffaaaacc,	0xffbbbbdd,	0xffddddff,	0xff110033,	0xff221155
+	dd 0xff443377,	0xff554488,	0xff7766aa,	0xff9988cc,	0xffbb99ee,	0xff331155,	0xff442266,	0xff553377
+	dd 0xff664488,	0xff8855aa,	0xff9966bb,	0xffaa77cc,	0xff550055,	0xff770088,	0xff9922aa,	0xffcc44dd
+	dd 0xffff66ff,	0xffff99ff,	0xffffbbff,	0xffffddff,	0xffffffff,	0x00000000,	0xff000000, 0xffffffff
 
 ; *** GENERATED DATA ***
 ;GC_INSERTIONPOINT_DATA

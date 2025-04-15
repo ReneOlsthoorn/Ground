@@ -83,11 +83,9 @@ namespace GroundCompiler
         {
             ProgramNode programNode = new();
             while (!IsAtEnd())
-                programNode.Body.Nodes.Add(ParseStatement());
+                programNode.BodyNode?.AddNode(ParseStatement());
 
-            /* At this point, the AST is an empty shell. It just exists. That can be handy in some situations.
-             * But in our situation, we are going to initialize the nodes, which fills the symboltables, etc... */
-            programNode.Initialize();
+            /* At this point, the AST is an empty shell. It just exists. That can be handy in some situations. */
             return programNode;
         }
 
@@ -218,7 +216,7 @@ namespace GroundCompiler
                 {
                     var rangeDatatype = Datatype.GetDatatype("int");
                     Expression.Binary rangeExpr = ParseExpression() as Expression.Binary;
-                    initializer = new Statement.VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.Left);
+                    initializer = new Statement.VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.LeftNode);
                     initializer.Properties["for-loop-variable"] = true;
 
                     Token rangeToOrUntilToken = new Token();
@@ -230,7 +228,7 @@ namespace GroundCompiler
                         rangeToOrUntilToken.Types.Add(TokenType.Less);
 
                     var rangeConditionVariable = new Expression.Variable(rangeIdentifier);
-                    Expression rangeConditionExp = new Expression.Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.Right);
+                    Expression rangeConditionExp = new Expression.Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.RightNode);
 
                     Token incrementToken = new Token();
                     incrementToken.Lexeme = "++";
@@ -359,8 +357,9 @@ namespace GroundCompiler
                 var equals = NextToken();
                 var rightValue = Assignment();
 
-                if (expr is Expression.Get getExpr)
-                    return new Expression.Set(getExpr.Object, getExpr.Name, rightValue, equals);
+                // Do we have an identifier.identifier (so a property-set) on the left side?
+                if (expr is Expression.PropertyGet getExpr)
+                    return new Expression.PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
 
                 return new Expression.Assignment(expr, rightValue, equals);
             }
@@ -436,7 +435,7 @@ namespace GroundCompiler
                         if (stringToken.Datatype != null && stringToken.Datatype.Contains(Datatype.TypeEnum.String))
                         {
                             stringToken = NextToken();
-                            return new Expression.Get(expr, stringToken);
+                            return new Expression.PropertyGet(expr, stringToken);
                         }
                     }
                     if (Check(TokenType.LeftSquareBracket))
@@ -451,10 +450,10 @@ namespace GroundCompiler
                         string s = $"[{token.Lexeme}]";
                         newToken.Value = s;
                         newToken.Lexeme = $"\"{s}\"";
-                        return new Expression.Get(expr, newToken);
+                        return new Expression.PropertyGet(expr, newToken);
                     }
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
-                    expr = new Expression.Get(expr, name);
+                    expr = new Expression.PropertyGet(expr, name);
                 }
                 else if (Match(TokenType.LeftSquareBracket))
                     expr = ArrayAccess(expr);
@@ -466,7 +465,6 @@ namespace GroundCompiler
 
         private Expression ArrayAccess(Expression collection)
         {
-            var index = Peek();
             var accessorElements = new List<Expression>();
             if (!Check(TokenType.RightSquareBracket))
             {
@@ -479,7 +477,7 @@ namespace GroundCompiler
             }
 
             Consume(TokenType.RightSquareBracket, "Expect ']' after accessing a collection.");
-            return new Expression.ArrayAccess(collection, accessorElements, index);
+            return new Expression.ArrayAccess(collection, accessorElements);
         }
 
         private Expression FunctionCall(Expression functionName)
@@ -662,7 +660,7 @@ namespace GroundCompiler
             return; // remove if you want debug info
 
             var astPrinter = new AstPrinter();
-            foreach (Statement statement in node.Body.AllNodes())
+            foreach (Statement statement in node.BodyNode.AllNodes())
                 Console.WriteLine(astPrinter.Print(statement));
         }
 

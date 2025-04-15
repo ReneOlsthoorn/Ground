@@ -233,13 +233,13 @@ testgroup.gfun2();
 tmpFilename = "write.bin";
 tmpFile = msvcrt.fopen(tmpFilename, "wb");
 int arraySize = 10*1024;
-byte[] pointer = msvcrt.calloc(1,arraySize);
-i64[] ptr2 = pointer;
+byte[] thePointer = msvcrt.calloc(1,arraySize);
+i64[] ptr2 = thePointer;
 ptr2[0] = 0xfffffe02;
 //println(ptr[1]);
-msvcrt.fwrite(pointer, arraySize, 1, tmpFile);
+msvcrt.fwrite(thePointer, arraySize, 1, tmpFile);
 msvcrt.fclose(tmpFile);
-msvcrt.free(pointer);
+msvcrt.free(thePointer);
 
 
 println("End.");

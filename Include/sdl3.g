@@ -17,5 +17,11 @@ dll sdl3 function SDL_DestroyWindow(ptr window);
 dll sdl3 function SDL_Quit();
 dll sdl3 function SDL_CreateTextureFromSurface(ptr renderer, ptr surface);
 dll sdl3 function SDL_DestroySurface(ptr surface);
+dll sdl3 function SDL_ShowCursor();
+dll sdl3 function SDL_HideCursor();
+dll sdl3 function SDL_RenderDebugText(ptr renderer, f32 x, f32 y, string str);
+dll sdl3 function SDL_SetRenderDrawColor(ptr renderer, int r, int g, int b, int a);
+dll sdl3 function SDL_RenderClear(ptr renderer);
+dll sdl3 function SDL_SetRenderScale(ptr renderer, f32 scaleX, f32 scaleY);
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  //SDL_Surface* as result

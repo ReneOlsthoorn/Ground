@@ -41,7 +41,7 @@ namespace GroundCompiler
 
         public void Emit_Equ_LocalVariables(bool emit = true)
         {
-            List<Scope.Symbol.LocalVariableSymbol> theVariables = this.FunctionStatement.Body.GetScope()!.GetVariableSymbols();
+            List<Scope.Symbol.LocalVariableSymbol> theVariables = this.FunctionStatement.BodyNode.GetScope()!.GetVariableSymbols();
 
             int negativeOffset = (NeedsRefCount() ? ReferenceCountPointersAllocationSize() : 0);
             foreach (var varSymbol in theVariables)
@@ -160,7 +160,7 @@ namespace GroundCompiler
             Emit_Equ_LocalVariables();
             EmitCreateStackframe();
 
-            this.FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
+            this.FunctionStatement.BodyNode.shouldCleanDereferenced = NeedsRefCount();
 
             if (MainCallback != null)
                 MainCallback();
@@ -179,7 +179,7 @@ namespace GroundCompiler
              */
             Emitter.StackPos = 0;  // when generating the code, assume an even stack.
 
-            this.FunctionStatement.Body.shouldCleanDereferenced = NeedsRefCount();
+            this.FunctionStatement.BodyNode.shouldCleanDereferenced = NeedsRefCount();
             this.FunctionStatement.Properties["in EmittedProcedure"] = true;  // this allows a registration of used registers within a function
 
             // Generate the code before the entrycode is even generated... This is risky, but works.

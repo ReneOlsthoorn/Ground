@@ -75,15 +75,12 @@ if (font256OnDisk == null) {
 sidelib.ConvertFonts(font256OnDisk, g.[font256_p], g.[font32_p]);
 sidelib.FreeImage(font256OnDisk);
 
-g.[colortable_p] = msvcrt.calloc(1, 256 * 4);
+g.[colortable_p] = g.colorpalette256;
 g.[screentext1_p] = msvcrt.calloc(1, g.GC_Screen_TextSize);
 g.[screentext4_p] = msvcrt.calloc(1, g.GC_Screen_TextSize * 4);
 g.[font32_charcolor_p] = msvcrt.calloc(1, g.GC_Screen_TextSize);
 
 u32[256] colors = g.[colortable_p];
-#include retrovm_colortable.g
-insertColors(g.[colortable_p]);
-
 byte[61,36] screenArray = g.[screentext1_p];
 byte[61,36] colorsArray = g.[font32_charcolor_p];
 
@@ -263,7 +260,6 @@ sdl3.SDL_Quit();
 
 msvcrt.free(g.[font32_p]);
 msvcrt.free(g.[font256_p]);
-msvcrt.free(g.[colortable_p]);
 msvcrt.free(g.[screentext1_p]);
 msvcrt.free(g.[screentext4_p]);
 msvcrt.free(g.[font32_charcolor_p]);

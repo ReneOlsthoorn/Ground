@@ -195,7 +195,7 @@ namespace GroundCompiler
                     if (groupSymbol.GroupStatement.Properties.ContainsKey("don't generate"))
                         continue;
 
-                    foreach (var groupFunction in groupSymbol.GroupStatement.Methods)
+                    foreach (var groupFunction in groupSymbol.GroupStatement.FunctionNodes)
                         result.Add(groupFunction);
                 }
             }
@@ -325,9 +325,9 @@ namespace GroundCompiler
             }
         }
 
-        public Symbol DefineParentScopeParameter(string name, Datatype datatype, int levelsDeep, IScopeStatement scopeStatement)
+        public Symbol DefineParentScopeParameter(string name, Datatype datatype, int levelsDeep, IScopeStatement scopeStatement, LocalVariableSymbol localVar)
         {
-            var newElement = new Scope.Symbol.ParentScopeVariable(name, datatype, levelsDeep, scopeStatement);
+            var newElement = new Scope.Symbol.ParentScopeVariable(name, datatype, levelsDeep, scopeStatement, localVar);
             Symboltable[name] = newElement;
             return newElement;
         }
@@ -429,12 +429,14 @@ namespace GroundCompiler
             {
                 public int LevelsDeep;
                 public IScopeStatement TheScopeStatement;
+                public LocalVariableSymbol TheLocalVariable;
 
-                public ParentScopeVariable(string name, Datatype datatype, int levelsDeep, IScopeStatement theScopeStatement) : base(name, datatype)
+                public ParentScopeVariable(string name, Datatype datatype, int levelsDeep, IScopeStatement theScopeStatement, LocalVariableSymbol localVar) : base(name, datatype)
                 {
                     Symboltype = "parent scope var";
                     LevelsDeep = levelsDeep;
                     TheScopeStatement = theScopeStatement;
+                    TheLocalVariable = localVar;
                 }
 
                 public override ClassStatement? GetClassStatement()

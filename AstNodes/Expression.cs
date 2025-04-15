@@ -12,40 +12,38 @@ namespace GroundCompiler.AstNodes
 
         public interface IVisitor<T>
         {
-            T VisitorGetExpr(Get expr);
-            T VisitorSetExpr(Set expr);
-            T VisitorAssignmentExpr(Assignment expr);
-            T VisitorBinaryExpr(Binary expr);
-            T VisitorFunctionCallExpr(FunctionCall expr);
-            T VisitorGroupingExpr(Grouping expr);
-            T VisitorLiteralExpr(Literal expr);
-            T VisitorLogicalExpr(Logical expr);
-            T VisitorUnaryExpr(Unary expr);
-            T VisitorVariableExpr(Variable expr);
-            T VisitorListExpr(List expr);
-            T VisitorArrayAccessExpr(ArrayAccess expr);
+            T VisitorPropertyGet(PropertyGet expr);
+            T VisitorPropertySet(PropertySet expr);
+            T VisitorAssignment(Assignment expr);
+            T VisitorBinary(Binary expr);
+            T VisitorFunctionCall(FunctionCall expr);
+            T VisitorGrouping(Grouping expr);
+            T VisitorLiteral(Literal expr);
+            T VisitorUnary(Unary expr);
+            T VisitorVariable(Variable expr);
+            T VisitorList(List expr);
+            T VisitorArrayAccess(ArrayAccess expr);
         }
 
 
-        // Get a property
-        public class Get : Expression
+        // identifier.identifier
+        public class PropertyGet : Expression
         {
-            public Get(Expression @object, Token name)
+            public Expression ObjectNode;
+            public Token Name;
+            
+            public PropertyGet(Expression @object, Token name)
             {
-                Object = @object;
+                ObjectNode = @object;
                 Name = name;
             }
 
             public override void Initialize()
             {
-                if (Object != null) {
-                    Object.Parent = this;
-                    Object.Initialize();
-                }
                 base.Initialize();
 
                 var currentScope = GetScope();
-                var objVariableExpr = Object as Expression.Variable;
+                var objVariableExpr = ObjectNode as Expression.Variable;
                 ClassStatement? classStatement = null;
                 if (objVariableExpr!.ExprType.isClass())
                 {
@@ -68,7 +66,7 @@ namespace GroundCompiler.AstNodes
                     }
                     else
                     {
-                        var instVarList = classStatement.InstanceVariables.Find((instVariable) => instVariable.Name.Lexeme == Name.Lexeme);
+                        var instVarList = classStatement.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == Name.Lexeme);
                         if (instVarList != null) {
                             ExprType = instVarList.ResultType;
                         }
@@ -76,73 +74,21 @@ namespace GroundCompiler.AstNodes
                 }
             }
 
-            public Expression Object;
-            public Token Name;
-
-            [DebuggerStepThrough]
-            public override T Accept<T>(IVisitor<T> visitor)
+            public override IEnumerable<AstNode> Nodes
             {
-                return visitor.VisitorGetExpr(this);
-            }
-        }
-
-
-        // Set a property
-        public class Set : Expression
-        {
-            public Expression TheObject;
-            public Token Name;
-            public List<Expression>? Accessor;
-            public Expression Value;
-            public Token AssignmentOp;
-
-            public Set(Expression @object, Token name, Expression value, Token assignmentOp)
-            {
-                TheObject = @object;
-                Name = name;
-                Value = value;
-                AssignmentOp = assignmentOp;
-                Accessor = null;
-            }
-
-            public Set(Expression obj, Token name, List<Expression> accessor, Expression value, Token assignmentOp) : this(obj, name, value, assignmentOp)
-            {
-                Accessor = accessor;
-            }
-
-            public override void Initialize()
-            {
-                if (TheObject != null) { TheObject.Parent = this; TheObject.Initialize(); }
-                if (Value != null) { Value.Parent = this; Value.Initialize(); }
-                if (Accessor != null)
+                get
                 {
-                    foreach (var element in Accessor)
-                    {
-                        element.Parent = this;
-                        element.Initialize();
-                    }
-                }
-                base.Initialize();
-            }
-
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
-            {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                if (Value != null)
-                {
-                    foreach (AstNode child in Value.FindAllNodes(typeToFind))
-                        yield return child;
+                    if (ObjectNode != null)
+                        yield return ObjectNode;
                 }
             }
 
-            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
             {
-                if (Object.ReferenceEquals(Value, oldNode))
+                if (Object.ReferenceEquals(ObjectNode, oldNode))
                 {
                     newNode.Parent = this;
-                    Value = (Expression)newNode;
+                    ObjectNode = (Expression)newNode;
                     return true;
                 }
                 return false;
@@ -151,13 +97,69 @@ namespace GroundCompiler.AstNodes
             [DebuggerStepThrough]
             public override T Accept<T>(IVisitor<T> visitor)
             {
-                return visitor.VisitorSetExpr(this);
+                return visitor.VisitorPropertyGet(this);
             }
         }
 
 
+        // identifier.identifier = Value
+        public class PropertySet : Expression
+        {
+            public Expression ObjectNode;
+            public Token Name;
+            public Token AssignmentOperation;
+            public Expression ValueNode;
+
+            public PropertySet(Expression theObject, Token theName, Token theAssignmentOperation, Expression theValue)
+            {
+                ObjectNode = theObject;
+                Name = theName;
+                ValueNode = theValue;
+                AssignmentOperation = theAssignmentOperation;
+            }
+
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (ObjectNode != null)
+                        yield return ObjectNode;
+
+                    if (ValueNode != null)
+                        yield return ValueNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(ObjectNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ObjectNode = (Expression)newNode;
+                    return true;
+                }
+                if (Object.ReferenceEquals(ValueNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    ValueNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
+            }
+
+            [DebuggerStepThrough]
+            public override T Accept<T>(IVisitor<T> visitor)
+            {
+                return visitor.VisitorPropertySet(this);
+            }
+        }
+
+
+        // 1  or  "string"  
         public class Literal : Expression
         {
+            public object? Value;
+
             public Literal(object? value)
             {
                 Value = value;
@@ -171,8 +173,6 @@ namespace GroundCompiler.AstNodes
             {
                 ExprType = theType;
             }
-
-            public object? Value;
 
             public override void Initialize()
             {
@@ -220,58 +220,31 @@ namespace GroundCompiler.AstNodes
             [DebuggerStepThrough]
             public override T Accept<T>(IVisitor<T> visitor)
             {
-                return visitor.VisitorLiteralExpr(this);
+                return visitor.VisitorLiteral(this);
             }
         }
 
 
-        public class Logical : Expression
-        {
-            public Logical(Expression left, Token @operator, Expression right)
-            {
-                Left = left;
-                Operator = @operator;
-                Right = right;
-            }
-
-            public override void Initialize()
-            {
-                if (Left != null) { Left.Parent = this; Left.Initialize(); }
-                if (Right != null) { Right.Parent = this; Right.Initialize(); }
-                base.Initialize();
-            }
-
-            public Expression Left;
-            public Token Operator;
-            public Expression Right;
-
-            [DebuggerStepThrough]
-            public override T Accept<T>(IVisitor<T> visitor)
-            {
-                return visitor.VisitorLogicalExpr(this);
-            }
-        }
-
-
+        // i++ or -i
         public class Unary : Expression
         {
+            public Token Operator;
+            public Expression RightNode;
+            public bool Postfix;
+
             public Unary(Token @operator, Expression right, bool postfix = false)
             {
                 Operator = @operator;
-                Right = right;
+                RightNode = right;
                 Postfix = postfix;
             }
 
-            public Token Operator;
-            public Expression Right;
-            public bool Postfix;
-
             public override void Initialize()
             {
-                if (Right != null) {
-                    Right.Parent = this;
-                    Right.Initialize();
-                    this.ExprType = Right.ExprType;
+                if (RightNode != null) {
+                    RightNode.Parent = this;
+                    RightNode.Initialize();
+                    this.ExprType = RightNode.ExprType;
 
                     if (Operator.Contains(TokenType.Asterisk))
                         if (this.ExprType.Base == null)
@@ -279,14 +252,32 @@ namespace GroundCompiler.AstNodes
                         else
                             this.ExprType = this.ExprType.Base;
                 }
+            }
 
-                base.Initialize();
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (RightNode != null)
+                        yield return RightNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(RightNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    RightNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
             }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorUnaryExpr(this);
+                return visitor.VisitorUnary(this);
             }
         }
 
@@ -318,12 +309,13 @@ namespace GroundCompiler.AstNodes
                         break;
 
                     ownerScope = needleScope.Owner;
-                    levelsDeep++;
+                    if (!(ownerScope is ClassStatement classStatement)) // Waarom rekenen we ClassStatement niet mee? Omdat functie's op grondniveau gedefinieerd worden.
+                        levelsDeep++;
                 }
                 if (ownerScope == null)
                     Compiler.Error("Expression>>GetSymbol error.");
 
-                return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!);
+                return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!, variableSymbol!);
             }
 
             return symbol;
@@ -333,12 +325,12 @@ namespace GroundCompiler.AstNodes
         // Identifier
         public class Variable : Expression
         {
+            public Token Name;
+
             public Variable(Token name)
             {
                 Name = name;
             }
-
-            public Token Name;
 
             public override void Initialize()
             {
@@ -371,7 +363,7 @@ namespace GroundCompiler.AstNodes
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorVariableExpr(this);
+                return visitor.VisitorVariable(this);
             }
         }
 
@@ -379,18 +371,18 @@ namespace GroundCompiler.AstNodes
         // [ 1, 2, 4 ]
         public class List : Expression
         {
-            public readonly List<Expression> Elements;
+            public readonly List<Expression> ElementsNodes;
 
             public List(List<Expression> elements)
             {
-                Elements = elements;
+                ElementsNodes = elements;
             }
 
             public override void Initialize()
             {
                 string? elementType = null;
-                if (Elements != null) { 
-                    foreach (var element in Elements)
+                if (ElementsNodes != null) { 
+                    foreach (var element in ElementsNodes)
                     {
                         element.Parent = this;
                         element.Initialize();
@@ -400,66 +392,129 @@ namespace GroundCompiler.AstNodes
                             Compiler.Error("All elements in a List must have the same type");
                     }
                 }
-                base.Initialize();
+
                 if (elementType != null)
                     this.ExprType = Datatype.GetDatatype($"{elementType}[]");
                 else
                     this.ExprType = Datatype.GetDatatype($"i64[]");
             }
 
+            public UInt64 SizeInBytes() {
+                UInt64 result = 80;  //default: 10 elements of 8 bytes.
+
+                int sizeEachElement = this.ExprType.Base!.SizeInBytes;
+                if (this.ExprType.hasArrayDefinition)
+                    result = this.ExprType.BytesToAllocate();
+                else
+                {
+                    UInt64 nrElements = (UInt64)this.Nodes.Count();
+                    if (nrElements > 0)
+                        result = nrElements * (UInt64)sizeEachElement;
+                }
+                return result;
+            }
+
+
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    foreach (AstNode node in ElementsNodes)
+                        yield return node;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                for (int i = 0; i < ElementsNodes.Count; i++)
+                {
+                    AstNode node = ElementsNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
+                    {
+                        newNode.Parent = this;
+                        ElementsNodes[i] = (Expression)newNode;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             [DebuggerStepThrough]
             public override T Accept<T>(IVisitor<T> visitor)
             {
-                return visitor.VisitorListExpr(this);
+                return visitor.VisitorList(this);
             }
         }
 
 
-        // tmp[2]
+        // tmp[2,3]
         public class ArrayAccess : Expression
         {
-            public Expression Member;
-            public List<Expression> Accessor;
-            public Token Index;
+            public Expression MemberNode;
+            public List<Expression> IndexNodes;
 
-            public ArrayAccess(Expression member, List<Expression> accessor, Token index)
+            public ArrayAccess(Expression member, List<Expression> theIndexes)
             {
-                Member = member;
-                Accessor = accessor;
-                Index = index;
+                MemberNode = member;
+                IndexNodes = theIndexes;
             }
 
             public override void Initialize()
             {
-                if (Member != null) { Member.Parent = this; Member.Initialize(); }
-                if (Accessor != null) {
-                    foreach (var expr in Accessor)
-                    {
-                        expr.Parent = this;
-                        expr.Initialize();
-                    }
-                }
-                this.ExprType = Member?.ExprType.Base ?? Datatype.Default;
                 base.Initialize();
+                this.ExprType = MemberNode?.ExprType.Base ?? Datatype.Default;
             }
 
             public Expression.Variable? GetMemberVariable()
             {
-                if (this.Member is Expression.Variable)
-                    return (Expression.Variable)this.Member;
+                if (this.MemberNode is Expression.Variable)
+                    return (Expression.Variable)this.MemberNode;
 
-                if (this.Member is Expression.ArrayAccess)
+                if (this.MemberNode is Expression.ArrayAccess)
                 {
-                    var memberAccess = (Expression.ArrayAccess)this.Member;
+                    var memberAccess = (Expression.ArrayAccess)this.MemberNode;
                     return memberAccess.GetMemberVariable();
                 }
                 return null;
             }
 
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (MemberNode != null)
+                        yield return MemberNode;
+
+                    foreach (AstNode node in IndexNodes)
+                        yield return node;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(MemberNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    MemberNode = (Expression)newNode;
+                    return true;
+                }
+                for (int i = 0; i < IndexNodes.Count; i++)
+                {
+                    AstNode node = IndexNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
+                    {
+                        newNode.Parent = this;
+                        IndexNodes[i] = (Expression)newNode;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             [DebuggerStepThrough]
             public override T Accept<T>(IVisitor<T> visitor)
             {
-                return visitor.VisitorArrayAccessExpr(this);
+                return visitor.VisitorArrayAccess(this);
             }
         }
 
@@ -467,56 +522,80 @@ namespace GroundCompiler.AstNodes
         // tmp = 10;
         public class Assignment : Expression
         {
+            public Expression LeftOfEqualSignNode;
+            public Expression RightOfEqualSignNode;
+            public Token Operator;
+            
             public Assignment(Expression left, Expression right, Token operatorToken)
             {
-                LeftOfEqualSign = left;
-                RightOfEqualSign = right;
+                LeftOfEqualSignNode = left;
+                RightOfEqualSignNode = right;
                 Operator = operatorToken;  // = or later perhaps += and -=
             }
             public override void Initialize()
             {
-                if (LeftOfEqualSign is Expression.Variable variableExpr)
-                {
-                    // Define pass-through parameters
-                    GetSymbol(variableExpr.Name.Lexeme, GetScope()!);
-                }
+                if (LeftOfEqualSignNode is Expression.Variable variableExpr)
+                    GetSymbol(variableExpr.Name.Lexeme, GetScope()!);  // Define pass-through parameters
 
-                if (LeftOfEqualSign != null) { LeftOfEqualSign.Parent = this; LeftOfEqualSign.Initialize(); }
-                if (RightOfEqualSign != null) { RightOfEqualSign.Parent = this; RightOfEqualSign.Initialize(); }
                 base.Initialize();
             }
 
-            public Expression LeftOfEqualSign;
-            public Expression RightOfEqualSign;
-            public Token Operator;
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (LeftOfEqualSignNode != null)
+                        yield return LeftOfEqualSignNode;
+
+                    if (RightOfEqualSignNode != null)
+                        yield return RightOfEqualSignNode;
+                }
+            }
+
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
+            {
+                if (Object.ReferenceEquals(LeftOfEqualSignNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    LeftOfEqualSignNode = (Expression)newNode;
+                    return true;
+                }
+                if (Object.ReferenceEquals(RightOfEqualSignNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    RightOfEqualSignNode = (Expression)newNode;
+                    return true;
+                }
+                return false;
+            }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorAssignmentExpr(this);
+                return visitor.VisitorAssignment(this);
             }
         }
 
 
-        // tmp = 10 + 10
+        // 10 + 10   or   2 * 2
         public class Binary : Expression
         {
+            public Expression LeftNode;
+            public Token Operator;
+            public Expression RightNode;
+            
             public Binary(Expression left, Token @operator, Expression right)
             {
-                Left = left;
+                LeftNode = left;
                 Operator = @operator;
-                Right = right;
+                RightNode = right;
             }
-
-            public Expression Left;
-            public Token Operator;
-            public Expression Right;
 
             public override void Initialize()
             {
                 // In de Left en Right expressions kan van alles zitten, maar ook Expression.Variabele
-                var leftVar = Left as Expression.Variable;
-                var rightVar = Right as Expression.Variable;
+                var leftVar = LeftNode as Expression.Variable;
+                var rightVar = RightNode as Expression.Variable;
 
                 if (leftVar != null)
                 {
@@ -529,23 +608,23 @@ namespace GroundCompiler.AstNodes
                     rightVar.ExprType = scope?.GetVariableDataType(rightVar.Name.Lexeme) ?? Datatype.Default;
                 }
 
-                if (Left.ExprType.Name == "string" || Right.ExprType.Name == "string")
+                if (LeftNode.ExprType.Name == "string" || RightNode.ExprType.Name == "string")
                     this.ExprType = Datatype.GetDatatype("string");
-                else if (Left.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || Right.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                else if (LeftNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || RightNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                     this.ExprType = Datatype.GetDatatype("float");
 
-                Left.Parent = this;
-                Left.Initialize();
+                LeftNode.Parent = this;
+                LeftNode.Initialize();
 
-                Right.Parent = this;
-                Right.Initialize();
+                RightNode.Parent = this;
+                RightNode.Initialize();
 
                 /* After initialisation of the Left and Right a change in the underlying ExprType could be done. Bring it back up the tree. */
-                if (Left.ExprType.Name == "string" || Right.ExprType.Name == "string")
+                if (LeftNode.ExprType.Name == "string" || RightNode.ExprType.Name == "string")
                     this.ExprType = Datatype.GetDatatype("string");
-                else if (Left.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || Right.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                else if (LeftNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || RightNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                     this.ExprType = Datatype.GetDatatype("float");
-                else if (Left.ExprType.Name == "ptr" || Right.ExprType.Name == "ptr")
+                else if (LeftNode.ExprType.Name == "ptr" || RightNode.ExprType.Name == "ptr")
                     this.ExprType = Datatype.GetDatatype("ptr");
 
                 // override bubbling the datatypes with a boolean if a == or other boolean result operator is used.
@@ -553,40 +632,30 @@ namespace GroundCompiler.AstNodes
                     this.ExprType = Datatype.GetDatatype("bool");
             }
 
-            public override IEnumerable<AstNode> AllNodes()
+            public override IEnumerable<AstNode> Nodes
             {
-                yield return this;
-                foreach (var node in Left.AllNodes())
-                    yield return node;
+                get
+                {
+                    if (LeftNode != null)
+                        yield return LeftNode;
 
-                foreach (var node in Right.AllNodes())
-                    yield return node;
+                    if (RightNode != null)
+                        yield return RightNode;
+                }
             }
 
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
             {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (AstNode child in Left.FindAllNodes(typeToFind))
-                    yield return child;
-
-                foreach (AstNode child in Right.FindAllNodes(typeToFind))
-                    yield return child;
-            }
-
-            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
-            {
-                if (Object.ReferenceEquals(Left, oldNode))
+                if (Object.ReferenceEquals(LeftNode, oldNode))
                 {
                     newNode.Parent = this;
-                    Left = (Expression)newNode;
+                    LeftNode = (Expression)newNode;
                     return true;
                 }
-                if (Object.ReferenceEquals(Right, oldNode))
+                if (Object.ReferenceEquals(RightNode, oldNode))
                 {
                     newNode.Parent = this;
-                    Right = (Expression)newNode;
+                    RightNode = (Expression)newNode;
                     return true;
                 }
                 return false;
@@ -594,13 +663,13 @@ namespace GroundCompiler.AstNodes
 
             public bool BothSidesLiteral()
             {
-                return ((Left is Literal) && (Right is Literal));
+                return ((LeftNode is Literal) && (RightNode is Literal));
             }
 
             public bool BothSideSameType()
             {
-                Datatype leftDatatype = Left.ExprType;
-                Datatype rightDatatype = Right.ExprType;
+                Datatype leftDatatype = LeftNode.ExprType;
+                Datatype rightDatatype = RightNode.ExprType;
 
                 if (leftDatatype.Contains(Datatype.TypeEnum.Integer) && rightDatatype.Contains(Datatype.TypeEnum.Integer))
                     return true;
@@ -619,10 +688,10 @@ namespace GroundCompiler.AstNodes
 
             public Expression.Literal CombineBothSideSameTypeLiterals()
             {
-                Datatype leftDatatype = Left.ExprType;
-                Datatype rightDatatype = Right.ExprType;
-                var leftLiteral = Left as Expression.Literal;
-                var rightLiteral = Right as Expression.Literal;
+                Datatype leftDatatype = LeftNode.ExprType;
+                Datatype rightDatatype = RightNode.ExprType;
+                var leftLiteral = LeftNode as Expression.Literal;
+                var rightLiteral = RightNode as Expression.Literal;
 
                 if (leftDatatype.Contains(Datatype.TypeEnum.Integer) && rightDatatype.Contains(Datatype.TypeEnum.Integer))
                 {
@@ -648,29 +717,28 @@ namespace GroundCompiler.AstNodes
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorBinaryExpr(this);
+                return visitor.VisitorBinary(this);
             }
         }
 
 
-        // func(10);
+        // test(10);
         public class FunctionCall : Expression
         {
-            public Expression FunctionName;
-            public List<Expression> Arguments;
+            public Expression FunctionNameNode;
+            public List<Expression> ArgumentNodes;
 
             public FunctionCall(Expression functionName, List<Expression> arguments)
             {
-                FunctionName = functionName;
-                Arguments = arguments;
+                FunctionNameNode = functionName;
+                ArgumentNodes = arguments;
             }
 
             public override void Initialize()
             {
                 string functionName = "";
 
-                //We don't initialize Callee, because it is simply a Name of the function packed in a Variable Expression
-                foreach (var arg in Arguments)
+                foreach (var arg in ArgumentNodes)
                 {
                     arg.Parent = this;
                     arg.Initialize();
@@ -678,14 +746,13 @@ namespace GroundCompiler.AstNodes
 
                 // normally, the scope of the functioncall is used.
                 var scope = GetScope();
-                if (FunctionName is Expression.Variable functionNameVariable)
+                if (FunctionNameNode is Expression.Variable functionNameVariable)
                     functionName = functionNameVariable.Name.Lexeme;
 
                 // When we have an methodcall, we use the scope from the class
-                if (FunctionName is Expression.Get functionNameGet)
+                if (FunctionNameNode is Expression.PropertyGet functionNameGet)
                 {
-
-                    if (functionNameGet.Object is Expression.Variable functionNameVar)
+                    if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
                     {
                         string funcName = functionNameVar.Name.Lexeme;
                         var theSymbol = scope.GetVariableAnywhere(funcName);
@@ -698,13 +765,10 @@ namespace GroundCompiler.AstNodes
                         if (theGroupStmt != null)
                             scope = theGroupStmt.GetScope();
                     }
-
                     functionNameGet.Parent = this;
                     functionNameGet.Initialize();
                     functionName = functionNameGet.Name.Lexeme;
                 }
-
-                base.Initialize();
 
                 var symbol = GetSymbol(functionName, scope!);
 
@@ -730,12 +794,12 @@ namespace GroundCompiler.AstNodes
                         ExprType = theFunction.FunctionStmt.ResultDatatype!;
                 }
 
-                foreach (var arg in Arguments)
+                foreach (var arg in ArgumentNodes)
                 {
-                    if (arg is Expression.Get exprGet)
+                    if (arg is Expression.PropertyGet exprGet)
                     {
                         var currentScope = exprGet.GetScope();
-                        var variableExpr = exprGet.Object as Expression.Variable;
+                        var variableExpr = exprGet.ObjectNode as Expression.Variable;
                         var variableSymbol = currentScope!.GetVariable(variableExpr!.Name.Lexeme);
 
                         if (variableExpr!.Name.Lexeme == "g")
@@ -749,48 +813,50 @@ namespace GroundCompiler.AstNodes
                         else
                         {
                             var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
-                            var instVar = classStatement!.InstanceVariables.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
+                            var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
                             arg.ExprType = instVar.ResultType;
                         }
                     }
                 }
             }
 
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
             {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (var arg in Arguments)
+                for (int i = 0; i < ArgumentNodes.Count; i++)
                 {
-                    foreach (AstNode child in arg.FindAllNodes(typeToFind))
-                        yield return child;
-                }
-            }
-
-
-            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
-            {
-                if ((oldNode is Expression oldExpr) && (newNode is Expression newExpr))
-                {
-                    for (int i = 0; i < Arguments.Count; i++)
+                    AstNode node = ArgumentNodes[i];
+                    if (Object.ReferenceEquals(node, oldNode))
                     {
-                        AstNode node = Arguments[i];
-                        if (Object.ReferenceEquals(node, oldNode))
-                        {
-                            newNode.Parent = this;
-                            Arguments[i] = newExpr;
-                            return true;
-                        }
+                        newNode.Parent = this;
+                        ArgumentNodes[i] = (Expression)newNode;
+                        return true;
                     }
                 }
+                if (Object.ReferenceEquals(FunctionNameNode, oldNode))
+                {
+                    newNode.Parent = this;
+                    FunctionNameNode = (Expression)newNode;
+                    return true;
+                }
                 return false;
+            }
+
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    foreach (AstNode node in ArgumentNodes)
+                        yield return node;
+
+                    if (FunctionNameNode != null)
+                        yield return FunctionNameNode;
+                }
             }
 
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorFunctionCallExpr(this);
+                return visitor.VisitorFunctionCall(this);
             }
         }
 
@@ -798,53 +864,47 @@ namespace GroundCompiler.AstNodes
         // (1+2)
         public class Grouping : Expression
         {
+            public Expression expression;
+
             public Grouping(Expression expression)
             {
-                Expression = expression;
+                this.expression = expression;
             }
-
-            public Expression Expression;
 
             public override void Initialize()
             {
-                if (Expression != null)
+                if (expression != null)
                 {
-                    Expression.Parent = this;
-                    Expression.Initialize();
-                    this.ExprType = Expression.ExprType;
+                    expression.Parent = this;
+                    expression.Initialize();
+                    this.ExprType = expression.ExprType;
                 }
             }
 
-            public override IEnumerable<AstNode> AllNodes()
+            public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
             {
-                yield return this;
-                yield return Expression;
-            }
-
-            public override IEnumerable<AstNode> FindAllNodes(Type typeToFind)
-            {
-                if (this.GetType() == typeToFind)
-                    yield return this;
-
-                foreach (AstNode child in Expression.FindAllNodes(typeToFind))
-                    yield return child;
-            }
-
-            public override bool ReplaceInternalAstNode(AstNode oldNode, AstNode newNode)
-            {
-                if (Object.ReferenceEquals(Expression, oldNode))
+                if (Object.ReferenceEquals(expression, oldNode))
                 {
                     newNode.Parent = this;
-                    Expression = (Expression)newNode;
+                    expression = (Expression)newNode;
                     return true;
                 }
                 return false;
             }
 
+            public override IEnumerable<AstNode> Nodes
+            {
+                get
+                {
+                    if (expression != null)
+                        yield return expression;
+                }
+            }
+
             [DebuggerStepThrough]
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitorGroupingExpr(this);
+                return visitor.VisitorGrouping(this);
             }
         }
 

@@ -415,41 +415,21 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void PopGreaterToBoolean()
-        {
-            var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");             // expr 3 > 2.
-            StackPop();
-            Codeline($"sub   {reg}, rax");        // sub 2, 3 (2 - 3) -> carry is set
-            Codeline($"mov   eax, 0");
-            Codeline($"adc   eax, 0");          // carry is added as 1, so result = 1 (value true).
-            // bool rax 1 = true, bool rax 0 = false;
-            cpu.FreeRegister(reg);
-        }
-
-        public void PopLessToBoolean()
+        public void PopCCToBoolean(string condition)
         {
             var reg = cpu.GetTmpRegister();
             Codeline($"pop   {reg}");
             StackPop();
-            Codeline($"sub   rax, {reg}");
-            Codeline($"mov   eax, 0");
-            Codeline($"adc   eax, 0");
+            Codeline($"cmp   rax, {reg}");
+            Codeline($"set{condition}  al");
+            Codeline($"movzx rax, al");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
         }
-
-        public void PopGreaterEqualToBoolean()
-        {
-            PopLessToBoolean();
-            LogicalNot();
-        }
-
-        public void PopLessEqualToBoolean()
-        {
-            PopGreaterToBoolean();
-            LogicalNot();
-        }
+        public void PopGreaterToBoolean() => PopCCToBoolean("g");
+        public void PopLessToBoolean() => PopCCToBoolean("l");
+        public void PopGreaterEqualToBoolean() => PopCCToBoolean("ge");
+        public void PopLessEqualToBoolean() => PopCCToBoolean("le");
 
         public void Logical()
         {
