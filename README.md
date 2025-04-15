@@ -308,4 +308,4 @@ for (i in 1..10)  { println(i); }  // from 1..10
 for (i in 0..<10) { println(i); }  // from 0..9
 ```
 2025.03.27: SDL3 support and added win32-screengrab.g example.  
-2025.04.15: Bertus game added.
+2025.04.15: Bertus game added. Written in 400 lines of code.
