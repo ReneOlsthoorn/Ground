@@ -264,7 +264,8 @@ your computer. I agree with those users that data collecting is not nice. Howeve
 
 ### State of Ground : Alpha
 The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
-Ground is created to facilitate the production of compact high performance code. Ground will always be Alpha!
+Ground is created to facilitate the production of compact high performance code.  
+Ground will always be Alpha!
 
 ### Running the smoothscroller.g example
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
@@ -306,5 +307,5 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 for (i in 1..10)  { println(i); }  // from 1..10
 for (i in 0..<10) { println(i); }  // from 0..9
 ```
-2025.03.27: SDL3 support and added win32-screengrab.g example.
+2025.03.27: SDL3 support and added win32-screengrab.g example.  
 2025.04.15: Bertus game added.
