@@ -8,14 +8,17 @@ namespace GroundCompiler
         public string sourcecode;
         public int needle;          // position of the lexer in the sourcecode
         public int lineCounter;     // linecounter of sourcecode
+        public Dictionary<string, Token>? defines = null;
 
         public Lexer(string sourcecode)
         {
             this.sourcecode = sourcecode + "\n";
         }
 
-        public IEnumerable<Token> GetTokens()
+        public IEnumerable<Token> GetTokens(Dictionary<string, Token>? theDefines = null)
         {
+            defines = theDefines;
+
             needle = 0;
             lineCounter = 1;
             while (true)
@@ -104,6 +107,12 @@ namespace GroundCompiler
                     string s = ReadMatching(IsNotRightBrace);
                     token.Value = s;
                     NextChar();
+                }
+
+                if (defines != null)
+                {
+                    if (token.Contains(TokenType.Identifier) && defines.ContainsKey(token.Lexeme))
+                        token = defines[token.Lexeme];
                 }
 
                 return token;

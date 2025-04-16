@@ -45,7 +45,12 @@ namespace GroundCompiler
                 if (functionVar.Name.Lexeme.ToLower() == "sizeof")
                 {
                     UInt64 theSizeOf = 0;
-                    if (functionCall.ArgumentNodes[0] is GroundCompiler.AstNodes.Expression.Variable exprVar)
+
+                    if (functionCall.ArgumentNodes[0] is GroundCompiler.AstNodes.Expression.Literal literalExpr)
+                    {
+                        theSizeOf = (UInt64)literalExpr.ExprType.SizeInBytes;
+                    }
+                    else if (functionCall.ArgumentNodes[0] is GroundCompiler.AstNodes.Expression.Variable exprVar)
                     {
                         var theVar = exprVar.GetScope()?.GetVariableAnywhere(exprVar.Name.Lexeme);
 

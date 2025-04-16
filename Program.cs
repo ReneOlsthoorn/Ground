@@ -12,7 +12,7 @@ namespace GroundCompiler
         string usedTemplate = "console";
         bool runAfterCompilation = true;
         bool generateDebugInfo = false;
-
+        Dictionary<string, Token> defines = new Dictionary<string, Token>();
 
         static void Main(string[] args)
         {
@@ -46,7 +46,7 @@ namespace GroundCompiler
 
             Console.WriteLine("*** Convert sourcecode to tokens.");
             var lexer = new Lexer(sourcecode);
-            var tokens = lexer.GetTokens();
+            var tokens = lexer.GetTokens(defines);
             lexer.WriteDebugInfo(tokens);
 
             Console.WriteLine("*** Convert tokens into an Abstract Syntax Tree.");
@@ -86,6 +86,18 @@ namespace GroundCompiler
                 string fileToInclude = line.Split()[1].Trim();
                 ClearLineAtIndex(index);
                 IncludeFileAtIndex(index, fileToInclude);
+                return true;
+            }
+            if (line.StartsWith("#define"))
+            {
+                string defineKey = line.Split()[1].Trim();
+                string defineValue = line.Split()[2].Trim();
+
+                var defineLexer = new Lexer(defineValue);
+                var defineTokens = defineLexer.GetTokens().ToList();
+                defines[defineKey] = defineTokens[0];
+
+                ClearLineAtIndex(index);
                 return true;
             }
             return false;

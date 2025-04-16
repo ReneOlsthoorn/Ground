@@ -38,7 +38,7 @@ function msys_frand(u32* seed) : int
 
 
 function ScreenPointerForXY(int x, int y) {	
-	pointer result = g.[pixels_p] + ((y*960)+x)*4;
+	pointer result = g.[pixels_p] + ((y*SCREEN_WIDTH)+x)*SCREEN_PIXELSIZE;
 	return result;
 }
 

@@ -1,6 +1,25 @@
 
 #template sdl3
 
+#define SCREEN_WIDTH 960
+#define SCREEN_HEIGHT 560
+#define SCREEN_PIXELSIZE 4
+#define SPRITESHEET_WIDTH 256
+#define SPRITESHEET_HEIGHT 256
+#define SDL_EVENT_SIZE 128
+#define SDL_EVENT_TYPE_POS 0
+#define SDL_EVENT_SCANCODE_POS 24
+#define GRID_START_X 250
+#define GRID_START_Y 100
+#define SPRITESHEET_ACTOR_WIDTH 32
+#define SPRITESHEET_ACTOR_HEIGHT 32
+#define SPRITESHEET_CUBE_WIDTH 64
+#define SPRITESHEET_CUBE_HEIGHT 64
+#define SPRITESHEET_IMAGE_BALL 3
+#define SPRITESHEET_BLOCK_RED 1
+#define SPRITESHEET_BLOCK_YELLOW 2
+#define SPRITESHEET_BLOCK_BLUE 3
+
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -8,29 +27,26 @@
 #include sidelib.g
 #include bertus_helper.g
 
-
-u32[960, 560] pixels = null;
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+byte[SDL_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL_EVENT_TYPE_POS];
+u32* eventScancode = &event[SDL_EVENT_SCANCODE_POS];
 bool StatusRunning = true;
 int frameCount = 0;
 int level = 1;
 int levelCompleteFramecount = 0;
 int gameOverFramecount = 0;
-int gridStartX = 250;
-int gridStartY = 100;
 int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates newton
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
 int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];			// which blocks of the blockState are solid. Defines the shape of the level.
 int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];	// which blocks of the blockState are solid. Defines the shape of the level.
 int* levelShapePtr = &level1[0];
-int levelShapeCount = sizeof(level1) / 8;
+int levelShapeCount = sizeof(level1) / sizeof(int);
 asm data {spritesheet_p dq 0}
 g.[spritesheet_p] = sidelib.LoadImage("Bertus.png");
 if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
-sidelib.FlipRedAndGreenInImage(g.[spritesheet_p], 256, 256);
-u32[256, 256] spritesheet = g.[spritesheet_p];
+sidelib.FlipRedAndGreenInImage(g.[spritesheet_p], SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT);
+u32[SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT] spritesheet = g.[spritesheet_p];
 
 
 ptr thread1Handle = kernel32.GetCurrentThread();
@@ -56,12 +72,12 @@ class CubeShape {
 		bool isOneven = ((theRow % 2) == 1);
 		int remaining = theIndex % 7;
 		this.y = theRow*48;
-		this.x = remaining*64;
+		this.x = remaining*SPRITESHEET_CUBE_WIDTH;
 		if (isOneven) { this.x = this.x + 32; }
 	}
 	function getDestinationPointer(int elementNr) : ptr {
 	    //getXY(elementNr);  // BUG!! deze werkt niet omdat de this niet goed meekomt in de methode aanroep.
-		ptr result = ScreenPointerForXY(gridStartX + this.x, gridStartY + this.y + 14);
+		ptr result = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y + 14);
 		return result;
 	}
 }
@@ -79,10 +95,10 @@ class Actor {
 	bool falling;
 	bool drawOnBack;
 	function draw() {
-		ptr dest = ScreenPointerForXY(gridStartX + this.x, gridStartY + this.y);
-		ptr qPic = g.[spritesheet_p] + (this.image*32*4);
+		ptr dest = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y);
+		ptr qPic = g.[spritesheet_p] + (this.image * SPRITESHEET_ACTOR_WIDTH * SCREEN_PIXELSIZE);
 		if (this.visible == true) {
-			PlotSheetSprite(qPic, dest, 32, 32, 256);
+			PlotSheetSprite(qPic, dest, SPRITESHEET_ACTOR_WIDTH, SPRITESHEET_ACTOR_HEIGHT, SPRITESHEET_WIDTH);
 		}
 	}
 	function jump(newX, newY, newImage) {
@@ -100,7 +116,6 @@ class Actor {
 	}
 	function move() {
 		this.arrivedAtIndex = -1;
-
 		if (this.movex < 0) {
 			this.x = this.x - 2;
 			this.movex = this.movex + 2;
@@ -111,7 +126,7 @@ class Actor {
 		}
 		if (this.falling) {
 			this.y = this.y + 2;
-			if (this.y >= (528-gridStartY)) {
+			if (this.y >= (528 - GRID_START_Y)) {
 				this.visible = false;
 				this.movex = 0;
 				this.movey = 0;
@@ -160,8 +175,8 @@ function initBall() {
 	ball.reset();
 	shape.getXY(3);
 	ball.x = shape.x+16;
-	ball.y = 0-gridStartY;
-	ball.image = 3;
+	ball.y = 0 - GRID_START_Y;
+	ball.image = SPRITESHEET_IMAGE_BALL;
 	ball.visible = true;
 	ball.falling = true;
 }
@@ -170,8 +185,8 @@ function initBall2() {
 	ball2.reset();
 	shape.getXY(5);
 	ball2.x = shape.x+16;
-	ball2.y = 0-gridStartY+64;
-	ball2.image = 3;
+	ball2.y = 0 - GRID_START_Y+64;
+	ball2.image = SPRITESHEET_IMAGE_BALL;
 	ball2.visible = true;
 	ball2.falling = true;
 }
@@ -184,15 +199,15 @@ function GoLevel(int level) {
 	for (i in 0..48) { blockState[i] = 0; }
 	if (level == 1) {
 		levelShapePtr = &level1[0];
-		levelShapeCount = sizeof(level1) / 8;
+		levelShapeCount = sizeof(level1) / sizeof(int);
 	}
 	if (level == 2) {
 		levelShapePtr = &level2[0];
-		levelShapeCount = sizeof(level2) / 8;
+		levelShapeCount = sizeof(level2) / sizeof(int);
 	}
 	for (i in 0..< shape.nrElements()) {
 		int indexForElement = shape.getIndexForElement(i);
-		blockState[indexForElement] = 3;
+		blockState[indexForElement] = SPRITESHEET_BLOCK_BLUE;
 	}
 	initBertus();
 	initBall();
@@ -211,7 +226,7 @@ function Draw() {
 		destPtr = shape.getDestinationPointer(i);
 		int indexForElement = shape.getIndexForElement(i);
 		int blockImage = blockState[indexForElement];
-		PlotSheetSprite(g.[spritesheet_p]+(blockImage*64*256*4), destPtr, 64, 64, 256);
+		PlotSheetSprite(g.[spritesheet_p]+(blockImage * SPRITESHEET_CUBE_HEIGHT * SPRITESHEET_WIDTH*SCREEN_PIXELSIZE), destPtr, SPRITESHEET_CUBE_WIDTH, SPRITESHEET_CUBE_HEIGHT, SPRITESHEET_WIDTH);
 	}
 
 	if (bertus.drawOnBack == false) { bertus.draw(); }
@@ -231,25 +246,25 @@ function MoveElements() {
 		int theIndex = shape.getIndexForElement(i);
 		if (bertus.falling == false && bertus.x == (shape.x+16) && bertus.y == shape.y) {
 			bertus.arrivedAtIndex = theIndex;
-			blockState[theIndex] = 2;
+			blockState[theIndex] = SPRITESHEET_BLOCK_YELLOW;
 		}
 		int random = 0;
 		if (ball.drawOnBack == false && ball.x == (shape.x+16) && ball.y == shape.y) {
 			ball.arrivedAtIndex = theIndex;
 			random = msys_frand(&seedRandom);
 			if (random % 2 == 0) {
-				ball.jump(32,48,3);
+				ball.jump(32,48,SPRITESHEET_IMAGE_BALL);
 			} else {
-				ball.jump(-32,48,3);
+				ball.jump(-32,48,SPRITESHEET_IMAGE_BALL);
 			}
 		}
 		if (ball2.drawOnBack == false && ball2.x == (shape.x+16) && ball2.y == shape.y) {
 			ball2.arrivedAtIndex = theIndex;
 			random = msys_frand(&seedRandom);
 			if (random % 2 == 0) {
-				ball2.jump(32,48,3);
+				ball2.jump(32,48,SPRITESHEET_IMAGE_BALL);
 			} else {
-				ball2.jump(-32,48,3);
+				ball2.jump(-32,48,SPRITESHEET_IMAGE_BALL);
 			}
 		}
 	}
@@ -285,7 +300,7 @@ function MoveElements() {
 	// All blocks are stepped on?
 	bool allBlocksHit = true;
 	for (i in 0..48) {
-		if (blockState[i] == 3) { allBlocksHit = false; }
+		if (blockState[i] == SPRITESHEET_BLOCK_BLUE) { allBlocksHit = false; }
 	}
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
@@ -342,9 +357,9 @@ while (StatusRunning)
 			for (i in 0..< shape.nrElements()) {
 				shape.getXY(i);
 				int theIndex = shape.getIndexForElement(i);
-				int theBlockNr = 2;
+				int theBlockNr = SPRITESHEET_BLOCK_YELLOW;
 				int remain = (levelCompleteFramecount / 10) % 2;
-				if (remain == 1) { theBlockNr = 3; }
+				if (remain == 1) { theBlockNr = SPRITESHEET_BLOCK_BLUE; }
 				blockState[theIndex] = theBlockNr;
 			}
 		}
