@@ -317,10 +317,12 @@ while (StatusRunning)
 		}
 		if ((bertus.movex == 0) && (bertus.movey == 0)) {
 			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-				if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); }    // naar boven links
-				if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); }      // naar onder rechts
-				if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); }     // naar boven rechts
-				if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); }     // naar onder links
+				if (bertus.falling == false and bertus.visible == true) {
+					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); }    // naar boven links
+					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); }      // naar onder rechts
+					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); }     // naar boven rechts
+					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); }     // naar onder links
+				}
 				if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
 					StatusRunning = false;
 				}
