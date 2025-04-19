@@ -46,6 +46,24 @@ _f_print:
   ret   G_STACKSPACE_1_PARAM
 
 
+_f_assert:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  cmp	rax, 0
+  jnz	.assert_correct
+  lea	rax, [assert_errormessage]
+  call	PrintScreenString
+  mov   rsp, rbp
+  pop   rbp
+  add	rsp, 0x28     ;sizeof(G_STACKSPACE_1_PARAM) 0x20 + sizeof(ret) 0x08
+  jmp	assert_exitpoint
+.assert_correct:
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
 intvalue@_f_chr$ equ rbp+G_PARAMETER1
 _f_chr$:
   push  rbp

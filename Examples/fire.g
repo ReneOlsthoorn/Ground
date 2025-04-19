@@ -3,6 +3,7 @@
 
 #template sdl3
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -10,9 +11,9 @@
 #include sidelib.g
 
 int frameCount = 0;
-u32[960, 560] pixels = null;
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 
-int arraySize = 960*560;
+int arraySize = SCREEN_WIDTH * SCREEN_HEIGHT;
 byte[] fireBufferNew = msvcrt.calloc(1, arraySize);
 byte[] fireBufferOld = msvcrt.calloc(1, arraySize);
 
@@ -22,28 +23,28 @@ byte[] coolmapPointer = msvcrt.calloc(1, arraySize);
 msvcrt.fread(coolmapPointer, 1, arraySize, coolmapFile);
 msvcrt.fclose(coolmapFile);
 
-
+#define palette_nr_elements 256
 int paletteFile = msvcrt.fopen("fire_palette.bin", "rb");
-u32[256] palette = [];
-msvcrt.fread(palette, 4, 256, paletteFile);
+u32[palette_nr_elements] palette = [];
+msvcrt.fread(palette, SCREEN_PIXELSIZE, palette_nr_elements, paletteFile);
 msvcrt.fclose(paletteFile);
 
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Fire", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Fire", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
 int pitch = g.GC_ScreenLineSize;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 bool drawTheScene = true;
-int coolingMapHeight = g.GC_Screen_DimY;
+int coolingMapHeight = SCREEN_HEIGHT;
 int coolingMapOffset = coolingMapHeight - 1;
 
 
@@ -57,7 +58,7 @@ if (g.[logo_p] == null) {
 
 while (StatusRunning)
 {
-	while (sdl3.SDL_PollEvent(&event[0])) {
+	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
 		}
@@ -67,7 +68,6 @@ while (StatusRunning)
 			}
 		}
 	}
-
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
 
@@ -87,8 +87,8 @@ while (StatusRunning)
 		coolingMapOffset = 0;
 	}
 
-	for (int f = 0; f < 960; f++) {
-		fireBufferOld[(960*557)+f] = 0xff;
+	for (int f = 0; f < SCREEN_WIDTH; f++) {
+		fireBufferOld[(SCREEN_WIDTH*(SCREEN_HEIGHT-3))+f] = 0xff;
 	}
 
 	asm {
@@ -110,8 +110,8 @@ while (StatusRunning)
 	  pop	rdi rsi
 	}
 
-	for (int y = 0; y < 559; y++) {
-		int coolingY = (y + coolingMapOffset) % 560;
+	for (int y = 0; y < (SCREEN_HEIGHT-1); y++) {
+		int coolingY = (y + coolingMapOffset) % SCREEN_HEIGHT;
 		int coolingPosY = coolingY * g.GC_Screen_DimX;
 
 		asm {

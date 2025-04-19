@@ -97,6 +97,9 @@ namespace GroundCompiler.AstNodes
                 fn = this.Scope.DefineHardcodedFunction("println");
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
+                fn = this.Scope.DefineHardcodedFunction("assert");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("bool")));
+
                 fn = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
                 fn.FunctionStmt.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
 

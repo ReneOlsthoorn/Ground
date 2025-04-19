@@ -1,16 +1,8 @@
 
 #template sdl3
 
-#define SCREEN_WIDTH 960
-#define SCREEN_HEIGHT 560
-#define SCREEN_PIXELSIZE 4
 #define SPRITESHEET_WIDTH 256
 #define SPRITESHEET_HEIGHT 256
-#define SDL_EVENT_SIZE 128
-#define SDL_EVENT_TYPE_POS 0
-#define SDL_EVENT_SCANCODE_POS 24
-#define GRID_START_X 250
-#define GRID_START_Y 100
 #define SPRITESHEET_ACTOR_WIDTH 32
 #define SPRITESHEET_ACTOR_HEIGHT 32
 #define SPRITESHEET_CUBE_WIDTH 64
@@ -19,7 +11,10 @@
 #define SPRITESHEET_BLOCK_RED 1
 #define SPRITESHEET_BLOCK_YELLOW 2
 #define SPRITESHEET_BLOCK_BLUE 3
+#define GRID_START_X 250
+#define GRID_START_Y 100
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -28,9 +23,9 @@
 #include bertus_helper.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
-byte[SDL_EVENT_SIZE] event = [];
-u32* eventType = &event[SDL_EVENT_TYPE_POS];
-u32* eventScancode = &event[SDL_EVENT_SCANCODE_POS];
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
 int frameCount = 0;
 int level = 1;
@@ -67,7 +62,7 @@ class CubeShape {
 	function nrElements() { return levelShapeCount; }
 	function getIndexForElement(int elementNr) { return *(levelShapePtr+elementNr*8); }
 	function getXY(int elementNr) {
-		int theIndex = getIndexForElement(elementNr);
+		int theIndex = this.getIndexForElement(elementNr);
 		int theRow = theIndex / 7;
 		bool isOneven = ((theRow % 2) == 1);
 		int remaining = theIndex % 7;
@@ -76,7 +71,7 @@ class CubeShape {
 		if (isOneven) { this.x = this.x + 32; }
 	}
 	function getDestinationPointer(int elementNr) : ptr {
-	    //getXY(elementNr);  // BUG!! deze werkt niet omdat de this niet goed meekomt in de methode aanroep.
+	    this.getXY(elementNr);  // BUG!! deze werkt niet omdat het aantal "loopen" van de G_PARAMETER_LEXPARENT niet correct is. Daarom mag je nu alleen van buiten de methods aanroepen.
 		ptr result = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y + 14);
 		return result;
 	}
@@ -222,7 +217,6 @@ function Draw() {
 
 	ptr destPtr;
 	for (i in 0..< shape.nrElements()) {
-		shape.getXY(i);
 		destPtr = shape.getDestinationPointer(i);
 		int indexForElement = shape.getIndexForElement(i);
 		int blockImage = blockState[indexForElement];
@@ -311,7 +305,7 @@ function MoveElements() {
 GoLevel(level);
 while (StatusRunning)
 {
-	while (sdl3.SDL_PollEvent(&event[0])) {
+	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
 		}

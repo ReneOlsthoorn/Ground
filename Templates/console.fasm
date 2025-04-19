@@ -128,7 +128,7 @@ start:
   call	PrintScreenString
 .endloop:
 
-
+assert_exitpoint:
   invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
   invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
   invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
@@ -223,6 +223,7 @@ bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 
 carriage_return_bytes	db 13,10,0
+assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
 leak_message			db 13,10,'*** memoryleak! ***',0
 memchecker_message		db 13,10,'Variable memory used (bytes): ',0
 indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0

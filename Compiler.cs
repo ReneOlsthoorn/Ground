@@ -431,7 +431,6 @@ namespace GroundCompiler
 
             EmitExpression(expr.RightNode);
             EmitConversionCompatibleType(expr.RightNode, expr.ExprType);
-
             emitter.Push(expr);
 
             EmitExpression(expr.LeftNode);
@@ -462,31 +461,31 @@ namespace GroundCompiler
                     emitter.PopBitwiseOr();
                     break;
                 case TokenType.Greater:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "ja");
                     else
                         emitter.PopGreaterToBoolean();
                     break;
                 case TokenType.GreaterEqual:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "jae");
                     else
                         emitter.PopGreaterEqualToBoolean();
                     break;
                 case TokenType.Less:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "jb");
                     else
                         emitter.PopLessToBoolean();
                     break;
                 case TokenType.LessEqual:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "jbe");
                     else
                         emitter.PopLessEqualToBoolean();
                     break;
                 case TokenType.IsEqual:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "je");
                     else
                     {
@@ -495,7 +494,7 @@ namespace GroundCompiler
                     }
                     break;
                 case TokenType.NotIsEqual:
-                    if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompare(expr, "jne");
                     else
                     {
@@ -517,12 +516,20 @@ namespace GroundCompiler
                     break;
             }
 
+            // After the comparison, set the ExprType to boolean if a == or other boolean result operator is used.
+            if (expr.Operator.Contains(TokenType.BooleanResultOperator))
+                expr.ExprType = Datatype.GetDatatype("bool");
+
             return null;
         }
 
 
+        // THIS FUNCTION NEEDS REFACTORING. IT IS NOT CLEAR HOW IT DOES IT'S THING.
+
         public object? VisitorFunctionCall(Expression.FunctionCall expr)
         {
+            ClassStatement? classStatement = null;
+
             // normally, the scope of the functioncall is used.
             var currentScope = expr.GetScope();
             var scope = currentScope;
@@ -638,23 +645,32 @@ namespace GroundCompiler
                     instVar = functionNameVar;
 
                     string funcName = functionNameVar.Name.Lexeme;
-                    var theSymbol = scope!.GetVariableAnywhere(funcName);
 
-                    if (theSymbol is Scope.Symbol.ParentScopeVariable parentSymbol)
-                        levelsDeep = parentSymbol.LevelsDeep;
-
-                    var theClass = theSymbol!.GetClassStatement();
-                    if (theClass != null)
+                    if (funcName != "this")
                     {
-                        scope = theClass.GetScope();
-                        if (theSymbol != null)
-                            instVarName = theSymbol.Name;
+                        var theSymbol = scope!.GetVariableAnywhere(funcName);
+
+                        if (theSymbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+                            levelsDeep = parentSymbol.LevelsDeep;
+
+                        var theClass = theSymbol!.GetClassStatement();
+                        if (theClass != null)
+                        {
+                            scope = theClass.GetScope();
+                            if (theSymbol != null)
+                                instVarName = theSymbol.Name;
+                        }
+
+                        var theGroupStmt = theSymbol!.GetGroupStatement();
+                        if (theGroupStmt != null)
+                            scope = theGroupStmt.GetScope();
                     }
-
-                    var theGroupStmt = theSymbol!.GetGroupStatement();
-                    if (theGroupStmt != null)
-                        scope = theGroupStmt.GetScope();
-
+                    else
+                    {
+                        instVarName = "this";
+                        if (expr.FindParentType(typeof(ClassStatement)) is ClassStatement cStmt)
+                            classStatement = cStmt;
+                    }
 
                     string functionName = functionNameGet.Name.Lexeme;
                     theFunction = GetSymbol(functionName, scope!) as Scope.Symbol.FunctionSymbol;
@@ -690,15 +706,33 @@ namespace GroundCompiler
 
             if (pushLexicalParent)
             {
-                // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
-                if (levelsDeep == 0)
-                    emitter.Codeline("mov   rax, rbp");         // normal parent frame
+                // Hier gaan we helemaal het bos in. De lexical parent variabele moet de parent binnen de lexical scoping zijn, maar we gebruiken het
+                // om terug te springen naar de juiste rbp. We berekenen helemaal niet op welk niveau van lexical scoping we zitten. Trouwens: volgens mij gaat het
+                // idee om een lexical parent mee te geven ook helemaal niet werken. 
+
+                if (instVarName == "this")
+                {
+                    emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // "this" is the same lexical level
+                }
                 else
                 {
-                    int loopNr = levelsDeep - 1;
-                    emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
-                    for (int i = 0; i < loopNr; i++)
-                        emitter.Codeline("mov   rax, [rax]");
+                    // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
+                    if (levelsDeep == 0)
+                    {
+                        // When we are inside a function, ship the lexparent.
+                        var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                        if (functionStmt != null && !(functionStmt is ProgramNode))
+                            emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");
+                        else
+                            emitter.Codeline("mov   rax, rbp");         // normal parent frame
+                    }
+                    else
+                    {
+                        int loopNr = levelsDeep - 1;
+                        emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
+                        for (int i = 0; i < loopNr; i++)
+                            emitter.Codeline("mov   rax, [rax]");
+                    }
                 }
                 emitter.Push();
             }
@@ -706,7 +740,13 @@ namespace GroundCompiler
             if (pushThis)
             {
                 // Add "this" or null if there is no class instance. Position: [rbp+16] // first parameter
-                if (instVarName != null && instVar != null)
+                if (instVarName == "this")
+                {
+                    var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                    string procName = functionStmt!.Name.Lexeme;
+                    string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement?.Name.Lexeme);
+                    emitter.LoadFunctionParameter64(theName);
+                } else if (instVarName != null && instVarName != "this" && instVar != null)
                     VariableRead(instVar);
                 else
                     emitter.LoadNull();

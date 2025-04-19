@@ -2,6 +2,7 @@
 
 #template sdl3
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -14,13 +15,13 @@ int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Chipmunk physics engine usage", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Chipmunk physics engine usage", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
@@ -97,7 +98,7 @@ float angle;
 
 while (StatusRunning)
 {
-	while (sdl3.SDL_PollEvent(&event[0])) {
+	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
 		}
@@ -119,11 +120,11 @@ while (StatusRunning)
 		angle = chipmunk.cpBodyGetAngle(ballBodies[b]);
 
 		destRect[0] = cpvectPos.x;
-		destRect[1] = 560 - cpvectPos.y;
+		destRect[1] = SCREEN_HEIGHT - cpvectPos.y;
 		destRect[2] = 32;
 		destRect[3] = 32;
 
-		float theAngle = angle * (180.0 / 3.141592);
+		float theAngle = angle * (180.0 / MATH_PI);
 		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, null, destRect, -theAngle, null, g.SDL_FLIP_NONE);
 	}
 

@@ -1,4 +1,8 @@
 
+#define SDL3_EVENT_SIZE 128
+#define SDL3_EVENT_TYPE_OFFSET 0
+#define SDL3_EVENT_SCANCODE_OFFSET 24
+
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
 dll sdl3 function SDL_CreateRenderer(ptr window, string name);

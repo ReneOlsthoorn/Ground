@@ -10,15 +10,19 @@ namespace GroundCompiler
         public int lineCounter;     // linecounter of sourcecode
         public Dictionary<string, Token>? defines = null;
 
+        public Lexer(PreProcessor preprocessor)
+        {
+            this.sourcecode = preprocessor.sourcecode + "\n";
+            defines = preprocessor.defines;
+        }
+
         public Lexer(string sourcecode)
         {
             this.sourcecode = sourcecode + "\n";
         }
 
-        public IEnumerable<Token> GetTokens(Dictionary<string, Token>? theDefines = null)
+        public IEnumerable<Token> GetTokens()
         {
-            defines = theDefines;
-
             needle = 0;
             lineCounter = 1;
             while (true)

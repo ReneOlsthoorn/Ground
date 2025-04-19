@@ -120,6 +120,7 @@ start:
 ; at this point, there is a memory leak
 .endloop:
 
+assert_exitpoint:
   invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]
   invoke kernel32_HeapFree, [processHeapHandle], 0, [indexSpacePointer]
   invoke kernel32_HeapFree, [processHeapHandle], 0, [variableSpacePointer]
@@ -347,6 +348,7 @@ readalltext_openmode    db 'rb',0
 bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 carriage_return_bytes	db 13,10,0
+assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
 
 align 8
 

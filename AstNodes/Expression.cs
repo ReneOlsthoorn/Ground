@@ -626,10 +626,6 @@ namespace GroundCompiler.AstNodes
                     this.ExprType = Datatype.GetDatatype("float");
                 else if (LeftNode.ExprType.Name == "ptr" || RightNode.ExprType.Name == "ptr")
                     this.ExprType = Datatype.GetDatatype("ptr");
-
-                // override bubbling the datatypes with a boolean if a == or other boolean result operator is used.
-                if (Operator.Contains(TokenType.BooleanResultOperator))
-                    this.ExprType = Datatype.GetDatatype("bool");
             }
 
             public override IEnumerable<AstNode> Nodes
@@ -680,6 +676,13 @@ namespace GroundCompiler.AstNodes
                 return false;
             }
 
+            public bool BothSidesOfTypeEnum(Datatype.TypeEnum theTypeEnum)
+            {
+                Datatype leftDatatype = LeftNode.ExprType;
+                Datatype rightDatatype = RightNode.ExprType;
+                return leftDatatype.Contains(theTypeEnum) && rightDatatype.Contains(theTypeEnum);
+            }
+
             public bool CanBothSidesBeCombined()
             {
                 return (BothSidesLiteral() && BothSideSameType() && 
@@ -722,7 +725,7 @@ namespace GroundCompiler.AstNodes
         }
 
 
-        // test(10);
+        // test(10);   this.test();
         public class FunctionCall : Expression
         {
             public Expression FunctionNameNode;
@@ -755,15 +758,18 @@ namespace GroundCompiler.AstNodes
                     if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
                     {
                         string funcName = functionNameVar.Name.Lexeme;
-                        var theSymbol = scope.GetVariableAnywhere(funcName);
+                        if (funcName != "this")
+                        {
+                            var theSymbol = scope.GetVariableAnywhere(funcName);
 
-                        var theClass = theSymbol.GetClassStatement();
-                        if (theClass != null)
-                            scope = theClass.GetScope();
+                            var theClass = theSymbol.GetClassStatement();
+                            if (theClass != null)
+                                scope = theClass.GetScope();
 
-                        var theGroupStmt = theSymbol.GetGroupStatement();
-                        if (theGroupStmt != null)
-                            scope = theGroupStmt.GetScope();
+                            var theGroupStmt = theSymbol.GetGroupStatement();
+                            if (theGroupStmt != null)
+                                scope = theGroupStmt.GetScope();
+                        }
                     }
                     functionNameGet.Parent = this;
                     functionNameGet.Initialize();

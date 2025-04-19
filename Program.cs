@@ -7,12 +7,10 @@ namespace GroundCompiler
     public class Program
     {
         required public string sourceFilename, sourceFullFilepath;
-        string sourcecode = "", generatedCode = "";
+        string generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
-        string usedTemplate = "console";
         bool runAfterCompilation = true;
-        bool generateDebugInfo = false;
-        Dictionary<string, Token> defines = new Dictionary<string, Token>();
+        bool generateDebugInfo = true;
 
         static void Main(string[] args)
         {
@@ -20,7 +18,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "sudoku.g";  //console.g, sudoku.g, smoothscroller.g, smoothscroller_optimized.g, mode7.g, mode7_optimized.g, chipmunk_tennis.g, starfield.g, plasma_non_colorcycling.g, fire.g, win32-screengrab.g bertus.g
+                fileName = "sudoku.g";  //console.g, unittests.g sudoku.g smoothscroller.g smoothscroller_optimized.g mode7.g mode7_optimized.g chipmunk_tennis.g starfield.g plasma_non_colorcycling.g fire.g win32-screengrab.g bertus.g
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
@@ -41,12 +39,15 @@ namespace GroundCompiler
 
         public void Build()
         {
-            sourcecode = File.ReadAllText(sourceFullFilepath);
-            CheckCompilerDirectives();
+            string sourcecode = File.ReadAllText(sourceFullFilepath);
+
+            Console.WriteLine("*** Preprocessor. Process compiler directives and collect defines.");
+            var preprocessor = new PreProcessor(sourcecode);
+            preprocessor.ProcessCompilerDirectives();
 
             Console.WriteLine("*** Convert sourcecode to tokens.");
-            var lexer = new Lexer(sourcecode);
-            var tokens = lexer.GetTokens(defines);
+            var lexer = new Lexer(preprocessor);
+            var tokens = lexer.GetTokens();
             lexer.WriteDebugInfo(tokens);
 
             Console.WriteLine("*** Convert tokens into an Abstract Syntax Tree.");
@@ -63,98 +64,13 @@ namespace GroundCompiler
             Optimizer.Optimize(ast);
 
             Console.WriteLine("*** Convert AST to x86-64 assembly.");
-            Compiler compiler = new Compiler(template: usedTemplate);
+            Compiler compiler = new Compiler(template: preprocessor.usedTemplate);
             generatedCode = compiler.GenerateAssembly(ast);
 
             Assemble();
             RunExecutable();
         }
 
-
-        public bool HandleDirective(int index)
-        {
-            int endOfLine = sourcecode.IndexOf('\n', index);
-            string line = sourcecode.Substring(index, endOfLine-index);
-            if (line.StartsWith("#template"))
-            {
-                usedTemplate = line.Split()[1].Trim();
-                ClearLineAtIndex(index);
-                return false;
-            }
-            if (line.StartsWith("#include"))
-            {
-                string fileToInclude = line.Split()[1].Trim();
-                ClearLineAtIndex(index);
-                IncludeFileAtIndex(index, fileToInclude);
-                return true;
-            }
-            if (line.StartsWith("#define"))
-            {
-                string defineKey = line.Split()[1].Trim();
-                string defineValue = line.Split()[2].Trim();
-
-                var defineLexer = new Lexer(defineValue);
-                var defineTokens = defineLexer.GetTokens().ToList();
-                defines[defineKey] = defineTokens[0];
-
-                ClearLineAtIndex(index);
-                return true;
-            }
-            return false;
-        }
-
-        public void IncludeFileAtIndex(int index, string fileName)
-        {
-            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Include\\{fileName}"));
-            if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
-            if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
-            if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
-
-            string theText = File.ReadAllText(fullPath);
-            StringBuilder sb = new StringBuilder(sourcecode);
-            sb.Insert(index, theText);
-            sourcecode = sb.ToString();
-        }
-
-        public void ClearLineAtIndex(int index)
-        {
-            int endOfLine = sourcecode.IndexOf('\n', index);
-            StringBuilder sb = new StringBuilder(sourcecode);
-
-            if (sourcecode[endOfLine - 1] == '\r')
-                endOfLine--;
-
-            for (int i = index; i < endOfLine; i++)
-                sb[i] = ' ';
-            sourcecode = sb.ToString();
-        }
-
-        public void CheckCompilerDirectives()
-        {
-            bool endMarkerFound = true;
-            bool endReached = false;
-            while (!endReached)
-            {
-                int sourcecodeCount = sourcecode.Length;
-                for (int i = 0; i < sourcecodeCount; i++)
-                {
-                    if (endMarkerFound && sourcecode[i] == '#')
-                        if (HandleDirective(i))
-                            break;
-                        else
-                            endMarkerFound = false;
-
-                    if (sourcecode[i] == '\n')
-                        endMarkerFound = true;
-
-                    if (i == sourcecodeCount - 1)
-                        endReached = true;
-                }
-            }
-        }
 
         public void Assemble()
         {
@@ -165,7 +81,6 @@ namespace GroundCompiler
             string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.lst"));
 
             File.WriteAllText(outputAsmFilename, generatedCode);
-
             Console.WriteLine("*** Start assembler.");
 
             string assemblerParameters = $"{outputAsmFilename}";
@@ -269,9 +184,7 @@ namespace GroundCompiler
                 return;
 
             Console.WriteLine("*** Starting the executable.\r\n");
-
             string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.exe"));
-
             Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
         }
 
