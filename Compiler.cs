@@ -524,7 +524,7 @@ namespace GroundCompiler
         }
 
 
-        // THIS FUNCTION NEEDS REFACTORING. IT IS NOT CLEAR HOW IT DOES IT'S THING.
+        // THIS FUNCTION NEEDS REFACTORING. IT IS NOT CLEAR HOW IT DOES IT'S THING ANYMORE.
 
         public object? VisitorFunctionCall(Expression.FunctionCall expr)
         {
@@ -706,23 +706,27 @@ namespace GroundCompiler
 
             if (pushLexicalParent)
             {
-                // Hier gaan we helemaal het bos in. De lexical parent variabele moet de parent binnen de lexical scoping zijn, maar we gebruiken het
-                // om terug te springen naar de juiste rbp. We berekenen helemaal niet op welk niveau van lexical scoping we zitten. Trouwens: volgens mij gaat het
-                // idee om een lexical parent mee te geven ook helemaal niet werken. 
+                // Hier gaan we helemaal het bos in. De berekening van het aantal niveau's wordt niet goed bijgehouden.
+                // Waardoor alleen op rootlevel en level1 class instances gebruikt mogen worden.
+                // Het is een behoorlijke zooi geworden. Het is nu echt nodig om unittests.g af en toe te draaien, want
+                // bij veranderingen worden waarschijnlijk bugs geintroduceerd.
 
                 if (instVarName == "this")
                 {
-                    emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // "this" is the same lexical level
+                    emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // "this" is the same lexical level, so as a trick we use the previous lexparent as lexparent.
                 }
                 else
                 {
-                    // Add lexical parent frame. Position: [rbp+G_PARAMETER_LEXPARENT] // second parameter
                     if (levelsDeep == 0)
                     {
-                        // When we are inside a function, ship the lexparent.
-                        var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
-                        if (functionStmt != null && !(functionStmt is ProgramNode))
-                            emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");
+                        if (instVarName != null)
+                        {
+                            var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                            if (functionStmt != null && !(functionStmt is ProgramNode))
+                                emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");   // 1 levelsDeep
+                            else
+                                emitter.Codeline("mov   rax, rbp");         // normal parent frame
+                        }
                         else
                             emitter.Codeline("mov   rax, rbp");         // normal parent frame
                     }

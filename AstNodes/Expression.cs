@@ -309,7 +309,7 @@ namespace GroundCompiler.AstNodes
                         break;
 
                     ownerScope = needleScope.Owner;
-                    if (!(ownerScope is ClassStatement classStatement)) // Waarom rekenen we ClassStatement niet mee? Omdat functie's op grondniveau gedefinieerd worden.
+                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement)) // Dit zijn niet echte calling scopes.
                         levelsDeep++;
                 }
                 if (ownerScope == null)

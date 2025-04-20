@@ -35,8 +35,8 @@ int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates newt
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
 int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];			// which blocks of the blockState are solid. Defines the shape of the level.
 int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];	// which blocks of the blockState are solid. Defines the shape of the level.
-int* levelShapePtr = &level1[0];
-int levelShapeCount = sizeof(level1) / sizeof(int);
+int* levelPtr = &level1[0];
+int levelSize = sizeof(level1) / sizeof(int);
 asm data {spritesheet_p dq 0}
 g.[spritesheet_p] = sidelib.LoadImage("Bertus.png");
 if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
@@ -56,26 +56,29 @@ sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
 
+
 class CubeShape {
 	int x;
 	int y;
-	function nrElements() { return levelShapeCount; }
-	function getIndexForElement(int elementNr) { return *(levelShapePtr+elementNr*8); }
+
+	function nrElements() { return levelSize; }
+	function getIndexForElement(int elementNr) { return levelPtr[elementNr]; }
 	function getXY(int elementNr) {
 		int theIndex = this.getIndexForElement(elementNr);
 		int theRow = theIndex / 7;
 		bool isOneven = ((theRow % 2) == 1);
 		int remaining = theIndex % 7;
-		this.y = theRow*48;
-		this.x = remaining*SPRITESHEET_CUBE_WIDTH;
+		this.y = theRow * 48;
+		this.x = remaining * SPRITESHEET_CUBE_WIDTH;
 		if (isOneven) { this.x = this.x + 32; }
 	}
 	function getDestinationPointer(int elementNr) : ptr {
-	    this.getXY(elementNr);  // BUG!! deze werkt niet omdat het aantal "loopen" van de G_PARAMETER_LEXPARENT niet correct is. Daarom mag je nu alleen van buiten de methods aanroepen.
+	    this.getXY(elementNr);
 		ptr result = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y + 14);
 		return result;
 	}
 }
+
 
 
 class Actor {
@@ -89,6 +92,7 @@ class Actor {
 	bool visible;
 	bool falling;
 	bool drawOnBack;
+
 	function draw() {
 		ptr dest = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y);
 		ptr qPic = g.[spritesheet_p] + (this.image * SPRITESHEET_ACTOR_WIDTH * SCREEN_PIXELSIZE);
@@ -106,7 +110,7 @@ class Actor {
 	function isHit(int otherX, int otherY) : bool {
 		return msvcrt.abs(otherX-this.x) < 16 && msvcrt.abs(otherY-this.y) < 16;
 	}
-	function isArrived() {
+	function isArrivedAtBlock() {
 		return (this.falling == false and this.movex == 0 and this.movey == 0);
 	}
 	function move() {
@@ -154,7 +158,7 @@ class Actor {
 CubeShape shape;
 Actor bertus;
 Actor ball;
-Actor ball2;
+Actor secondBall;
 
 
 function initBertus() {
@@ -176,14 +180,14 @@ function initBall() {
 	ball.falling = true;
 }
 
-function initBall2() {
-	ball2.reset();
+function initSecondBall() {
+	secondBall.reset();
 	shape.getXY(5);
-	ball2.x = shape.x+16;
-	ball2.y = 0 - GRID_START_Y+64;
-	ball2.image = SPRITESHEET_IMAGE_BALL;
-	ball2.visible = true;
-	ball2.falling = true;
+	secondBall.x = shape.x+16;
+	secondBall.y = 0 - GRID_START_Y+64;
+	secondBall.image = SPRITESHEET_IMAGE_BALL;
+	secondBall.visible = true;
+	secondBall.falling = true;
 }
 
 
@@ -193,12 +197,12 @@ function GoLevel(int level) {
 	gameOverFramecount = 0;
 	for (i in 0..48) { blockState[i] = 0; }
 	if (level == 1) {
-		levelShapePtr = &level1[0];
-		levelShapeCount = sizeof(level1) / sizeof(int);
+		levelPtr = &level1[0];
+		levelSize = sizeof(level1) / sizeof(int);
 	}
 	if (level == 2) {
-		levelShapePtr = &level2[0];
-		levelShapeCount = sizeof(level2) / sizeof(int);
+		levelPtr = &level2[0];
+		levelSize = sizeof(level2) / sizeof(int);
 	}
 	for (i in 0..< shape.nrElements()) {
 		int indexForElement = shape.getIndexForElement(i);
@@ -206,33 +210,33 @@ function GoLevel(int level) {
 	}
 	initBertus();
 	initBall();
-	initBall2();
+	initSecondBall();
 }
 
 
 function Draw() {
 	if (bertus.drawOnBack == true) { bertus.draw(); }
 	if (ball.drawOnBack == true)   { ball.draw(); }
-	if (ball2.drawOnBack == true)  { ball2.draw(); }
+	if (secondBall.drawOnBack == true)  { secondBall.draw(); }
 
 	ptr destPtr;
 	for (i in 0..< shape.nrElements()) {
 		destPtr = shape.getDestinationPointer(i);
 		int indexForElement = shape.getIndexForElement(i);
 		int blockImage = blockState[indexForElement];
-		PlotSheetSprite(g.[spritesheet_p]+(blockImage * SPRITESHEET_CUBE_HEIGHT * SPRITESHEET_WIDTH*SCREEN_PIXELSIZE), destPtr, SPRITESHEET_CUBE_WIDTH, SPRITESHEET_CUBE_HEIGHT, SPRITESHEET_WIDTH);
+		PlotSheetSprite(g.[spritesheet_p]+(blockImage * SPRITESHEET_CUBE_HEIGHT * SPRITESHEET_WIDTH * SCREEN_PIXELSIZE), destPtr, SPRITESHEET_CUBE_WIDTH, SPRITESHEET_CUBE_HEIGHT, SPRITESHEET_WIDTH);
 	}
 
 	if (bertus.drawOnBack == false) { bertus.draw(); }
 	if (ball.drawOnBack == false)   { ball.draw(); }
-	if (ball2.drawOnBack == false)  { ball2.draw(); }
+	if (secondBall.drawOnBack == false)  { secondBall.draw(); }
 }
 
 
 function MoveElements() {
 	bertus.move();
 	if (frameCount % 3 == 0 or ball.falling)  {  ball.move(); }
-	if (frameCount % 2 == 0 or ball2.falling) {	ball2.move(); }
+	if (frameCount % 2 == 0 or secondBall.falling) {	secondBall.move(); }
 
 	// Is Bertus or a ball arrived at a block?
 	for (i in 0..< shape.nrElements()) {
@@ -252,13 +256,13 @@ function MoveElements() {
 				ball.jump(-32,48,SPRITESHEET_IMAGE_BALL);
 			}
 		}
-		if (ball2.drawOnBack == false && ball2.x == (shape.x+16) && ball2.y == shape.y) {
-			ball2.arrivedAtIndex = theIndex;
+		if (secondBall.drawOnBack == false && secondBall.x == (shape.x+16) && secondBall.y == shape.y) {
+			secondBall.arrivedAtIndex = theIndex;
 			random = msys_frand(&seedRandom);
 			if (random % 2 == 0) {
-				ball2.jump(32,48,SPRITESHEET_IMAGE_BALL);
+				secondBall.jump(32,48,SPRITESHEET_IMAGE_BALL);
 			} else {
-				ball2.jump(-32,48,SPRITESHEET_IMAGE_BALL);
+				secondBall.jump(-32,48,SPRITESHEET_IMAGE_BALL);
 			}
 		}
 	}
@@ -267,28 +271,28 @@ function MoveElements() {
 		if (bertus.isHit(ball.x, ball.y)) {
 			gameOverFramecount = 1;
 		}
-		if (bertus.isHit(ball2.x, ball2.y)) {
+		if (bertus.isHit(secondBall.x, secondBall.y)) {
 			gameOverFramecount = 1;
 		}
 	}
 
-	if (bertus.isArrived() and bertus.arrivedAtIndex == -1) {
+	if (bertus.isArrivedAtBlock() and bertus.arrivedAtIndex == -1) {
 		bertus.falling = true;
 		bertus.drawOnBack = true;
 	}
 
 	if (bertus.visible == false) { bertus.visible = true; gameOverFramecount = 1; }
 	if (ball.visible == false) { initBall(); }
-	if (ball2.visible == false) { initBall2(); }
+	if (secondBall.visible == false) { initSecondBall(); }
 
-	if (ball.falling == false and ball.isArrived() and ball.arrivedAtIndex == -1) {
+	if (ball.falling == false and ball.isArrivedAtBlock() and ball.arrivedAtIndex == -1) {
 		ball.falling = true;
 		ball.drawOnBack = true;
 	}
 
-	if (ball2.falling == false and ball2.isArrived() and ball2.arrivedAtIndex == -1) {
-		ball2.falling = true;
-		ball2.drawOnBack = true;
+	if (secondBall.falling == false and secondBall.isArrivedAtBlock() and secondBall.arrivedAtIndex == -1) {
+		secondBall.falling = true;
+		secondBall.drawOnBack = true;
 	}
 
 	// All blocks are stepped on?
@@ -299,9 +303,7 @@ function MoveElements() {
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
 
-
 // BEGIN Mainloop:
-
 GoLevel(level);
 while (StatusRunning)
 {
@@ -373,9 +375,7 @@ while (StatusRunning)
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
 }
-
 // END Mainloop
-
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

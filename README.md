@@ -224,16 +224,16 @@ screenArray[30,10] = "A";
 
 An other piece to investigate is:
 ```
-byte[128] event = [];
-u32* eventType = &event[0];
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 if (*eventType == g.SDL_QUIT) { running = false; }
 ```
-The first line allocated 128 bytes. The second line creates a pointer of a u32 to the first element. The third line
+The first line allocated SDL3_EVENT_SIZE, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
 retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
 ### Some remarks
-At this moment, you can only declare a Class instance at the root level.
+At this moment, you can only declare a Class instance at the root level and inside a function, not in nested functions or classes.
 
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,

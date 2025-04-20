@@ -872,6 +872,8 @@ colorpalette256	dd 0xff000000	; #000000  First 16 colors are C-64 colors.
 	dd 0xff664488,	0xff8855aa,	0xff9966bb,	0xffaa77cc,	0xff550055,	0xff770088,	0xff9922aa,	0xffcc44dd
 	dd 0xffff66ff,	0xffff99ff,	0xffffbbff,	0xffffddff,	0xffffffff,	0x00000000,	0xff000000, 0xffffffff
 
+align 8
+
 ; *** GENERATED DATA ***
 ;GC_INSERTIONPOINT_DATA
 ; *** END DATA ***

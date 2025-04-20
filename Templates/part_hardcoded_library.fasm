@@ -54,9 +54,8 @@ _f_assert:
   jnz	.assert_correct
   lea	rax, [assert_errormessage]
   call	PrintScreenString
-  mov   rsp, rbp
-  pop   rbp
-  add	rsp, 0x28     ;sizeof(G_STACKSPACE_1_PARAM) 0x20 + sizeof(ret) 0x08
+  mov   rbp, [main_rbp]
+  mov   rsp, [main_rbp]
   jmp	assert_exitpoint
 .assert_correct:
   mov   rsp, rbp
