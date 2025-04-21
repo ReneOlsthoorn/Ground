@@ -10,7 +10,7 @@ namespace GroundCompiler
         string generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
         bool runAfterCompilation = true;
-        bool generateDebugInfo = true;
+        bool generateDebugInfo = false;
 
         static void Main(string[] args)
         {

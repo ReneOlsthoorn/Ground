@@ -35,6 +35,8 @@ int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates newt
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
 int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];			// which blocks of the blockState are solid. Defines the shape of the level.
 int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];	// which blocks of the blockState are solid. Defines the shape of the level.
+int[] level3 = [8,9,10,11,15,16,17,18,19,21,22,25,26,29,30,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];
+int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31,32,34,35,36,37,38,39,40];
 int* levelPtr = &level1[0];
 int levelSize = sizeof(level1) / sizeof(int);
 asm data {spritesheet_p dq 0}
@@ -88,10 +90,10 @@ class Actor {
 	int movex;
 	int movey;
 	int image;
-	int frame;
+	int jumpSimulationPosition;
 	bool visible;
 	bool falling;
-	bool drawOnBack;
+	int fallenOffCounter;
 
 	function draw() {
 		ptr dest = ScreenPointerForXY(GRID_START_X + this.x, GRID_START_Y + this.y);
@@ -104,7 +106,7 @@ class Actor {
 		this.movex = newX;
 		this.movey = newY;
 		this.image = newImage;
-		this.frame = 0;
+		this.jumpSimulationPosition = 0;
 		this.falling = false;
 	}
 	function isHit(int otherX, int otherY) : bool {
@@ -133,24 +135,25 @@ class Actor {
 			}
 		} else {
 			if (this.movey < 0) {
-				this.y = this.y - 3 + jumpSimulation[this.frame];
+				this.y = this.y - 3 + jumpSimulation[this.jumpSimulationPosition];
 				this.movey = this.movey + 3;
 			}
 			if (this.movey > 0) {
-				this.y = this.y + 3 + jumpSimulation[this.frame];
+				this.y = this.y + 3 + jumpSimulation[this.jumpSimulationPosition];
 				this.movey = this.movey - 3;
 			}
-			this.frame = this.frame + 1;
+			this.jumpSimulationPosition = this.jumpSimulationPosition + 1;
 		}
+		if (this.fallenOffCounter > 0) { this.fallenOffCounter = this.fallenOffCounter + 1; }
 	}
 	function reset() {
-		this.frame = 0;
+		this.jumpSimulationPosition = 0;
 		this.movex = 0;
 		this.movey = 0;
 		this.visible = false;
 		this.falling = false;
-		this.drawOnBack = false;
 		this.arrivedAtIndex = -1;
+		this.fallenOffCounter = 0;
 	}
 }
 
@@ -196,14 +199,10 @@ function GoLevel(int level) {
 	levelCompleteFramecount = 0;
 	gameOverFramecount = 0;
 	for (i in 0..48) { blockState[i] = 0; }
-	if (level == 1) {
-		levelPtr = &level1[0];
-		levelSize = sizeof(level1) / sizeof(int);
-	}
-	if (level == 2) {
-		levelPtr = &level2[0];
-		levelSize = sizeof(level2) / sizeof(int);
-	}
+	if (level == 1) { levelPtr = &level1[0]; levelSize = sizeof(level1) / sizeof(int); }
+	if (level == 2) { levelPtr = &level2[0]; levelSize = sizeof(level2) / sizeof(int); }
+	if (level == 3) { levelPtr = &level3[0]; levelSize = sizeof(level3) / sizeof(int); }
+	if (level == 4) { levelPtr = &level4[0]; levelSize = sizeof(level4) / sizeof(int); }
 	for (i in 0..< shape.nrElements()) {
 		int indexForElement = shape.getIndexForElement(i);
 		blockState[indexForElement] = SPRITESHEET_BLOCK_BLUE;
@@ -215,9 +214,9 @@ function GoLevel(int level) {
 
 
 function Draw() {
-	if (bertus.drawOnBack == true) { bertus.draw(); }
-	if (ball.drawOnBack == true)   { ball.draw(); }
-	if (secondBall.drawOnBack == true)  { secondBall.draw(); }
+	if (bertus.fallenOffCounter >= 16) { bertus.draw(); }
+	if (ball.fallenOffCounter >= 16)   { ball.draw(); }
+	if (secondBall.fallenOffCounter >= 16)  { secondBall.draw(); }
 
 	ptr destPtr;
 	for (i in 0..< shape.nrElements()) {
@@ -227,27 +226,27 @@ function Draw() {
 		PlotSheetSprite(g.[spritesheet_p]+(blockImage * SPRITESHEET_CUBE_HEIGHT * SPRITESHEET_WIDTH * SCREEN_PIXELSIZE), destPtr, SPRITESHEET_CUBE_WIDTH, SPRITESHEET_CUBE_HEIGHT, SPRITESHEET_WIDTH);
 	}
 
-	if (bertus.drawOnBack == false) { bertus.draw(); }
-	if (ball.drawOnBack == false)   { ball.draw(); }
-	if (secondBall.drawOnBack == false)  { secondBall.draw(); }
+	if (bertus.fallenOffCounter < 16) { bertus.draw(); }
+	if (ball.fallenOffCounter < 16)   { ball.draw(); }
+	if (secondBall.fallenOffCounter < 16)  { secondBall.draw(); }
 }
 
 
 function MoveElements() {
 	bertus.move();
-	if (frameCount % 3 == 0 or ball.falling)  {  ball.move(); }
-	if (frameCount % 2 == 0 or secondBall.falling) {	secondBall.move(); }
+	if (frameCount % 3 == 0 or ball.falling) { ball.move(); }
+	if (frameCount % 2 == 0 or secondBall.falling) { secondBall.move(); }
 
 	// Is Bertus or a ball arrived at a block?
 	for (i in 0..< shape.nrElements()) {
 		shape.getXY(i);
 		int theIndex = shape.getIndexForElement(i);
-		if (bertus.falling == false && bertus.x == (shape.x+16) && bertus.y == shape.y) {
+		if (bertus.fallenOffCounter == 0 && bertus.x == (shape.x+16) && bertus.y == shape.y) {
 			bertus.arrivedAtIndex = theIndex;
 			blockState[theIndex] = SPRITESHEET_BLOCK_YELLOW;
 		}
 		int random = 0;
-		if (ball.drawOnBack == false && ball.x == (shape.x+16) && ball.y == shape.y) {
+		if (ball.fallenOffCounter == 0 && ball.x == (shape.x+16) && ball.y == shape.y) {
 			ball.arrivedAtIndex = theIndex;
 			random = msys_frand(&seedRandom);
 			if (random % 2 == 0) {
@@ -256,7 +255,7 @@ function MoveElements() {
 				ball.jump(-32,48,SPRITESHEET_IMAGE_BALL);
 			}
 		}
-		if (secondBall.drawOnBack == false && secondBall.x == (shape.x+16) && secondBall.y == shape.y) {
+		if (secondBall.fallenOffCounter == 0 && secondBall.x == (shape.x+16) && secondBall.y == shape.y) {
 			secondBall.arrivedAtIndex = theIndex;
 			random = msys_frand(&seedRandom);
 			if (random % 2 == 0) {
@@ -267,18 +266,18 @@ function MoveElements() {
 		}
 	}
 
-	if (bertus.falling == false) {
-		if (bertus.isHit(ball.x, ball.y)) {
+	if (bertus.fallenOffCounter == 0) {
+		if (ball.fallenOffCounter == 0 && bertus.isHit(ball.x, ball.y)) {
 			gameOverFramecount = 1;
 		}
-		if (bertus.isHit(secondBall.x, secondBall.y)) {
+		if (secondBall.fallenOffCounter == 0 && bertus.isHit(secondBall.x, secondBall.y)) {
 			gameOverFramecount = 1;
 		}
 	}
 
 	if (bertus.isArrivedAtBlock() and bertus.arrivedAtIndex == -1) {
 		bertus.falling = true;
-		bertus.drawOnBack = true;
+		bertus.fallenOffCounter = 1;
 	}
 
 	if (bertus.visible == false) { bertus.visible = true; gameOverFramecount = 1; }
@@ -287,12 +286,12 @@ function MoveElements() {
 
 	if (ball.falling == false and ball.isArrivedAtBlock() and ball.arrivedAtIndex == -1) {
 		ball.falling = true;
-		ball.drawOnBack = true;
+		ball.fallenOffCounter = 1;
 	}
 
 	if (secondBall.falling == false and secondBall.isArrivedAtBlock() and secondBall.arrivedAtIndex == -1) {
 		secondBall.falling = true;
-		secondBall.drawOnBack = true;
+		secondBall.fallenOffCounter = 1;
 	}
 
 	// All blocks are stepped on?
@@ -347,9 +346,9 @@ while (StatusRunning)
 	if (levelCompleteFramecount > 0) {
 		writeText(renderer, 100.0, 70.0, "Level complete!");
 		levelCompleteFramecount++;
-		if (levelCompleteFramecount > 180) {
+		if (levelCompleteFramecount > 125) {
 			level++;
-			if (level > 2) { level = 1; }
+			if (level > 4) { level = 1; }
 			GoLevel(level);
 		} else {
 			for (i in 0..< shape.nrElements()) {
@@ -367,7 +366,7 @@ while (StatusRunning)
 		writeText(renderer, 100.0, 70.0, "*** Game over! ***");
 		writeText(renderer, 100.0, 90.0, "    Try again...");
 		gameOverFramecount++;
-		if (gameOverFramecount > 180) {
+		if (gameOverFramecount > 125) {
 			GoLevel(level);
 		}
 	}
