@@ -31,7 +31,9 @@ int frameCount = 0;
 int level = 1;
 int levelCompleteFramecount = 0;
 int gameOverFramecount = 0;
+int nrBlocksHit = 0;
 int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates newton
+int[] randomBallSpread = [0,1,2,3,4,5,6,1,2,3,4,5,2,3,4,3];
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
 int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];			// which blocks of the blockState are solid. Defines the shape of the level.
 int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];	// which blocks of the blockState are solid. Defines the shape of the level.
@@ -173,9 +175,20 @@ function initBertus() {
 	bertus.visible = true;
 }
 
+function getRandomLevelIndex() : int {
+	int randomValue = randomBallSpread[(msys_frand(&seedRandom) % 16)];
+	return randomValue;
+}
+
 function initBall() {
 	ball.reset();
-	shape.getXY(3);
+	bool goodValue = false;
+	while (goodValue == false) {
+		goodValue = true;
+		shape.x = getRandomLevelIndex() * 64;
+		if ((shape.x+16) == bertus.x and nrBlocksHit < 2) { goodValue = false; }
+		if ((shape.x+16) == secondBall.x) { goodValue = false; }
+	}
 	ball.x = shape.x+16;
 	ball.y = 0 - GRID_START_Y;
 	ball.image = SPRITESHEET_IMAGE_BALL;
@@ -185,9 +198,15 @@ function initBall() {
 
 function initSecondBall() {
 	secondBall.reset();
-	shape.getXY(5);
+	bool goodValue = false;
+	while (goodValue == false) {
+		goodValue = true;
+		shape.x = getRandomLevelIndex() * 64;
+		if ((shape.x+16) == bertus.x and nrBlocksHit < 2) { goodValue = false; }
+		if ((shape.x+16) == ball.x) { goodValue = false; }
+	}
 	secondBall.x = shape.x+16;
-	secondBall.y = 0 - GRID_START_Y+64;
+	secondBall.y = 0 - GRID_START_Y;
 	secondBall.image = SPRITESHEET_IMAGE_BALL;
 	secondBall.visible = true;
 	secondBall.falling = true;
@@ -195,6 +214,7 @@ function initSecondBall() {
 
 
 function GoLevel(int level) {
+	nrBlocksHit = 0;
 	bertus.reset();
 	levelCompleteFramecount = 0;
 	gameOverFramecount = 0;
@@ -267,10 +287,10 @@ function MoveElements() {
 	}
 
 	if (bertus.fallenOffCounter == 0) {
-		if (ball.fallenOffCounter == 0 && bertus.isHit(ball.x, ball.y)) {
+		if (ball.fallenOffCounter == 0 && ball.falling == false && bertus.isHit(ball.x, ball.y)) {
 			gameOverFramecount = 1;
 		}
-		if (secondBall.fallenOffCounter == 0 && bertus.isHit(secondBall.x, secondBall.y)) {
+		if (secondBall.fallenOffCounter == 0 && secondBall.falling == false && bertus.isHit(secondBall.x, secondBall.y)) {
 			gameOverFramecount = 1;
 		}
 	}
@@ -296,8 +316,10 @@ function MoveElements() {
 
 	// All blocks are stepped on?
 	bool allBlocksHit = true;
+	nrBlocksHit = 0;
 	for (i in 0..48) {
 		if (blockState[i] == SPRITESHEET_BLOCK_BLUE) { allBlocksHit = false; }
+		if (blockState[i] == SPRITESHEET_BLOCK_YELLOW) { nrBlocksHit = nrBlocksHit + 1; }
 	}
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
