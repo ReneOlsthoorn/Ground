@@ -1,9 +1,14 @@
 # Ground
 
-Compiler for the programming language Ground. The compiler itself is created in C# and generates FASM x86-64 assembly.
-Ground allows x86-64 assembly language to be added anywhere in the code. Mixing Ground- and assembly is 
-possible due to generated symbolic constants for each local Ground variable.  
-The primary usecase for Ground is creating highspeed programs.  
+This project is the compiler for the programming language "Ground". The name reflects the vision that code needs to 
+keep in contact with the ground of all code which is assembly. So, it allows x86-64 assembly language to be added 
+anywhere in the code. Mixing Ground- and assembly is possible due to generated symbolic constants for each local 
+Ground variable. The primary focus for Ground is creating highspeed programs for Windows.  
+The language has constructs like classes, with support for instance variables and methods, functions, groups of functions, 
+compact for-loops, statements like "while" and "if", datatypes like "string" and "float", etc...  
+See file Examples\unittests.g for some usage.  
+The compiler itself is created in C# and the generated x86-64 assembly is compatible with the free FASM assembler for
+Windows.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template. A second reason why 
@@ -52,9 +57,7 @@ must be assembly or C. This creates a distance. Ground tries to close this gap. 
 it everywhere. The Ground code is more compact, so typical usage of x86-64 is in innerloops.  
 See Examples\mode7_optimized.g for an example of innerloop optimization.
 
-Ground has language constructs like class, group, function, while, if, string, float, etc...
-See file Examples\console.g to see some usage.  
-It has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
+Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example.
 
@@ -83,7 +86,8 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 </p>
 
 ### Variables
-Outside arrays or class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are the datatypes respected.
+Outside arrays or class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are 
+the datatypes respected.
 
 ### Details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
@@ -266,6 +270,11 @@ your computer. I agree with those users that data collecting is not nice. Howeve
 The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
 Ground is created to facilitate the production of compact high performance code.  
 Ground will always be Alpha!
+
+### Write your own language!
+The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
+don't want a reference count system. Why not write your own language? Use the lexer from this compiler or borrow some
+code generation constructs. It might be less work than you think and you end up being an expert.
 
 ### Running the smoothscroller.g example
 You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
