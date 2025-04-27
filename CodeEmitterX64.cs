@@ -853,7 +853,19 @@ namespace GroundCompiler
         }
         public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
         {
-            Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
+            if (nrBytes != 1 && nrBytes != 2 && nrBytes != 4 && nrBytes != 8)
+            {
+                //var reg = cpu.GetTmpRegister();
+                cpu.ReserveRegister("rdx");
+                Codeline($"mov   rax, {nrBytes}");
+                Codeline($"mov   rdx, {indexReg}");
+                Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
+                Codeline($"mov   {indexReg}, rax");
+                Codeline($"lea   rax, [{baseReg}+{indexReg}]");
+                cpu.FreeRegister("rdx");
+            }
+            else
+                Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
         }
 
         public void resizeCurrentFloatingPoint(int sourceNrBytes, int destinationNrBytes)

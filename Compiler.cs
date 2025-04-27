@@ -1,4 +1,5 @@
 ﻿using GroundCompiler.AstNodes;
+using System.ComponentModel.Design;
 using System.Globalization;
 using static GroundCompiler.AstNodes.Expression;
 using static GroundCompiler.AstNodes.Statement;
@@ -294,51 +295,66 @@ namespace GroundCompiler
         // Get a class property. Direction: Read.
         public object? VisitorPropertyGet(Expression.PropertyGet expr)
         {
+            var objectNodeAsVariable = expr.ObjectNode as Expression.Variable;
+            var objectNodeAsArray = expr.ObjectNode as Expression.ArrayAccess;
+
             var currentScope = expr.GetScope();
-            var variableExpr = expr.ObjectNode as Expression.Variable;
 
             ClassStatement? classStatement = null;
             VarStatement? instVar = null;
 
-            if (variableExpr!.Name.Lexeme == "g")
+            if (objectNodeAsVariable != null)
             {
-                string theVariable = expr.Name.Lexeme;
-                if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
-                    theVariable = theVariable.Substring(1, (theVariable.Length - 2));
-
-                emitter.LoadHardcodedGroupVariable(theVariable);
-                return null;
-            }
-
-            var variableSymbol = currentScope!.GetVariable(variableExpr!.Name.Lexeme);
-            if (variableSymbol is Symbol.GroupSymbol groupSymbol)
-            {
-                var groupScope = groupSymbol.GroupStatement.GetScope();
-                var groupVar = groupScope.GetVariable(expr.Name.Lexeme);
-                if (groupVar is Symbol.HardcodedVariable hardCodedVar)
+                if (objectNodeAsVariable?.Name.Lexeme == "g")
                 {
-                    string varName = emitter.AssemblyVariableNameForHardcodedGroupVariable(groupSymbol.Name, hardCodedVar.Name);
-                    emitter.LoadHardcodedGroupVariable(varName);
+                    string theVariable = expr.Name.Lexeme;
+                    if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
+                        theVariable = theVariable.Substring(1, (theVariable.Length - 2));
+
+                    emitter.LoadHardcodedGroupVariable(theVariable);
+                    return null;
                 }
-                return null;
+
+                var variableSymbol = currentScope!.GetVariable(objectNodeAsVariable!.Name.Lexeme);
+                if (variableSymbol is Symbol.GroupSymbol groupSymbol)
+                {
+                    var groupScope = groupSymbol.GroupStatement.GetScope();
+                    var groupVar = groupScope.GetVariable(expr.Name.Lexeme);
+                    if (groupVar is Symbol.HardcodedVariable hardCodedVar)
+                    {
+                        string varName = emitter.AssemblyVariableNameForHardcodedGroupVariable(groupSymbol.Name, hardCodedVar.Name);
+                        emitter.LoadHardcodedGroupVariable(varName);
+                    }
+                    return null;
+                }
+
+                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+
+                bool noGetMemoryPointerFromIndex = false;
+                if (objectNodeAsVariable.Name.Lexeme == "this")
+                {
+                    var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                    noGetMemoryPointerFromIndex = true;
+                    string procName = functionStmt!.Name.Lexeme;
+                    string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+                    emitter.LoadFunctionParameter64(theName);
+                }
+                else
+                    VariableRead(objectNodeAsVariable);
+
+                if (!noGetMemoryPointerFromIndex)
+                    emitter.GetMemoryPointerFromIndex();
             }
-            else
+
+            if (objectNodeAsArray != null)
             {
-                classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                ArrayAccess(objectNodeAsArray!, addressOf: true);
+
+                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
                 instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             }
 
-            if (variableExpr.Name.Lexeme == "this")
-            {
-                var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
-                string procName = functionStmt!.Name.Lexeme;
-                string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
-                emitter.LoadFunctionParameter64(theName);
-            }
-            else
-                VariableRead(variableExpr);
-
-            emitter.GetMemoryPointerFromIndex();
             string instVarReg = cpu.GetTmpRegister();
             emitter.Codeline($"mov   {instVarReg}, rax");
             emitter.LoadInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
@@ -354,7 +370,8 @@ namespace GroundCompiler
             var currentScope = expr.GetScope();
             EmitExpression(expr.ValueNode);
 
-            var variableExpr = expr.ObjectNode as Expression.Variable;
+            var objectNodeAsVariable = expr.ObjectNode as Expression.Variable;
+            var objectNodeAsArray = expr.ObjectNode as Expression.ArrayAccess;
 
             if (expr.Name.Contains(TokenType.Literal))
             {
@@ -366,7 +383,7 @@ namespace GroundCompiler
                 return null;
             }
 
-            if (variableExpr?.Name.Lexeme == "g")
+            if (objectNodeAsVariable?.Name.Lexeme == "g")
             {
                 string theLiteralVariable = expr.Name.Lexeme;
                 emitter.StoreCurrent($"[{theLiteralVariable}]");
@@ -374,7 +391,7 @@ namespace GroundCompiler
             }
 
             emitter.Push(expr.ValueNode);
-            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+            ClassStatement? classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
             string reg;
@@ -385,17 +402,26 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
 
-            if (variableExpr.Name.Lexeme == "this")
+            if (objectNodeAsVariable != null)
             {
-                var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
-                string procName = functionStmt!.Name.Lexeme;
-                string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
-                emitter.LoadFunctionParameter64(theName);
-            }
-            else
-                VariableRead(variableExpr);
+                bool noGetMemoryPointerFromIndex = false;
+                if (objectNodeAsVariable.Name.Lexeme == "this")
+                {
+                    var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                    noGetMemoryPointerFromIndex = true;
+                    string procName = functionStmt!.Name.Lexeme;
+                    string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+                    emitter.LoadFunctionParameter64(theName);
+                }
+                else
+                    VariableRead(objectNodeAsVariable);
 
-            emitter.GetMemoryPointerFromIndex();
+                if (!noGetMemoryPointerFromIndex)
+                    emitter.GetMemoryPointerFromIndex();
+            }
+            if (objectNodeAsArray != null)
+                ArrayAccess(objectNodeAsArray!, addressOf: true);
+
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
             emitter.Pop(expr.ValueNode);
@@ -637,10 +663,12 @@ namespace GroundCompiler
 
             Expression.Variable? instVar = null;
 
+            Expression.ArrayAccess? propertyGetArrayAccess = null;
+
             // When we have an methodcall, we use the scope from the class
-            if (expr.FunctionNameNode is Expression.PropertyGet functionNameGet)
+            if (expr.FunctionNameNode is Expression.PropertyGet propertyGet)
             {
-                if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
+                if (propertyGet.ObjectNode is Expression.Variable functionNameVar)
                 {
                     instVar = functionNameVar;
 
@@ -671,10 +699,18 @@ namespace GroundCompiler
                         if (expr.FindParentType(typeof(ClassStatement)) is ClassStatement cStmt)
                             classStatement = cStmt;
                     }
-
-                    string functionName = functionNameGet.Name.Lexeme;
-                    theFunction = GetSymbol(functionName, scope!) as Scope.Symbol.FunctionSymbol;
                 }
+
+                if (propertyGet.ObjectNode is Expression.ArrayAccess objectNodeArray)
+                {
+                    propertyGetArrayAccess = objectNodeArray;
+
+                    classStatement = propertyGet.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                    if (classStatement != null)
+                        scope = classStatement.GetScope();
+                }
+                string functionName = propertyGet.Name.Lexeme;
+                theFunction = GetSymbol(functionName, scope!) as Scope.Symbol.FunctionSymbol;
             }
             var dllFunctionSymbol = theFunction as Symbol.DllFunctionSymbol;
 
@@ -719,7 +755,7 @@ namespace GroundCompiler
                 {
                     if (levelsDeep == 0)
                     {
-                        if (instVarName != null)
+                        if (instVarName != null || propertyGetArrayAccess != null)
                         {
                             var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
                             if (functionStmt != null && !(functionStmt is ProgramNode))
@@ -750,8 +786,15 @@ namespace GroundCompiler
                     string procName = functionStmt!.Name.Lexeme;
                     string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement?.Name.Lexeme);
                     emitter.LoadFunctionParameter64(theName);
-                } else if (instVarName != null && instVarName != "this" && instVar != null)
+                    //emitter.GetMemoryPointerFromIndex();
+                }
+                else if (instVarName != null && instVarName != "this" && instVar != null)
+                {
                     VariableRead(instVar);
+                    emitter.GetMemoryPointerFromIndex();
+                }
+                else if (propertyGetArrayAccess != null)
+                    ArrayAccess(propertyGetArrayAccess, addressOf: true);
                 else
                     emitter.LoadNull();
 

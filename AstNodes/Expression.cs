@@ -42,12 +42,10 @@ namespace GroundCompiler.AstNodes
             {
                 base.Initialize();
 
-                var currentScope = GetScope();
-                var objVariableExpr = ObjectNode as Expression.Variable;
                 ClassStatement? classStatement = null;
-                if (objVariableExpr!.ExprType.isClass())
+                if (ObjectNode.ExprType.isClass())
                 {
-                    classStatement = objVariableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                    classStatement = ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
                     var classScope = classStatement!.GetScope();
                     var theVar = classScope!.GetVariable(Name.Lexeme);
 
@@ -725,7 +723,7 @@ namespace GroundCompiler.AstNodes
         }
 
 
-        // test(10);   this.test();
+        // test(10);   this.test();    array[2].method(1);
         public class FunctionCall : Expression
         {
             public Expression FunctionNameNode;
@@ -755,6 +753,12 @@ namespace GroundCompiler.AstNodes
                 // When we have an methodcall, we use the scope from the class
                 if (FunctionNameNode is Expression.PropertyGet functionNameGet)
                 {
+                    Expression propGetObjectNode = functionNameGet.ObjectNode;
+
+                    functionNameGet.Parent = this;
+                    functionNameGet.Initialize();
+                    functionName = functionNameGet.Name.Lexeme;
+
                     if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
                     {
                         string funcName = functionNameVar.Name.Lexeme;
@@ -771,9 +775,11 @@ namespace GroundCompiler.AstNodes
                                 scope = theGroupStmt.GetScope();
                         }
                     }
-                    functionNameGet.Parent = this;
-                    functionNameGet.Initialize();
-                    functionName = functionNameGet.Name.Lexeme;
+                    if (functionNameGet.ObjectNode is Expression.ArrayAccess objectNodeArray) {
+                        ClassStatement? classStatement = (propGetObjectNode.ExprType.Properties.ContainsKey("classStatement")) ? propGetObjectNode.ExprType.Properties["classStatement"] as ClassStatement : null;
+                        if (classStatement != null)
+                            scope = classStatement.GetScope();
+                    }
                 }
 
                 var symbol = GetSymbol(functionName, scope!);
@@ -805,20 +811,31 @@ namespace GroundCompiler.AstNodes
                     if (arg is Expression.PropertyGet exprGet)
                     {
                         var currentScope = exprGet.GetScope();
-                        var variableExpr = exprGet.ObjectNode as Expression.Variable;
-                        var variableSymbol = currentScope!.GetVariable(variableExpr!.Name.Lexeme);
+                        var objectNodeVar = exprGet.ObjectNode as Expression.Variable;
+                        var objectNodeArray = exprGet.ObjectNode as Expression.ArrayAccess;
 
-                        if (variableExpr!.Name.Lexeme == "g")
-                            arg.ExprType = Datatype.Default;
-                        else if (variableSymbol is Symbol.GroupSymbol groupSymbol)
+                        if (objectNodeVar != null)
                         {
-                            var groupScope = groupSymbol.GroupStatement.GetScope();
-                            var groupVar = groupScope.GetVariable(exprGet.Name.Lexeme);
-                            arg.ExprType = groupVar.GetDatatype();
+                            var variableSymbol = currentScope!.GetVariable(objectNodeVar!.Name.Lexeme);
+
+                            if (objectNodeVar!.Name.Lexeme == "g")
+                                arg.ExprType = Datatype.Default;
+                            else if (variableSymbol is Symbol.GroupSymbol groupSymbol)
+                            {
+                                var groupScope = groupSymbol.GroupStatement.GetScope();
+                                var groupVar = groupScope.GetVariable(exprGet.Name.Lexeme);
+                                arg.ExprType = groupVar.GetDatatype();
+                            }
+                            else
+                            {
+                                var classStatement = objectNodeVar!.ExprType.Properties["classStatement"] as ClassStatement;
+                                var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
+                                arg.ExprType = instVar.ResultType;
+                            }
                         }
-                        else
+                        if (objectNodeArray != null)
                         {
-                            var classStatement = variableExpr!.ExprType.Properties["classStatement"] as ClassStatement;
+                            var classStatement = exprGet.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
                             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
                             arg.ExprType = instVar.ResultType;
                         }
