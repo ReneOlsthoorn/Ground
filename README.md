@@ -311,7 +311,7 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 </p>
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Bertus_Highscore.jpg?raw=true" width="488" /><br/>
-Try beating my score. Will not be easy!
+Try to beat my score. Will not be easy!
 </p>
 
 ### Changelog
