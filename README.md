@@ -309,6 +309,10 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" />
 </p>
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Bertus_Highscore.jpg?raw=true" width="488" />
+Try beating my score. Will not be easy!
+</p>
 
 ### Changelog
 2025.01.29: Added kotlin for-loops:
