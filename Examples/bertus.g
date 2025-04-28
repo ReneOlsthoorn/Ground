@@ -13,7 +13,6 @@
 #define SPRITESHEET_BLOCK_BLUE 3
 #define GRID_START_X 250
 #define GRID_START_Y 100
-#define MAX_NR_BALLS 5
 
 #include graphics_defines.g
 #include msvcrt.g
@@ -33,12 +32,13 @@ int level = 1;
 int levelCompleteFramecount = 0;
 int gameOverFramecount = 0;
 int nrBlocksHit = 0;
-int nrEnemyBalls = 5;
-int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates newton
+int nrEnemyBalls = 4;
+int score = 1000;
+int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates a jump
 int[] randomBallSpread = [0,1,2,3,4,5,6,1,2,3,4,5,2,3,4,3];
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
-int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];			// which blocks of the blockState are solid. Defines the shape of the level.
-int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];	// which blocks of the blockState are solid. Defines the shape of the level.
+int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];  // which blocks of the blockState are solid. Defines the shape of the level.
+int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];
 int[] level3 = [8,9,10,11,15,16,17,18,19,21,22,25,26,29,30,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];
 int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31,32,34,35,36,37,38,39,40];
 int* levelPtr = &level1[0];
@@ -48,7 +48,6 @@ g.[spritesheet_p] = sidelib.LoadImage("Bertus.png");
 if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
 sidelib.FlipRedAndGreenInImage(g.[spritesheet_p], SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT);
 u32[SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT] spritesheet = g.[spritesheet_p];
-
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -65,7 +64,6 @@ sdl3.SDL_HideCursor();
 class CubeShape {
 	int x;
 	int y;
-
 	function nrElements() { return levelSize; }
 	function getIndexForElement(int elementNr) { return levelPtr[elementNr]; }
 	function getXY(int elementNr) {
@@ -134,14 +132,15 @@ class Actor {
 			this.movex = this.movex - 2;
 		}
 		if (this.falling) {
-			this.y = this.y + 2;
-			if (this.y >= (528 - GRID_START_Y)) {
+			this.y = this.y + 3;
+			if (this.y >= (525 - GRID_START_Y)) {
 				this.visible = false;
 				this.movex = 0;
 				this.movey = 0;
 				this.falling = false;
 			}
-		} else {
+		}
+		else {
 			if (this.movey < 0) {
 				this.y = this.y - 3 + jumpSimulation[this.jumpSimulationPosition];
 				this.movey = this.movey + 3;
@@ -166,10 +165,9 @@ class Actor {
 	}
 }
 
-
 CubeShape shape;
 Actor bertus;
-Actor[MAX_NR_BALLS] balls = [ ];
+Actor[4] balls = [ ];
 
 function initBertus() {
 	bertus.reset();
@@ -207,7 +205,7 @@ function initBall(int idx) {
 }
 
 
-function GotoLevel(int level) {
+function GotoLevel() {
 	nrBlocksHit = 0;
 	bertus.reset();
 	for (i in 0 ..< nrEnemyBalls) { balls[i].reset(); }
@@ -226,6 +224,11 @@ function GotoLevel(int level) {
 	for (i in 0 ..< nrEnemyBalls) { initBall(i); }
 }
 
+function RestartGame() {
+	score = 1000;
+	level = 1;
+	GotoLevel();
+}
 
 function Draw() {
 	if (bertus.fallenOffCounter >= 16) { bertus.draw(); }
@@ -272,7 +275,7 @@ function MoveElements() {
 		}
 		int random = 0;
 		for (j in 0 ..< nrEnemyBalls) {
-			if (balls[j].fallenOffCounter == 0 && balls[j].x == (shape.x+16) && balls[j].y == shape.y) {
+			if (balls[j].fallenOffCounter == 0 && balls[j].x == (shape.x+16) && balls[j].y >= shape.y && balls[j].y <= shape.y+5) {
 				balls[j].arrivedAtIndex = theIndex;
 				random = msys_frand(&seedRandom);
 				if (random % 2 == 0) {
@@ -322,7 +325,7 @@ function MoveElements() {
 }
 
 // BEGIN Mainloop:
-GotoLevel(level);
+GotoLevel();
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
@@ -332,10 +335,10 @@ while (StatusRunning)
 		if ((bertus.movex == 0) && (bertus.movey == 0)) {
 			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 				if (bertus.falling == false and bertus.visible == true) {
-					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); }    // naar boven links
-					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); }      // naar onder rechts
-					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); }     // naar boven rechts
-					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); }     // naar onder links
+					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score = score - 1; }    // naar boven links
+					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); score = score - 1; }      // naar onder rechts
+					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); score = score - 1; }     // naar boven rechts
+					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); score = score - 1; }     // naar onder links
 				}
 				if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
 					StatusRunning = false;
@@ -363,20 +366,25 @@ while (StatusRunning)
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
 	if (levelCompleteFramecount > 0) {
-		writeText(renderer, 100.0, 70.0, "Level complete!");
-		levelCompleteFramecount++;
-		if (levelCompleteFramecount > 125) {
-			level++;
-			if (level > 4) { level = 1; }
-			GotoLevel(level);
-		} else {
-			for (i in 0..< shape.nrElements()) {
-				shape.getXY(i);
-				int theIndex = shape.getIndexForElement(i);
-				int theBlockNr = SPRITESHEET_BLOCK_YELLOW;
-				int remain = (levelCompleteFramecount / 10) % 2;
-				if (remain == 1) { theBlockNr = SPRITESHEET_BLOCK_BLUE; }
-				blockState[theIndex] = theBlockNr;
+		if (level == 4) {
+			writeText(renderer, 100.0, 70.0, "Game finished!");
+			writeText(renderer, 100.0, 90.0, "Score is " + score);
+		}
+		else {
+			writeText(renderer, 100.0, 70.0, "Level complete!");
+			levelCompleteFramecount++;
+			if (levelCompleteFramecount > 125) {
+				level++;
+				GotoLevel();
+			} else {
+				for (i in 0..< shape.nrElements()) {
+					shape.getXY(i);
+					int theIndex = shape.getIndexForElement(i);
+					int theBlockNr = SPRITESHEET_BLOCK_YELLOW;
+					int remain = (levelCompleteFramecount / 10) % 2;
+					if (remain == 1) { theBlockNr = SPRITESHEET_BLOCK_BLUE; }
+					blockState[theIndex] = theBlockNr;
+				}
 			}
 		}
 	}
@@ -385,13 +393,15 @@ while (StatusRunning)
 		writeText(renderer, 100.0, 70.0, "*** Game over! ***");
 		writeText(renderer, 100.0, 90.0, "    Try again...");
 		gameOverFramecount++;
-		if (gameOverFramecount > 125) {
-			GotoLevel(level);
-		}
+		if (gameOverFramecount > 125) {	RestartGame(); }
+	}	
+	if (gameOverFramecount == 0 && levelCompleteFramecount == 0) {
+		writeText(renderer, 20.0, 30.0, "Score: " + score);
 	}
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
+	if (frameCount % 60 == 0 && score > 0 and levelCompleteFramecount == 0) { score = score - 1; }
 }
 // END Mainloop
 
