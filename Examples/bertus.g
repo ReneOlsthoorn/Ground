@@ -233,9 +233,8 @@ function RestartGame() {
 function Draw() {
 	if (bertus.fallenOffCounter >= 16) { bertus.draw(); }
 	for (i in 0 ..< nrEnemyBalls) {
-		if (balls[i].fallenOffCounter >= 16) {
+		if (balls[i].fallenOffCounter >= 16)
 			balls[i].draw();
-		}
 	}
 
 	ptr destPtr;
@@ -319,7 +318,7 @@ function MoveElements() {
 	nrBlocksHit = 0;
 	for (i in 0..48) {
 		if (blockState[i] == SPRITESHEET_BLOCK_BLUE) { allBlocksHit = false; }
-		if (blockState[i] == SPRITESHEET_BLOCK_YELLOW) { nrBlocksHit = nrBlocksHit + 1; }
+		if (blockState[i] == SPRITESHEET_BLOCK_YELLOW) { nrBlocksHit++; }
 	}
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
@@ -329,20 +328,19 @@ GotoLevel();
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
-		if (*eventType == g.SDL_EVENT_QUIT) {
+		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
-		}
+
 		if ((bertus.movex == 0) && (bertus.movey == 0)) {
 			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 				if (bertus.falling == false and bertus.visible == true) {
-					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score = score - 1; }    // naar boven links
-					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); score = score - 1; }      // naar onder rechts
-					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); score = score - 1; }     // naar boven rechts
-					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); score = score - 1; }     // naar onder links
+					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--; }    // naar boven links
+					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); score--; }      // naar onder rechts
+					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); score--; }     // naar boven rechts
+					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); score--; }     // naar onder links
 				}
-				if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+				if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 					StatusRunning = false;
-				}
 			}
 		}
 	}
@@ -353,14 +351,12 @@ while (StatusRunning)
 
 	SDL3_ClearScreenPixels();
 	Draw();
-	if (levelCompleteFramecount == 0 and gameOverFramecount == 0) {
+	if (levelCompleteFramecount == 0 and gameOverFramecount == 0)
 		MoveElements();
-	}
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
-	if (currentTicks < debugBestTicks) {
+	if (currentTicks < debugBestTicks)
 		debugBestTicks = currentTicks;
-	}
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
@@ -395,13 +391,12 @@ while (StatusRunning)
 		gameOverFramecount++;
 		if (gameOverFramecount > 125) {	RestartGame(); }
 	}	
-	if (gameOverFramecount == 0 && levelCompleteFramecount == 0) {
+	if (gameOverFramecount == 0 && levelCompleteFramecount == 0)
 		writeText(renderer, 20.0, 30.0, "Score: " + score);
-	}
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
-	if (frameCount % 60 == 0 && score > 0 and levelCompleteFramecount == 0) { score = score - 1; }
+	if (frameCount % 60 == 0 && score > 0 and levelCompleteFramecount == 0) { score--; }
 }
 // END Mainloop
 

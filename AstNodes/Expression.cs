@@ -299,16 +299,17 @@ namespace GroundCompiler.AstNodes
                 Symbol.LocalVariableSymbol? variableSymbol = symbol as Symbol.LocalVariableSymbol;
                 int levelsDeep = 0;
                 var needleScope = scope;
-                IScopeStatement? ownerScope = null;
+                IScopeStatement? ownerScope = needleScope.Owner;
                 while (!needleScope.Contains(name))
                 {
+                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement || ownerScope is ProgramNode))   // Dit zijn niet echte calling scopes.
+                        levelsDeep++;
+
                     needleScope = needleScope.Parent;
                     if (needleScope == null)
                         break;
 
                     ownerScope = needleScope.Owner;
-                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement)) // Dit zijn niet echte calling scopes.
-                        levelsDeep++;
                 }
                 if (ownerScope == null)
                     Compiler.Error("Expression>>GetSymbol error.");

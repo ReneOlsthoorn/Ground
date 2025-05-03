@@ -550,8 +550,7 @@ namespace GroundCompiler
         }
 
 
-        // THIS FUNCTION NEEDS REFACTORING. IT IS NOT CLEAR HOW IT DOES IT'S THING ANYMORE.
-
+        // This function needs refactoring. It does too much. We must push it over and create a class for it.
         public object? VisitorFunctionCall(Expression.FunctionCall expr)
         {
             ClassStatement? classStatement = null;
@@ -609,10 +608,17 @@ namespace GroundCompiler
 
                 string name = functionNameVariable.Name.Lexeme;
                 var needleScope = scope;
-                while (!needleScope!.Contains(name))
+                IScopeStatement? ownerScope = needleScope.Owner;
+                while (!needleScope.Contains(name))
                 {
+                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement || ownerScope is ProgramNode))   // Dit zijn niet echte calling scopes.
+                        levelsDeep++;
+
                     needleScope = needleScope.Parent;
-                    levelsDeep++;
+                    if (needleScope == null)
+                        break;
+
+                    ownerScope = needleScope.Owner;
                 }
 
                 if (functionNameVariable.Name.Lexeme == "GC_CreateThread")
@@ -742,36 +748,28 @@ namespace GroundCompiler
 
             if (pushLexicalParent)
             {
-                // Hier gaan we helemaal het bos in. De berekening van het aantal niveau's wordt niet goed bijgehouden.
-                // Waardoor alleen op rootlevel en level1 class instances gebruikt mogen worden.
-                // Het is een behoorlijke zooi geworden. Het is nu echt nodig om unittests.g af en toe te draaien, want
-                // bij veranderingen worden waarschijnlijk bugs geintroduceerd.
-
                 if (instVarName == "this")
-                {
                     emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // "this" is the same lexical level, so as a trick we use the previous lexparent as lexparent.
-                }
                 else
                 {
-                    if (levelsDeep == 0)
-                    {
-                        if (instVarName != null || propertyGetArrayAccess != null)
-                        {
-                            var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
-                            if (functionStmt != null && !(functionStmt is ProgramNode))
-                                emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");   // 1 levelsDeep
-                            else
-                                emitter.Codeline("mov   rax, rbp");         // normal parent frame
-                        }
-                        else
-                            emitter.Codeline("mov   rax, rbp");         // normal parent frame
-                    }
+                    if (instVarName != null || propertyGetArrayAccess != null)
+                        emitter.Codeline("mov   rax, [main_rbp]");
                     else
                     {
-                        int loopNr = levelsDeep - 1;
-                        emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
-                        for (int i = 0; i < loopNr; i++)
-                            emitter.Codeline("mov   rax, [rax]");
+                        if (levelsDeep == 0)
+                        {
+                            if (instVarName != null || propertyGetArrayAccess != null)
+                                emitter.Codeline("mov   rax, [main_rbp]");
+                            else
+                                emitter.Codeline("mov   rax, rbp");         // normal parent frame for normal functions
+                        }
+                        else
+                        {
+                            int loopNr = levelsDeep - 1;
+                            emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // parameter 2, lexical parent
+                            for (int i = 0; i < loopNr; i++)
+                                emitter.Codeline("mov   rax, [rax]");
+                        }
                     }
                 }
                 emitter.Push();
@@ -786,7 +784,6 @@ namespace GroundCompiler
                     string procName = functionStmt!.Name.Lexeme;
                     string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement?.Name.Lexeme);
                     emitter.LoadFunctionParameter64(theName);
-                    //emitter.GetMemoryPointerFromIndex();
                 }
                 else if (instVarName != null && instVarName != "this" && instVar != null)
                 {

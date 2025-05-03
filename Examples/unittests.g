@@ -15,14 +15,16 @@ assert(f == 3.14159265);
 
 // Testing the kotlin look-a-like for loops. Definition of loop iterator j is not necessary.
 i = 0;
-for (j in 1..20) { i = i + j; }
+for (j in 1..20)
+	i = i + j;
 assert(i == 210);
 
 
 
 // Use the ..< range operator to exclude the rightvalue, which is handy for zero-indexed arrays.
 i = 0;
-for (j in 0..< 20) { i = i + j; }
+for (j in 0..< 20)
+	i = i + j;
 assert(i == 190);
 
 
@@ -342,6 +344,46 @@ startBall();
 assert(balls[0].arrivedAtIndex == 99);
 assert(outsideScopeVar == 80+80+34);
 
+
+int[] shape1List = [3,9];
+int shapeCount;
+function GoLevel() {
+	shapeCount = sizeof(shape1List) / 8;
+}
+GoLevel();
+assert(shapeCount == 2);
+
+
+class UnitTestClass {
+	int instvar;
+	function method1() {
+		this.instvar = this.instvar + 1;
+	}
+}
+UnitTestClass unitTestClass1;
+unitTestClass1.instvar = 80;
+unitTestClass1.method1();
+assert(unitTestClass1.instvar == 81);
+
+
+
+int xx = 10;
+class TheClass2 {
+	function method() {
+		xx = xx + 20;
+	}
+}
+function deep1() {
+	TheClass2 cl2;
+	function deep2() {
+		TheClass2 cl1;
+		cl1.method();
+		cl2.method();
+	}
+	deep2();
+}
+deep1();
+assert(xx == 50);
 
 
 println("SUCCESS: unittests were completed with SUCCESS.");

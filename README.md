@@ -237,7 +237,7 @@ retrieves the value pointed to by eventType and compares it with SDL_QUIT.
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
 ### Some remarks
-At this moment, you can only declare a Class instance at the root level and inside a function, not in nested functions or classes.
+At this moment, you can only declare a Classes at the root level. Inner classes are not supported.
 
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
