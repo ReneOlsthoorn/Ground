@@ -191,6 +191,13 @@ namespace GroundCompiler
 
         public void VariableAddressOf(Expression.Variable variableExpr)
         {
+            // A reference type must always return the memory location, and never the Lea of the variable.
+            if (variableExpr.ExprType.IsReferenceType)
+            {
+                VariableRead(variableExpr);
+                return;
+            }
+
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
             string reg;

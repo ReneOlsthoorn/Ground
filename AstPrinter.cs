@@ -151,7 +151,7 @@ namespace GroundCompiler
             return stmt.Accept(this);
         }
 
-        public string VisitorPropertyGet(Expression.PropertyGet expr)
+        public string VisitorPropertyGet(Expression.PropertyExpression expr)
         {
             return Parenthesize2(".", expr.ObjectNode, expr.Name.Lexeme);
         }

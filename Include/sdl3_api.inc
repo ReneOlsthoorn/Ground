@@ -84,4 +84,10 @@ import sdl3,\
 	   sdl3_SDL_SetRenderDrawColor, 'SDL_SetRenderDrawColor',\
 	   sdl3_SDL_RenderClear, 'SDL_RenderClear',\
 	   sdl3_SDL_SetRenderScale, 'SDL_SetRenderScale',\
+	   sdl3_SDL_LoadWAV, 'SDL_LoadWAV',\
+	   sdl3_SDL_OpenAudioDeviceStream, 'SDL_OpenAudioDeviceStream',\
+	   sdl3_SDL_ResumeAudioStreamDevice, 'SDL_ResumeAudioStreamDevice',\
+	   sdl3_SDL_GetAudioStreamAvailable, 'SDL_GetAudioStreamAvailable',\
+	   sdl3_SDL_PutAudioStreamData, 'SDL_PutAudioStreamData',\
+	   sdl3_SDL_free, 'SDL_free',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'

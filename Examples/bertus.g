@@ -53,7 +53,7 @@ ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
 ptr window = sdl3.SDL_CreateWindow("Bertus", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
@@ -120,7 +120,7 @@ class Actor {
 	function move() {
 		this.arrivedAtIndex = -1;
 		if (this.waitingTime > 0) {
-			this.waitingTime = this.waitingTime - 1;
+			this.waitingTime--;
 			return;
 		}
 		if (this.movex < 0) {
@@ -149,9 +149,9 @@ class Actor {
 				this.y = this.y + 3 + jumpSimulation[this.jumpSimulationPosition];
 				this.movey = this.movey - 3;
 			}
-			this.jumpSimulationPosition = this.jumpSimulationPosition + 1;
+			this.jumpSimulationPosition++;
 		}
-		if (this.fallenOffCounter > 0) { this.fallenOffCounter = this.fallenOffCounter + 1; }
+		if (this.fallenOffCounter > 0) { this.fallenOffCounter++; }
 	}
 	function reset() {
 		this.waitingTime = 0;
@@ -323,6 +323,27 @@ function MoveElements() {
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
 
+
+class SDL_AudioSpec {
+	u32 format;
+	i32 channels;
+	i32 freq;
+}
+SDL_AudioSpec spec;
+string wavPath = "jump.wav";
+ptr stream = null;
+u8* wavData = null;
+u32 wavDataLen = 0;
+bool wavLoaded = sdl3.SDL_LoadWAV(wavPath, &spec, &wavData, &wavDataLen);
+stream = sdl3.SDL_OpenAudioDeviceStream(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null, null);
+if (!wavLoaded or !stream)
+	StatusRunning = false;
+
+function playSound() {
+	sdl3.SDL_ResumeAudioStreamDevice(stream);
+	sdl3.SDL_PutAudioStreamData(stream, wavData, wavDataLen);
+}
+
 // BEGIN Mainloop:
 GotoLevel();
 while (StatusRunning)
@@ -334,10 +355,10 @@ while (StatusRunning)
 		if ((bertus.movex == 0) && (bertus.movey == 0)) {
 			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 				if (bertus.falling == false and bertus.visible == true) {
-					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--; }    // naar boven links
-					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5); score--; }      // naar onder rechts
-					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1); score--; }     // naar boven rechts
-					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7); score--; }     // naar onder links
+					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--;  playSound(); }    // naar boven links
+					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5);   score--;  playSound(); }    // naar onder rechts
+					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1);  score--;  playSound(); }    // naar boven rechts
+					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7);  score--;  playSound(); }    // naar onder links
 				}
 				if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 					StatusRunning = false;
@@ -363,11 +384,12 @@ while (StatusRunning)
 
 	if (levelCompleteFramecount > 0) {
 		if (level == 4) {
-			writeText(renderer, 100.0, 70.0, "Game finished!");
-			writeText(renderer, 100.0, 90.0, "Score is " + score);
+			writeText(renderer, 100.0, 60.0, "All 4 levels completed!");
+			writeText(renderer, 100.0, 80.0, "Game finished!");
+			writeText(renderer, 100.0, 100.0, "Score is " + score);
 		}
 		else {
-			writeText(renderer, 100.0, 70.0, "Level complete!");
+			writeText(renderer, 100.0, 70.0, "Level " + level + " complete!");
 			levelCompleteFramecount++;
 			if (levelCompleteFramecount > 125) {
 				level++;
@@ -399,6 +421,8 @@ while (StatusRunning)
 	if (frameCount % 60 == 0 && score > 0 and levelCompleteFramecount == 0) { score--; }
 }
 // END Mainloop
+
+sdl3.SDL_free(wavData);
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

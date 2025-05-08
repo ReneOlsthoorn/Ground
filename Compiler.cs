@@ -293,7 +293,7 @@ namespace GroundCompiler
 
 
         // Get a class property. Direction: Read.
-        public object? VisitorPropertyGet(Expression.PropertyGet expr)
+        public object? VisitorPropertyGet(Expression.PropertyExpression expr)
         {
             var objectNodeAsVariable = expr.ObjectNode as Expression.Variable;
             var objectNodeAsArray = expr.ObjectNode as Expression.ArrayAccess;
@@ -368,29 +368,33 @@ namespace GroundCompiler
         public object? VisitorPropertySet(Expression.PropertySet expr)
         {
             var currentScope = expr.GetScope();
-            EmitExpression(expr.ValueNode);
 
             var objectNodeAsVariable = expr.ObjectNode as Expression.Variable;
             var objectNodeAsArray = expr.ObjectNode as Expression.ArrayAccess;
 
-            if (expr.Name.Contains(TokenType.Literal))
+            if (expr.ValueNode != null)
             {
-                string theLiteralVariable = expr.Name.Lexeme;
-                if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
-                    theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+                EmitExpression(expr.ValueNode);
 
-                emitter.StoreCurrent(theLiteralVariable);
-                return null;
+                if (expr.Name.Contains(TokenType.Literal))
+                {
+                    string theLiteralVariable = expr.Name.Lexeme;
+                    if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(TypeEnum.String))
+                        theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+
+                    emitter.StoreCurrent(theLiteralVariable);
+                    return null;
+                }
+
+                if (objectNodeAsVariable?.Name.Lexeme == "g")
+                {
+                    string theLiteralVariable = expr.Name.Lexeme;
+                    emitter.StoreCurrent($"[{theLiteralVariable}]");
+                    return null;
+                }
+
+                emitter.Push(expr.ValueNode);
             }
-
-            if (objectNodeAsVariable?.Name.Lexeme == "g")
-            {
-                string theLiteralVariable = expr.Name.Lexeme;
-                emitter.StoreCurrent($"[{theLiteralVariable}]");
-                return null;
-            }
-
-            emitter.Push(expr.ValueNode);
             ClassStatement? classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
@@ -425,7 +429,8 @@ namespace GroundCompiler
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
             emitter.Pop(expr.ValueNode);
-            EmitConversionCompatibleType(expr.ValueNode, instVar.ResultType);
+            if (expr.ValueNode != null)
+                EmitConversionCompatibleType(expr.ValueNode, instVar.ResultType);
 
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
             cpu.FreeRegister(instVarReg);
@@ -672,7 +677,7 @@ namespace GroundCompiler
             Expression.ArrayAccess? propertyGetArrayAccess = null;
 
             // When we have an methodcall, we use the scope from the class
-            if (expr.FunctionNameNode is Expression.PropertyGet propertyGet)
+            if (expr.FunctionNameNode is Expression.PropertyExpression propertyGet)
             {
                 if (propertyGet.ObjectNode is Expression.Variable functionNameVar)
                 {
@@ -735,6 +740,8 @@ namespace GroundCompiler
             {
                 var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
+
+                // In een DLL aanroep willen we altijd de memory-location meegeven in plaats van de memory-index.
                 if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType)
                     emitter.GetMemoryPointerFromIndex();
 
@@ -945,7 +952,20 @@ namespace GroundCompiler
             // a++ , a--
             if (expr.Postfix && (expr.Operator.Contains(TokenType.PlusPlus) || expr.Operator.Contains(TokenType.MinusMinus)))
             {
-                if (expr.RightNode is Expression.Variable theVariable)
+                if (expr.RightNode is Expression.PropertyExpression propExpr)
+                {
+                    VisitorPropertyGet(propExpr);
+                    if (expr.Operator.Contains(TokenType.PlusPlus))
+                        emitter.IncrementCurrent();
+                    if (expr.Operator.Contains(TokenType.MinusMinus))
+                        emitter.DecrementCurrent();
+                    emitter.Push();
+                    PropertySet propSet = new PropertySet(propExpr.ObjectNode, propExpr.Name, null, null);
+                    propSet.Parent = propExpr.Parent;
+                    VisitorPropertySet(propSet);
+                    emitter.Pop();
+                }
+                else if (expr.RightNode is Expression.Variable theVariable)
                 {
                     VariableRead(theVariable);
                     emitter.Push();
@@ -955,7 +975,8 @@ namespace GroundCompiler
                         emitter.DecrementCurrent();
                     VariableWrite(theVariable);
                     emitter.Pop();
-                } else
+                }
+                else
                     Compiler.Error("a++ or a-- can only be done on a variable.");
                 return null;
             }

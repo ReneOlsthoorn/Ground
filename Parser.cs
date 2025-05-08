@@ -358,7 +358,7 @@ namespace GroundCompiler
                 var rightValue = Assignment();
 
                 // Do we have an identifier.identifier (so a property-set) on the left side?
-                if (expr is Expression.PropertyGet getExpr)
+                if (expr is Expression.PropertyExpression getExpr)
                     return new Expression.PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
 
                 return new Expression.Assignment(expr, rightValue, equals);
@@ -417,7 +417,15 @@ namespace GroundCompiler
                 var op = NextToken();
                 return new Expression.Unary(op, theValue, postfix: true);
             }
-            return Call();
+            var higherThanPostfix = Call();
+            if (higherThanPostfix is Expression.PropertyExpression propGet)
+            {
+                if (Check(TokenType.PlusPlus, TokenType.MinusMinus)) {
+                    var op = NextToken();
+                    higherThanPostfix = new Expression.Unary(op, higherThanPostfix, postfix: true);
+                }
+            }
+            return higherThanPostfix;
         }
 
         private Expression Call()
@@ -435,7 +443,7 @@ namespace GroundCompiler
                         if (stringToken.Datatype != null && stringToken.Datatype.Contains(Datatype.TypeEnum.String))
                         {
                             stringToken = NextToken();
-                            return new Expression.PropertyGet(expr, stringToken);
+                            return new Expression.PropertyExpression(expr, stringToken);
                         }
                     }
                     if (Check(TokenType.LeftSquareBracket))
@@ -450,10 +458,10 @@ namespace GroundCompiler
                         string s = $"[{token.Lexeme}]";
                         newToken.Value = s;
                         newToken.Lexeme = $"\"{s}\"";
-                        return new Expression.PropertyGet(expr, newToken);
+                        return new Expression.PropertyExpression(expr, newToken);
                     }
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
-                    expr = new Expression.PropertyGet(expr, name);
+                    expr = new Expression.PropertyExpression(expr, name);
                 }
                 else if (Match(TokenType.LeftSquareBracket))
                     expr = ArrayAccess(expr);

@@ -27,5 +27,11 @@ dll sdl3 function SDL_RenderDebugText(ptr renderer, f32 x, f32 y, string str);
 dll sdl3 function SDL_SetRenderDrawColor(ptr renderer, int r, int g, int b, int a);
 dll sdl3 function SDL_RenderClear(ptr renderer);
 dll sdl3 function SDL_SetRenderScale(ptr renderer, f32 scaleX, f32 scaleY);
+dll sdl3 function SDL_LoadWAV(ptr path, ptr audiospec, ptr audio_buf, u32* audio_len) : bool;
+dll sdl3 function SDL_OpenAudioDeviceStream(int devid, ptr audiospec, ptr callback, ptr userdata) : ptr;
+dll sdl3 function SDL_ResumeAudioStreamDevice(ptr stream) : bool;
+dll sdl3 function SDL_GetAudioStreamAvailable(ptr stream) : int;
+dll sdl3 function SDL_PutAudioStreamData(ptr stream, ptr buf, int len) : bool;
+dll sdl3 function SDL_free(ptr mem);
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  //SDL_Surface* as result

@@ -12,7 +12,7 @@ namespace GroundCompiler.AstNodes
 
         public interface IVisitor<T>
         {
-            T VisitorPropertyGet(PropertyGet expr);
+            T VisitorPropertyGet(PropertyExpression expr);
             T VisitorPropertySet(PropertySet expr);
             T VisitorAssignment(Assignment expr);
             T VisitorBinary(Binary expr);
@@ -27,12 +27,12 @@ namespace GroundCompiler.AstNodes
 
 
         // identifier.identifier
-        public class PropertyGet : Expression
+        public class PropertyExpression : Expression
         {
             public Expression ObjectNode;
             public Token Name;
             
-            public PropertyGet(Expression @object, Token name)
+            public PropertyExpression(Expression @object, Token name)
             {
                 ObjectNode = @object;
                 Name = name;
@@ -752,7 +752,7 @@ namespace GroundCompiler.AstNodes
                     functionName = functionNameVariable.Name.Lexeme;
 
                 // When we have an methodcall, we use the scope from the class
-                if (FunctionNameNode is Expression.PropertyGet functionNameGet)
+                if (FunctionNameNode is Expression.PropertyExpression functionNameGet)
                 {
                     Expression propGetObjectNode = functionNameGet.ObjectNode;
 
@@ -809,7 +809,7 @@ namespace GroundCompiler.AstNodes
 
                 foreach (var arg in ArgumentNodes)
                 {
-                    if (arg is Expression.PropertyGet exprGet)
+                    if (arg is Expression.PropertyExpression exprGet)
                     {
                         var currentScope = exprGet.GetScope();
                         var objectNodeVar = exprGet.ObjectNode as Expression.Variable;
