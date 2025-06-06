@@ -81,6 +81,7 @@ namespace GroundCompiler
                     if (SkipIfMatch(":",  token, TokenType.Separator, TokenType.Colon)) break;
                     if (SkipIfMatch(",",  token, TokenType.Separator, TokenType.Comma)) break;
                     if (SkipIfMatch(".",  token, TokenType.Separator, TokenType.Dot)) break;
+                    if (SkipIfMatch("?",  token, TokenType.Separator, TokenType.QuestionMark)) break;
                     if (SkipIfMatch("(",  token, TokenType.Separator, TokenType.OpenBracket)) break;
                     if (SkipIfMatch(")",  token, TokenType.Separator, TokenType.CloseBracket)) break;
                     if (SkipIfMatch("{",  token, TokenType.Separator, TokenType.LeftBrace)) break;
@@ -101,16 +102,22 @@ namespace GroundCompiler
 
                 if (token.Contains(TokenType.Assembly))
                 {
-                    int needleBegin = needle;
-                    SkipUntil("{");
-                    int needleEnd = needle;
-                    string attributes = sourcecode.Substring(needleBegin, needleEnd - needleBegin).Trim();
-                    if (attributes.Length > 0)
-                        token.Properties["attributes"] = attributes;
-                    NextChar();
-                    string s = ReadMatching(IsNotRightBrace);
-                    token.Value = s;
-                    NextChar();
+                    int oldNeedle = needle;
+                    var firstNonSpace = GetFirstNonSpaceChar();
+                    if (firstNonSpace != ';')
+                    {
+                        needle = oldNeedle;
+                        int needleBegin = needle;
+                        SkipUntil("{");
+                        int needleEnd = needle;
+                        string attributes = sourcecode.Substring(needleBegin, needleEnd - needleBegin).Trim();
+                        if (attributes.Length > 0)
+                            token.Properties["attributes"] = attributes;
+                        NextChar();
+                        string s = ReadMatching(IsNotRightBrace);
+                        token.Value = s;
+                        NextChar();
+                    }
                 }
 
                 if (defines != null)
@@ -155,6 +162,7 @@ namespace GroundCompiler
             if (sLower == "for")   { fill(token, sLower, TokenType.Keyword, TokenType.For);   return; }
             if (sLower == "asm")   { fill(token, sLower, TokenType.Keyword, TokenType.Assembly); return; }
             if (sLower == "break") { fill(token, sLower, TokenType.Keyword, TokenType.Break); return; }
+            if (sLower == "this")  { fill(token, sLower, TokenType.Keyword, TokenType.This); return; }
             if (sLower == "null")  { fill(token, sLower, TokenType.Keyword, TokenType.Null); return; }
             if (sLower == "return") { fill(token, sLower, TokenType.Keyword, TokenType.Return); return; }
             if (sLower == "in") { fill(token, sLower, TokenType.In); return; }

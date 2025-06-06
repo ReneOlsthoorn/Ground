@@ -109,12 +109,7 @@ namespace GroundCompiler
             Codeline($"sub   rsp, {stackSpaceNeeded}");
             StackSub(stackSpaceNeeded);
             if (insertRefCountBlock)
-            {
-                Codeline($"mov   qword [rbp-G_FIRST_REFCOUNT_PTR], 0");
-                Codeline($"mov   qword [rbp-G_LAST_REFCOUNT_PTR], 0");
-                Codeline($"mov   qword [rbp-G_FIRST_TMPREFCOUNT_PTR], 0");
-                Codeline($"mov   qword [rbp-G_LAST_TMPREFCOUNT_PTR], 0");
-            }
+                Codeline($"call  ClearRefCountPtrs");
         }
 
         public void EndFunction(int returnPop = 0, bool noFrameRestoration = false)

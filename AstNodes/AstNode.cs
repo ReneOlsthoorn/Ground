@@ -36,7 +36,12 @@ namespace GroundCompiler.AstNodes
             }
         }
 
-        public void AddNode(AstNode node) => _Nodes.Add(node);
+        public void AddNode(AstNode node, int? theIndex = null) {
+            if (theIndex != null)
+                _Nodes.Insert(theIndex.Value, node);
+            else
+                _Nodes.Add(node);
+        }
 
         public AstNode? FindParentType(Type typeToFind)
         {

@@ -45,6 +45,7 @@ namespace GroundCompiler
         RightBrace,   // }
         Comma,        // ,
         Dot,          // .
+        QuestionMark, // ?
         RangeTo,      // ..
         RangeUntil,   // ..<
         Asterisk,     // *
@@ -56,6 +57,7 @@ namespace GroundCompiler
         In,           // in
         Assembly,     // asm keyword
         Null,         // null
+        This,         // this
         LiteralAssemblyPiece, 
         If,           // if
         Else,         // else

@@ -18,10 +18,6 @@ namespace GroundCompiler.AstNodes
             R VisitorWhile(WhileStatement stmt);
             R VisitorIf(IfStatement stmt);
             R VisitorExpression(ExpressionStatement stmt);
-            R VisitorFunction(FunctionStatement stmt);
-            R VisitorClass(ClassStatement stmt);
-            R VisitorDll(DllStatement stmt);
-            R VisitorGroup(GroupStatement stmt);
             R VisitorReturn(ReturnStatement stmt);
             R VisitorBreak(BreakStatement stmt);
             R VisitorAssembly(AssemblyStatement stmt);
@@ -220,9 +216,12 @@ namespace GroundCompiler.AstNodes
                     InitializerNode.Initialize();
 
                     if (InitializerNode is Expression.List listExpr)
+                    {
                         varSymbol.Properties["assigned element"] = listExpr;
+                        InitializerNode.ExprType = ResultType;
+                    }
 
-                    // Hardcoded Arrays are valuetype. That must be respected in assigned variables.
+                    // Hardcoded Arrays (ASM arrays) are valuetype. That must be respected in assigned variables.
                     //if (ResultType.Contains(Datatype.TypeEnum.Array) && Initializer.ExprType.Contains(Datatype.TypeEnum.Array) && (!Initializer.ExprType.IsReferenceType))
                     // Why is the line above removed: when we call a DLL function, the result is never a array type, because function have no result type.
                     // We should declare a returntype for a function, but the solution beneath is a shortcut.
@@ -476,11 +475,7 @@ namespace GroundCompiler.AstNodes
                 return false;
             }
 
-            [DebuggerStepThrough]
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
-                return visitor.VisitorDll(this);
-            }
+            public override T Accept<T>(IVisitor<T> visitor) => default!;
         }
 
 
@@ -549,11 +544,7 @@ namespace GroundCompiler.AstNodes
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
 
-            [DebuggerStepThrough]
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
-                return visitor.VisitorClass(this);
-            }
+            public override T Accept<T>(IVisitor<T> visitor) => default!;
         }
 
 
@@ -608,11 +599,7 @@ namespace GroundCompiler.AstNodes
             public Scope GetScopeFromStatement() => this.Scope;
             public Token GetScopeName() => this.Name;
 
-            [DebuggerStepThrough]
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
-                return visitor.VisitorGroup(this);
-            }
+            public override T Accept<T>(IVisitor<T> visitor) => default!;
         }
 
 
@@ -844,11 +831,7 @@ namespace GroundCompiler.AstNodes
                 return false;
             }
 
-            [DebuggerStepThrough]
-            public override R Accept<R>(IVisitor<R> visitor)
-            {
-                return visitor.VisitorFunction(this);
-            }
+            public override T Accept<T>(IVisitor<T> visitor) => default!;
         }
 
 

@@ -1,4 +1,13 @@
 
+
+ClearRefCountPtrs:
+  mov   qword [rbp-G_FIRST_REFCOUNT_PTR], 0
+  mov   qword [rbp-G_LAST_REFCOUNT_PTR], 0
+  mov   qword [rbp-G_FIRST_TMPREFCOUNT_PTR], 0
+  mov   qword [rbp-G_LAST_TMPREFCOUNT_PTR], 0
+  ret
+
+
 StoreBytes:
 ; rcx = nr of bytes
 ; rdx = destination pointer

@@ -27,8 +27,76 @@ namespace GroundCompiler
 
         public static void Evaluate(ProgramNode rootNode)
         {
-            /* Evaluate the sizeof() function, etc... */
+            /* Transform [12] fixed */
+            foreach (Statement.VarStatement varStatement in rootNode.FindAllNodes(typeof(Statement.VarStatement)).ToList())
+            {
+                if (varStatement.InitializerNode is Expression.List list)
+                {
+                    if (list.Properties.ContainsKey("fixed"))
+                    {
+                        string theGeneratedLabel = $"fixed_gen_{varStatement.Name.Lexeme}";
 
+                        varStatement.ResultType.IsValueType = true;
+                        var labelNameToken = new Token(TokenType.Identifier);
+                        labelNameToken.Lexeme = theGeneratedLabel;
+                        var gToken = new Token(TokenType.Identifier);
+                        gToken.Lexeme = "g";
+
+                        Expression.Variable newVar = new Expression.Variable(gToken);
+                        var propExpr = new Expression.PropertyExpression(newVar, labelNameToken);
+                        newVar.Parent = varStatement;
+                        varStatement.InitializerNode = propExpr;
+
+                        var theValues = new List<string>();
+                        foreach (var expr in list.ElementsNodes)
+                        {
+                            if (expr is Expression.Literal literal)
+                                theValues.Add(Convert.ToString(literal.Value)!);
+                        }
+
+                        string asmDataSize;
+                        switch (list.ExprType!.Base!.SizeInBytes)
+                        {
+                            case 8:
+                                asmDataSize = "dq";
+                                break;
+                            case 4:
+                                asmDataSize = "dd";
+                                break;
+                            case 2:
+                                asmDataSize = "dw";
+                                break;
+                            case 1:
+                                asmDataSize = "db";
+                                break;
+                            default:
+                                asmDataSize = "dq";
+                                break;
+                        }
+
+                        Token asmStrToken = new Token();
+                        String asmStr = "";
+
+                        if (list.ElementsNodes.Count == 0)
+                        {
+                            UInt64 nrBytes = list.SizeInBytes();                           
+                            asmStr = $"{theGeneratedLabel} db {nrBytes} dup(0)";
+                        } else
+                            asmStr = $"{theGeneratedLabel} {asmDataSize} {string.Join(",", theValues)}";
+
+                        asmStrToken.Value = asmStr;
+                        asmStrToken.Properties["attributes"] = "data";
+                        var asmStatement = new AssemblyStatement(asmStrToken);
+
+                        var theRootBlocknode = rootNode.Nodes.First();
+                        theRootBlocknode.AddNode(asmStatement);
+                        asmStatement.Parent = theRootBlocknode;
+                    }
+                }
+            }
+
+
+            /* Evaluate the sizeof() function, etc... */
             List<NodeReplace> toReplace = new();
             foreach (Expression.FunctionCall functionCall in rootNode.FindAllNodes(typeof(Expression.FunctionCall)))
                 ResolveSizeOf(functionCall, ref toReplace);

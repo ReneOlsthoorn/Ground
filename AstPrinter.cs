@@ -19,34 +19,6 @@ namespace GroundCompiler
             return builder.ToString();
         }
 
-
-        public string VisitorClass(Statement.ClassStatement stmt)
-        {
-            var builder = new StringBuilder();
-            builder.Append("(class " + stmt.Name.Lexeme);
-
-            //if (stmt.Superclass != null)
-            //    builder.Append(" < " + Print(stmt.Superclass));
-
-            foreach (var method in stmt.FunctionNodes)
-                builder.Append(" " + Print(method));
-
-            builder.Append(")");
-            return builder.ToString();
-        }
-
-        public string VisitorGroup(Statement.GroupStatement stmt)
-        {
-            var builder = new StringBuilder();
-            builder.Append("(group " + stmt.Name.Lexeme);
-
-            foreach (var method in stmt.FunctionNodes)
-                builder.Append(" " + Print(method));
-
-            builder.Append(")");
-            return builder.ToString();
-        }
-
         public string VisitorBreak(Statement.BreakStatement stmt)
         {
             return "(break)";
@@ -56,16 +28,11 @@ namespace GroundCompiler
         {
             return "(assembly)";
         }
-        public string VisitorDll(Statement.DllStatement stmt)
-        {
-            return "(dll)";
-        }
 
         public string VisitorPoke(Statement.PokeStatement stmt)
         {
             return "(poke)";
         }
-
 
         public string VisitorReturn(Statement.ReturnStatement stmt)
         {
@@ -117,29 +84,14 @@ namespace GroundCompiler
             return Parenthesize(";", stmt.ExpressionNode);
         }
 
-        public string VisitorFunction(FunctionStatement stmt)
+        public string Print(AstNode node)
         {
-            var builder = new StringBuilder();
-            builder.Append("(function " + stmt.Name.Lexeme + "(");
-
-            foreach (var param in stmt.Parameters)
-            {
-                if (param != stmt.Parameters[0])
-                    builder.Append(" ");
-
-                builder.Append(param.TheType + " " + param.Name);
-            }
-
-            builder.Append(") ");
-
-            foreach (var body in stmt.BodyNode.Nodes)
-                builder.Append(((Statement)body).Accept(this));
-
-            builder.Append(")");
-            return builder.ToString();
+            if (node is Expression expr)
+                return expr.Accept(this);
+            if (node is Statement statement)
+                return statement.Accept(this);
+            return "";
         }
-
-
 
         public string Print(Expression expr)
         {

@@ -26,6 +26,28 @@ namespace GroundCompiler.AstNodes
         }
 
 
+        public class ThisExpression : Expression
+        {
+            public Token Keyword;
+
+            public ThisExpression(Token keyword)
+            {
+                this.Keyword = keyword;
+            }
+
+            public override void Initialize()
+            {
+                var scope = GetScope();
+
+                var classStmt = this.FindParentType(typeof(ClassStatement)) as ClassStatement;
+                if (classStmt != null)
+                    ExprType = Datatype.GetDatatype(classStmt.Name.Lexeme);
+            }
+
+            public override T Accept<T>(IVisitor<T> visitor) => default!;
+        }
+
+
         // identifier.identifier
         public class PropertyExpression : Expression
         {
@@ -334,29 +356,19 @@ namespace GroundCompiler.AstNodes
             public override void Initialize()
             {
                 var scope = GetScope();
-
-                if (Name.Lexeme == "this")
-                {
-                    var classStmt = this.FindParentType(typeof(ClassStatement)) as ClassStatement;
-                    if (classStmt != null)
-                        ExprType = Datatype.GetDatatype(classStmt.Name.Lexeme);
-                }
+                var symbol = GetSymbol(Name.Lexeme, scope!);
+                if (symbol is Scope.Symbol.ParentScopeVariable)
+                    ExprType = (symbol as Scope.Symbol.ParentScopeVariable)!.DataType;
+                else if (symbol is Scope.Symbol.LocalVariableSymbol)
+                    ExprType = (symbol as Scope.Symbol.LocalVariableSymbol)!.DataType;
+                else if (symbol is Scope.Symbol.FunctionParameterSymbol)
+                    ExprType = (symbol as Scope.Symbol.FunctionParameterSymbol)!.DataType;
+                else if (symbol is Scope.Symbol.HardcodedVariable)
+                    ExprType = (symbol as Scope.Symbol.HardcodedVariable)!.DataType;
+                else if (symbol is Scope.Symbol.FunctionSymbol)
+                    ExprType = Datatype.GetDatatype("ptr");
                 else
-                {
-                    var symbol = GetSymbol(Name.Lexeme, scope!);
-                    if (symbol is Scope.Symbol.ParentScopeVariable)
-                        ExprType = (symbol as Scope.Symbol.ParentScopeVariable)!.DataType;
-                    else if (symbol is Scope.Symbol.LocalVariableSymbol)
-                        ExprType = (symbol as Scope.Symbol.LocalVariableSymbol)!.DataType;
-                    else if (symbol is Scope.Symbol.FunctionParameterSymbol)
-                        ExprType = (symbol as Scope.Symbol.FunctionParameterSymbol)!.DataType;
-                    else if (symbol is Scope.Symbol.HardcodedVariable)
-                        ExprType = (symbol as Scope.Symbol.HardcodedVariable)!.DataType;
-                    else if (symbol is Scope.Symbol.FunctionSymbol)
-                        ExprType = Datatype.GetDatatype("ptr");
-                    else
-                        ExprType = Datatype.Default;
-                }
+                    ExprType = Datatype.Default;
             }
 
             [DebuggerStepThrough]
@@ -763,19 +775,17 @@ namespace GroundCompiler.AstNodes
                     if (functionNameGet.ObjectNode is Expression.Variable functionNameVar)
                     {
                         string funcName = functionNameVar.Name.Lexeme;
-                        if (funcName != "this")
-                        {
-                            var theSymbol = scope.GetVariableAnywhere(funcName);
+                        var theSymbol = scope.GetVariableAnywhere(funcName);
 
-                            var theClass = theSymbol.GetClassStatement();
-                            if (theClass != null)
-                                scope = theClass.GetScope();
+                        var theClass = theSymbol.GetClassStatement();
+                        if (theClass != null)
+                            scope = theClass.GetScope();
 
-                            var theGroupStmt = theSymbol.GetGroupStatement();
-                            if (theGroupStmt != null)
-                                scope = theGroupStmt.GetScope();
-                        }
+                        var theGroupStmt = theSymbol.GetGroupStatement();
+                        if (theGroupStmt != null)
+                            scope = theGroupStmt.GetScope();
                     }
+
                     if (functionNameGet.ObjectNode is Expression.ArrayAccess objectNodeArray) {
                         ClassStatement? classStatement = (propGetObjectNode.ExprType.Properties.ContainsKey("classStatement")) ? propGetObjectNode.ExprType.Properties["classStatement"] as ClassStatement : null;
                         if (classStatement != null)

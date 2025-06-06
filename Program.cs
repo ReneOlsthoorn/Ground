@@ -10,7 +10,7 @@ namespace GroundCompiler
         string generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
         bool runAfterCompilation = true;
-        bool generateDebugInfo = false;
+        bool generateDebugInfo = true;
 
         static void Main(string[] args)
         {
@@ -18,7 +18,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "unittests.g";  //unittests.g sudoku.g smoothscroller.g smoothscroller_optimized.g mode7.g mode7_optimized.g chipmunk_tennis.g starfield.g plasma_non_colorcycling.g fire.g win32-screengrab.g bertus.g
+                fileName = "plasma_non_colorcycling.g";  //unittests  sudoku  smoothscroller  smoothscroller_optimized   mode7   mode7_optimized   chipmunk_tennis   starfield  plasma_non_colorcycling  fire  win32-screengrab  bertus  snake
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));

@@ -129,6 +129,10 @@ namespace GroundCompiler
             if (Match(TokenType.Assign))
                 initializer = ParseExpression();
 
+            if (Match(TokenType.Assembly))
+                if (initializer is Expression.List listItem)
+                    listItem.Properties["fixed"] = true;
+
             Consume(TokenType.SemiColon, "VarDeclaration: Expected ';' after variable declaration.");
             return new Statement.VarStatement(datatype, name, initializer);
         }
@@ -357,7 +361,6 @@ namespace GroundCompiler
                 var equals = NextToken();
                 var rightValue = Assignment();
 
-                // Do we have an identifier.identifier (so a property-set) on the left side?
                 if (expr is Expression.PropertyExpression getExpr)
                     return new Expression.PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
 
@@ -463,6 +466,11 @@ namespace GroundCompiler
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
                     expr = new Expression.PropertyExpression(expr, name);
                 }
+                else if (Match(TokenType.QuestionMark))
+                {
+                    var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
+                    expr = new Expression.PropertyExpression(expr, name);
+                }
                 else if (Match(TokenType.LeftSquareBracket))
                     expr = ArrayAccess(expr);
                 else
@@ -517,6 +525,9 @@ namespace GroundCompiler
                 Token token = NextToken();
                 return new Expression.Literal(token.Datatype!, token.Value!);
             }
+
+            if (Check(TokenType.This))
+                return new Expression.ThisExpression(NextToken());
 
             if (Check(TokenType.Identifier))
                 return new Expression.Variable(NextToken());
@@ -668,7 +679,7 @@ namespace GroundCompiler
             return; // remove if you want debug info
 
             var astPrinter = new AstPrinter();
-            foreach (Statement statement in node.BodyNode.AllNodes())
+            foreach (AstNode statement in node.BodyNode.AllNodes())
                 Console.WriteLine(astPrinter.Print(statement));
         }
 

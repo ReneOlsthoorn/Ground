@@ -1,55 +1,89 @@
 
+
 GC_Allocate:
-;INPUT:  rcx contains the requested size
-;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+;INPUT:  rcx = requested size in bytes
+;OUTPUT: rcx = INDEXSPACE rownr
+;        rax = pointer to allocated memory
+;This method just reserves a clean index and a clean memory piece.
+
   WaitLock  G_LOCKOBJECT_INDEXSPACE
   push	rsi r8
-  and	ecx, 0xffffff80 ; 128 bytes alignment
-  add   rcx, 128
-  mov	rsi, [indexSpaceLevel]        ; earlier: indexSpacePointer
+  and	ecx, 0xffffff80					; 128 bytes alignment
+  add   rcx, 128						; rcx = requested size
+
+  mov	rsi, [indexSpaceLevel]			; rsi = index element used to allocate the memory
+
   mov   rax, rsi
   sub   rax, [indexSpacePointer]
-  shr   rax, 5                          ; divide by GC_INDEXSPACE_ROWSIZE
-  sub	rsi, GC_INDEXSPACE_ROWSIZE
+  shr   rax, 5                          ; divide by GC_INDEXSPACE_ROWSIZE, so eax is the element nr.
+
+; Check if the indexSpaceLevel must be reset
+  mov	rdx, [indexSpaceNrElements]
+  sub	rdx, 1							; last element index
+  cmp	rax, rdx
+  jl	.noIndexOverflow
+  mov	rsi, [indexSpacePointer]
+  mov	[indexSpaceLevel], rsi
+  xor	eax, eax
+.noIndexOverflow:
+
+; Check if the variableSpaceNeedle is near the variableSpaceSize 
+  mov	rdx, [variableSpacePointer]
+  add	rdx, [variableSpaceSize]
+  mov	r8, [variableSpaceNeedle]
+  add	r8, rcx
+  cmp	r8, rdx
+  jl	.noVariableSpaceOverflow
+; try to reuse the existing memory referenced in the indexSpace
+  mov	rsi, [indexSpacePointer]
+  mov	[indexSpaceLevel], rsi
+  xor	eax, eax
+.noVariableSpaceOverflow:  
+
   xor	edx, edx
-;  xor	eax, eax
-  dec	eax
+  jmp	.skipNextRowAdding
+
 .rowloop:
   add	rsi, GC_INDEXSPACE_ROWSIZE      ; NEXT ROW
   inc	eax
-  cmp	qword [rsi], 0
+.skipNextRowAdding:
+
+  cmp	qword [rsi], 0					; pointer to memory available? Should be:  cmp qword [rsi+GC_INDEXSPACE_ALLOCATED_MEMORY_POINTER], 0
   je	.create_new_block
 
-  mov   r8, [indexSpaceMax]      ; Determine the indexSpaceMax
+  mov   r8, [indexSpaceMax]				; Determine the indexSpaceMax
   cmp   r8, rsi
   jge   .noIncreaseMaxIndexPointer
   mov   [indexSpaceMax], rsi
 .noIncreaseMaxIndexPointer:
 
-  mov   r8, [indexSpaceLevel]    ; Determine the indexSpaceLevel
+  mov   r8, [indexSpaceLevel]			; Determine the indexSpaceLevel
   cmp   r8, rsi
   jge   .noIncreaseIndexLevel
   mov   [indexSpaceLevel], rsi
 .noIncreaseIndexLevel:
 
-  cmp	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 0
+  cmp	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 0		; Is het blok vrij of wordt er nog gebruik van gemaakt?
   jne	.rowloop
-  cmp	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
+  cmp	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx		; Is de grootte van het blok wel groot genoeg voor onze vraag
   jl	.rowloop
-  mov	rdx, [rsi]
+  mov	rdx, [rsi]						; pointer to memory is in offset 0   (see GC_INDEXSPACE_ALLOCATED_MEMORY_POINTER)
   jmp	.reuse_found_block
+
 .create_new_block:
   mov	rdx, [variableSpaceNeedle]
   mov	qword [rsi], rdx
   mov	qword [rsi+GC_INDEXSPACE_SIZE_OFFSET], rcx
   add	qword [variableSpaceNeedle], rcx
+
 .reuse_found_block:
   mov	dword [rsi+GC_INDEXSPACE_NRREFS_OFFSET], 1  ; by default, an allocation gets a referencecount of 1.
   mov	rcx, rax				; INDEXSPACE rownr in rcx
-  mov	rax, rdx				; memptr in rax
+  mov	rax, rdx				; pointer to allocated memory in rax
   pop	r8 rsi
   FreeLock  G_LOCKOBJECT_INDEXSPACE
   ret
+
 
 
 AddReference:
