@@ -14,10 +14,10 @@ namespace GroundCompiler
         AstPrinter AstPrint = new AstPrinter();
         readonly string CodeTemplateName;
 
-        public Compiler(string template) {
+        public Compiler(string template, Dictionary<string, Token>? defines = null) {
             CodeTemplateName = template;
             cpu = new CPU_X86_64();
-            emitter = new CodeEmitterX64(cpu);
+            emitter = new CodeEmitterX64(cpu, defines);
         }
 
         public string GenerateAssembly(Statement stmt)
@@ -388,7 +388,7 @@ namespace GroundCompiler
                     return null;
                 }
 
-                emitter.Push(expr.ValueNode);
+                emitter.Push(expr.ValueNode.ExprType);
             }
             ClassStatement? classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
@@ -452,26 +452,28 @@ namespace GroundCompiler
         {
             PrintAst(expr);
 
+            var conversionDatatype = expr.DetermineConversionDatatype();
+
             EmitExpression(expr.RightNode);
-            EmitConversionCompatibleType(expr.RightNode, expr.ExprType);
-            emitter.Push(expr);
+            EmitConversionCompatibleType(expr.RightNode, conversionDatatype);
+            emitter.Push(conversionDatatype);
 
             EmitExpression(expr.LeftNode);
-            EmitConversionCompatibleType(expr.LeftNode, expr.ExprType);
+            EmitConversionCompatibleType(expr.LeftNode, conversionDatatype);
 
             switch (expr.Operator.Type)
             {
                 case TokenType.Plus:
-                    emitter.PopAdd(expr);
+                    emitter.PopAdd(expr, conversionDatatype);
                     break;
                 case TokenType.Minus:
-                    emitter.PopSub(expr);
+                    emitter.PopSub(expr, conversionDatatype);
                     break;
                 case TokenType.Asterisk:
-                    emitter.PopMul(expr);
+                    emitter.PopMul(expr, conversionDatatype);
                     break;
                 case TokenType.Slash:
-                    emitter.PopDiv(expr);
+                    emitter.PopDiv(expr, conversionDatatype);
                     break;
                 case TokenType.Ampersand:
                     emitter.PopBitwiseAnd();
@@ -484,44 +486,44 @@ namespace GroundCompiler
                     emitter.PopBitwiseOr();
                     break;
                 case TokenType.Greater:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "ja");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("ja");
                     else
                         emitter.PopGreaterToBoolean();
                     break;
                 case TokenType.GreaterEqual:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "jae");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("jae");
                     else
                         emitter.PopGreaterEqualToBoolean();
                     break;
                 case TokenType.Less:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "jb");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("jb");
                     else
                         emitter.PopLessToBoolean();
                     break;
                 case TokenType.LessEqual:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "jbe");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("jbe");
                     else
                         emitter.PopLessEqualToBoolean();
                     break;
                 case TokenType.IsEqual:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "je");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("je");
                     else
                     {
-                        emitter.PopSub(expr);
+                        emitter.PopSub(expr, conversionDatatype);
                         emitter.LogicalNot();
                     }
                     break;
                 case TokenType.NotIsEqual:
-                    if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompare(expr, "jne");
+                    if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                        emitter.PopCompareFloat("jne");
                     else
                     {
-                        emitter.PopSub(expr);
+                        emitter.PopSub(expr, conversionDatatype);
                         emitter.Logical();
                     }
                     break;
@@ -538,10 +540,6 @@ namespace GroundCompiler
                     emitter.PopShiftRight();
                     break;
             }
-
-            // After the comparison, set the ExprType to boolean if a == or other boolean result operator is used.
-            if (expr.Operator.Contains(TokenType.BooleanResultOperator))
-                expr.ExprType = Datatype.GetDatatype("bool");
 
             return null;
         }
@@ -734,7 +732,7 @@ namespace GroundCompiler
 
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
-                emitter.Push(arg);
+                emitter.Push(arg.ExprType);
             }
 
             bool pushLexicalParent = (dllFunctionSymbol == null);
@@ -998,7 +996,7 @@ namespace GroundCompiler
             // *a  (a = int*)
             if (exprDatatype.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
             {
-                emitter.LoadPointingTo(exprDatatype.Base!);
+                emitter.LoadPointingTo((exprDatatype.Base == null) ? Datatype.Default : exprDatatype.Base);
                 return null;
             }
 

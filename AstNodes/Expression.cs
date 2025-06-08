@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using static GroundCompiler.AstNodes.Statement;
 using static GroundCompiler.Scope;
 
@@ -6,7 +7,7 @@ namespace GroundCompiler.AstNodes
 {
     public abstract class Expression : AstNode
     {
-        public Datatype ExprType = Datatype.Default;
+        public Datatype ExprType = Datatype.Default;    // This is the result datatype for this expression. In the initialize phase, the type is determined.
 
         public abstract T Accept<T>(IVisitor<T> visitor);
 
@@ -25,6 +26,82 @@ namespace GroundCompiler.AstNodes
             T VisitorArrayAccess(ArrayAccess expr);
         }
 
+
+        public Symbol? GetSymbol(string name, Scope scope)
+        {
+            if (name == "g")
+                return new Symbol.GroupSymbol("g");
+
+            var symbol = scope.GetVariable(name);
+            if (symbol == null)
+            {
+                symbol = scope.GetVariableAnywhere(name);
+                if (symbol == null)
+                    Compiler.Error($"Symbol {name} does not exist.");
+
+                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol || symbol is Symbol.GroupSymbol || symbol is Symbol.ClassSymbol)
+                    return symbol;
+
+                // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.
+                Symbol.LocalVariableSymbol? variableSymbol = symbol as Symbol.LocalVariableSymbol;
+                int levelsDeep = 0;
+                var needleScope = scope;
+                IScopeStatement? ownerScope = needleScope.Owner;
+                while (!needleScope.Contains(name))
+                {
+                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement || ownerScope is ProgramNode))   // Dit zijn niet echte calling scopes.
+                        levelsDeep++;
+
+                    needleScope = needleScope.Parent;
+                    if (needleScope == null)
+                        break;
+
+                    ownerScope = needleScope.Owner;
+                }
+                if (ownerScope == null)
+                    Compiler.Error("Expression>>GetSymbol error.");
+
+                return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!, variableSymbol!);
+            }
+
+            return symbol;
+        }
+
+
+        public static bool CombinationContaining(List<Expression> nodes, List<Datatype.TypeEnum> theTypes)
+        {
+            foreach (Datatype.TypeEnum theType in theTypes)
+            {
+                bool found = false;
+                foreach (Expression node in nodes)
+                {
+                    found = node.ExprType.Contains(theType);
+                    if (found)
+                        break;
+                }
+
+                if (!found)
+                    return false;
+            }
+            return true;
+        }
+
+        public static bool HasNodeWithDatatype(List<Expression> nodes, Datatype.TypeEnum theType)
+        {
+            foreach (Expression node in nodes)
+                if (node.ExprType.Contains(theType))
+                    return true;
+            return false;
+        }
+
+
+        public static Expression? GetNodeWithDatatype(List<Expression> nodes, Datatype.TypeEnum theType)
+        {
+            foreach (Expression node in nodes)
+                if (node.ExprType.Contains(theType))
+                    return node;
+            return null;
+        }
 
         public class ThisExpression : Expression
         {
@@ -302,47 +379,6 @@ namespace GroundCompiler.AstNodes
         }
 
 
-        public Symbol? GetSymbol(string name, Scope scope)
-        {
-            if (name == "g")
-                return new Symbol.GroupSymbol("g");
-
-            var symbol = scope.GetVariable(name);
-            if (symbol == null)
-            {
-                symbol = scope.GetVariableAnywhere(name);
-                if (symbol == null)
-                    Compiler.Error($"Symbol {name} does not exist.");
-
-                if (symbol is Scope.Symbol.HardcodedVariable || symbol is Scope.Symbol.HardcodedFunctionSymbol || symbol is Symbol.FunctionSymbol || symbol is Symbol.GroupSymbol || symbol is Symbol.ClassSymbol)
-                    return symbol;
-
-                // At this point, the symbol is available but it is in a parent scope, so a ParentScopeVariable must be inserted in the symboltable.
-                Symbol.LocalVariableSymbol? variableSymbol = symbol as Symbol.LocalVariableSymbol;
-                int levelsDeep = 0;
-                var needleScope = scope;
-                IScopeStatement? ownerScope = needleScope.Owner;
-                while (!needleScope.Contains(name))
-                {
-                    if (!(ownerScope is ClassStatement || ownerScope is GroupStatement || ownerScope is ProgramNode))   // Dit zijn niet echte calling scopes.
-                        levelsDeep++;
-
-                    needleScope = needleScope.Parent;
-                    if (needleScope == null)
-                        break;
-
-                    ownerScope = needleScope.Owner;
-                }
-                if (ownerScope == null)
-                    Compiler.Error("Expression>>GetSymbol error.");
-
-                return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!, variableSymbol!);
-            }
-
-            return symbol;
-        }
-
-
         // Identifier
         public class Variable : Expression
         {
@@ -594,12 +630,32 @@ namespace GroundCompiler.AstNodes
             public Expression LeftNode;
             public Token Operator;
             public Expression RightNode;
-            
+
             public Binary(Expression left, Token @operator, Expression right)
             {
                 LeftNode = left;
                 Operator = @operator;
                 RightNode = right;
+            }
+
+            public Datatype DetermineConversionDatatype()
+            {
+                Datatype result = Datatype.Default;
+                if (HasNodeWithDatatype([LeftNode, RightNode], Datatype.TypeEnum.String))
+                    result = Datatype.GetDatatype("string");
+                else if (HasNodeWithDatatype([LeftNode, RightNode], Datatype.TypeEnum.FloatingPoint))
+                    result = Datatype.GetDatatype(GetNodeWithDatatype([LeftNode, RightNode], Datatype.TypeEnum.FloatingPoint)!.ExprType.Name);
+                else if (HasNodeWithDatatype([LeftNode, RightNode], Datatype.TypeEnum.Pointer))
+                    result = Datatype.GetDatatype(GetNodeWithDatatype([LeftNode, RightNode], Datatype.TypeEnum.Pointer)!.ExprType.Name);
+                return result;
+            }
+
+            public Datatype DetermineResultDatatype()
+            {
+                Datatype result = DetermineConversionDatatype();
+                if (Operator.Contains(TokenType.BooleanResultOperator))
+                    result = Datatype.GetDatatype("bool");
+                return result;
             }
 
             public override void Initialize()
@@ -619,10 +675,7 @@ namespace GroundCompiler.AstNodes
                     rightVar.ExprType = scope?.GetVariableDataType(rightVar.Name.Lexeme) ?? Datatype.Default;
                 }
 
-                if (LeftNode.ExprType.Name == "string" || RightNode.ExprType.Name == "string")
-                    this.ExprType = Datatype.GetDatatype("string");
-                else if (LeftNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || RightNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                    this.ExprType = Datatype.GetDatatype("float");
+                this.ExprType = DetermineResultDatatype();
 
                 LeftNode.Parent = this;
                 LeftNode.Initialize();
@@ -631,12 +684,7 @@ namespace GroundCompiler.AstNodes
                 RightNode.Initialize();
 
                 /* After initialisation of the Left and Right a change in the underlying ExprType could be done. Bring it back up the tree. */
-                if (LeftNode.ExprType.Name == "string" || RightNode.ExprType.Name == "string")
-                    this.ExprType = Datatype.GetDatatype("string");
-                else if (LeftNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) || RightNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                    this.ExprType = Datatype.GetDatatype("float");
-                else if (LeftNode.ExprType.Name == "ptr" || RightNode.ExprType.Name == "ptr")
-                    this.ExprType = Datatype.GetDatatype("ptr");
+                this.ExprType = DetermineResultDatatype();
             }
 
             public override IEnumerable<AstNode> Nodes

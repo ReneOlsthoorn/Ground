@@ -54,11 +54,17 @@ assert(i == 5);
 
 
 // Remember: Intel x86 is little endian, which proved to be a better choice over time than the Motorola 68000 big endian, because value's can expand without a problem.
-i = 0x1ffff;
+i = 0x1ffffffff;
 u32* u32p = alternate_iptr;
-*u32p = 0;      // clear the lower 32 bits.
-*(u32p+4) = 1;  // set the higher 32 bits (4 bytes) to 1.
-assert(i == 0x100000000);
+*u32p = 1;      // Clear the lower 32 bits.
+assert(i == 0x100000001);
+j = 0;
+*(u32p+j) = 2;  // One node of the binary expression is a u32* and combining it with an integer must result in a u32* expression type, else this will fail.
+assert(i == 0x100000002);
+u32p[j] = 3;
+assert(i == 0x100000003);
+*(u32p) = 4;
+assert(i == 0x100000004);
 
 
 
@@ -384,6 +390,11 @@ function deep1() {
 }
 deep1();
 assert(xx == 50);
+
+
+float starZ = 218.2914243448;
+i = 100;
+assert(!((i > 200) or (starZ < 0.0)));
 
 
 println("SUCCESS: unittests were completed with SUCCESS.");

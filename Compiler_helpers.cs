@@ -244,7 +244,7 @@ namespace GroundCompiler
             {
                 // *a  (a = int*)
                 if (exprDatatype.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
-                    emitter.StorePointingTo(exprDatatype.Base!);
+                    emitter.StorePointingTo((exprDatatype.Base == null) ? Datatype.Default : exprDatatype.Base);
                 // *a  (a = ptr)
                 else if (exprDatatype.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
                     emitter.StorePointingTo(exprDatatype);
@@ -285,7 +285,7 @@ namespace GroundCompiler
                         cpu.FreeRegister("rdx");
                     }
                     if (i > 0)
-                        emitter.PopAdd(expr);
+                        emitter.PopAdd(expr, expr.ExprType);
                 }
                 emitter.MoveCurrentToRegister(indexReg);
                 int elementSizeInBytes = 0;

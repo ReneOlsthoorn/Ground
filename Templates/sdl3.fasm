@@ -280,15 +280,20 @@ _f_PlotSheetSprite:
   retn  G_STACKSPACE_5_PARAM
 
 
+color@_f_SDL3_ClearScreenPixels equ rbp+G_PARAMETER1
 _f_SDL3_ClearScreenPixels:
+  push  rbp
+  mov   rbp, rsp
   mov	rcx, GC_Screen_DimX*GC_Screen_DimY
   mov	rdx, [pixels_p]
-  mov	eax, 0xff000000
+  mov	rax, qword [color@_f_SDL3_ClearScreenPixels]
   push	rdi
   mov	rdi, rdx
   rep	stosd
   pop   rdi
-  retn  16
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
 
 
 section '.idata' import data readable writeable

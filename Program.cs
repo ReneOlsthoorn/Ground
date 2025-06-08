@@ -10,7 +10,7 @@ namespace GroundCompiler
         string generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
         bool runAfterCompilation = true;
-        bool generateDebugInfo = true;
+        bool generateDebugInfo = false;
 
         static void Main(string[] args)
         {
@@ -18,7 +18,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "plasma_non_colorcycling.g";  //unittests  sudoku  smoothscroller  smoothscroller_optimized   mode7   mode7_optimized   chipmunk_tennis   starfield  plasma_non_colorcycling  fire  win32-screengrab  bertus  snake
+                fileName = "plasma_non_colorcycling.g";  //unittests  sudoku  smoothscroller  smoothscroller_optimized  mode7  mode7_optimized  chipmunk_tennis  starfield  plasma_non_colorcycling  fire  win32-screengrab  bertus  snake
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
@@ -64,7 +64,7 @@ namespace GroundCompiler
             Optimizer.Optimize(ast);
 
             Console.WriteLine("*** Convert AST to x86-64 assembly.");
-            Compiler compiler = new Compiler(template: preprocessor.usedTemplate);
+            Compiler compiler = new Compiler(template: preprocessor.usedTemplate, defines: preprocessor.defines);
             generatedCode = compiler.GenerateAssembly(ast);
 
             Assemble();
@@ -183,7 +183,7 @@ namespace GroundCompiler
             if (!runAfterCompilation)
                 return;
 
-            Console.WriteLine("*** Starting the executable.\r\n");
+            Console.WriteLine($"*** Starting {sourceFilename}.exe\r\n");
             string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.exe"));
             Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
         }

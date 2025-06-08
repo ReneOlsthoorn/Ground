@@ -83,8 +83,8 @@ namespace GroundCompiler
 
         public static Dictionary<string, Datatype> Cached = new() {
             { "int",    Datatype.FromData("int",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
-            { "ptr",    Datatype.FromData("ptr",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
-            { "pointer",Datatype.FromData("pointer",[ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
+            { "ptr",    Datatype.FromData("ptr",    [ TypeEnum.Pointer, TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
+            { "pointer",Datatype.FromData("pointer",[ TypeEnum.Pointer, TypeEnum.Number, TypeEnum.Integer, TypeEnum.Unsigned ], isValueType:true, nrBytes:8) },
             { "i64",    Datatype.FromData("i64",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:8) },
             { "i32",    Datatype.FromData("i32",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:4) },
             { "i16",    Datatype.FromData("i16",    [ TypeEnum.Number, TypeEnum.Integer, TypeEnum.Signed ],   isValueType:true, nrBytes:2) },

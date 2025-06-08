@@ -124,7 +124,9 @@ namespace GroundCompiler.AstNodes
                 this.Scope.DefineHardcodedVariable("GC_Screen_TextColumns", Datatype.GetDatatype("int"));
                 this.Scope.DefineHardcodedFunction("zero");
                 this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
-                this.Scope.DefineHardcodedFunction("SDL3_ClearScreenPixels");
+
+                fn = this.Scope.DefineHardcodedFunction("SDL3_ClearScreenPixels");
+                fn.FunctionStmt.Parameters.Add(new FunctionParameter("color", Datatype.GetDatatype("int")));
 
                 // Usage:   byte[61,36] screenArray = GC_ScreenText;
                 var screenPtrDatatype = Datatype.GetDatatype("byte[]", new List<UInt64> { 61, 36 });

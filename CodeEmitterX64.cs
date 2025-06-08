@@ -19,11 +19,12 @@ namespace GroundCompiler
         public long StackPos = -8;  // position of the stack for align16 purposes. Resetted in EmitProcedure>>EmitCreateStackframe()
         long labelCounter = 0;
 
-        public CodeEmitterX64(CPU_X86_64 cpu)
+        public CodeEmitterX64(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null)
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
             GeneratedCode_Equates = new List<string>();
+            InsertPreprocessorDefines(preprocessorDefines);
             GeneratedCode_Main = new List<string>();
             GeneratedCode_Procedures = new List<string>();
             GeneratedCode_Data = new List<string>();
@@ -195,9 +196,9 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void Push(AstNodes.Expression? expr = null)
+        public void Push(Datatype? conversionDatatype = null)
         {
-            if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
+            if (conversionDatatype != null && conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
                 PushFloat();
             else
             {
@@ -237,9 +238,9 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public void PopAdd(AstNodes.Expression? expr = null)
+        public void PopAdd(AstNodes.Expression expr, Datatype conversionDatatype)
         {
-            if (expr?.ExprType.Name == "string")
+            if (conversionDatatype.Contains(Datatype.TypeEnum.String))
             {
                 // We do string concatenation, this allocates memory. Clean the references so memory won't get drained when we are in a loop. 
                 var blockType = expr.FindParentType(typeof(BlockStatement)) as BlockStatement;
@@ -250,7 +251,7 @@ namespace GroundCompiler
                 return;
             }
 
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
@@ -267,28 +268,25 @@ namespace GroundCompiler
         }
 
 
-        public void PopCompare(AstNodes.Expression? expr, string trueJmpCondition = "je")
+        public void PopCompareFloat(string trueJmpCondition = "je")
         {
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-            {
-                var exitLabel = NewLabel();
+            var exitLabel = NewLabel();
 
-                var floatReg = cpu.GetTmpFloatRegister();
-                PopFloat($"{floatReg}");
-                Codeline($"mov   rax, 1");
-                Codeline($"comisd xmm0, {floatReg}");
-                Codeline($"{trueJmpCondition}    {exitLabel}");
-                Codeline($"mov   rax, 0");
-                Codeline($"jmp   {exitLabel}");
-                cpu.FreeRegister(floatReg);
-                InsertLabel(exitLabel);
-            }
+            var floatReg = cpu.GetTmpFloatRegister();
+            PopFloat($"{floatReg}");
+            Codeline($"mov   rax, 1");
+            Codeline($"comisd xmm0, {floatReg}");
+            Codeline($"{trueJmpCondition}    {exitLabel}");
+            Codeline($"mov   rax, 0");
+            Codeline($"jmp   {exitLabel}");
+            cpu.FreeRegister(floatReg);
+            InsertLabel(exitLabel);
         }
 
 
-        public void PopSub(AstNodes.Expression? expr = null)
+        public void PopSub(AstNodes.Expression.Binary expr, Datatype conversionDatatype)
         {
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.String))
+            if (conversionDatatype.Contains(Datatype.TypeEnum.String))
             {
                 // We have the situation that in string comparison there can be a null value in both arguments.
                 var nullExitLabel = NewLabel();
@@ -307,7 +305,7 @@ namespace GroundCompiler
                 Codeline($"call   GetMemoryPointerFromIndex");
                 Codeline($"mov    rcx, rax");
                 Codeline($"pop    rax");
-                StackPop();
+                //StackPop(); // deze tweede pop doen we niet, omdat normaal gesproken er maar 1 tijdens executie wordt uitgevoerd.
                 Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
                 Codeline($"je     {secondArgNull}");
                 Codeline($"call   GetMemoryPointerFromIndex");
@@ -321,7 +319,7 @@ namespace GroundCompiler
                 return;
             }
 
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
@@ -337,12 +335,13 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
-        public void PopMul(AstNodes.Expression? expr = null)
+
+        public void PopMul(AstNodes.Expression expr, Datatype conversionDatatype)
         {
-            if (!(expr?.ExprType.Contains(Datatype.TypeEnum.Number) ?? false))
+            if (!conversionDatatype.Contains(Datatype.TypeEnum.Number))
                 Compiler.Error("CodeEmitterX64>>PopMul: Cannot multiply expressions that are not numbers.");
 
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
@@ -358,9 +357,9 @@ namespace GroundCompiler
             cpu.FreeRegister("rdx");
         }
 
-        public void PopDiv(AstNodes.Expression? expr = null)
+        public void PopDiv(AstNodes.Expression expr, Datatype conversionDatatype)
         {
-            if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
@@ -889,5 +888,15 @@ namespace GroundCompiler
         public void StackSub(int size = 8) => StackPos -= size;
         public void StackPush(int size = 8) => StackSub(size);
         public void StackPop(int size = 8) => StackAdd(size);
+
+
+        void InsertPreprocessorDefines(Dictionary<string, Token>? preprocessorDefines = null)
+        {
+            if (preprocessorDefines == null)
+                return;
+
+            foreach (var key in preprocessorDefines.Keys)
+                GeneratedCode_Equates.Add($"{key}={preprocessorDefines[key].Lexeme}\r\n");
+        }
     }
 }

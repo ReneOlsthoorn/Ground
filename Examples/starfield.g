@@ -2,31 +2,35 @@
 
 #template sdl3
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
 #include user32.g
 #include sidelib.g
 
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
-
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Travelling Through Stars", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
-sdl3.SDL_SetRenderVSync(renderer, 1);
-
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int frameCount = 0;
-u32[960, 560] pixels = null;
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
 int pitch = g.GC_ScreenLineSize;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
+
+
+ptr thread1Handle = kernel32.GetCurrentThread();
+int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
+kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
+
+sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
+ptr window = sdl3.SDL_CreateWindow("Travelling Through Stars", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+sdl3.SDL_SetRenderVSync(renderer, 1);
+sdl3.SDL_HideCursor();
+
 
 int numberOfStars = 700;
 int SeedStarfield = 123123;
@@ -121,14 +125,13 @@ InitStarField();
 
 while (StatusRunning)
 {
-	while (sdl3.SDL_PollEvent(&event[0])) {
-		if (*eventType == g.SDL_EVENT_QUIT) {
+	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
+		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
-		}
+
 		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
-			}
 		}
 	}
 
@@ -146,10 +149,11 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 	sdl3.SDL_RenderPresent(renderer);
-
 	frameCount++;
 }
 
+
+sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
@@ -157,5 +161,5 @@ sdl3.SDL_Quit();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 
-string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-user32.MessageBox(null, showStr, "Message", g.MB_OK);
+//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+//user32.MessageBox(null, showStr, "Message", g.MB_OK);

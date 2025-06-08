@@ -34,13 +34,13 @@ int gameOverFramecount = 0;
 int nrBlocksHit = 0;
 int nrEnemyBalls = 4;
 int score = 1000;
-int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6];  // Simulates a jump
-int[] randomBallSpread = [0,1,2,3,4,5,6,1,2,3,4,5,2,3,4,3];
-int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0];  // length: 49. State of each possible block.
-int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];  // which blocks of the blockState are solid. Defines the shape of the level.
-int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47];
-int[] level3 = [8,9,10,11,15,16,17,18,19,21,22,25,26,29,30,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48];
-int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31,32,34,35,36,37,38,39,40];
+int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6] asm;  // Simulates a jump
+int[] randomBallSpread = [0,1,2,3,4,5,6,1,2,3,4,5,2,3,4,3] asm;
+int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0] asm;  // length: 49. State of each possible block.
+int[] level1 = [3,9,10,16,17,18,22,23,24,25,29,30,31,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48] asm;  // which blocks of the blockState are solid. Defines the shape of the level.
+int[] level2 = [7,9,10,12,14,15,16,18,19,20,21,22,23,24,25,26,29,30,31,32,33,36,37,38,39,43,44,45,46,47] asm;
+int[] level3 = [8,9,10,11,15,16,17,18,19,21,22,25,26,29,30,32,33,35,36,37,38,39,40,42,43,44,45,46,47,48] asm;
+int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31,32,34,35,36,37,38,39,40] asm;
 int* levelPtr = &level1[0];
 int levelSize = sizeof(level1) / sizeof(int);
 asm data {spritesheet_p dq 0}
@@ -224,11 +224,6 @@ function GotoLevel() {
 	for (i in 0 ..< nrEnemyBalls) { initBall(i); }
 }
 
-function RestartGame() {
-	score = 1000;
-	level = 1;
-	GotoLevel();
-}
 
 function Draw() {
 	if (bertus.fallenOffCounter >= 16) { bertus.draw(); }
@@ -370,7 +365,7 @@ while (StatusRunning)
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 
-	SDL3_ClearScreenPixels();
+	SDL3_ClearScreenPixels(0xff000000);
 	Draw();
 	if (levelCompleteFramecount == 0 and gameOverFramecount == 0)
 		MoveElements();
@@ -384,7 +379,7 @@ while (StatusRunning)
 
 	if (levelCompleteFramecount > 0) {
 		if (level == 4) {
-			writeText(renderer, 100.0, 60.0, "All 4 levels completed!");
+			writeText(renderer, 60.0, 60.0, "All 4 levels completed!");
 			writeText(renderer, 100.0, 80.0, "Game finished!");
 			writeText(renderer, 100.0, 100.0, "Score is " + score);
 		}
@@ -411,7 +406,11 @@ while (StatusRunning)
 		writeText(renderer, 100.0, 70.0, "*** Game over! ***");
 		writeText(renderer, 100.0, 90.0, "    Try again...");
 		gameOverFramecount++;
-		if (gameOverFramecount > 125) {	RestartGame(); }
+		if (gameOverFramecount > 125) {	
+			if (level == 1)
+				score = 1000;
+			GotoLevel();
+		}
 	}	
 	if (gameOverFramecount == 0 && levelCompleteFramecount == 0)
 		writeText(renderer, 20.0, 30.0, "Score: " + score);
