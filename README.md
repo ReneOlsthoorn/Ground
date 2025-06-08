@@ -314,6 +314,12 @@ There is also an example which interfaces with the Chipmunk Physics engine. Chec
 Try to beat my score. Will not be easy!
 </p>
 
+### Snake game
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Snake.jpg?raw=true" width="498" /><br/>
+Feed the snake 100 meals.
+</p>
+
 ### Changelog
 2025.01.29: Added kotlin for-loops:
 ```
