@@ -397,4 +397,39 @@ i = 100;
 assert(!((i > 200) or (starZ < 0.0)));
 
 
+byte[15,15] board = [ ] asm;
+
+function copyLine(ptr dest, string src) {
+	ptr src_p = &src;
+asm {
+  mov	rdx, [src_p@copyLine]
+  mov	r8, [dest@copyLine]
+.loop:
+  mov	al, [rdx]
+  test	al, al
+  jz	.exitloop
+  cmp	al, '.'
+  jne	.notempty
+  mov	al, 0
+  jmp	.setfield
+.notempty:
+  mov	al, 1
+.setfield:
+  mov	byte [r8], al
+  inc	r8
+  inc	rdx
+  jmp	.loop
+.exitloop:
+}
+}
+
+function PlaceAchimsp16(int x, int y) {
+	copyLine(&board[x,y++], ".......**");
+	copyLine(&board[x,y++], "..*.*..*.");
+}
+
+PlaceAchimsp16(1,2);
+assert(board[5,3] == 1);
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

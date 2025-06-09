@@ -126,9 +126,11 @@ namespace GroundCompiler
 
                     if (stmt.InitializerNode!.ExprType.IsReferenceType)
                     {
-                        var reg = emitter.Gather_CurrentStackframe();
-                        emitter.AddReference(stmt.InitializerNode);
-                        cpu.FreeRegister(reg);
+                        if (!IsUnaryAddressOf(stmt.InitializerNode!)) {
+                            var reg = emitter.Gather_CurrentStackframe();
+                            emitter.AddReference(stmt.InitializerNode);
+                            cpu.FreeRegister(reg);
+                        }
                     }
 
                     var assemblyVarName = emitter.AssemblyVariableName(localVarSymbol, stmt.GetScope()?.Owner);
@@ -727,7 +729,7 @@ namespace GroundCompiler
                 EmitExpression(arg);
 
                 // In een DLL aanroep willen we altijd de memory-location meegeven in plaats van de memory-index.
-                if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType)
+                if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType && (!IsUnaryAddressOf(arg)))
                     emitter.GetMemoryPointerFromIndex();
 
                 FunctionParameter fPar = fPars[i];

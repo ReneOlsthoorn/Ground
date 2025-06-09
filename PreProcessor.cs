@@ -54,7 +54,7 @@ namespace GroundCompiler
             }
             if (line.StartsWith("#include"))
             {
-                string fileToInclude = line.Split()[1].Trim();
+                string fileToInclude = line.Substring("#include".Length).Trim();
                 ClearLineAtIndex(index);
                 IncludeFileAtIndex(index, fileToInclude);
                 return true;

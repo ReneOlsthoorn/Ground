@@ -195,6 +195,7 @@ namespace GroundCompiler
             if (variableExpr.ExprType.IsReferenceType)
             {
                 VariableRead(variableExpr);
+                emitter.GetMemoryPointerFromIndex();
                 return;
             }
 
@@ -379,6 +380,12 @@ namespace GroundCompiler
             }
         }
 
+        public bool IsUnaryAddressOf(Expression expr)
+        {
+            if (expr is Expression.Unary unaryExpr)
+                return unaryExpr.Operator.Contains(TokenType.Ampersand);
+            return false;
+        }
 
     }
 }
