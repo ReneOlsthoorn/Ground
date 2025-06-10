@@ -1,9 +1,8 @@
 
 // John Conway's Game Of Life.
-// Calculate the center color of every 3x3 on the board with the following rules:
-// 1) When the colored center cell is surrounded with 2 or 3 colored cells, it remains colored.
-// 2) When the colored center cell is surrounded by 4 or more colored cells, it is removed.
-// 3) When an empty cell is surrounded by exactly 3 cells, the center cell is colored.
+// Calculate whether the center cell of every 3x3 block on the board is alive with the following rules:
+// 1) When a center cell is surrounded by exactly 3 live cells, the center cell is born.
+// 2) When the living center cell is surrounded with 2 or 3 colored cells, it remains alive.
 
 #template sdl3
 
@@ -22,7 +21,7 @@
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
-byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] generation2 = [ ] asm;
+byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] nextBoard = [ ] asm;
 u32[6] fgColorList = [ 0xff7D7D7C, 0xffffff00, 0xffffffff, 0xffff00ff, 0xff00ffff, 0xffffffff ];
 u32[6] bgColorList = [ 0xffBBBBBB, 0xffFEE92D, 0xffbbbbbb, 0xffff00ff, 0xff00ffff, 0xffffffff ];
 bool StatusRunning = true;
@@ -70,23 +69,17 @@ function NrNeighbours(int x, int y) : int {
 }
 
 
-function CalculateCenterCell(int x, int y) {
-	int nr = NrNeighbours(x, y);
-	bool isColored = (board[x,y] == 1);
-	if (isColored) {
-		// 1) When the colored center cell is surrounded with 2 or 3 colored cells, it remains colored.
-		// 2) When the colored center cell is surrounded by 4 or more colored cells, it is removed.
-		if (nr == 2 or nr == 3) {
-			generation2[x,y] = 1;
-		} else if (nr >= 4) {
-			generation2[x,y] = 0;
-		}
-	} else {
-		// 3) When an empty cell is surrounded by exactly 3 cells, the center cell is colored.
-		if (nr == 3) {
-			generation2[x,y] = 1;
-		}
-	}
+function CalculateCenterCellIn3x3Block(int x, int y) {
+	int nrNeighboursAliveIn3x3Block = NrNeighbours(x, y);
+	bool isAlive = (board[x,y] == 1);
+
+	// 1) When a center cell is surrounded by exactly 3 live cells, the center cell is born.
+	if (nrNeighboursAliveIn3x3Block == 3)
+		nextBoard[x,y] = 1; // born or remains alive
+
+	// 2) When the living center cell is surrounded with 2 or 3 colored cells, it remains alive.
+	if (nrNeighboursAliveIn3x3Block == 2 && isAlive)
+		nextBoard[x,y] = 1;
 }
 
 
@@ -99,16 +92,16 @@ function DoGeneration() {
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
-			generation2[x,y] = 0;
+			nextBoard[x,y] = 0;
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
-			CalculateCenterCell(x,y);
+			CalculateCenterCellIn3x3Block(x,y);
 
-	// Overwrite the board with generation2
+	// Overwrite the board with nextBoard
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
-			board[x,y] = generation2[x,y];
+			board[x,y] = nextBoard[x,y];
 }
 
 
@@ -117,27 +110,45 @@ function DoGeneration() {
 
 function ShowNextFigure() {
 	figureShow++;
-	if (figureShow == 8)
+	if (figureShow == 9)
 		figureShow = 1;
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
 			board[x,y] = 0;
 
-	if (figureShow == 1)
-		PlaceAchimsp16(35, 16);
-	if (figureShow == 2)
-		PlaceAchimsp144(27, 12);
-	if (figureShow == 3)
-		PlaceBeluchenkosp37(20,4);
-	if (figureShow == 4)
-		PlaceMerzenich(30, 12);
+	if (figureShow == 1) {
+		PlaceAchimsp16(15, 16);
+		PlaceAchimsp16(55, 16);
+		PlaceAchimsp16(95, 16);
+		PlaceAchimsp16(35, 40);
+		PlaceAchimsp16(75, 40);
+	}
+	if (figureShow == 2) {
+		PlaceAchimsp144(10, 12);
+		PlaceAchimsp144(60, 12);
+		PlaceAchimsp144(30, 40);
+		PlaceAchimsp144(80, 40);
+	}
+	if (figureShow == 3) {
+		PlaceBeluchenkosp37(12,13);
+		PlaceBeluchenkosp37(70,13);
+	}
+	if (figureShow == 4) {
+		PlaceMerzenich(15, 13);
+		PlaceMerzenich(55, 13);
+		PlaceMerzenich(95, 13);
+		PlaceMerzenich(35, 40);
+		PlaceMerzenich(75, 40);
+	}
 	if (figureShow == 5)
 		PlaceSuhajda104P177(35,12);
 	if (figureShow == 6)
 		Place119P4H1V0(40,20);
 	if (figureShow == 7)
 		PlaceGliderGun(4,4);
+	if (figureShow == 8)
+		Place106P135(32,20);
 
 	frameCountToStartGeneration = frameCount + 60;
 }
