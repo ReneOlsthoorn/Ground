@@ -432,4 +432,13 @@ PlaceAchimsp16(1,2);
 assert(board[5,3] == 1);
 
 
+function fun(f32* x) {
+	*x = 64.0;
+}
+f32 f2 = 32.0;
+fun(&f2);
+int fInt = f2 / 8.0;
+assert(fInt == 8);
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

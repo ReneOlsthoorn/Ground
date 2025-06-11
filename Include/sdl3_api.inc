@@ -90,4 +90,7 @@ import sdl3,\
 	   sdl3_SDL_GetAudioStreamAvailable, 'SDL_GetAudioStreamAvailable',\
 	   sdl3_SDL_PutAudioStreamData, 'SDL_PutAudioStreamData',\
 	   sdl3_SDL_free, 'SDL_free',\
+	   sdl3_SDL_GetMouseState, 'SDL_GetMouseState',\
+	   sdl3_SDL_PumpEvents, 'SDL_PumpEvents',\
+	   sdl3_SDL_HasMouse, 'SDL_HasMouse',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'

@@ -351,7 +351,11 @@ namespace GroundCompiler
                 if (sourceDatatype.Contains(Datatype.TypeEnum.Integer))
                     emitter.IntegerToString(sourceExpr);
                 else if (sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                {
+                    if (sourceDatatype.SizeInBytes == 4)
+                        emitter.resizeCurrentFloatingPoint(4, 8); // convert from f32 to f64, because FloatToString only prints 64-bit float values.
                     emitter.FloatToString(sourceExpr);
+                }
                 else if (sourceDatatype.Contains(Datatype.TypeEnum.Boolean))
                     emitter.BooleanToString(sourceExpr);
 
@@ -366,7 +370,7 @@ namespace GroundCompiler
             }
             else if (destinationDatatype.Contains(Datatype.TypeEnum.Integer) && sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
-                emitter.FloatToInteger();
+                emitter.FloatToInteger(sourceDatatype, destinationDatatype);
                 if (copyDatatypeToSource)
                     sourceExpr.ExprType = destinationDatatype;
             }

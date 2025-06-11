@@ -127,6 +127,7 @@ IntegerToString:
   ret
 
 
+;the %f only prints 64-bit floats, so convert f32 to f64 before using this function.
 FloatToString:
   push  r8 r9 rsi rdi r10
   movq  rax, xmm0

@@ -97,9 +97,25 @@ namespace GroundCompiler.AstNodes
 
         public static Expression? GetNodeWithDatatype(List<Expression> nodes, Datatype.TypeEnum theType)
         {
+            List<Expression> matches = new List<Expression>();
             foreach (Expression node in nodes)
                 if (node.ExprType.Contains(theType))
-                    return node;
+                    matches.Add(node);
+
+            // als er meerdere nodes gevonden zijn, haal dan de literal nodes eruit. Een literal heeft namelijk minder zwaarte dan een variabele om ExprType te bepalen.
+            if (matches.Count >= 2)
+            {
+                var newMatches = matches.Where(el => !(el is Expression.Literal)).ToList();
+                if (newMatches.Count > 0)
+                    matches = newMatches;
+            }
+
+            // als er nu nog steeds meerdere zijn, dan moet je de grootste SizeInBytes pakken.
+            //if (matches.Count >= 2)
+            //    matches.OrderByDescending(el => el.ExprType.SizeInBytes);
+
+            if (matches.Count >= 1)
+                return matches.First();
             return null;
         }
 
@@ -348,6 +364,11 @@ namespace GroundCompiler.AstNodes
                             this.ExprType = Datatype.Default;
                         else
                             this.ExprType = this.ExprType.Base;
+                }
+                if (Operator.Types.Contains(TokenType.Ampersand))
+                {
+                    Datatype dt = Datatype.GetDatatype(ExprType.Name + "*");
+                    ExprType = dt;
                 }
             }
 

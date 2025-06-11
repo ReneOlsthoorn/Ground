@@ -1,14 +1,15 @@
 
 
 function writeText(ptr renderer, float x, float y, string text) {
-	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 	f32 scale = 1.3;
 	sdl3.SDL_SetRenderScale(renderer, scale, scale);
 	f32 theX = x;
 	f32 theY = y;
-	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
+	sdl3.SDL_RenderDebugText(renderer, theX-2.0, theY, text);
+
 	sdl3.SDL_SetRenderDrawColor(renderer, 0xe0, 0xe0, 0xe0, 0xff);
-	theX = x - 2.0;
 	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
 }
 
@@ -76,14 +77,14 @@ function FillHorizontal(int y, int nrLines, u32 color) {
 
 
 function DrawBoard() {
-	FillHorizontal(0, 4, fgColorList[0]);
+	//FillHorizontal(0, 4, fgColorList[0]);
 	for (y in 0 ..< GRID_ELEMENTS_Y) {
 		for (x in 0 ..< GRID_ELEMENTS_X) {
 			DrawGridElement(x,y, board[x,y]);
 		}
 	}
-	FillHorizontal(SCREEN_HEIGHT-4, 1, bgColorList[0]);
-	FillHorizontal(SCREEN_HEIGHT-3, 3, fgColorList[0]);
+	//FillHorizontal(SCREEN_HEIGHT-4, 1, bgColorList[0]);
+	//FillHorizontal(SCREEN_HEIGHT-3, 3, fgColorList[0]);
 }
 
 
@@ -105,6 +106,31 @@ asm {
 .setfield:
   mov	byte [r8], al
   inc	r8
+  inc	rdx
+  jmp	.loop
+.exitloop:
+}
+}
+
+
+function copyLineR(ptr dest, string src) {
+	ptr src_p = &src;
+asm {
+  mov	rdx, [src_p@copyLine]
+  mov	r8, [dest@copyLine]
+.loop:
+  mov	al, [rdx]
+  test	al, al
+  jz	.exitloop
+  cmp	al, '.'
+  jne	.notempty
+  mov	al, 0
+  jmp	.setfield
+.notempty:
+  mov	al, 1
+.setfield:
+  mov	byte [r8], al
+  dec	r8
   inc	rdx
   jmp	.loop
 .exitloop:

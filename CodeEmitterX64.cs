@@ -255,7 +255,10 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
-                Codeline($"addsd xmm0, {floatReg}");
+                if (conversionDatatype.SizeInBytes == 4)
+                    Codeline($"addss xmm0, {floatReg}");
+                else
+                    Codeline($"addsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -323,7 +326,10 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
-                Codeline($"subsd xmm0, {floatReg}");
+                if (conversionDatatype.SizeInBytes == 4)
+                    Codeline($"subss xmm0, {floatReg}");
+                else
+                    Codeline($"subsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -345,7 +351,10 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
-                Codeline($"mulsd xmm0, {floatReg}");
+                if (conversionDatatype.SizeInBytes == 4)
+                    Codeline($"mulss xmm0, {floatReg}");
+                else
+                    Codeline($"mulsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -363,7 +372,10 @@ namespace GroundCompiler
             {
                 var floatReg = cpu.GetTmpFloatRegister();
                 PopFloat($"{floatReg}");
-                Codeline($"divsd xmm0, {floatReg}");
+                if (conversionDatatype.SizeInBytes == 4)
+                    Codeline($"divss xmm0, {floatReg}");
+                else
+                    Codeline($"divsd xmm0, {floatReg}");
                 cpu.FreeRegister(floatReg);
                 return;
             }
@@ -684,9 +696,12 @@ namespace GroundCompiler
             resizeCurrentFloatingPoint(sourceNrBytes: 8, destinationNrBytes: destinationSize);
         }
 
-        public void FloatToInteger()
+        public void FloatToInteger(Datatype sourceDatatype, Datatype destinationDatatype)
         {
-            Codeline("cvtsd2si rax, xmm0");
+            if (sourceDatatype.SizeInBytes == 4)
+                Codeline("cvtss2si rax, xmm0");
+            else
+                Codeline("cvtsd2si rax, xmm0");
         }
 
         public void InsertLabel(string label)
@@ -867,7 +882,14 @@ namespace GroundCompiler
             if (sourceNrBytes == 8 && destinationNrBytes == 8)
                 return;
             if (sourceNrBytes == 8 && destinationNrBytes == 4)
+            {
+                var tmpReg = cpu.GetTmpFloatRegister();
                 Codeline($"cvtsd2ss  xmm0, xmm0");
+                Codeline($"movaps {tmpReg}, xmm0");
+                Codeline($"xorps xmm0, xmm0");
+                Codeline($"movss xmm0, {tmpReg}");
+                cpu.FreeRegister(tmpReg);
+            }
             if (sourceNrBytes == 4 && destinationNrBytes == 8)
                 Codeline($"cvtss2sd  xmm0, xmm0");
         }

@@ -22,6 +22,7 @@
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
 byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] nextBoard = [ ] asm;
+byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] oldBoard = [ ] asm;
 u32[6] fgColorList = [ 0xff7D7D7C, 0xffffff00, 0xffffffff, 0xffff00ff, 0xff00ffff, 0xffffffff ];
 u32[6] bgColorList = [ 0xffBBBBBB, 0xffFEE92D, 0xffbbbbbb, 0xffff00ff, 0xff00ffff, 0xffffffff ];
 bool StatusRunning = true;
@@ -31,8 +32,8 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int pitch = g.GC_ScreenLineSize;
-int figureShow = 4;
-
+int figureShow = 0;
+int generations = 0;
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -43,9 +44,7 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
-
 #include game-of-life helper.g
-
 
 function NrNeighbours(int x, int y) : int {
 	int nr = 0;
@@ -68,7 +67,6 @@ function NrNeighbours(int x, int y) : int {
 	return nr;
 }
 
-
 function CalculateCenterCellIn3x3Block(int x, int y) {
 	int nrNeighboursAliveIn3x3Block = NrNeighbours(x, y);
 	bool isAlive = (board[x,y] == 1);
@@ -81,7 +79,6 @@ function CalculateCenterCellIn3x3Block(int x, int y) {
 	if (nrNeighboursAliveIn3x3Block == 2 && isAlive)
 		nextBoard[x,y] = 1;
 }
-
 
 function DoGeneration() {
 	if (frameCount < frameCountToStartGeneration)
@@ -98,61 +95,68 @@ function DoGeneration() {
 		for (x in 0 ..< GRID_ELEMENTS_X)
 			CalculateCenterCellIn3x3Block(x,y);
 
-	// Overwrite the board with nextBoard
-	for (y in 0 ..< GRID_ELEMENTS_Y)
-		for (x in 0 ..< GRID_ELEMENTS_X)
-			board[x,y] = nextBoard[x,y];
-}
+	bool isOldBoardNextBoard = true;
+	for (y in 0 ..< GRID_ELEMENTS_Y) {
+		for (x in 0 ..< GRID_ELEMENTS_X) {
+			if (oldBoard[x,y] != nextBoard[x,y])
+				isOldBoardNextBoard = false;
+		}
+	}
+	if not (isOldBoardNextBoard)
+		generations++;
 
+	for (y in 0 ..< GRID_ELEMENTS_Y)
+		for (x in 0 ..< GRID_ELEMENTS_X) {
+			oldBoard[x,y] = board[x,y];
+			board[x,y] = nextBoard[x,y];
+		}
+}
 
 #include game-of-life patterns.g
 
-
 function ShowNextFigure() {
-	figureShow++;
-	if (figureShow == 9)
-		figureShow = 1;
+	int halfX = GRID_ELEMENTS_X / 2;
+	int halfY = GRID_ELEMENTS_Y / 2;
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
 			board[x,y] = 0;
 
+	figureShow++;
+	if (figureShow == 8)
+		figureShow = 1;
+
 	if (figureShow == 1) {
-		PlaceAchimsp16(15, 16);
-		PlaceAchimsp16(55, 16);
-		PlaceAchimsp16(95, 16);
-		PlaceAchimsp16(35, 40);
-		PlaceAchimsp16(75, 40);
+		PlaceSuhajda104P177(35,12);
 	}
 	if (figureShow == 2) {
-		PlaceAchimsp144(10, 12);
-		PlaceAchimsp144(60, 12);
-		PlaceAchimsp144(30, 40);
-		PlaceAchimsp144(80, 40);
+		Place119P4H1V0(40,10);
+		PlaceShip5(80,40);
+		PlaceShip2(20,40);
 	}
 	if (figureShow == 3) {
-		PlaceBeluchenkosp37(12,13);
+	    PlaceAchimsp16(15, 16);
+		PlaceAchimsp144(20, 40);
 		PlaceBeluchenkosp37(70,13);
 	}
 	if (figureShow == 4) {
-		PlaceMerzenich(15, 13);
-		PlaceMerzenich(55, 13);
-		PlaceMerzenich(95, 13);
-		PlaceMerzenich(35, 40);
-		PlaceMerzenich(75, 40);
+		PlacePufferTrain(5, 16);
 	}
-	if (figureShow == 5)
-		PlaceSuhajda104P177(35,12);
-	if (figureShow == 6)
-		Place119P4H1V0(40,20);
-	if (figureShow == 7)
+	if (figureShow == 5) {
 		PlaceGliderGun(4,4);
-	if (figureShow == 8)
-		Place106P135(32,20);
+		PlaceGliderEater(21,57);
+	}
+	if (figureShow == 6) {
+		PlacePentomino(halfX-2,halfY-2);
+	}
+	if (figureShow == 7) {
+		PlaceMerzenich(15, 13);
+		Place106P135(52,20);
+	}
 
 	frameCountToStartGeneration = frameCount + 60;
+	generations = 0;
 }
-
 
 ShowNextFigure();
 while (StatusRunning)
@@ -179,7 +183,13 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
-	writeText(renderer, 10.0, 10.0, "Press [space] for new fig. " + figureShow);
+	f32 mouseX;
+	f32 mouseY;
+	sdl3.SDL_GetMouseState(&mouseX, &mouseY);
+	int gridPosX = mouseX / GRID_ELEMENT_PIXELS;
+	int gridPosY = mouseY / GRID_ELEMENT_PIXELS;
+	writeText(renderer, 10.0, 10.0, "Fig: " + figureShow + " Gen: " + generations + " X: " + gridPosX + " Y: " + gridPosY);
+	writeText(renderer, 10.0, 20.0, "Press [space] for next fig.");
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
