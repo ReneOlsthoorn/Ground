@@ -1,14 +1,12 @@
 # Ground
 
-This project is the compiler for the programming language "Ground". The name reflects the vision that code needs to 
-keep in contact with the ground of all code which is assembly. So, it allows x86-64 assembly language to be added 
-anywhere in the code. Mixing Ground- and assembly is possible due to generated symbolic constants for each local 
-Ground variable. The primary focus for Ground is creating highspeed programs for Windows.  
-The language has constructs like classes, with support for instance variables and methods, functions, groups of functions, 
+This is the compiler for the programming language Ground. The name reflects the vision that highspeed code needs to 
+stay in contact with it's ground, which is x86-64. So, it allows x86-64 assembly to be added anywhere in the code. 
+Mixing ground- and assembly is possible by using the generated symbolic constants in your assembly code. 
+The language has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like "while" and "if", datatypes like "string" and "float", etc...  
-See file Examples\unittests.g for some usage.  
-The compiler itself is created in C# and the generated x86-64 assembly is compatible with the free FASM assembler for
-Windows.  
+See file Examples\unittests.g on how to use many constructs.  
+The compiler itself is created in C# and the generated x86-64 assembly is assembled with FASM for Windows.  
 The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template. A second reason why 
@@ -21,17 +19,15 @@ like msvcrt, is promoted.
 The central concept of Ground is the ability to replace a statement with x86-64. So for example we have the following
 code in mode7.g:
 ```
-		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+		for (x in 0..< g.GC_Screen_DimX) {
 			float fSampleWidth = x / float_ScreenDIMx;
 			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
-			...
 ```
 
 We can replace a statement with x86-64:
 ```
-		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+		for (x in 0..< g.GC_Screen_DimX) {
 			float fSampleWidth = x / float_ScreenDIMx;
-
 			//float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 			float fSampleX;
 			asm {
@@ -43,10 +39,9 @@ We can replace a statement with x86-64:
 				addsd xmm0, xmm2
 				movq [fSampleX@main], xmm0
 			}
-			...
 ```
 
-Diving into this language will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
+Diving into this project will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format, the x64 calling convention and Compiler Design.
 
 The C programming language is 50 years old at this moment. It is a well-known language to do low-level programming, but 
