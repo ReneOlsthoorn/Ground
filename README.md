@@ -331,3 +331,4 @@ for (i in 0..<10) { println(i); }  // from 0..9
 2025.04.15: Bertus game added. Written in 400 lines of code.  
 2025.06.06: Asm arrays added (see snake.g)  
 2025.06.10: Game Of Life added.
+2025.06.13: Removed usage of innerclasses in the structure of the compiler. Using namespaces now.

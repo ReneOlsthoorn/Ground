@@ -1,5 +1,5 @@
-﻿using GroundCompiler.AstNodes;
-using static GroundCompiler.AstNodes.Statement;
+﻿using GroundCompiler.Statements;
+using GroundCompiler.Expressions;
 
 
 namespace GroundCompiler
@@ -130,11 +130,11 @@ namespace GroundCompiler
                 initializer = ParseExpression();
 
             if (Match(TokenType.Assembly))
-                if (initializer is Expression.List listItem)
+                if (initializer is Expressions.List listItem)
                     listItem.Properties["fixed"] = true;
 
             Consume(TokenType.SemiColon, "VarDeclaration: Expected ';' after variable declaration.");
-            return new Statement.VarStatement(datatype, name, initializer);
+            return new VarStatement(datatype, name, initializer);
         }
 
         private Statement PokeStatement()
@@ -164,7 +164,7 @@ namespace GroundCompiler
             Consume(TokenType.Comma, "PokeStatement: Expected comma.");
             Expression? valueExpr = ParseExpression();
             Consume(TokenType.SemiColon, "PokeStatement: Expected ';' after value.");
-            return new Statement.PokeStatement(sizeType, nameToken.Lexeme, valueExpr);
+            return new PokeStatement(sizeType, nameToken.Lexeme, valueExpr);
         }
 
         private Statement ReturnStatement()
@@ -174,7 +174,7 @@ namespace GroundCompiler
                 valueExpr = ParseExpression();
 
             Consume(TokenType.SemiColon, "ReturnStatement: Expected ';' after return value.");
-            return new Statement.ReturnStatement(valueExpr);
+            return new ReturnStatement(valueExpr);
         }
 
         private Statement AssemblyStatement()
@@ -189,7 +189,7 @@ namespace GroundCompiler
             Consume(TokenType.OpenBracket, "IfStatement: Expected '(' after 'if'.");
             var condition = ParseExpression();
             if (notToken != null)
-                condition = new Expression.Unary(notToken, condition);
+                condition = new Unary(notToken, condition);
 
             Consume(TokenType.CloseBracket, "IfStatement: Expected ')' after if condition.");
 
@@ -199,7 +199,7 @@ namespace GroundCompiler
             if (Match(TokenType.Else))
                 elseBranch = ParseStatement();
 
-            return new Statement.IfStatement(condition, thenBranch, elseBranch);
+            return new IfStatement(condition, thenBranch, elseBranch);
         }
 
         private Statement ForStatement()
@@ -219,8 +219,8 @@ namespace GroundCompiler
                 if (Match(TokenType.In))
                 {
                     var rangeDatatype = Datatype.GetDatatype("int");
-                    Expression.Binary rangeExpr = ParseExpression() as Expression.Binary;
-                    initializer = new Statement.VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.LeftNode);
+                    Binary rangeExpr = ParseExpression() as Binary;
+                    initializer = new VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.LeftNode);
                     initializer.Properties["for-loop-variable"] = true;
 
                     Token rangeToOrUntilToken = new Token();
@@ -231,20 +231,20 @@ namespace GroundCompiler
                     else
                         rangeToOrUntilToken.Types.Add(TokenType.Less);
 
-                    var rangeConditionVariable = new Expression.Variable(rangeIdentifier);
-                    Expression rangeConditionExp = new Expression.Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.RightNode);
+                    var rangeConditionVariable = new Variable(rangeIdentifier);
+                    Expression rangeConditionExp = new Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.RightNode);
 
                     Token incrementToken = new Token();
                     incrementToken.Lexeme = "++";
                     incrementToken.Types = new List<TokenType> { TokenType.Operator, TokenType.PlusPlus };
-                    Expression rangeIncrementExp = new Expression.Unary(incrementToken, rangeConditionVariable, postfix: true);
+                    Expression rangeIncrementExp = new Unary(incrementToken, rangeConditionVariable, postfix: true);
 
                     Consume(TokenType.CloseBracket, "ForStatement: Expect ')' after 'for' clauses");
 
                     var sugarBody = ParseStatement();
-                    sugarBody = new Statement.BlockStatement(new List<Statement> { sugarBody, new Statement.ExpressionStatement(rangeIncrementExp) });
-                    sugarBody = new Statement.WhileStatement(rangeConditionExp, sugarBody);
-                    sugarBody = new Statement.BlockStatement(new List<Statement> { initializer, sugarBody });
+                    sugarBody = new BlockStatement(new List<Statement> { sugarBody, new ExpressionStatement(rangeIncrementExp) });
+                    sugarBody = new WhileStatement(rangeConditionExp, sugarBody);
+                    sugarBody = new BlockStatement(new List<Statement> { initializer, sugarBody });
                     return sugarBody;
                 }
             }
@@ -266,15 +266,15 @@ namespace GroundCompiler
             var body = ParseStatement();
 
             if (increment != null)
-                body = new Statement.BlockStatement(new List<Statement> { body, new Statement.ExpressionStatement(increment) });
+                body = new BlockStatement(new List<Statement> { body, new ExpressionStatement(increment) });
 
             if (condition == null)
-                condition = new Expression.Literal(true);
+                condition = new Literal(true);
 
-            body = new Statement.WhileStatement(condition, body);
+            body = new WhileStatement(condition, body);
 
             if (initializer != null)
-                body = new Statement.BlockStatement(new List<Statement> { initializer, body });
+                body = new BlockStatement(new List<Statement> { initializer, body });
 
             return body;
         }
@@ -287,7 +287,7 @@ namespace GroundCompiler
             Consume(TokenType.CloseBracket, "Expected ')' after condition.");
             var body = ParseStatement();
 
-            return new Statement.WhileStatement(condition, body);
+            return new WhileStatement(condition, body);
         }
 
 
@@ -295,7 +295,7 @@ namespace GroundCompiler
         {
             var token = NextToken();
             Consume(TokenType.SemiColon, "BreakStatement: Expected ';' after 'break'.");
-            return new Statement.BreakStatement(token);
+            return new BreakStatement(token);
         }
 
 
@@ -303,7 +303,7 @@ namespace GroundCompiler
         {
             var expr = ParseExpression();
             Consume(TokenType.SemiColon, "Expected ';' after expression.");
-            return new Statement.ExpressionStatement(expr);
+            return new ExpressionStatement(expr);
         }
 
         public Statement ParseStatement()
@@ -320,7 +320,7 @@ namespace GroundCompiler
             if (Match(TokenType.For)) return ForStatement();
             if (Match(TokenType.If)) return IfStatement();
             if (Match(TokenType.While)) return WhileStatement();
-            if (Match(TokenType.LeftBrace)) return new Statement.BlockStatement(Block());
+            if (Match(TokenType.LeftBrace)) return new BlockStatement(Block());
 
             return ExpressionStatement();
         }
@@ -361,10 +361,10 @@ namespace GroundCompiler
                 var equals = NextToken();
                 var rightValue = Assignment();
 
-                if (expr is Expression.PropertyExpression getExpr)
-                    return new Expression.PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
+                if (expr is PropertyExpression getExpr)
+                    return new PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
 
-                return new Expression.Assignment(expr, rightValue, equals);
+                return new Assignment(expr, rightValue, equals);
             }
             return expr;
         }
@@ -387,7 +387,7 @@ namespace GroundCompiler
             {
                 var op = NextToken();
                 var right = higherPrecedence();
-                expr = new Expression.Binary(expr, op, right);
+                expr = new Binary(expr, op, right);
             }
             return expr;
         }
@@ -398,7 +398,7 @@ namespace GroundCompiler
             {
                 var op = NextToken();
                 var right = Unary();
-                if (op.Contains(TokenType.Minus) && right is Expression.Literal literal)
+                if (op.Contains(TokenType.Minus) && right is Literal literal)
                 {
                     Type theType = literal.Value!.GetType();
                     if (literal.ExprType.Contains(Datatype.TypeEnum.Integer))
@@ -407,7 +407,7 @@ namespace GroundCompiler
                         literal.Value = -((double)literal.Value!);
                     return right;
                 }
-                return new Expression.Unary(op, right);
+                return new Unary(op, right);
             }
             return Postfix();
         }
@@ -418,14 +418,14 @@ namespace GroundCompiler
             {
                 var theValue = Primary();
                 var op = NextToken();
-                return new Expression.Unary(op, theValue, postfix: true);
+                return new Unary(op, theValue, postfix: true);
             }
             var higherThanPostfix = Call();
-            if (higherThanPostfix is Expression.PropertyExpression propGet)
+            if (higherThanPostfix is PropertyExpression propGet)
             {
                 if (Check(TokenType.PlusPlus, TokenType.MinusMinus)) {
                     var op = NextToken();
-                    higherThanPostfix = new Expression.Unary(op, higherThanPostfix, postfix: true);
+                    higherThanPostfix = new Unary(op, higherThanPostfix, postfix: true);
                 }
             }
             return higherThanPostfix;
@@ -446,7 +446,7 @@ namespace GroundCompiler
                         if (stringToken.Datatype != null && stringToken.Datatype.Contains(Datatype.TypeEnum.String))
                         {
                             stringToken = NextToken();
-                            return new Expression.PropertyExpression(expr, stringToken);
+                            return new PropertyExpression(expr, stringToken);
                         }
                     }
                     if (Check(TokenType.LeftSquareBracket))
@@ -461,15 +461,15 @@ namespace GroundCompiler
                         string s = $"[{token.Lexeme}]";
                         newToken.Value = s;
                         newToken.Lexeme = $"\"{s}\"";
-                        return new Expression.PropertyExpression(expr, newToken);
+                        return new PropertyExpression(expr, newToken);
                     }
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
-                    expr = new Expression.PropertyExpression(expr, name);
+                    expr = new PropertyExpression(expr, name);
                 }
                 else if (Match(TokenType.QuestionMark))
                 {
                     var name = Consume(TokenType.Identifier, "Expected property name after '.'.");
-                    expr = new Expression.PropertyExpression(expr, name);
+                    expr = new PropertyExpression(expr, name);
                 }
                 else if (Match(TokenType.LeftSquareBracket))
                     expr = ArrayAccess(expr);
@@ -493,7 +493,7 @@ namespace GroundCompiler
             }
 
             Consume(TokenType.RightSquareBracket, "Expect ']' after accessing a collection.");
-            return new Expression.ArrayAccess(collection, accessorElements);
+            return new ArrayAccess(collection, accessorElements);
         }
 
         private Expression FunctionCall(Expression functionName)
@@ -507,7 +507,7 @@ namespace GroundCompiler
             }
 
             Consume(TokenType.CloseBracket, "Expected ')' after arguments.");
-            return new Expression.FunctionCall(functionName, arguments);
+            return new FunctionCall(functionName, arguments);
         }
 
         private Expression Primary()
@@ -515,28 +515,28 @@ namespace GroundCompiler
             if (Check(Datatype.TypeEnum.Boolean))
             {
                 Token token = NextToken();
-                return new Expression.Literal(token.Datatype!, (bool)token.Value!);
+                return new Literal(token.Datatype!, (bool)token.Value!);
             }
             if (Match(TokenType.Null))
-                return new Expression.Literal(null);
+                return new Literal(null);
 
             if (Check(Datatype.TypeEnum.Number, Datatype.TypeEnum.String))
             {
                 Token token = NextToken();
-                return new Expression.Literal(token.Datatype!, token.Value!);
+                return new Literal(token.Datatype!, token.Value!);
             }
 
             if (Check(TokenType.This))
-                return new Expression.ThisExpression(NextToken());
+                return new ThisExpression(NextToken());
 
             if (Check(TokenType.Identifier))
-                return new Expression.Variable(NextToken());
+                return new Variable(NextToken());
 
             if (Match(TokenType.OpenBracket))
             {
                 var expr = ParseExpression();
                 Consume(TokenType.CloseBracket, "Expected ')' after expression.");
-                return new Expression.Grouping(expr);
+                return new Grouping(expr);
             }
 
             if (Match(TokenType.LeftSquareBracket))
@@ -563,8 +563,8 @@ namespace GroundCompiler
             var name = Consume(TokenType.Identifier, "Expect class name before body.");
 
             Consume(TokenType.LeftBrace, "Expect '{' before class body.");
-            var methods = new List<Statement.FunctionStatement>();
-            var instanceVariables = new List<Statement.VarStatement>();
+            var methods = new List<FunctionStatement>();
+            var instanceVariables = new List<VarStatement>();
             while (!Check(TokenType.RightBrace) && !IsAtEnd())
             {
                 if (Match(TokenType.Function))
@@ -585,7 +585,7 @@ namespace GroundCompiler
         {
             var name = Consume(TokenType.Identifier, "Expect group name before body.");
             Consume(TokenType.LeftBrace, "Expect '{' before group body.");
-            var methods = new List<Statement.FunctionStatement>();
+            var methods = new List<FunctionStatement>();
             while (!Check(TokenType.RightBrace) && !IsAtEnd())
             {
                 if (Match(TokenType.Function))
@@ -622,7 +622,7 @@ namespace GroundCompiler
             if (Check(TokenType.Assembly))
             {
                 var asmCode = NextToken();
-                var asmBody = new Statement.BlockStatement(new List<Statement> { new AssemblyStatement(asmCode) });
+                var asmBody = new BlockStatement(new List<Statement> { new AssemblyStatement(asmCode) });
                 var theAsmFunction = new FunctionStatement(name, parameters, asmBody);
                 theAsmFunction.Properties["assembly only function"] = true;
                 if (parameters.Count == 0)
@@ -647,7 +647,7 @@ namespace GroundCompiler
 
             Consume(TokenType.LeftBrace, "FunctionDeclaration: Expected '{' before " + kind + " body.");
 
-            var body = new Statement.BlockStatement(Block());
+            var body = new BlockStatement(Block());
             var theFunctionStatement = new FunctionStatement(name, parameters, body);
             if (resultType != null)
                 theFunctionStatement.ResultDatatype = resultType.Datatype;
@@ -670,7 +670,7 @@ namespace GroundCompiler
             }
 
             Consume(TokenType.RightSquareBracket, "Expect ']' to close a list.");
-            return new Expression.List(elements);
+            return new Expressions.List(elements);
         }
 
 

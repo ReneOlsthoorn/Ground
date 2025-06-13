@@ -1,5 +1,6 @@
-﻿using System;
-using static GroundCompiler.AstNodes.Statement;
+﻿using GroundCompiler.Statements;
+using GroundCompiler.Expressions;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -34,7 +35,7 @@ namespace GroundCompiler
 
         public void Emit_Equ_InstanceVariables()
         {
-            List<Scope.Symbol.LocalVariableSymbol> theVariables = this.ClassStatement.GetScope()!.GetVariableSymbols();
+            List<LocalVariableSymbol> theVariables = this.ClassStatement.GetScope()!.GetVariableSymbols();
 
             int offset = 0;
             foreach (var varSymbol in theVariables)

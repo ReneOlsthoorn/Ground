@@ -7,12 +7,6 @@ function PlaceX(int x, int y) {
 	copyLine(&board[x,y++], "");
 }
 
-//x = 46, y = 46, rule = B3/S23
-//16bo12bo$9b2o24b2o$8b3o3b2o14b2o3b3o$14b2ob2o8b2ob2o$16bo12bo$$$$2bo
-//40bo$b2o40b2o$b2o40b2o$$$$2b2o38b2o$2b2o38b2o$o3bo36bo3bo$3bo38bo$3bo
-//38bo$$$$$$$$$3bo38bo$3bo38bo$o3bo36bo3bo$2b2o38b2o$2b2o38b2o$$$$b2o40b
-//2o$b2o40b2o$2bo40bo$$$$16bo12bo$14b2ob2o8b2ob2o$8b3o3b2o14b2o3b3o$9b2o
-//24b2o$16bo12bo!
 
 function PlaceSuhajda104P177(int x, int y) {
 	copyLine(&board[x,y++], "................O............O................");
@@ -452,32 +446,32 @@ function PlaceShip8(int x, int y) {
 
 
 function PlaceShip9(int x, int y) {
-	copyLine(&board[x,y++], "...............O.....O....");
-	copyLine(&board[x,y++], "..............O.....OO....");
-	copyLine(&board[x,y++], "..............O...O.......");
-	copyLine(&board[x,y++], "...............O....O.....");
-	copyLine(&board[x,y++], "...............O........OO");
-	copyLine(&board[x,y++], "...........OO...O.....O.O.");
-	copyLine(&board[x,y++], "..........O..O....OO......");
-	copyLine(&board[x,y++], ".........O.....O...O...O..");
-	copyLine(&board[x,y++], "..OO....O.O....OO.........");
-	copyLine(&board[x,y++], "..OO......O......O..O.....");
-	copyLine(&board[x,y++], "......O...O......OO..OO..O");
-	copyLine(&board[x,y++], "O....O..OO.............OO.");
-	copyLine(&board[x,y++], "O.O.OO.............O......");
-	copyLine(&board[x,y++], "OO..O.O.............O.....");
-	copyLine(&board[x,y++], "....................O.....");
-	copyLine(&board[x,y++], "...............OOO.O......");
-	copyLine(&board[x,y++], "..............O...O.......");
-	copyLine(&board[x,y++], "..............O..O........");
-	copyLine(&board[x,y++], "..........................");
-	copyLine(&board[x,y++], "............O..O..........");
-	copyLine(&board[x,y++], ".............OO...........");
-	copyLine(&board[x,y++], "............OO............");
-	copyLine(&board[x,y++], "................OO........");
-	copyLine(&board[x,y++], ".............O..OO........");
-	copyLine(&board[x,y++], "............O.............");
-	copyLine(&board[x,y++], "............OOO...........");
+	copyLineR(&board[x,y++], "...............O.....O....");
+	copyLineR(&board[x,y++], "..............O.....OO....");
+	copyLineR(&board[x,y++], "..............O...O.......");
+	copyLineR(&board[x,y++], "...............O....O.....");
+	copyLineR(&board[x,y++], "...............O........OO");
+	copyLineR(&board[x,y++], "...........OO...O.....O.O.");
+	copyLineR(&board[x,y++], "..........O..O....OO......");
+	copyLineR(&board[x,y++], ".........O.....O...O...O..");
+	copyLineR(&board[x,y++], "..OO....O.O....OO.........");
+	copyLineR(&board[x,y++], "..OO......O......O..O.....");
+	copyLineR(&board[x,y++], "......O...O......OO..OO..O");
+	copyLineR(&board[x,y++], "O....O..OO.............OO.");
+	copyLineR(&board[x,y++], "O.O.OO.............O......");
+	copyLineR(&board[x,y++], "OO..O.O.............O.....");
+	copyLineR(&board[x,y++], "....................O.....");
+	copyLineR(&board[x,y++], "...............OOO.O......");
+	copyLineR(&board[x,y++], "..............O...O.......");
+	copyLineR(&board[x,y++], "..............O..O........");
+	copyLineR(&board[x,y++], "..........................");
+	copyLineR(&board[x,y++], "............O..O..........");
+	copyLineR(&board[x,y++], ".............OO...........");
+	copyLineR(&board[x,y++], "............OO............");
+	copyLineR(&board[x,y++], "................OO........");
+	copyLineR(&board[x,y++], ".............O..OO........");
+	copyLineR(&board[x,y++], "............O.............");
+	copyLineR(&board[x,y++], "............OOO...........");
 }
 
 

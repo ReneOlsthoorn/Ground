@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 
-
 namespace GroundCompiler
 {
     public class Lexer

@@ -1,11 +1,6 @@
-﻿using GroundCompiler.AstNodes;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static GroundCompiler.AstNodes.Statement;
+﻿using GroundCompiler.Statements;
+using GroundCompiler.Expressions;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -30,9 +25,9 @@ namespace GroundCompiler
         public static void Evaluate(ProgramNode rootNode)
         {
             /* Transform [12] fixed */
-            foreach (Statement.VarStatement varStatement in rootNode.FindAllNodes(typeof(Statement.VarStatement)).ToList())
+            foreach (VarStatement varStatement in rootNode.FindAllNodes(typeof(VarStatement)).ToList())
             {
-                if (varStatement.InitializerNode is Expression.List list)
+                if (varStatement.InitializerNode is Expressions.List list)
                 {
                     if (list.Properties.ContainsKey("fixed"))
                     {
@@ -44,15 +39,15 @@ namespace GroundCompiler
                         var gToken = new Token(TokenType.Identifier);
                         gToken.Lexeme = "g";
 
-                        Expression.Variable newVar = new Expression.Variable(gToken);
-                        var propExpr = new Expression.PropertyExpression(newVar, labelNameToken);
+                        Variable newVar = new Variable(gToken);
+                        var propExpr = new PropertyExpression(newVar, labelNameToken);
                         newVar.Parent = varStatement;
                         varStatement.InitializerNode = propExpr;
 
                         var theValues = new List<string>();
                         foreach (var expr in list.ElementsNodes)
                         {
-                            if (expr is Expression.Literal literal)
+                            if (expr is Literal literal)
                                 theValues.Add(Convert.ToString(literal.Value)!);
                         }
 
@@ -100,7 +95,7 @@ namespace GroundCompiler
 
             /* Evaluate the sizeof() function, etc... */
             List<NodeReplace> toReplace = new();
-            foreach (Expression.FunctionCall functionCall in rootNode.FindAllNodes(typeof(Expression.FunctionCall)))
+            foreach (FunctionCall functionCall in rootNode.FindAllNodes(typeof(FunctionCall)))
                 ResolveSizeOf(functionCall, ref toReplace);
 
             foreach (var obj in toReplace)
@@ -108,19 +103,19 @@ namespace GroundCompiler
         }
 
 
-        public static void ResolveSizeOf(Expression.FunctionCall functionCall, ref List<NodeReplace> toReplace)
+        public static void ResolveSizeOf(FunctionCall functionCall, ref List<NodeReplace> toReplace)
         {
-            if (functionCall.FunctionNameNode is GroundCompiler.AstNodes.Expression.Variable functionVar)
+            if (functionCall.FunctionNameNode is Variable functionVar)
             {
                 if (functionVar.Name.Lexeme.ToLower() == "sizeof")
                 {
                     UInt64 theSizeOf = 0;
 
-                    if (functionCall.ArgumentNodes[0] is GroundCompiler.AstNodes.Expression.Literal literalExpr)
+                    if (functionCall.ArgumentNodes[0] is Literal literalExpr)
                     {
                         theSizeOf = (UInt64)literalExpr.ExprType.SizeInBytes;
                     }
-                    else if (functionCall.ArgumentNodes[0] is GroundCompiler.AstNodes.Expression.Variable exprVar)
+                    else if (functionCall.ArgumentNodes[0] is Variable exprVar)
                     {
                         var theVar = exprVar.GetScope()?.GetVariableAnywhere(exprVar.Name.Lexeme);
 
@@ -131,13 +126,13 @@ namespace GroundCompiler
                         }
                         else if (theVar != null)
                         {
-                            if (theVar is Scope.Symbol.ParentScopeVariable parentVar)
+                            if (theVar is ParentScopeVariable parentVar)
                                 theVar = parentVar.TheLocalVariable;
 
                             if (theVar.Properties.ContainsKey("assigned element"))
                             {
                                 AstNode assignedElement = (AstNode)theVar.Properties["assigned element"]!;
-                                if (assignedElement is Expression.List listExpr)
+                                if (assignedElement is Expressions.List listExpr)
                                     theSizeOf = (UInt64)listExpr.SizeInBytes();
                             }
                         }
@@ -146,7 +141,7 @@ namespace GroundCompiler
                             theSizeOf = (UInt64)exprVar.ExprType.SizeInBytes;
                         }
                     }
-                    var theResultLiteral = new Expression.Literal("int", theSizeOf);
+                    var theResultLiteral = new Literal("int", theSizeOf);
                     if (functionCall.Parent != null)
                         toReplace.Add(new NodeReplace(functionCall.Parent!, functionCall, theResultLiteral));
                 }

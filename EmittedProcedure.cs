@@ -1,7 +1,5 @@
-﻿using System;
-using static GroundCompiler.AstNodes.Statement;
-using static GroundCompiler.Scope;
-using static GroundCompiler.Scope.Symbol;
+﻿using GroundCompiler.Statements;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -41,7 +39,7 @@ namespace GroundCompiler
 
         public void Emit_Equ_LocalVariables(bool emit = true)
         {
-            List<Scope.Symbol.LocalVariableSymbol> theVariables = this.FunctionStatement.BodyNode.GetScope()!.GetVariableSymbols();
+            List<LocalVariableSymbol> theVariables = this.FunctionStatement.BodyNode.GetScope()!.GetVariableSymbols();
 
             int negativeOffset = (NeedsRefCount() ? ReferenceCountPointersAllocationSize() : 0);
             foreach (var varSymbol in theVariables)

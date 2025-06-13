@@ -1,14 +1,12 @@
 
 
 function writeText(ptr renderer, float x, float y, string text) {
-	f32 scale = 1.3;
+	f32 scale = 1.0;
 	sdl3.SDL_SetRenderScale(renderer, scale, scale);
 	f32 theX = x;
 	f32 theY = y;
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
-	sdl3.SDL_RenderDebugText(renderer, theX-2.0, theY, text);
-
 	sdl3.SDL_SetRenderDrawColor(renderer, 0xe0, 0xe0, 0xe0, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
 }

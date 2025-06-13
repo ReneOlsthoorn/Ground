@@ -1,5 +1,5 @@
 ﻿
-namespace GroundCompiler.AstNodes
+namespace GroundCompiler
 {
     public abstract class AstNode
     {

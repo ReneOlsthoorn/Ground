@@ -1,14 +1,11 @@
-﻿using GroundCompiler.AstNodes;
-using static GroundCompiler.AstNodes.Expression;
-using static GroundCompiler.AstNodes.Statement;
-using static GroundCompiler.Datatype;
-using static GroundCompiler.Scope;
+﻿using GroundCompiler.Expressions;
+using GroundCompiler.Statements;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
     public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
-
         public Symbol? GetSymbol(string name, Scope scope)
         {
             var symbol = scope.GetVariable(name);
@@ -20,7 +17,6 @@ namespace GroundCompiler
             }
             return symbol;
         }
-
 
         public static void Error(String message)
         {
@@ -35,7 +31,7 @@ namespace GroundCompiler
 
         public void EmitExpression(Expression expr, Datatype targetType)
         {
-            if (expr is Expression.Literal exprLiteral && targetType.Name == "byte")
+            if (expr is Literal exprLiteral && targetType.Name == "byte")
                 exprLiteral.ConvertToByteValue();
 
             this.EmitExpression(expr);
@@ -55,7 +51,7 @@ namespace GroundCompiler
             }
         }
 
-        public void EmitClasses(List<Symbol.ClassSymbol> usedClasses)
+        public void EmitClasses(List<ClassSymbol> usedClasses)
         {
             foreach (var aClass in usedClasses)
             {
@@ -70,25 +66,25 @@ namespace GroundCompiler
         }
 
 
-        public void VariableRead(Expression.Variable variableExpr)
+        public void VariableRead(Variable variableExpr)
         {
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
             string reg;
 
-            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+            if (symbol is LocalVariableSymbol localVarSymbol)
                 emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
-            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+            else if (symbol is FunctionParameterSymbol funcParSymbol)
                 emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
-            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+            else if (symbol is ParentScopeVariable parentSymbol)
             {
                 reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                 emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
                 cpu.FreeRegister(reg);
             }
-            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+            else if (symbol is FunctionSymbol funcSymbol)
                 emitter.LoadFunction(emitter.ConvertToAssemblyFunctionName(funcSymbol.Name));
-            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+            else if (symbol is HardcodedVariable hardcodedSymbol)
             {
                 if (symbol.Name == "GC_ScreenText")
                     emitter.LoadSystemVarsVariable("screentext1_p");
@@ -114,38 +110,38 @@ namespace GroundCompiler
                 if (symbol.Name == "GC_Screen_TextColumns")
                     emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
             }
-            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+            else if (symbol is GroupSymbol groupSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
-        public void VariableWrite(Expression.Variable variableExpr)
+        public void VariableWrite(Variable variableExpr)
         {
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
 
-            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+            if (symbol is LocalVariableSymbol localVarSymbol)
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
-            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+            else if (symbol is FunctionParameterSymbol funcParSymbol)
                 emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
-            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+            else if (symbol is ParentScopeVariable parentSymbol)
                 emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
-            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+            else if (symbol is FunctionSymbol funcSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");
-            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+            else if (symbol is HardcodedVariable hardcodedSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");
-            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+            else if (symbol is GroupSymbol groupSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
-        public void VariableAssignment(Expression.Variable variableExpr, Expression.Assignment assignment)
+        public void VariableAssignment(Variable variableExpr, Assignment assignment)
         {
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
             string reg;
 
-            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+            if (symbol is LocalVariableSymbol localVarSymbol)
             {
                 EmitExpression(assignment.RightOfEqualSignNode);
                 EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
@@ -157,12 +153,12 @@ namespace GroundCompiler
                 }
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
             }
-            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+            else if (symbol is FunctionParameterSymbol funcParSymbol)
             {
                 EmitExpression(assignment.RightOfEqualSignNode);
                 emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
             }
-            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+            else if (symbol is ParentScopeVariable parentSymbol)
             {
                 var assemblyVarName = emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement);
                 if (parentSymbol.DataType.IsReferenceType)
@@ -180,16 +176,16 @@ namespace GroundCompiler
                 emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
                 cpu.FreeRegister(reg);
             }
-            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+            else if (symbol is FunctionSymbol funcSymbol)
                 Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
-            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+            else if (symbol is HardcodedVariable hardcodedSymbol)
                 EmitExpression(assignment.RightOfEqualSignNode);
-            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+            else if (symbol is GroupSymbol groupSymbol)
                 Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
         }
 
 
-        public void VariableAddressOf(Expression.Variable variableExpr)
+        public void VariableAddressOf(Variable variableExpr)
         {
             // A reference type must always return the memory location, and never the Lea of the variable.
             if (variableExpr.ExprType.IsReferenceType)
@@ -203,26 +199,26 @@ namespace GroundCompiler
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
             string reg;
 
-            if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+            if (symbol is LocalVariableSymbol localVarSymbol)
                 emitter.LeaFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-            else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+            else if (symbol is FunctionParameterSymbol funcParSymbol)
                 emitter.LeaFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol));
-            else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+            else if (symbol is ParentScopeVariable parentSymbol)
             {
                 reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                 emitter.LeaParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement));
                 cpu.FreeRegister(reg);
             }
-            else if (symbol is Scope.Symbol.FunctionSymbol funcSymbol)
+            else if (symbol is FunctionSymbol funcSymbol)
                 Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
-            else if (symbol is Scope.Symbol.HardcodedVariable hardcodedSymbol)
+            else if (symbol is HardcodedVariable hardcodedSymbol)
                 Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
-            else if (symbol is Scope.Symbol.GroupSymbol groupSymbol)
+            else if (symbol is GroupSymbol groupSymbol)
                 Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
         }
 
 
-        public void UnaryAssignment(Expression.Unary expr, Expression.Assignment assignment)
+        public void UnaryAssignment(Unary expr, Assignment assignment)
         {
             EmitExpression(assignment.RightOfEqualSignNode);
             EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
@@ -230,12 +226,12 @@ namespace GroundCompiler
 
             Datatype exprDatatype = Datatype.Default;
 
-            if (expr.RightNode is Expression.Grouping groupStmt)
+            if (expr.RightNode is Grouping groupStmt)
             {
                 EmitExpression(expr.RightNode);
                 exprDatatype = groupStmt.ExprType;
             }
-            else if (expr.RightNode is Expression.Variable theVariable)
+            else if (expr.RightNode is Variable theVariable)
             {
                 VariableRead(theVariable);
                 exprDatatype = theVariable.ExprType;
@@ -244,10 +240,10 @@ namespace GroundCompiler
             if (expr.Operator.Contains(TokenType.Asterisk))
             {
                 // *a  (a = int*)
-                if (exprDatatype.Contains(TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
+                if (exprDatatype.Contains(Datatype.TypeEnum.Pointer) && expr.Operator.Contains(TokenType.Asterisk))
                     emitter.StorePointingTo((exprDatatype.Base == null) ? Datatype.Default : exprDatatype.Base);
                 // *a  (a = ptr)
-                else if (exprDatatype.Contains(TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
+                else if (exprDatatype.Contains(Datatype.TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
                     emitter.StorePointingTo(exprDatatype);
             } else
                 Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
@@ -255,7 +251,7 @@ namespace GroundCompiler
 
 
         // Array value is loaded (usually to register RAX) or stored (as part of an assignment)
-        public void ArrayAccess(Expression.ArrayAccess arrayExpr, Expression.Assignment? assignment = null, bool addressOf = false)
+        public void ArrayAccess(ArrayAccess arrayExpr, Assignment? assignment = null, bool addressOf = false)
         {
             var currentScope = arrayExpr.GetScope();
             var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!);
@@ -263,7 +259,7 @@ namespace GroundCompiler
 
             if (arrayExpr.IndexNodes != null)
             {
-                var varSymbol = symbol as Scope.Symbol.VariableSymbol;
+                var varSymbol = symbol as VariableSymbol;
                 string indexReg = cpu.GetRestoredRegister(arrayExpr);
                 for (int i = 0; i < arrayExpr.IndexNodes.Count; i++)
                 {
@@ -291,13 +287,13 @@ namespace GroundCompiler
                 emitter.MoveCurrentToRegister(indexReg);
                 int elementSizeInBytes = 0;
 
-                if (symbol is Scope.Symbol.LocalVariableSymbol localVarSymbol)
+                if (symbol is LocalVariableSymbol localVarSymbol)
                 {
                     targetType = localVarSymbol!.DataType.Base;
                     elementSizeInBytes = localVarSymbol!.DataType.Base!.SizeInBytes;
                     emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
                 }
-                else if (symbol is Scope.Symbol.ParentScopeVariable parentSymbol)
+                else if (symbol is ParentScopeVariable parentSymbol)
                 {
                     targetType = parentSymbol!.DataType.Base;
                     elementSizeInBytes = parentSymbol!.DataType.Base!.SizeInBytes;
@@ -305,7 +301,7 @@ namespace GroundCompiler
                     emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol.TheScopeStatement), parentSymbol.DataType);
                     cpu.FreeRegister(reg);
                 }
-                else if (symbol is Scope.Symbol.FunctionParameterSymbol funcParSymbol)
+                else if (symbol is FunctionParameterSymbol funcParSymbol)
                 {
                     targetType = funcParSymbol!.DataType.Base;
                     elementSizeInBytes = funcParSymbol!.DataType.Base!.SizeInBytes;
@@ -338,7 +334,7 @@ namespace GroundCompiler
 
         public void EmitConversionCompatibleType(Expression sourceExpr, Datatype destinationDatatype, bool copyDatatypeToSource = true)
         {
-            if (sourceExpr is Expression.Literal literalExpr)
+            if (sourceExpr is Literal literalExpr)
             {
                 if (literalExpr.Value == null)
                     return;
@@ -386,7 +382,7 @@ namespace GroundCompiler
 
         public bool IsUnaryAddressOf(Expression expr)
         {
-            if (expr is Expression.Unary unaryExpr)
+            if (expr is Unary unaryExpr)
                 return unaryExpr.Operator.Contains(TokenType.Ampersand);
             return false;
         }

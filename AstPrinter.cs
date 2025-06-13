@@ -1,13 +1,12 @@
-﻿using GroundCompiler.AstNodes;
-using System.Text;
-using static GroundCompiler.AstNodes.Expression;
-using static GroundCompiler.AstNodes.Statement;
+﻿using System.Text;
+using GroundCompiler.Expressions;
+using GroundCompiler.Statements;
 
 namespace GroundCompiler
 {
     public class AstPrinter : Expression.IVisitor<string>, Statement.IVisitor<string>
     {
-        public string VisitorProgramNode(Statement.ProgramNode stmt)
+        public string VisitorProgramNode(ProgramNode stmt)
         {
             var builder = new StringBuilder();
             builder.Append("(program ");
@@ -19,22 +18,22 @@ namespace GroundCompiler
             return builder.ToString();
         }
 
-        public string VisitorBreak(Statement.BreakStatement stmt)
+        public string VisitorBreak(BreakStatement stmt)
         {
             return "(break)";
         }
 
-        public string VisitorAssembly(Statement.AssemblyStatement stmt)
+        public string VisitorAssembly(AssemblyStatement stmt)
         {
             return "(assembly)";
         }
 
-        public string VisitorPoke(Statement.PokeStatement stmt)
+        public string VisitorPoke(PokeStatement stmt)
         {
             return "(poke)";
         }
 
-        public string VisitorReturn(Statement.ReturnStatement stmt)
+        public string VisitorReturn(ReturnStatement stmt)
         {
             if (stmt.ReturnValueNode == null)
                 return "(return)";
@@ -43,7 +42,7 @@ namespace GroundCompiler
         }
 
 
-        public string VisitorBlock(Statement.BlockStatement stmt)
+        public string VisitorBlock(BlockStatement stmt)
         {
             var builder = new StringBuilder();
             builder.Append("(block ");
@@ -56,7 +55,7 @@ namespace GroundCompiler
         }
 
 
-        public string VisitorVariableDeclaration(Statement.VarStatement stmt)
+        public string VisitorVariableDeclaration(VarStatement stmt)
         {
             if (stmt.InitializerNode == null)
                 return Parenthesize2(stmt.ResultType.Name, stmt.Name);
@@ -65,7 +64,7 @@ namespace GroundCompiler
         }
 
 
-        public string VisitorIf(Statement.IfStatement statement)
+        public string VisitorIf(IfStatement statement)
         {
             if (statement.ElseBranchNode == null)
                 return Parenthesize2("if", statement.ConditionNode, statement.ThenBranchNode);
@@ -74,12 +73,12 @@ namespace GroundCompiler
         }
 
 
-        public string VisitorWhile(Statement.WhileStatement stmt)
+        public string VisitorWhile(WhileStatement stmt)
         {
             return Parenthesize2("while", stmt.ConditionNode, stmt.BodyNode);
         }
 
-        public string VisitorExpression(Statement.ExpressionStatement stmt)
+        public string VisitorExpression(ExpressionStatement stmt)
         {
             return Parenthesize(";", stmt.ExpressionNode);
         }
@@ -103,33 +102,33 @@ namespace GroundCompiler
             return stmt.Accept(this);
         }
 
-        public string VisitorPropertyGet(Expression.PropertyExpression expr)
+        public string VisitorPropertyGet(PropertyExpression expr)
         {
             return Parenthesize2(".", expr.ObjectNode, expr.Name.Lexeme);
         }
 
-        public string VisitorAssignment(Expression.Assignment expr)
+        public string VisitorAssignment(Assignment expr)
         {
             return Parenthesize2(expr.Operator.Lexeme, expr.LeftOfEqualSignNode, expr.RightOfEqualSignNode);
         }
 
-        public string VisitorBinary(Expression.Binary expr)
+        public string VisitorBinary(Binary expr)
         {
             return Parenthesize(expr.Operator.Lexeme, expr.LeftNode, expr.RightNode);
         }
 
 
-        public string VisitorFunctionCall(Expression.FunctionCall expr)
+        public string VisitorFunctionCall(FunctionCall expr)
         {
             return Parenthesize2("call", expr.FunctionNameNode, expr.ArgumentNodes);
         }
 
-        public string VisitorGrouping(Expression.Grouping expr)
+        public string VisitorGrouping(Grouping expr)
         {
             return Parenthesize("group", expr.expression);
         }
 
-        public string VisitorLiteral(Expression.Literal expr)
+        public string VisitorLiteral(Literal expr)
         {
             if (expr.Value == null) return "nil";
             if (expr.ExprType.Name == "string")
@@ -138,27 +137,27 @@ namespace GroundCompiler
             return expr.Value.ToString() ?? "";
         }
 
-        public string VisitorPropertySet(Expression.PropertySet expr)
+        public string VisitorPropertySet(PropertySet expr)
         {
             return Parenthesize2("=", expr.ObjectNode, expr.Name.Lexeme, expr.ValueNode);
         }
 
-        public string VisitorUnary(Expression.Unary expr)
+        public string VisitorUnary(Unary expr)
         {
             return Parenthesize(expr.Operator.Lexeme, expr.RightNode);
         }
 
-        public string VisitorVariable(Expression.Variable expr)
+        public string VisitorVariable(Variable expr)
         {
             return expr.Name.Lexeme;
         }
 
-        public string VisitorList(Expression.List expr)
+        public string VisitorList(Expressions.List expr)
         {
             return " [ LIST ] ";
         }
 
-        public string VisitorArrayAccess(Expression.ArrayAccess access)
+        public string VisitorArrayAccess(ArrayAccess access)
         {
             return " access ";
         }

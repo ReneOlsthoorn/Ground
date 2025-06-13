@@ -1,6 +1,6 @@
-﻿using System;
-using System.Text;
-using GroundCompiler.AstNodes;
+﻿using GroundCompiler.Statements;
+using GroundCompiler.Expressions;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -23,7 +23,7 @@ namespace GroundCompiler
             while (continueSimplify)
             {
                 continueSimplify = false;
-                foreach (Expression? expression in rootNode.FindAllNodes(typeof(Expression.Binary)))
+                foreach (Expression? expression in rootNode.FindAllNodes(typeof(Binary)))
                     if (SimplifyExpression(expression, ref toReplace))
                     {
                         continueSimplify = true;
@@ -49,7 +49,7 @@ namespace GroundCompiler
 
         public static bool SimplifyExpressionOnce(Expression expr)
         {
-            foreach (Expression.Binary binaryExpr in expr.FindAllNodes(typeof(Expression.Binary)))
+            foreach (Binary binaryExpr in expr.FindAllNodes(typeof(Binary)))
             {
                 if (binaryExpr.CanBothSidesBeCombined())
                 {
@@ -64,9 +64,9 @@ namespace GroundCompiler
 
         public static void EnsureValidGrouping(Expression expr)
         {
-            foreach (Expression.Grouping groupingExpr in expr.FindAllNodes(typeof(Expression.Grouping)))
+            foreach (Grouping groupingExpr in expr.FindAllNodes(typeof(Grouping)))
             {
-                var theLiteral = groupingExpr.expression as Expression.Literal;
+                var theLiteral = groupingExpr.expression as Literal;
                 if (theLiteral != null)
                 {
                     bool updated = groupingExpr?.Parent?.ReplaceNode(groupingExpr, theLiteral) ?? false;

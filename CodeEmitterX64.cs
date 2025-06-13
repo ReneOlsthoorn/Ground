@@ -1,8 +1,7 @@
-﻿using System;
-using System.Globalization;
-using static GroundCompiler.AstNodes.Statement;
-using static GroundCompiler.Scope;
-using static GroundCompiler.Scope.Symbol;
+﻿using System.Globalization;
+using GroundCompiler.Expressions;
+using GroundCompiler.Statements;
+using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -57,7 +56,7 @@ namespace GroundCompiler
         public string NewLabel() { return $"L{labelCounter++}"; }
 
 
-        public void EmitLiteralFloats(List<Scope.Symbol.FloatConstantSymbol> globalLiteralFloats)
+        public void EmitLiteralFloats(List<FloatConstantSymbol> globalLiteralFloats)
         {
             foreach (var variable in globalLiteralFloats)
             {
@@ -66,7 +65,7 @@ namespace GroundCompiler
             }
         }
 
-        public void EmitStrings(List<Scope.Symbol.StringConstantSymbol> globalStrings)
+        public void EmitStrings(List<StringConstantSymbol> globalStrings)
         {
             foreach (var variable in globalStrings)
             {
@@ -78,7 +77,7 @@ namespace GroundCompiler
             }
         }
 
-        public void EmitFixedStringIndexSpaceEntries(List<Scope.Symbol.StringConstantSymbol> globalStrings)
+        public void EmitFixedStringIndexSpaceEntries(List<StringConstantSymbol> globalStrings)
         {
             int indexspaceRownr = 3;
             cpu.ReserveRegister("rcx");
@@ -129,7 +128,7 @@ namespace GroundCompiler
                 Codeline($"ret\r\n");
         }
 
-        public void CallFunction(FunctionSymbol f, AstNodes.Expression expr)
+        public void CallFunction(FunctionSymbol f, Expression expr)
         {
             bool needsTmpReference = f.FunctionStmt.ResultDatatype?.IsReferenceType ?? false;
             if (needsTmpReference)
@@ -224,7 +223,7 @@ namespace GroundCompiler
             StackAdd();
         }
 
-        public void PopAddStrings(AstNodes.Expression? expr = null)
+        public void PopAddStrings(Expression? expr = null)
         {
             cpu.ReserveRegister("rcx");
             cpu.ReserveRegister("rdx");
@@ -238,7 +237,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public void PopAdd(AstNodes.Expression expr, Datatype conversionDatatype)
+        public void PopAdd(Expression expr, Datatype conversionDatatype)
         {
             if (conversionDatatype.Contains(Datatype.TypeEnum.String))
             {
@@ -287,7 +286,7 @@ namespace GroundCompiler
         }
 
 
-        public void PopSub(AstNodes.Expression.Binary expr, Datatype conversionDatatype)
+        public void PopSub(Binary expr, Datatype conversionDatatype)
         {
             if (conversionDatatype.Contains(Datatype.TypeEnum.String))
             {
@@ -342,7 +341,7 @@ namespace GroundCompiler
         }
 
 
-        public void PopMul(AstNodes.Expression expr, Datatype conversionDatatype)
+        public void PopMul(Expression expr, Datatype conversionDatatype)
         {
             if (!conversionDatatype.Contains(Datatype.TypeEnum.Number))
                 Compiler.Error("CodeEmitterX64>>PopMul: Cannot multiply expressions that are not numbers.");
@@ -366,7 +365,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rdx");
         }
 
-        public void PopDiv(AstNodes.Expression expr, Datatype conversionDatatype)
+        public void PopDiv(Expression expr, Datatype conversionDatatype)
         {
             if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
@@ -493,7 +492,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public void Negation(AstNodes.Expression? expr = null)
+        public void Negation(Expression? expr = null)
         {
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
@@ -667,7 +666,7 @@ namespace GroundCompiler
             Codeline("call  GetMemoryPointerFromIndex");
         }
 
-        public void IntegerToString(AstNodes.Expression expr)
+        public void IntegerToString(Expression expr)
         {
             cpu.ReserveRegister("rcx");
             Codeline("call  IntegerToString");
@@ -676,7 +675,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public void FloatToString(AstNodes.Expression expr)
+        public void FloatToString(Expression expr)
         {
             cpu.ReserveRegister("rcx");
             Codeline($"call  FloatToString");
@@ -685,7 +684,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public void BooleanToString(AstNodes.Expression expr)
+        public void BooleanToString(Expression expr)
         {
             Codeline($"call  BooleanToString");
         }
@@ -711,12 +710,12 @@ namespace GroundCompiler
 
         public string ConvertToAssemblyFunctionName(string functionName, string? groupName = null) => $"_f_{functionName}" + ((groupName != null) ? $"@{groupName}" : "");
 
-        public string AssemblyVariableName(Scope.Symbol.LocalVariableSymbol varSymbol, IScopeStatement? scopeStmt)
+        public string AssemblyVariableName(LocalVariableSymbol varSymbol, IScopeStatement? scopeStmt)
         {
             return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, varSymbol.Name);
         }
 
-        public string AssemblyVariableName(Scope.Symbol.FunctionParameterSymbol varSymbol)
+        public string AssemblyVariableName(FunctionParameterSymbol varSymbol)
         {
             return AssemblyVariableNameForFunctionParameter(varSymbol.TheFunction.Name.Lexeme, varSymbol.FunctionParameter.Name, varSymbol.TheFunction.GetGroupOrClassName());
         }
@@ -772,7 +771,7 @@ namespace GroundCompiler
             Codeline("call  RemoveReference");
         }
 
-        public void AddReference(AstNodes.AstNode node)
+        public void AddReference(AstNode node)
         {
             // rcx must contain the base of the stack of the function
             Codeline("call  AddReference");
@@ -783,7 +782,7 @@ namespace GroundCompiler
             blockType!.shouldCleanDereferenced = true;
         }
 
-        public void AddTmpReference(AstNodes.AstNode node)
+        public void AddTmpReference(AstNode node)
         {
             // rcx must contain the base of the stack of the function
             Codeline("call  AddTmpReference");
@@ -814,7 +813,7 @@ namespace GroundCompiler
             StackPush();
         }
 
-        public void Pop(AstNodes.Expression? expr = null, string? register = null)
+        public void Pop(Expression? expr = null, string? register = null)
         {
             if (expr?.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
                 PopFloat(register);

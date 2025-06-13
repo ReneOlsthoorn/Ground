@@ -188,14 +188,15 @@ function ShowNextFigure() {
 			board[x,y] = 0;
 
 	figureShow++;
-	if (figureShow == 8)
+	if (figureShow == 9)
 		figureShow = 1;
 
 	if (figureShow == 1) {
 		PlaceSuhajda104P177(35,12);
 	}
 	if (figureShow == 2) {
-		Place119P4H1V0(40,10);
+		PlaceShip1(105,3);
+		Place119P4H1V0(5,10);
 		PlaceShip5(80,40);
 		PlaceShip2(20,40);
 	}
@@ -206,6 +207,9 @@ function ShowNextFigure() {
 	}
 	if (figureShow == 4) {
 		PlacePufferTrain(5, 16);
+		PlaceShip3(90,50);
+		PlaceShip4(10,50);
+		PlaceShip6(50,50);
 	}
 	if (figureShow == 5) {
 		PlaceGliderGun(4,4);
@@ -217,6 +221,10 @@ function ShowNextFigure() {
 	if (figureShow == 7) {
 		PlaceMerzenich(15, 13);
 		Place106P135(52,20);
+	}
+	if (figureShow == 8) {
+		PlaceShip8(90,15);
+		PlaceShip9(40,1);
 	}
 
 	frameCountToStartGeneration = frameCount + 60;
@@ -253,8 +261,8 @@ while (StatusRunning)
 	sdl3.SDL_GetMouseState(&mouseX, &mouseY);
 	int gridPosX = mouseX / GRID_ELEMENT_PIXELS;
 	int gridPosY = mouseY / GRID_ELEMENT_PIXELS;
-	writeText(renderer, 10.0, 10.0, "Fig: " + figureShow + " Gen: " + generations + " X: " + gridPosX + " Y: " + gridPosY);
-	writeText(renderer, 10.0, 20.0, "Press [space] for next fig.");
+	writeText(renderer, 10.0, 4.0, "Figure: " + figureShow + " Generation: " + generations); // + " X: " + gridPosX + " Y: " + gridPosY);
+	writeText(renderer, 10.0, 14.0, "Press [space] for next.");
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;

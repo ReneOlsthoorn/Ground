@@ -1,6 +1,5 @@
-﻿using GroundCompiler.AstNodes;
-using System;
-using static GroundCompiler.AstNodes.Statement;
+﻿using GroundCompiler.Expressions;
+using GroundCompiler.Statements;
 
 namespace GroundCompiler
 {
