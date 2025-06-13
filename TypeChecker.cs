@@ -25,6 +25,8 @@ namespace GroundCompiler
             programNode.Initialize();
         }
 
+        public static string GenerationLabelForAsmArray(string name) => $"fixed_gen_{name}";
+
         public static void Evaluate(ProgramNode rootNode)
         {
             /* Transform [12] fixed */
@@ -34,7 +36,7 @@ namespace GroundCompiler
                 {
                     if (list.Properties.ContainsKey("fixed"))
                     {
-                        string theGeneratedLabel = $"fixed_gen_{varStatement.Name.Lexeme}";
+                        string theGeneratedLabel = GenerationLabelForAsmArray(varStatement.Name.Lexeme);
 
                         varStatement.ResultType.IsValueType = true;
                         var labelNameToken = new Token(TokenType.Identifier);

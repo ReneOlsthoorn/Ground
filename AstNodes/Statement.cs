@@ -221,6 +221,8 @@ namespace GroundCompiler.AstNodes
                     {
                         varSymbol.Properties["assigned element"] = listExpr;
                         InitializerNode.ExprType = ResultType;
+                        if (listExpr.Properties.ContainsKey("fixed"))
+                            varSymbol.Properties["asm array"] = true;
                     }
 
                     // Hardcoded Arrays (ASM arrays) are valuetype. That must be respected in assigned variables.

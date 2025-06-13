@@ -61,7 +61,11 @@ namespace GroundCompiler
 
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
-                    Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+
+                    if (varSymbol.Properties.ContainsKey("asm array"))
+                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ {TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
+                    else
+                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }
             }
 

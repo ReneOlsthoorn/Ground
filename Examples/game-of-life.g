@@ -19,6 +19,8 @@
 #include user32.g
 #include sidelib.g
 
+bool optimizedExecution = true;
+
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
 byte[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] nextBoard = [ ] asm;
@@ -80,12 +82,76 @@ function CalculateCenterCellIn3x3Block(int x, int y) {
 		nextBoard[x,y] = 1;
 }
 
+
+function DoGenerationX64() {
+
+	asm {
+	  mov	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  lea	rdx, [nextBoard@main]
+	  xor	eax, eax
+	  call	StoreBytes
+	}
+
+	for (y in 0 ..< GRID_ELEMENTS_Y)
+		for (x in 0 ..< GRID_ELEMENTS_X)
+			CalculateCenterCellIn3x3Block(x,y);
+
+	bool isOldBoardNextBoard = true;
+
+	asm {
+	  xor	ecx, ecx
+	  lea	r8, [oldBoard@main]
+	  lea	r9, [nextBoard@main]
+.loop:
+	  mov	al, [r8]
+	  cmp	al, [r9]
+	  je	.nextElement
+	  mov	qword [isOldBoardNextBoard@DoGenerationX64], 0
+	  jmp	.exit
+.nextElement:
+	  inc	r8
+	  inc	r9
+	  inc	rcx
+	  cmp	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  jne	.loop
+.exit:
+	}
+
+	if not (isOldBoardNextBoard)
+		generations++;
+
+	asm {
+	  xor	ecx, ecx
+	  lea	r8, [oldBoard@main]
+	  lea	r9, [board@main]
+	  lea	r10, [nextBoard@main]
+.loop:
+	  mov	al, [r9]
+	  mov	[r8], al
+	  mov	al, [r10]
+	  mov	[r9], al
+	  inc	r8
+	  inc	r9
+	  inc	r10
+	  inc	rcx
+	  cmp	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  jne	.loop
+.exit:
+	}
+}
+
+
 function DoGeneration() {
 	if (frameCount < frameCountToStartGeneration)
 		return;
 
 	if (frameCount % 5 != 0)
 		return;
+
+	if (optimizedExecution) {
+		DoGenerationX64();
+		return;
+	}
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
@@ -96,12 +162,11 @@ function DoGeneration() {
 			CalculateCenterCellIn3x3Block(x,y);
 
 	bool isOldBoardNextBoard = true;
-	for (y in 0 ..< GRID_ELEMENTS_Y) {
-		for (x in 0 ..< GRID_ELEMENTS_X) {
+	for (y in 0 ..< GRID_ELEMENTS_Y)
+		for (x in 0 ..< GRID_ELEMENTS_X)
 			if (oldBoard[x,y] != nextBoard[x,y])
 				isOldBoardNextBoard = false;
-		}
-	}
+
 	if not (isOldBoardNextBoard)
 		generations++;
 

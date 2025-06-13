@@ -440,5 +440,9 @@ fun(&f2);
 int fInt = f2 / 8.0;
 assert(fInt == 8);
 
+f = 32.0;
+f = 4.0 + f;
+assert(f == 36.0);
+
 
 println("SUCCESS: unittests were completed with SUCCESS.");
