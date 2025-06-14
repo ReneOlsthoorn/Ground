@@ -78,6 +78,8 @@ start:
 
 
 ; *** Print the maximum memory used
+__varspace_indexspace_refspace_info = 0
+if __varspace_indexspace_refspace_info = 1
   lea	rax, [memchecker_message]
   call	PrintScreenString
   mov	rax, [variableSpaceNeedle]
@@ -110,6 +112,7 @@ start:
   sub   rsp, 20h
   call  [msvcrt_printf]
   add   rsp, 20h
+end if
 
 ; *** Print ' leak!' in case of a memory leak.
   mov	rax, [indexSpacePointer]

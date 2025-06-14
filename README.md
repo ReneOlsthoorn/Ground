@@ -1,22 +1,23 @@
 # Ground
 
-This is the compiler for the programming language Ground. The name reflects the vision that highspeed code needs to 
+This is the compiler for the programming language Ground for Windows. The name reflects the vision that highspeed code needs to 
 stay in contact with it's ground, which is x86-64. So, it allows x86-64 assembly to be added anywhere in the code. 
 Mixing ground- and assembly is possible by using the generated symbolic constants in your assembly code. 
 The language has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like "while" and "if", datatypes like "string" and "float", etc...  
-See file Examples\unittests.g on how to use many constructs.  
-The compiler itself is created in C# and the generated x86-64 assembly is assembled with FASM for Windows.  
-The code that Ground generates is poured in an assembly template which can be freely chosen. This will result in
+See file Examples\unittests.g for usage of the language.  
+The compiler itself is created in C# and generates x86-64 assembly which is assembled with FASM for Windows.  
+The code that Ground generates is poured into an assembly template which can be chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
-template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template. A second reason why 
-the .EXE will remain small is that all external code is loaded at load-time. The usage of the known system DLL's, 
-like msvcrt, is promoted.
+template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template.  
+The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello-world.exe is 6k.  
+A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
+known system DLL's, like msvcrt, is promoted.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" />
 </p>
 
-The central concept of Ground is the ability to replace a statement with x86-64. So for example we have the following
+The central concept of Ground is the ability to replace a statement with x86-64. For example, we have the following
 code in mode7.g:
 ```
 		for (x in 0..< g.GC_Screen_DimX) {
@@ -41,6 +42,7 @@ We can replace a statement with x86-64:
 			}
 ```
 
+The asm block is copied literally to the assembler. Inspect the generated .asm file to see every detail. 
 Diving into this project will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format, the x64 calling convention and Compiler Design.
 
@@ -67,13 +69,12 @@ directory. Switch on the generateDebugInfo boolean in Program.cs and check if th
 Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
 the original sourcecode in the comment column of the debugger.
 
-### Running the mode7.g example
-You will need 3 additional files to run the mode7.g sample. First, the font which is located in the Resources
-folder and is called ```playfield1024.png```.  
-Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8-win32-x64.zip.
-Put the 3 files in de same folder as the generated mode7.exe and it will run.  
-You can also download all the necessary files and example executables at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
+### Running the examples
+You will need additional files to run the examples.  
+Unpack the GroundResources.zip into your bin/Debug/net9.0 folder.
+It includes the GroundSideLibrary.dll which includes a C PNG loader and is available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+It also includes SDL3.
+For instance try the mode7 example. In the Progam.cs in the Main function, enter fileName = "mode7.g";
 The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
 The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">

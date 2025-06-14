@@ -314,6 +314,8 @@ namespace GroundCompiler
 
         public bool Match(string text)
         {
+            if (sourcecode.Length <= needle + text.Length)
+                return false;
             return (sourcecode.Substring(needle, text.Length) == text);
         }
 
