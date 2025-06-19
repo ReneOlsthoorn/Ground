@@ -247,7 +247,7 @@ println(c);
 Will result in the following generated code:
 ```
 mov   rax, 2
-call  IntegerToString
+...
 ```
 The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
 also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
