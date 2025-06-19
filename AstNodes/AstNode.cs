@@ -105,6 +105,8 @@ namespace GroundCompiler
             return false;
         }
 
+        public virtual void RemoveNode(AstNode nodeToRemove) => _Nodes.Remove(nodeToRemove);
+
         public Scope? GetScope()
         {
             var scopeStmt = this as IScopeStatement;

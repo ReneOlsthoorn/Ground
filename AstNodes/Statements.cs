@@ -23,6 +23,8 @@ namespace GroundCompiler.Statements
             R VisitorBreak(BreakStatement stmt);
             R VisitorAssembly(AssemblyStatement stmt);
         }
+
+        public string getScopeName() => ((IScopeStatement)(this.GetScope()!.Owner)).GetScopeName().Lexeme;
     }
 
 
@@ -260,6 +262,8 @@ namespace GroundCompiler.Statements
                     yield return InitializerNode;
             }
         }
+
+        public string? GetNameIncludingLocalScope() => this.GetScope()?.GetNameIncludingLocalScope(Name.Lexeme);
 
         [DebuggerStepThrough]
         public override R Accept<R>(IVisitor<R> visitor)

@@ -74,6 +74,18 @@ namespace GroundCompiler
             return null;
         }
 
+        public string? GetNameIncludingLocalScope(string id)
+        {
+            if (Contains(id) && Symboltable[id] is LocalVariableSymbol)
+                return $"{id}@{Owner.GetScopeName().Lexeme}";
+
+            if (Parent != null)
+                return Parent.GetNameIncludingLocalScope(id);
+
+            return null;
+        }
+
+
         public Datatype GetVariableDataType(string id)
         {
             var theSymbol = GetVariableAnywhere(id);
@@ -235,6 +247,12 @@ namespace GroundCompiler
             var newElement = new LocalVariableSymbol(name, datatype);
             Symboltable[id] = newElement;
             return newElement;
+        }
+
+        public void RemoveVariable(string name, string datatype = "i64")
+        {
+            string id = IdFor(name, datatype);
+            Symboltable.Remove(id);
         }
 
         public HardcodedVariable DefineHardcodedVariable(string name, Datatype datatype)

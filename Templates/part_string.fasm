@@ -61,7 +61,7 @@ PrintNumber:
   mov	rbp, rsp
   sub	rsp, 0x10			; the 16 byte alignment forces us to reserve a full 16 bytes for the needed 2 bytes.
   push	rdx r8
-  xor	edx, edx			; edx:eax = number
+  cdq						; sign extend eax into edx. edx:eax = number
   idiv	rcx					; rax = quotient, rdx = remainder
   test	eax, eax			; Is quotient zero?
   je	@F					; yes, don't display it

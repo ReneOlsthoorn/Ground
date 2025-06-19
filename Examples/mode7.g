@@ -18,7 +18,7 @@ kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITIC
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Mode 7", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
@@ -76,13 +76,12 @@ function Innerloop() {
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
-		if (*eventType == g.SDL_EVENT_QUIT) {
+		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
-		}
+
 		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
-			}
 		}
 	}
 
@@ -93,9 +92,8 @@ while (StatusRunning)
 	Innerloop();
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
-	if (currentTicks < debugBestTicks) {
+	if (currentTicks < debugBestTicks and currentTicks != 0)
 		debugBestTicks = currentTicks;
-	}
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);

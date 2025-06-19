@@ -235,6 +235,24 @@ In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 ### Some remarks
 At this moment, you can only declare a Classes at the root level. Inner classes are not supported.
 
+### Optimizer
+Ground contains an optimizer (in Optimizer.cs), which will replace literals and removes unused variables. It will 
+scan the assembly code for usage of variables to avoid removing used variables.
+```
+int a = (2*5)+5+3+(4/2);
+int b = 4*10;
+int c = b / a;
+println(c);
+```
+Will result in the following generated code:
+```
+mov   rax, 2
+call  IntegerToString
+```
+The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
+also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
+println function.
+
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
@@ -331,5 +349,6 @@ for (i in 0..<10) { println(i); }  // from 0..9
 2025.03.27: SDL3 support and added win32-screengrab.g example.  
 2025.04.15: Bertus game added. Written in 400 lines of code.  
 2025.06.06: Asm arrays added (see snake.g)  
-2025.06.10: Game Of Life added.
-2025.06.13: Removed usage of innerclasses in the structure of the compiler. Using namespaces now.
+2025.06.10: Game Of Life added.  
+2025.06.13: Removed usage of innerclasses in the structure of the compiler. Using namespaces now.  
+2025.06.20: Optimizer extended. It will replace literals now, and remove unused variables.  

@@ -25,6 +25,7 @@ namespace GroundCompiler.Expressions
             T VisitorArrayAccess(ArrayAccess expr);
         }
 
+        public string getScopeName() => ((IScopeStatement)(this.GetScope()?.Owner))?.GetScopeName()?.Lexeme ?? "";
 
         public Symbol? GetSymbol(string name, Scope scope)
         {
@@ -209,6 +210,8 @@ namespace GroundCompiler.Expressions
             return false;
         }
 
+        public string? GetNameIncludingLocalScope() => this.GetScope()?.GetNameIncludingLocalScope(Name.Lexeme);
+
         [DebuggerStepThrough]
         public override T Accept<T>(IVisitor<T> visitor)
         {
@@ -292,10 +295,10 @@ namespace GroundCompiler.Expressions
         public override void Initialize()
         {
             if (ExprType.Name == "string")
-                GetScope()!.DefineString((string)Value!);
+                GetScope()?.DefineString((string)Value!);
 
             if (ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                GetScope()!.DefineFloatingpoint((double)Value!);
+                GetScope()?.DefineFloatingpoint(Convert.ToDouble(Value));
         }
 
         public void ConvertToByteValue()
@@ -430,6 +433,8 @@ namespace GroundCompiler.Expressions
             else
                 ExprType = Datatype.Default;
         }
+
+        public string? GetNameIncludingLocalScope() => this.GetScope()?.GetNameIncludingLocalScope(Name.Lexeme);
 
         [DebuggerStepThrough]
         public override R Accept<R>(IVisitor<R> visitor)

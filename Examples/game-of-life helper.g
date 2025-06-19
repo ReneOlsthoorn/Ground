@@ -114,8 +114,8 @@ asm {
 function copyLineR(ptr dest, string src) {
 	ptr src_p = &src;
 asm {
-  mov	rdx, [src_p@copyLine]
-  mov	r8, [dest@copyLine]
+  mov	rdx, [src_p@copyLineR]
+  mov	r8, [dest@copyLineR]
 .loop:
   mov	al, [rdx]
   test	al, al

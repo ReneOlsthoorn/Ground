@@ -10,32 +10,20 @@
 #include user32.g
 #include sidelib.g
 
-int frameCount = 0;
-u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+#define nrPaletteElements 256
 
+int frameCount = 0;
+byte[SCREEN_WIDTH, SCREEN_HEIGHT] coolPixels = null;
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+u32 seedRandom = 123123;
+int coolmapWidth = g.GC_Screen_DimX;
+int coolmapHeight = g.GC_Screen_DimY;
+u32[nrPaletteElements] palette = [];
+int paletteCounter = 0;
 int arraySize = SCREEN_WIDTH * SCREEN_HEIGHT;
+coolPixels = msvcrt.calloc(1, arraySize);
 byte[] fireBufferNew = msvcrt.calloc(1, arraySize);
 byte[] fireBufferOld = msvcrt.calloc(1, arraySize);
-
-
-int coolmapFile = msvcrt.fopen("fire_coolmap.bin", "rb");
-byte[] coolmapPointer = msvcrt.calloc(1, arraySize);
-msvcrt.fread(coolmapPointer, 1, arraySize, coolmapFile);
-msvcrt.fclose(coolmapFile);
-
-#define palette_nr_elements 256
-int paletteFile = msvcrt.fopen("fire_palette.bin", "rb");
-u32[palette_nr_elements] palette = [];
-msvcrt.fread(palette, SCREEN_PIXELSIZE, palette_nr_elements, paletteFile);
-msvcrt.fclose(paletteFile);
-
-
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Fire", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
-sdl3.SDL_SetRenderVSync(renderer, 1);
-
 byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
@@ -46,8 +34,6 @@ int debugBestTicks = 0xffff;
 bool drawTheScene = true;
 int coolingMapHeight = SCREEN_HEIGHT;
 int coolingMapOffset = coolingMapHeight - 1;
-
-
 asm data {logo_p dq 0}
 g.[logo_p] = sidelib.LoadImage("groundlogo_960x109.png");
 if (g.[logo_p] == null) {
@@ -56,16 +42,118 @@ if (g.[logo_p] == null) {
 }
 
 
+function msys_frand(u32* seed) : float
+{
+	seed[0] = seed[0] * 0x343FD + 0x269EC3;
+	u32 a = (seed[0] >> 9) or 0x3f800000;
+
+	float floatedA;
+	asm {
+		movss    xmm0, dword [a@msys_frand]
+		cvtss2sd xmm1, xmm0
+		movq     qword [floatedA@msys_frand], xmm1
+	}
+	float res = floatedA - 1.0;
+	return res;
+}
+
+function SetWhites() {
+	int aantalWhites = (coolmapHeight * coolmapWidth) / 50;
+	int width = coolmapWidth - 6;
+	int height = coolmapHeight - 6;
+	for (int w = 0; w < aantalWhites; w++) {
+		int newX = msys_frand(&seedRandom) * width;
+		int newY = msys_frand(&seedRandom) * height;
+		newX = newX + 3;
+		newY = newY + 3;
+		coolPixels[newX,newY] = 0xff;
+
+		coolPixels[newX,(newY-1)] = 0xff;
+		coolPixels[(newX-1),newY] = 0xff;
+		coolPixels[(newX-1),(newY-1)] = 0xff;
+
+		coolPixels[newX,(newY+1)] = 0xff;
+		coolPixels[(newX+1),newY] = 0xff;
+		coolPixels[(newX+1),(newY+1)] = 0xff;
+	}
+}
+
+function AverageTheField() {
+	int width = coolmapWidth - 2;
+	int height = coolmapHeight - 2;
+    for (int n = 0; n < 20; n++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+				int theX = x + 1;
+				int theY = y + 1;
+
+                u32 coolValue = coolPixels[theX,theY] and 0xff;
+                u32 coolBoven = coolPixels[theX,(theY-1)] and 0xff;
+                u32 coolOnder = coolPixels[theX,(theY+1)] and 0xff;
+                u32 coolLinks = coolPixels[(theX-1),theY] and 0xff;
+                u32 coolRechts = coolPixels[(theX+1),theY] and 0xff;
+
+				int average = coolValue + coolBoven + coolOnder + coolLinks + coolRechts;
+				average = average / 5;
+				coolPixels[theX,theY] = average;
+            }
+        }
+    }
+}
+
+class ColorRGB {
+    int red;
+    int green;
+    int blue;
+    function ToInteger() : int {
+        return 0xff000000 + (this.red << 16) + (this.green << 8) + this.blue;
+    }
+}
+
+function CreateGradient(int nrSteps, ColorRGB startColor, ColorRGB endColor) {
+	ColorRGB color;
+	float fSteps = nrSteps;
+
+    for (int i = 0; i < nrSteps; i++) {
+        color.red = startColor.red + (i * ((endColor.red - startColor.red) / fSteps));
+        color.green = startColor.green + (i * ((endColor.green - startColor.green) / fSteps));
+        color.blue = startColor.blue + (i * ((endColor.blue - startColor.blue) / fSteps));
+        palette[paletteCounter] = color.ToInteger();
+		paletteCounter++;
+    }
+}
+
+
+// Create the coolingMap
+SetWhites();
+AverageTheField();
+
+// Create the palette colors
+CreateGradient(64, ColorRGB(0,0,0), ColorRGB(0x8b,0,0));
+CreateGradient(64, ColorRGB(0x8b,0,0), ColorRGB(0xff,0,0));
+CreateGradient(64, ColorRGB(0xff,0,0), ColorRGB(0xff,0xff,0));
+CreateGradient(64, ColorRGB(0xff,0xff,0), ColorRGB(0xff,0xff,0xff));
+
+// Create the Window
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+ptr window = sdl3.SDL_CreateWindow("Fire", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+sdl3.SDL_SetRenderVSync(renderer, 1);
+
+
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
-		if (*eventType == g.SDL_EVENT_QUIT) {
+		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
-		}
+
 		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-			if (*eventScancode == g.SDL_SCANCODE_ESCAPE) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
-			}
 		}
 	}
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
@@ -75,7 +163,7 @@ while (StatusRunning)
 
 	asm {SpeedFireLoop:}
 	asm {
-		mov	rcx, 960*(560-1)
+		mov	rcx, SCREEN_WIDTH*(SCREEN_HEIGHT-1)
 		mov rdx, [fireBufferNew@main]
 		add rdx, GC_Screen_DimX
 		mov r8, [fireBufferOld@main]
@@ -83,68 +171,50 @@ while (StatusRunning)
 	}
 
 	coolingMapOffset = coolingMapOffset + 2;
-	if (coolingMapOffset >= (coolingMapHeight-1)) {
+	if (coolingMapOffset >= (coolingMapHeight-1))
 		coolingMapOffset = 0;
-	}
 
-	for (int f = 0; f < SCREEN_WIDTH; f++) {
+	for (int f = 0; f < SCREEN_WIDTH; f++)
 		fireBufferOld[(SCREEN_WIDTH*(SCREEN_HEIGHT-3))+f] = 0xff;
-	}
 
-	asm {
-	  push	rsi rdi
-	  mov	rcx, 0
-	  mov	rsi, [logo_p]
-	  mov	rdi, [fireBufferOld@main]
-	  add	rdi, 960*200
+asm {
+  push	rsi rdi
+  mov	rcx, 0
+  mov	rsi, [logo_p]
+  mov	rdi, [fireBufferOld@main]
+  add	rdi, SCREEN_WIDTH*200
 .logoPixel:
-	  mov	eax, [rsi+rcx*4]
-	  cmp	eax, 0
-	  je	.nextLogoPixel
-	  mov	al, 0xbf
-	  mov	[rdi+rcx], al
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0
+  je	.nextLogoPixel
+  mov	al, 0xbf
+  mov	[rdi+rcx], al
 .nextLogoPixel:
-	  add	rcx, 1
-	  cmp	rcx, 960*108
-	  jne	.logoPixel
-	  pop	rdi rsi
-	}
+  add	rcx, 1
+  cmp	rcx, SCREEN_WIDTH*108
+  jne	.logoPixel
+  pop	rdi rsi
+}
 
 	for (int y = 0; y < (SCREEN_HEIGHT-1); y++) {
 		int coolingY = (y + coolingMapOffset) % SCREEN_HEIGHT;
 		int coolingPosY = coolingY * g.GC_Screen_DimX;
-
-		asm {
-		  mov	rcx, [y@main]
-		  mov	rdx, [coolingPosY@main]
-		  call	ASM_Fire
-		}
+asm {
+  mov	rcx, [y@main]
+  mov	rdx, [coolingPosY@main]
+  call	ASM_Fire
+}
 	}
-
-	//Palette:
-	//for (int i = 0; i < 256; i++) {
-	//	for (int y = 0; y < g.GC_Screen_DimY; y++) {
-	//		pixels[i,y] = palette[i];
-	//	}
-	//}
-
-	//Coolmap:
-	//u32[] pixelsFlat = pixels;
-	//for (int i = 0; i < 960*560; i++) {
-	//	u32 aPixel = coolmapPointer[i] + (coolmapPointer[i] << 8);
-	//	pixelsFlat[i] = aPixel;
-	//}
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
-	if ((currentTicks < 300) and (frameCount == 0)) {
-		asm {
-			jmp SpeedFireLoop
-		}
+	if ((currentTicks < 100) and (frameCount == 0)) {
+asm {
+  jmp	SpeedFireLoop
+}
 	}
 
-	if (currentTicks < debugBestTicks) {
+	if (currentTicks < debugBestTicks)
 		debugBestTicks = currentTicks;
-	}
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
@@ -158,13 +228,13 @@ sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
 
-msvcrt.free(coolmapPointer);
+msvcrt.free(coolPixels);
 msvcrt.free(fireBufferOld);
 msvcrt.free(fireBufferNew);
 sidelib.FreeImage(g.[logo_p]);
 
-// string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-// user32.MessageBox(null, showStr, "Message", g.MB_OK);
+//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+//user32.MessageBox(null, showStr, "Message", g.MB_OK);
 
 asm procedures {
 ASM_Fire:
@@ -188,7 +258,7 @@ ASM_Fire:
 	mov r11, 0
 	mov r12, 0
 	mov r10, [fireBufferNew@main]
-	mov r15, [coolmapPointer@main]
+	mov r15, [coolPixels@main]
 	add r15, rdx                ; r15 = fire_coolingMap + coolingPosY
 	mov rdi, [pixels_p]
 	mov r14, [fireBufferOld@main]
@@ -235,10 +305,6 @@ ASM_Fire:
 .volgende:
 	mov [r10+rcx], r11b
 
-	;mov eax, [rdi+rcx*4]
-	;and eax, 001000000h   ; We controleren of de eerste bit van het alpha kanaal gezet is, anders gaan we de vuurpixel niet zetten.
-	;cmp eax, 0
-	;je Next
 	mov eax, [r9+r11*4] ; lookup the fireGradient and put it an the screen.
 	mov [rdi+rcx*4], eax
 .Next:
