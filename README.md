@@ -1,12 +1,13 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows. The name reflects the vision that highspeed code needs to 
-stay in contact with it's ground, which is x86-64. So, it allows x86-64 assembly to be added anywhere in the code. 
-Mixing ground- and assembly is possible by using the generated symbolic constants in your assembly code. 
+This is the compiler for the programming language Ground for Windows. The name reflects the vision that highspeed code 
+needs to stay in contact with it's ground, which is x86-64. It allows x86-64 assembly to be added anywhere in the code. 
+Mixing ground- and assembly is possible by using the generated symbolic constants in your assembly code.  
 The language has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like "while" and "if", datatypes like "string" and "float", etc...  
-See file Examples\unittests.g for usage of the language.  
-The compiler itself is created in C# and generates x86-64 assembly which is assembled with FASM for Windows.  
+See file Examples\unittests.g on how to use the language.  
+The compiler itself is created in C# and generates x86-64 assembly which is assembled with the freely available
+FASM for Windows.  
 The code that Ground generates is poured into an assembly template which can be chosen. This will result in
 small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template.  
@@ -42,13 +43,14 @@ We can replace a statement with x86-64:
 			}
 ```
 
-The asm block is copied literally to the assembler. Inspect the generated .asm file to see every detail. 
-Diving into this project will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
-format, the x64 calling convention and Compiler Design.
+The asm block is literally copied to the assembler. If you want, you can inspect the generated .asm file to see 
+every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
+format and the x64 calling convention.  
 
-The C programming language is 50 years old at this moment. It is a well-known language to do low-level programming, but 
-nowadays C compilers do not allow the mixing of C and assembly in the same function. The reason is obvious: manual 
-inserted assembly makes optimization of the generated code hard.  
+Many programmers use C as their low-level programming language. Understandably so. The quality of the generated code
+is very good and it can be compiled for many different processors. However, it is 50 years old at this moment. Many 
+C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual inserted 
+assembly makes optimization of the generated code hard.  
 It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
 must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and allows 
 it everywhere. The Ground code is more compact, so typical usage of x86-64 is in innerloops.  
@@ -58,7 +60,7 @@ Ground has a reference count system, so garbage collection is automatic. This ma
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example.
 
-### Installing Fasm 1.73:
+### Installing FASM 1.73:
 Ground uses FASM to assemble the generated code. Download Fasm at https://flatassembler.net/fasmw17332.zip.
 Set the INCLUDE environment variable to ```<installation directory>\INCLUDE```.
 Add the ```<installation directory>``` to the System variables Path variable.
@@ -265,20 +267,21 @@ I want to take a moment here to give credits to that platform.
 Recently, I took time to remember my old Commodore 64 and Amiga 500 days. Back then, I was heavily invested in the 
 Amiga 500, because it seemed to be the successor of the C64. However, the platform did not upgrade for a long time. 
 The Commodore Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released in 1992. 
-That was more than 7 years later. I really felt let down by Commodore in 1990/1991.  
+That was more than 7 years later. I really felt let down by Commodore in 1990.  
 Later it became clear that Commodore had no focus on the Amiga in 1988,1989 and 1990. They were busy with the PC-line, 
 like releasing the PC-60-III, the CDTV project and the C-65 project. The C-65 had the new CSG-4510 processor running 
-at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels and 
-256 colors.  
-Not only was there no focus on the Amiga, but Commodore also neglected the Amiga Ranger prototypes created by Jay Miner 
-in 1988.  
+at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels 
+and 256 colors.  
+Not only was there no focus on the Amiga, but Commodore also neglected the Amiga Ranger prototypes created by Jay 
+Miner in 1988.  
 As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
 Fortunately, the good thing was that I moved to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now,
-30 years and numerous PC upgrades later, the platform is still a good choice. It has no vendor lock-in and you can pick 
+30 years and numerous PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick 
 and choose your moment to upgrade. We were truly blessed with this platform for 30 years. This must be said!  
 At this moment in 2024, several expert users are migrating to Linux because Windows collects data about the usage of 
-your computer. I agree with those users that data collecting is not nice. However, it can be disabled. Search for 
-"How to disable Microsoft Compatibility Telemetry".
+your computer. I agree that collecting data is wrong. However, it can be disabled. Search for "How to disable 
+Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the platform 
+that we owe so much too soon without valid reasons.
 
 ### State of Ground : Alpha
 The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
