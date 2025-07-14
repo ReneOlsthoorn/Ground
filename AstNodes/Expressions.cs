@@ -282,14 +282,20 @@ namespace GroundCompiler.Expressions
         {
             Value = value;
         }
-        public Literal(string theType, object value) : this(value)
+        public Literal(string theType, object? value) : this(value)
         {
             ExprType = Datatype.GetDatatype(theType);
         }
 
-        public Literal(Datatype theType, object value) : this(value)
+        public Literal(Datatype theType, object? value) : this(value)
         {
             ExprType = theType;
+        }
+
+        public Literal DeepCopy()
+        {
+            Literal result = new Literal(this.ExprType.DeepCopy(), this.Value);
+            return result;
         }
 
         public override void Initialize()

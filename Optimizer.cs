@@ -77,7 +77,10 @@ namespace GroundCompiler
                 foreach (var varUsage in variableUsages)
                 {
                     var theLiteral = literalVars[unAssigned].Item1!;
-                    theLiteral.ExprType = literalVars[unAssigned].Item2; // we zetten de ExprType naar de ResultType, anders wordt de literal van "float f = 60;" niet goed vervangen.
+                    if (theLiteral is Literal literalExpr)
+                        theLiteral = literalExpr.DeepCopy();
+
+                    theLiteral.ExprType = literalVars[unAssigned].Item2.DeepCopy(); // we zetten de ExprType naar de ResultType, anders wordt de literal van "float f = 60;" niet goed vervangen.
 
                     bool updated = varUsage?.Parent?.ReplaceNode(varUsage, theLiteral) ?? false;
                     Console.WriteLine($"Optimzer: Replaced with Literal: {unAssigned}");
@@ -168,7 +171,7 @@ namespace GroundCompiler
         {
             foreach (Grouping groupingExpr in expr.FindAllNodes(typeof(Grouping)))
                 if (groupingExpr.expression is Literal theLiteral)
-                    groupingExpr?.Parent?.ReplaceNode(groupingExpr, theLiteral);
+                    groupingExpr?.Parent?.ReplaceNode(groupingExpr, theLiteral.DeepCopy());
         }
 
     }

@@ -36,5 +36,6 @@ dll sdl3 function SDL_free(ptr mem);
 dll sdl3 function SDL_GetMouseState(ptr x, ptr y) : u32;
 dll sdl3 function SDL_PumpEvents();
 dll sdl3 function SDL_HasMouse();
+dll sdl3 function SDL_GetKeyboardState(ptr numkeys) : ptr;
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  //SDL_Surface* as result

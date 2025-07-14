@@ -60,6 +60,19 @@ namespace GroundCompiler
             return baseSizeInBytes;
         }
 
+        public Datatype DeepCopy()
+        {
+            Datatype result = new Datatype();
+            result.Types.AddRange(this.Types);
+            result.Name = this.Name;
+            result.SizeInBytes = this.SizeInBytes;
+            result.Base = this.Base;
+            result.ArrayNrs = (this.ArrayNrs == null) ? null : new List<UInt64>(this.ArrayNrs);
+            result.IsValueType = this.IsValueType;
+            return result;
+        }
+
+
         public static Datatype FromData(string name, List<TypeEnum> tokenTypes, bool isValueType = false, int nrBytes = 0)
         {
             Datatype result = new Datatype();

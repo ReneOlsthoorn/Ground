@@ -76,7 +76,7 @@ namespace GroundCompiler
 
         public static void Error(Token token, String message)
         {
-            Compiler.Error(message);
+            Compiler.Error(message, token);
         }
 
         public ProgramNode GetAbstractSyntaxTree()

@@ -18,9 +18,10 @@ namespace GroundCompiler
             return symbol;
         }
 
-        public static void Error(String message)
+        public static void Error(String message, Token? token = null)
         {
             Console.WriteLine("ERROR: " + message);
+            if (token != null) Console.WriteLine("LineNumber: " + token.LineNumber);
             Environment.Exit(0);
         }
 

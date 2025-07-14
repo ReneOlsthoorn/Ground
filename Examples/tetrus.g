@@ -1,10 +1,8 @@
 
 #template sdl3
 
-//https://www.codewithfaraz.com/c/94/how-to-create-snake-game-in-c-programming-step-by-step-guide
-
-#define GRID_ELEMENTS_X 40
-#define GRID_ELEMENTS_Y 23
+#define GRID_ELEMENTS_X 10
+#define GRID_ELEMENTS_Y 20
 #define GRID_ELEMENT_PIXELS 24
 #define GRID_ELEMENT_PIXELS_KERN 22
 #define GRID_POSY_OFFSET 4
@@ -15,23 +13,40 @@
 #include kernel32.g
 #include user32.g
 #include sidelib.g
-#include snake_helper.g
+#include tetrus_helper.g
+
+
+class Point {
+	int x;
+	int y;
+}
+
+Point[4] pointActive = [];  // een figuur heeft 4 punten.
+Point[4] pointOld = [];
+
+int[4,7] figures = [
+	1,3,5,7, // I
+	2,4,5,7, // Z
+	3,5,4,6, // S
+	3,5,4,7, // T
+	2,3,5,7, // L
+	3,5,7,6, // J
+	2,3,4,5  // O
+];
+int colorNum = 1;
+int dx = 0;
+int rotateDelta = 0;
+int linesToComplete = 20;
+int linesDoneCounter = 0;
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
-int[128] snakeX = [] asm;
-int[128] snakeY = [] asm;
-int snakeLength = 3;
-int dx;		// x-delta for each move of the snake.
-int dy;     // y-delta
-int foodX = -1;
-int foodY = -1;
-int waitCount = 10;		    // nr frames to wait before moving the snake
+int waitCount = 10;
 string gameStatus = "intro screen";    // "intro screen", "game running", "game over", "game finished"
 bool StatusRunning = true;
 int frameCount = 0;
-u32[6] fgColorList = [ 0xff7D7D7C, 0xffffff00, 0xffffffff, 0xffff00ff, 0xff00ffff, 0xffffffff ];
-u32[6] bgColorList = [ 0xffBBBBBB, 0xffffff00, 0xffbbbbbb, 0xffff00ff, 0xffFEE92D, 0xffffffff ];
+u32[8] fgColorList = [ 0xff3D3D3C, 0xFFFEF84C, 0xFF51E1FC, 0xFFE93D1E, 0xFF79AE3D, 0xFFF69230, 0xFFF16EB9, 0xFF943692 ];
+u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
 int[6] keyboardStack = [ ] asm;
 int keyboardStackNeedle = 0;
 byte[SDL3_EVENT_SIZE] event = [];
@@ -44,7 +59,7 @@ int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
-ptr window = sdl3.SDL_CreateWindow("Snake", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Tetrus", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 sdl3.SDL_SetRenderVSync(renderer, 1);
@@ -56,16 +71,6 @@ if (!wavLoaded or (stream == null)) { user32.MessageBox(null, "The sound cannot 
 function playSound() {
 	sdl3.SDL_ResumeAudioStreamDevice(stream);
 	sdl3.SDL_PutAudioStreamData(stream, wavData, wavDataLen);
-}
-
-
-function GenerateFood() {
-	bool keepLooping = true;
-	while (keepLooping) {
-		foodX = (msys_frand(&seedRandom) % (GRID_ELEMENTS_X-2)) + 1;   // food on the edges is not fun.
-		foodY = (msys_frand(&seedRandom) % (GRID_ELEMENTS_Y-2)) + 1;
-		if (board[foodX, foodY] == 0) { keepLooping = false; }
-	}
 }
 
 
@@ -107,7 +112,9 @@ function DrawGridElement(int x, int y, int shape) {
 	u32 fgColor = fgColorList[shape];
 	u32 bgColor = bgColorList[shape];
 
-	pointer p = &pixels[x * GRID_ELEMENT_PIXELS, y * GRID_ELEMENT_PIXELS + GRID_POSY_OFFSET];
+	int spelVlakXOffset = (SCREEN_WIDTH - (GRID_ELEMENTS_X * GRID_ELEMENT_PIXELS)) / 2;
+	int spelVlakYOffset = 50;
+	pointer p = &pixels[(x * GRID_ELEMENT_PIXELS)+spelVlakXOffset, y * GRID_ELEMENT_PIXELS + spelVlakYOffset];
 	int offsetToNextLine = SCREEN_WIDTH << 2;
 
 	FillGridElementPixels(p, bgColor);
@@ -127,66 +134,47 @@ function FillHorizontal(int y, int nrLines, u32 color) {
 
 
 function DrawBoard() {
-	FillHorizontal(0, 3, fgColorList[0]);
-	FillHorizontal(3, 1, bgColorList[0]);
-	for (y in 0 ..< GRID_ELEMENTS_Y) {
-		for (x in 0 ..< GRID_ELEMENTS_X) {
+	for (i in 0 ..< 4)
+		board[pointActive[i].x, pointActive[i].y] = colorNum;
+
+	for (y in 0 ..< GRID_ELEMENTS_Y)
+		for (x in 0 ..< GRID_ELEMENTS_X)
 			DrawGridElement(x,y, board[x,y]);
-		}
-	}
-	FillHorizontal(SCREEN_HEIGHT-4, 1, bgColorList[0]);
-	FillHorizontal(SCREEN_HEIGHT-3, 3, fgColorList[0]);
+
+	for (i in 0 ..< 4)
+		board[pointActive[i].x, pointActive[i].y] = 0;
 }
 
 
-function UpdateBoard() {
-	for (y in 0 ..< GRID_ELEMENTS_Y) {
-		for (x in 0 ..< GRID_ELEMENTS_X) {
+function ClearBoard() {
+	for (y in 0 ..< GRID_ELEMENTS_Y)
+		for (x in 0 ..< GRID_ELEMENTS_X)
 			board[x,y] = 0;
-		}
-	}
-	for (i in 0..< snakeLength) {
-        board[snakeX[i], snakeY[i]] = 1;
-    }
-	if not (foodX == -1 and foodY == -1) {
-		board[foodX, foodY] = 2;
-	}
 }
 
 
-function CheckEatingFood() {
-    if (snakeX[0] == foodX && snakeY[0] == foodY) {
-		snakeX[snakeLength] = snakeX[snakeLength-1];
-		snakeY[snakeLength] = snakeY[snakeLength-1];
-		playSound();
-        snakeLength = snakeLength + 1;
-		if (snakeLength == 100) { gameStatus = "game finished"; foodX = -1; foodY = -1; return; }
-		if (snakeLength % 12 == 0) { if (waitCount > 4) { waitCount = waitCount - 1; } }
-        GenerateFood();
-    }
-}
+function NoCollision() : int {
+	for (i in 0..< 4)
+		if (pointActive[i].x < 0 or pointActive[i].x >= GRID_ELEMENTS_X or pointActive[i].y >= GRID_ELEMENTS_Y)
+			return 0;
+		else if (board[pointActive[i].x, pointActive[i].y] > 0)
+			return 0;
 
-function CheckCollision(int newX, int newY) : int {
-    if (newX < 0 or newX >= GRID_ELEMENTS_X or newY < 0 or newY >= GRID_ELEMENTS_Y) {
-        return 1;      // The wall is undefeated.
-    }
-    for (int i = 1; i < (snakeLength-1); i++) {
-        if (newX == snakeX[i] and newY == snakeY[i]) {
-            return 2;  // Snake bites itself.
-        }
-    }
-	return 0;
+	return 1;
 }
 
 
 function CheckChangeDirection() {
+	dx = 0;
+	rotateDelta = 0;
+
 	if (keyboardStackNeedle == 0) { return; }
 
 	int gewensteRichting = keyboardStack[0];
-	if (gewensteRichting == 1)  { if not (dx == 1 and dy == 0) { dx = -1; dy = 0; } }
-	if (gewensteRichting == 2)  { if not (dx == -1 and dy == 0) { dx = 1; dy = 0; } }
-	if (gewensteRichting == 3)  { if not (dy == 1 and dx == 0) { dy = -1; dx = 0; } }
-	if (gewensteRichting == 4)  { if not (dy == -1 and dx == 0) { dy = 1; dx = 0; } }
+	if (gewensteRichting == 1)  { dx = -1; }
+	if (gewensteRichting == 2)  { dx = 1; }
+	if (gewensteRichting == 3)  { rotateDelta = 1; }
+	if (gewensteRichting == 4)  { rotateDelta = 1; }
 
 	for (i in 1..keyboardStackNeedle) {
 		keyboardStack[i-1] = keyboardStack[i];
@@ -195,39 +183,121 @@ function CheckChangeDirection() {
 }
 
 
+function GenerateNewPiece() {
+	int n = msys_frand(&seedRandom) % 7;
+	colorNum = n+1;
 
-function MoveSnake() {
-	if (frameCount % waitCount != 0) { return; }
+	for (i in 0 ..< 4) {
+		pointActive[i].x = 4 + figures[i, n] % 2;
+	    pointActive[i].y = figures[i, n] / 2;
+	}
+}
 
+
+function CopyActiveToOld() {
+	for (i in 0 ..< 4) {
+		pointOld[i].x = pointActive[i].x;
+		pointOld[i].y = pointActive[i].y;
+	}
+}
+
+function CopyOldToActive() {
+	for (i in 0 ..< 4) {
+		pointActive[i].x = pointOld[i].x;
+		pointActive[i].y = pointOld[i].y;
+	}
+}
+
+
+Point rotationPoint;
+function Rotate() {
+	CopyActiveToOld();
+
+	rotationPoint.x = pointActive[1].x;  // center of rotation
+	rotationPoint.y = pointActive[1].y;
+	for (i in 0 ..< 4) {
+		int x = pointActive[i].y - rotationPoint.y;
+		int y = pointActive[i].x - rotationPoint.x;
+		pointActive[i].x = rotationPoint.x - x;
+		pointActive[i].y = rotationPoint.y + y;
+	}
+
+	if not (NoCollision())
+		CopyOldToActive();
+}
+
+
+function CheckLines() {
+	// These loops will collapse all filled lines.
+	// It does this by copying the entire field from bottom to top and
+	// at the same time NOT lowering the destination counter when the entire line is occupied.
+    int k = GRID_ELEMENTS_Y - 1;
+	for (int y = GRID_ELEMENTS_Y - 1; y > 0; y--)
+	{
+		int count = 0;
+		for (x in 0 ..< GRID_ELEMENTS_X) {
+		    if (board[x,y] > 0)
+				count++;
+		    board[x,k] = board[x,y];
+		}
+		if (count < GRID_ELEMENTS_X) {
+			k--;
+		}
+		else {
+			linesDoneCounter = linesDoneCounter + 1;
+			playSound();
+			if (linesDoneCounter == linesToComplete) {
+				gameStatus = "game finished";
+				return;
+			}				
+		}
+	}
+}
+
+
+function MovePiece() {
+	CopyActiveToOld();
 	CheckChangeDirection();
 
-	int newX = snakeX[0] + dx;
-	int newY = snakeY[0] + dy;
+	if (rotateDelta != 0)
+		Rotate();
 
-	int collision = CheckCollision(newX, newY);
-	if (collision > 0) { gameStatus = "game over"; return; }
+	for (i in 0 ..< 4)
+		pointActive[i].x = pointActive[i].x + dx;
 
-    for (int i = snakeLength - 1; i > 0; i--) {
-        snakeX[i] = snakeX[i - 1];
-        snakeY[i] = snakeY[i - 1];
-    }
+	if not (NoCollision())
+		CopyOldToActive();
 
-    snakeX[0] = newX;
-    snakeY[0] = newY;
+	if (frameCount % waitCount != 0) { return; }
 
-	CheckEatingFood();
+
+	for (i in 0 ..< 4)
+		pointActive[i].y = pointActive[i].y + 1;
+
+
+	if not (NoCollision())
+	{
+		for (i in 0 ..< 4) { board[pointOld[i].x, pointOld[i].y] = colorNum; }
+
+		waitCount = 30;
+		GenerateNewPiece();
+
+		if not (NoCollision()) {
+			gameStatus = "game over";
+			return;
+		}
+	}
+
+	CheckLines();
 }
 
 
 function RestartGame() {
 	gameStatus = "game running";
-	waitCount = 10;
-	dx = 1;
-	dy = 0;
-	snakeLength = 3;
-	for (i in 0..< snakeLength) { snakeX[i] = 5-i; snakeY[i] = 10; }
-	UpdateBoard();
-	GenerateFood();
+	waitCount = 30;
+	ClearBoard();
+	GenerateNewPiece();
+	linesDoneCounter = 0;
 }
 
 
@@ -243,7 +313,6 @@ while (StatusRunning)
 			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = 3; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { keyboardStack[keyboardStackNeedle] = 4; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_SPACE) { 
 				if (gameStatus != "game running") { 
 					if (gameStatus == "intro screen") { 
@@ -251,6 +320,8 @@ while (StatusRunning)
 					} else { 
 						RestartGame();
 					}
+				} else {
+					keyboardStack[keyboardStackNeedle] = 4; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; }
 				}
 			}
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
@@ -258,37 +329,46 @@ while (StatusRunning)
 		}
 	}
 
+	sdl3.SDL_PumpEvents();
+	u8* keyState = sdl3.SDL_GetKeyboardState(null);
+	if (keyState[g.SDL_SCANCODE_DOWN])
+		waitCount = 4;
+    else
+		waitCount = 30;
+
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 
-	if (gameStatus == "game running") { MoveSnake(); }
+	if (gameStatus == "game running") { MovePiece(); }
 
-	UpdateBoard();
+	SDL3_ClearScreenPixels(0xff000000);
 	DrawBoard();
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
 	if (gameStatus == "intro screen") {
-		writeText(renderer, 60.0, 50.0, "Feed the Snake 100 meals!");
-		writeText(renderer, 60.0, 70.0, "Use cursor keys to steer.");
+		writeText(renderer, 60.0, 50.0, ("  Try to fully fill " + linesToComplete));
+		writeText(renderer, 60.0, 60.0, "  horizontal lines.");
 		writeText(renderer, 60.0, 90.0, " Press [space] to start.");
 	}
 
 	if (gameStatus == "game over") {
 		writeText(renderer, 60.0, 50.0, "   *** Game over ***");
-		writeText(renderer, 60.0, 70.0, "Do not let the Snake bite");
-		writeText(renderer, 60.0, 90.0, "  itself or hit a wall!");
-		writeText(renderer, 60.0, 110.0, " The Snake size was " + snakeLength + ".");
+		writeText(renderer, 60.0, 70.0, "  You needed " + linesToComplete + " lines.");
+		writeText(renderer, 60.0, 80.0, "  You have done " + linesDoneCounter + " lines.");
 		writeText(renderer, 60.0, 130.0, "Press [space] to restart");
 	}
 
 	if (gameStatus == "game finished") {
 		writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
-		writeText(renderer, 70.0, 70.0, "Finally after 100 meals,");
-		writeText(renderer, 70.0, 90.0, " the Snake is satisfied!");
+		writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines!");
 		writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
+	}
+
+	if (gameStatus == "game running") {
+		writeText(renderer, 5.0, 50.0, "Lines to do:" + (linesToComplete - linesDoneCounter));
 	}
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;

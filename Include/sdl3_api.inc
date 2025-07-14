@@ -93,4 +93,5 @@ import sdl3,\
 	   sdl3_SDL_GetMouseState, 'SDL_GetMouseState',\
 	   sdl3_SDL_PumpEvents, 'SDL_PumpEvents',\
 	   sdl3_SDL_HasMouse, 'SDL_HasMouse',\
+	   sdl3_SDL_GetKeyboardState, 'SDL_GetKeyboardState',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'
