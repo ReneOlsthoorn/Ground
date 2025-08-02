@@ -346,7 +346,7 @@ Watch the Game Of Life patterns blow up! The current version has 20 different pa
 ### Tetrus
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Tetrus.jpg?raw=true" width="500" /><br/>
-Solve 20 lines to complete.
+Solve 30 lines to complete.
 </p>
 
 ### Changelog
@@ -357,4 +357,5 @@ Solve 20 lines to complete.
 2025.06.10: Game Of Life added.  
 2025.06.13: Removed usage of innerclasses in the structure of the compiler. Using namespaces now.  
 2025.06.20: Optimizer extended. It will replace literals now, and remove unused variables.  
-2025.07.14: Added Tetrus.  
+2025.07.14: Added Tetrus game.  
+2025.08.02: Enhanced Tetrus playability (rotating at sides, manual keyboard repeat).  

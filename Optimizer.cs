@@ -87,7 +87,7 @@ namespace GroundCompiler
 
                     if (updated)
                     {
-                        varUsage?.Parent?.Initialize();
+                        varUsage?.Parent?.Reinitialize();
                         optimizeAgain = true;
                     }
                 }

@@ -213,10 +213,21 @@ namespace GroundCompiler.Statements
             InitializerNode = initializer;
         }
 
+        public override void Reinitialize()
+        {
+            SpecializedInitialize(allowRedefine: true);
+        }
+
         public override void Initialize()
         {
+            SpecializedInitialize();
+        }
+
+
+        public void SpecializedInitialize(bool allowRedefine = false)
+        {
             var scope = GetScope();
-            VariableSymbol varSymbol = scope?.DefineVariable(Name.Lexeme, ResultType, allowSameType: Properties.ContainsKey("for-loop-variable"));
+            VariableSymbol varSymbol = scope?.DefineVariable(Name.Lexeme, ResultType, allowSameType: Properties.ContainsKey("for-loop-variable") || allowRedefine);
 
             if (InitializerNode != null)
             {

@@ -72,6 +72,8 @@ namespace GroundCompiler
                 node.Parent = this;
         }
 
+        public virtual void Reinitialize() => Initialize();
+
         public virtual void Initialize()
         {
             UpdateParentInNodes();  // The Initialize might rely on the Parent of all elements already been set, so we have a double Node loop.

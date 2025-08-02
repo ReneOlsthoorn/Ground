@@ -15,44 +15,45 @@
 #include sidelib.g
 #include tetrus_helper.g
 
-
 class Point {
 	int x;
 	int y;
 }
-
-Point[4] pointActive = [];  // een figuur heeft 4 punten.
-Point[4] pointOld = [];
+Point[4] activeFigure = [];  //active figure on screen with 4 points.
+Point[4] oldFigure = [];     //backup copy of figureActive when performing rotation, etc...
 
 int[4,7] figures = [
+	2,3,4,5, // O
 	1,3,5,7, // I
-	2,4,5,7, // Z
 	3,5,4,6, // S
-	3,5,4,7, // T
+	2,4,5,7, // Z
 	2,3,5,7, // L
 	3,5,7,6, // J
-	2,3,4,5  // O
-];
-int colorNum = 1;
+	3,5,4,7  // T
+] asm;
+int activeFigureColor = 0;
 int dx = 0;
 int rotateDelta = 0;
-int linesToComplete = 20;
+int linesToComplete = 30;
 int linesDoneCounter = 0;
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
-int waitCount = 10;
+int waitCount;				//integer which determines at which modulo of frameCount a game 'tick will occur.
 string gameStatus = "intro screen";    // "intro screen", "game running", "game over", "game finished"
 bool StatusRunning = true;
 int frameCount = 0;
-u32[8] fgColorList = [ 0xff3D3D3C, 0xFFFEF84C, 0xFF51E1FC, 0xFFE93D1E, 0xFF79AE3D, 0xFFF69230, 0xFFF16EB9, 0xFF943692 ];
+u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
 u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
 int[6] keyboardStack = [ ] asm;
 int keyboardStackNeedle = 0;
+bool keyHitThisFrame = false;
 byte[SDL3_EVENT_SIZE] event = [];
-u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
-u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-
+u32* eventType = &event[SDL3_KEYBOARDEVENT_TYPE_U32];
+u32* eventScancode = &event[SDL3_KEYBOARDEVENT_SCANCODE_U32];
+u8* eventRepeat = &event[SDL3_KEYBOARDEVENT_REPEAT_U8];
+int gameTimeFrameStart;
+int secondsGameTime;
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -135,14 +136,14 @@ function FillHorizontal(int y, int nrLines, u32 color) {
 
 function DrawBoard() {
 	for (i in 0 ..< 4)
-		board[pointActive[i].x, pointActive[i].y] = colorNum;
+		board[activeFigure[i].x, activeFigure[i].y] = activeFigureColor;
 
 	for (y in 0 ..< GRID_ELEMENTS_Y)
 		for (x in 0 ..< GRID_ELEMENTS_X)
 			DrawGridElement(x,y, board[x,y]);
 
 	for (i in 0 ..< 4)
-		board[pointActive[i].x, pointActive[i].y] = 0;
+		board[activeFigure[i].x, activeFigure[i].y] = 0;
 }
 
 
@@ -153,13 +154,17 @@ function ClearBoard() {
 }
 
 
-function NoCollision() : int {
-	for (i in 0..< 4)
-		if (pointActive[i].x < 0 or pointActive[i].x >= GRID_ELEMENTS_X or pointActive[i].y >= GRID_ELEMENTS_Y)
-			return 0;
-		else if (board[pointActive[i].x, pointActive[i].y] > 0)
-			return 0;
-
+function CollisionStatus() : int {
+	for (i in 0..< 4) {
+		if (activeFigure[i].x < 0)
+			return -1;
+		if (activeFigure[i].x >= GRID_ELEMENTS_X)
+			return -2;
+		if (activeFigure[i].y >= GRID_ELEMENTS_Y)
+			return -3;
+		if (board[activeFigure[i].x, activeFigure[i].y] > 0)
+			return -4;
+	}
 	return 1;
 }
 
@@ -185,26 +190,26 @@ function CheckChangeDirection() {
 
 function GenerateNewPiece() {
 	int n = msys_frand(&seedRandom) % 7;
-	colorNum = n+1;
+	activeFigureColor = n+1;
 
 	for (i in 0 ..< 4) {
-		pointActive[i].x = 4 + figures[i, n] % 2;
-	    pointActive[i].y = figures[i, n] / 2;
+		activeFigure[i].x = 4 + figures[i, n] % 2;
+	    activeFigure[i].y = figures[i, n] / 2;
 	}
 }
 
 
 function CopyActiveToOld() {
 	for (i in 0 ..< 4) {
-		pointOld[i].x = pointActive[i].x;
-		pointOld[i].y = pointActive[i].y;
+		oldFigure[i].x = activeFigure[i].x;
+		oldFigure[i].y = activeFigure[i].y;
 	}
 }
 
 function CopyOldToActive() {
 	for (i in 0 ..< 4) {
-		pointActive[i].x = pointOld[i].x;
-		pointActive[i].y = pointOld[i].y;
+		activeFigure[i].x = oldFigure[i].x;
+		activeFigure[i].y = oldFigure[i].y;
 	}
 }
 
@@ -213,17 +218,30 @@ Point rotationPoint;
 function Rotate() {
 	CopyActiveToOld();
 
-	rotationPoint.x = pointActive[1].x;  // center of rotation
-	rotationPoint.y = pointActive[1].y;
+	rotationPoint.x = activeFigure[1].x;  // center of rotation
+	rotationPoint.y = activeFigure[1].y;
 	for (i in 0 ..< 4) {
-		int x = pointActive[i].y - rotationPoint.y;
-		int y = pointActive[i].x - rotationPoint.x;
-		pointActive[i].x = rotationPoint.x - x;
-		pointActive[i].y = rotationPoint.y + y;
+		int x = activeFigure[i].y - rotationPoint.y;
+		int y = activeFigure[i].x - rotationPoint.x;
+		activeFigure[i].x = rotationPoint.x - x;
+		activeFigure[i].y = rotationPoint.y + y;
 	}
 
-	if not (NoCollision())
-		CopyOldToActive();
+	int collStatus = CollisionStatus();
+	if (collStatus < 0) {
+		while (collStatus == -1) {  // a point of the piece is too much on the left. Try moving the piece to the right.
+			for (i in 0 ..< 4)
+				activeFigure[i].x = activeFigure[i].x + 1;
+			collStatus = CollisionStatus();
+		}
+		while (collStatus == -2) {
+			for (i in 0 ..< 4)
+				activeFigure[i].x = activeFigure[i].x - 1;
+			collStatus = CollisionStatus();
+		}
+		if (CollisionStatus() < 0)
+			CopyOldToActive();
+	}
 }
 
 
@@ -240,9 +258,8 @@ function CheckLines() {
 				count++;
 		    board[x,k] = board[x,y];
 		}
-		if (count < GRID_ELEMENTS_X) {
+		if (count < GRID_ELEMENTS_X)
 			k--;
-		}
 		else {
 			linesDoneCounter = linesDoneCounter + 1;
 			playSound();
@@ -263,31 +280,28 @@ function MovePiece() {
 		Rotate();
 
 	for (i in 0 ..< 4)
-		pointActive[i].x = pointActive[i].x + dx;
+		activeFigure[i].x = activeFigure[i].x + dx;
 
-	if not (NoCollision())
+	if (CollisionStatus() < 0)
 		CopyOldToActive();
 
 	if (frameCount % waitCount != 0) { return; }
 
-
 	for (i in 0 ..< 4)
-		pointActive[i].y = pointActive[i].y + 1;
+		activeFigure[i].y = activeFigure[i].y + 1;
 
-
-	if not (NoCollision())
+	if (CollisionStatus() < 0)
 	{
-		for (i in 0 ..< 4) { board[pointOld[i].x, pointOld[i].y] = colorNum; }
+		for (i in 0 ..< 4) { board[oldFigure[i].x, oldFigure[i].y] = activeFigureColor; }
 
 		waitCount = 30;
 		GenerateNewPiece();
 
-		if not (NoCollision()) {
+		if (CollisionStatus() < 0) {
 			gameStatus = "game over";
 			return;
 		}
 	}
-
 	CheckLines();
 }
 
@@ -298,8 +312,8 @@ function RestartGame() {
 	ClearBoard();
 	GenerateNewPiece();
 	linesDoneCounter = 0;
+	gameTimeFrameStart = frameCount;
 }
-
 
 RestartGame();
 gameStatus = "intro screen";
@@ -309,32 +323,36 @@ while (StatusRunning)
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
 
-		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+		if (*eventType == g.SDL_EVENT_KEY_DOWN && *eventRepeat == 0) {
+			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = 3; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_SPACE) { 
 				if (gameStatus != "game running") { 
-					if (gameStatus == "intro screen") { 
+					if (gameStatus == "intro screen")
 						gameStatus = "game running";
-					} else { 
+					else
 						RestartGame();
-					}
 				} else {
 					keyboardStack[keyboardStackNeedle] = 4; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; }
 				}
 			}
+			if (*eventScancode == g.SDL_SCANCODE_DOWN)    { waitCount = 3; }
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
 		}
+		if (*eventType == g.SDL_EVENT_KEY_UP && *eventScancode == g.SDL_SCANCODE_DOWN)
+			waitCount = 30;
 	}
 
-	sdl3.SDL_PumpEvents();
 	u8* keyState = sdl3.SDL_GetKeyboardState(null);
-	if (keyState[g.SDL_SCANCODE_DOWN])
-		waitCount = 4;
-    else
-		waitCount = 30;
+	if (frameCount % 7 == 0) {
+		if (keyHitThisFrame == false) {
+			if (keyState[g.SDL_SCANCODE_LEFT]) { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+			if (keyState[g.SDL_SCANCODE_RIGHT]) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+		}
+		keyHitThisFrame = false;
+	}
 
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
@@ -349,9 +367,9 @@ while (StatusRunning)
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
 	if (gameStatus == "intro screen") {
-		writeText(renderer, 60.0, 50.0, ("  Try to fully fill " + linesToComplete));
-		writeText(renderer, 60.0, 60.0, "  horizontal lines.");
-		writeText(renderer, 60.0, 90.0, " Press [space] to start.");
+		writeText(renderer, 60.0, 70.0, ("  Try to fully fill " + linesToComplete));
+		writeText(renderer, 60.0, 80.0, "    horizontal lines.");
+		writeText(renderer, 60.0, 110.0, " Press [space] to start.");
 	}
 
 	if (gameStatus == "game over") {
@@ -363,12 +381,17 @@ while (StatusRunning)
 
 	if (gameStatus == "game finished") {
 		writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
-		writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines!");
+		writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines");
+		writeText(renderer, 70.0, 80.0, "in " + secondsGameTime + " seconds!");
 		writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
 	}
 
 	if (gameStatus == "game running") {
-		writeText(renderer, 5.0, 50.0, "Lines to do:" + (linesToComplete - linesDoneCounter));
+		writeText(renderer, 5.0, 40.0, "Remaining");
+		writeText(renderer, 5.0, 50.0, "lines: " + (linesToComplete - linesDoneCounter));
+		writeText(renderer, 5.0, 70.0, "Time");
+		secondsGameTime = (frameCount - gameTimeFrameStart) / 60;
+		writeText(renderer, 5.0, 80.0, "elapsed: " + secondsGameTime);
 	}
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;

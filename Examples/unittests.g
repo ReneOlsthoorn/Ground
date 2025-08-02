@@ -445,4 +445,10 @@ f = 4.0 + f;
 assert(f == 36.0);
 
 
+int a7 = (2*5)+5+3+(4/2);
+int b7 = 4*10;
+int c7 = b7 / a7;
+assert(c7 == 2);
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");
