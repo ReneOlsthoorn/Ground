@@ -13,7 +13,7 @@ small .EXE files when the template is chosen wisely. For instance, there is a "c
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template.  
 The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello-world.exe is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
-known system DLL's, like msvcrt, is promoted.
+known system DLL's, like msvcrt, is promoted. Several games are coded with Ground:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
