@@ -189,7 +189,7 @@ function CheckChangeDirection() {
 
 
 function GenerateNewPiece() {
-	int n = msys_frand(&seedRandom) % 7;
+	int n = msvcrt.rand() % 7;
 	activeFigureColor = n+1;
 
 	for (i in 0 ..< 4) {

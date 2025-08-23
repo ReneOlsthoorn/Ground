@@ -15,7 +15,7 @@ The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
 known system DLL's, like msvcrt, is promoted.
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" />
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
 
 The central concept of Ground is the ability to replace a statement with x86-64. For example, we have the following
@@ -349,6 +349,12 @@ Watch the Game Of Life patterns blow up! The current version has 20 different pa
 Solve 30 lines to complete.
 </p>
 
+### Smoothscroller
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
+Smoothscrolling is always good.
+</p>
+
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
 2025.03.27: SDL3 support and added win32-screengrab.g example.  
@@ -359,3 +365,4 @@ Solve 30 lines to complete.
 2025.06.20: Optimizer extended. It will replace literals now, and remove unused variables.  
 2025.07.14: Added Tetrus game.  
 2025.08.02: Enhanced Tetrus playability (rotating at sides, manual keyboard repeat).  
+2025.08.23: Added Racer game.  

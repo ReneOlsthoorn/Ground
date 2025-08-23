@@ -139,6 +139,8 @@ while (StatusRunning)
 
 chipmunk.cpSpaceFree(space);
 
+sdl3.SDL_DestroyTexture(tenniscourtTexture);
+sdl3.SDL_DestroyTexture(ballTexture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
