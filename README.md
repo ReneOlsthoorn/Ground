@@ -301,7 +301,13 @@ Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/relea
 Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.  
 You can also download all the necessary files at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
 
-### The chipmunk_tennis.g example
+### Smoothscroller
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
+Smoothscrolling is always good.
+</p>
+
+### The Chipmunk Tennis example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
@@ -349,11 +355,12 @@ Watch the Game Of Life patterns blow up! The current version has 20 different pa
 Solve 30 lines to complete.
 </p>
 
-### Smoothscroller
+### Racer
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
-Smoothscrolling is always good.
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" /><br/>
+Motor racing game. Avoid the other motor racers on the road!
 </p>
+
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
