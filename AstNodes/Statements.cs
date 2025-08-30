@@ -143,6 +143,7 @@ namespace GroundCompiler.Statements
             AddDynamicDLL("gdi32");
             AddDynamicDLL("sidelib");
             AddDynamicDLL("chipmunk");
+            AddDynamicDLL("soloud");
         }
 
         public void AddDynamicDLL(string dllName)

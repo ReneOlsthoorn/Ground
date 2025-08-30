@@ -18,6 +18,7 @@
 #include kernel32.g
 #include user32.g
 #include sidelib.g
+#include soloud.g
 
 
 float[] track = [ 
@@ -47,6 +48,24 @@ float playerPositionDisplay = 0.0;
 bool clipHitting = false;      // is the clip now touched?
 float clipLeft;
 float clipRight;
+
+ptr soloudObject = soloud.Soloud_create();
+int soloudResult = soloud.Soloud_init(soloudObject);
+if (soloudResult != 0) { return; }
+
+ptr wavObject = soloud.Wav_create();
+int wavLoaded = soloud.Wav_load(wavObject, "engine.wav");
+if (wavLoaded != 0) return;
+
+f32 theVolume = 0.0;
+soloud.Wav_setVolume(wavObject, theVolume);
+soloud.Wav_setLooping(wavObject, 1);   // 1 = true, 0 = false
+int handle_enginesound = soloud.Soloud_play(soloudObject, wavObject);
+
+theVolume = 0.3;
+soloud.Soloud_setVolume(soloudObject, handle_enginesound, theVolume);
+f32 theSoundSpeed = 1.0;
+soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, theSoundSpeed);
 
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
@@ -406,6 +425,9 @@ while (StatusRunning)
 		writeText(renderer, 10.0, 24.0, "Hit!");
 
 	sdl3.SDL_RenderPresent(renderer);
+
+	f32 snelheid = (speed / 10.0) + 1.0;
+	soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, snelheid);    // Play a bit slower; 1.0f is normal
 
 	frameCount++;
 }

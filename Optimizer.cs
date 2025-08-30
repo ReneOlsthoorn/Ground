@@ -134,6 +134,10 @@ namespace GroundCompiler
                 if (asmKeyDictionary.ContainsKey(asmVariableName))
                     continue;
 
+                int nrFunctionCallNodes = unusedVar.Value.FindAllNodes(typeof(FunctionCall)).Count();
+                if (nrFunctionCallNodes > 0)
+                    continue;
+
                 unusedVar.Value?.Parent?.GetScope()?.RemoveVariable(unusedVar.Value.Name.Lexeme);
                 unusedVar.Value?.Parent?.RemoveNode(unusedVar.Value!);
                 Console.WriteLine($"Optimzer: Removed variable: {unusedVar.Value?.Name.Lexeme}  {asmVariableName}");

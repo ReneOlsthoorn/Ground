@@ -303,7 +303,8 @@ section '.idata' import data readable writeable
 		  sdl3, 'SDL3.dll', \
 		  sdl3_image, 'SDL3_image.dll', \
 		  sidelib, 'GroundSideLibrary.dll', \
-		  chipmunk, 'chipmunk.dll'
+		  chipmunk, 'chipmunk.dll', \
+		  soloud, 'soloud_x64.dll' 
 
   include '..\..\..\Include\kernel32_api.inc'
   include '..\..\..\Include\user32_api.inc'
@@ -311,6 +312,7 @@ section '.idata' import data readable writeable
   include '..\..\..\Include\sdl3_api.inc'
   include '..\..\..\Include\sidelib_api.inc'
   include '..\..\..\Include\chipmunk_api.inc'
+  include '..\..\..\Include\soloud_api.inc'
 
 
 section '.data' data readable writeable

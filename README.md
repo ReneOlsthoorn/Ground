@@ -373,3 +373,4 @@ Motor racing game. Avoid the other motor racers on the road!
 2025.07.14: Added Tetrus game.  
 2025.08.02: Enhanced Tetrus playability (rotating at sides, manual keyboard repeat).  
 2025.08.23: Added Racer game.  
+2025.08.30: Racer's engine sound added using Soloud.  
