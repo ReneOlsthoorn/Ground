@@ -245,12 +245,10 @@ scan the assembly code for usage of variables to avoid removing used variables.
 int a = (2*5)+5+3+(4/2);
 int b = 4*10;
 int c = b / a;
-println(c);
 ```
 Will result in the following generated code:
 ```
 mov   rax, 2
-...
 ```
 The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
 also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
