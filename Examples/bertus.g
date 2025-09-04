@@ -61,21 +61,23 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
+// Loading sounds...
 ptr soloudObject = soloud.Soloud_create();
 int soloudResult = soloud.Soloud_init(soloudObject);
 if (soloudResult != 0) return;
-ptr sfxrObject = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(sfxrObject, "sound/sfxr/jump.sfs");
+ptr jumpSfxr = soloud.Sfxr_create();
+int sfxrLoaded = soloud.Sfxr_loadParams(jumpSfxr, "sound/sfxr/jump.sfs");
 if (sfxrLoaded != 0) return;
-f32 theVolume = 1.0;
-soloud.Sfxr_setVolume(sfxrObject, theVolume);
-soloud.Sfxr_setLooping(sfxrObject, 0);   // 1 = true, 0 = false
+ptr fallSfxr = soloud.Sfxr_create();
+sfxrLoaded = soloud.Sfxr_loadParams(fallSfxr, "sound/sfxr/fall.sfs");
+if (sfxrLoaded != 0) return;
+ptr hurtSfxr = soloud.Sfxr_create();
+sfxrLoaded = soloud.Sfxr_loadParams(hurtSfxr, "sound/sfxr/hurt.sfs");
+if (sfxrLoaded != 0) return;
 
-int jumpsoundHandle;
-//soloud.Soloud_setVolume(soloudObject, handle_sound, theVolume);
-
-
-
+function playJump() { soloud.Soloud_play(soloudObject, jumpSfxr); }
+function playFall() { soloud.Soloud_play(soloudObject, fallSfxr); }
+function playHurt() { soloud.Soloud_play(soloudObject, hurtSfxr); }
 
 
 class CubeShape {
@@ -243,6 +245,7 @@ function GotoLevel() {
 
 
 function Draw() {
+	if (bertus.fallenOffCounter == 16) { playFall(); }
 	if (bertus.fallenOffCounter >= 16) { bertus.draw(); }
 	for (i in 0 ..< nrEnemyBalls) {
 		if (balls[i].fallenOffCounter >= 16)
@@ -335,8 +338,6 @@ function MoveElements() {
 	if (allBlocksHit) {	levelCompleteFramecount = 1; }
 }
 
-
-function playSound() { jumpsoundHandle = soloud.Soloud_play(soloudObject, sfxrObject); }
 function PrintTheScore() { writeText(renderer, 20.0, 30.0, "Score: " + score); }
 
 function LevelIsComplete() {
@@ -368,6 +369,8 @@ function GameIsOver() {
 	writeText(renderer, 100.0, 70.0, "*** Game over! ***");
 	writeText(renderer, 100.0, 90.0, "    Try again...");
 	gameOverFramecount++;
+	if (gameOverFramecount == 2)
+		playHurt();
 	if (gameOverFramecount > 125) {	
 		if (level == 1)
 			score = 1000;
@@ -387,10 +390,10 @@ while (StatusRunning)
 		if ((bertus.movex == 0) && (bertus.movey == 0)) {
 			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 				if (bertus.falling == false and bertus.visible == true) {
-					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--;  playSound(); }    // naar boven links
-					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5);   score--;  playSound(); }    // naar onder rechts
-					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1);  score--;  playSound(); }    // naar boven rechts
-					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7);  score--;  playSound(); }    // naar onder links
+					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--;  playJump(); }    // naar boven links
+					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5);   score--;  playJump(); }    // naar onder rechts
+					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1);  score--;  playJump(); }    // naar boven rechts
+					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7);  score--;  playJump(); }    // naar onder links
 				}
 				if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 					StatusRunning = false;
@@ -428,7 +431,9 @@ while (StatusRunning)
 // END Mainloop
 
 
-soloud.Sfxr_destroy(sfxrObject);
+soloud.Sfxr_destroy(jumpSfxr);
+soloud.Sfxr_destroy(fallSfxr);
+soloud.Sfxr_destroy(hurtSfxr);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
 
