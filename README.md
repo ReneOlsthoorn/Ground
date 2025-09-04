@@ -310,7 +310,7 @@ Smoothscrolling is always good.
 
 ### Jump
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.png?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.jpg?raw=true" width="500" /><br/>
 Jump on the platforms. 3D starfield background.
 </p>
 
