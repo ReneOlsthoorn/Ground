@@ -312,9 +312,9 @@ Jump on the platforms. 3D starfield background.
 </p>
 
 ### The Chipmunk Tennis example
-There is also an example which interfaces with the Chipmunk Physics engine. Check it out.  
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" /><br/>
+Example which uses the Chipmunk Physics engine.
 </p>
 
 ### The Plasma example with no colorcycling
