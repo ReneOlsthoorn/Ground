@@ -359,7 +359,7 @@ Solve 30 lines to complete.
 ### Racer
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" /><br/>
-Motor racing game. Avoid the other motor racers on the road!
+Motor racing game. Avoid the other motor racers.
 </p>
 
 
