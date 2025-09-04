@@ -376,7 +376,7 @@ namespace GroundCompiler
             {
                 emitter.resizeCurrent(destinationDatatype.SizeInBytes);
             }
-            else if (sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && destinationDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && destinationDatatype.SizeInBytes < sourceDatatype.SizeInBytes)
+            else if (sourceDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && destinationDatatype.Contains(Datatype.TypeEnum.FloatingPoint) && (destinationDatatype.SizeInBytes != sourceDatatype.SizeInBytes))
             {
                 emitter.resizeCurrentFloatingPoint(sourceDatatype.SizeInBytes, destinationDatatype.SizeInBytes);
             }

@@ -103,33 +103,17 @@ function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
 }
 
-function msys_frand(u32* seed) : float
-{
-	seed[0] = seed[0] * 0x343FD + 0x269EC3;
-	u32 a = (seed[0] >> 9) or 0x3f800000;
-
-	float floatedA;
-	asm {
-		movss    xmm0, dword [a@msys_frand]
-		cvtss2sd xmm1, xmm0
-		movq     qword [floatedA@msys_frand], xmm1
-	}
-	float res = floatedA - 1.0;
-	return res;
-}
-
-
 function InitStarField()
 {
 	for (int i = 0; i < numberOfStars; i++)
 	{
-		float rand = msys_frand(&SeedStarfield);
+		float rand = sdl3.SDL_randf_r(&SeedStarfield);
 		float starX = (rand - 0.5) * 100.0;
-		rand = msys_frand(&SeedStarfield);
+		rand = sdl3.SDL_randf_r(&SeedStarfield);
 		float starY = (rand - 0.5) * 100.0;
-		rand = msys_frand(&SeedStarfield);
+		rand = sdl3.SDL_randf_r(&SeedStarfield);
 		float starZ = (rand * 900.0) + 100.0;
-		rand = msys_frand(&SeedStarfield);
+		rand = sdl3.SDL_randf_r(&SeedStarfield);
 		float starZV = (rand * 4.5) + 0.5;
 		star_x[i] = starX;
 		star_y[i] = starY;
@@ -137,6 +121,7 @@ function InitStarField()
 		star_zv[i] = starZV;
 	}
 }
+InitStarField();
 
 function SetPixel(int x, int y, u32 color)
 {
@@ -148,7 +133,6 @@ function SetPixel(int x, int y, u32 color)
 	pixels[x,y+1] = color;
 	pixels[x+1,y+1] = color;
 }
-
 
 function StarField()
 {
@@ -168,11 +152,11 @@ function StarField()
 
 		if ((x > 955) or (x < 5) or (y > 555) or (y < 5) or (star_z[i] < 0.0))
 		{
-			float rand = msys_frand(&SeedStarfield);
+			float rand = sdl3.SDL_randf_r(&SeedStarfield);
 			float starX = (rand - 0.5) * 100.0;
-			rand = msys_frand(&SeedStarfield);
+			rand = sdl3.SDL_randf_r(&SeedStarfield);
 			float starY = (rand - 0.5) * 100.0;
-			rand = msys_frand(&SeedStarfield);
+			rand = sdl3.SDL_randf_r(&SeedStarfield);
 			float starZ = (rand + 0.1) * 900.0;
 			star_x[i] = starX;
 			star_y[i] = starY;
@@ -181,15 +165,11 @@ function StarField()
 	}
 }
 
-InitStarField();
-
-
 function PrintScore() {
 	fontScale = 1.3;
 	string theScore = "Score: " + score;
 	writeText(renderer, 5.0, 5.0, theScore);
 }
-
 
 function RestartGame() {
 	bertusRandomSeed = 123123;
@@ -223,6 +203,13 @@ function GameOverInformation() {
 	writeText(renderer, 140.0, 110.0, "Bertus lost his Ground!");
 	writeText(renderer, 140.0, 130.0, " Your score was " + score + ".");
 	writeText(renderer, 140.0, 150.0, "Press [space] to restart.");
+}
+
+function DrawBertus(int x, int y, ptr theUsedTexture) {
+	f32 scale = 1.0;
+	destRect[0] = x;  destRect[1] = y; destRect[2] = BERTUS_WIDTH; destRect[3] = BERTUS_HEIGHT;
+	sdl3.SDL_SetRenderScale(renderer, scale, scale);
+	sdl3.SDL_RenderTextureRotated(renderer, theUsedTexture, null, destRect, 0.0, null, g.SDL_FLIP_NONE);
 }
 
 
@@ -310,26 +297,22 @@ while (StatusRunning)
 		if (dy < -7.0)
 			usedBertusTexture = bertusJumpTexture;
 
-		destRect[0] = x;  destRect[1] = y; destRect[2] = BERTUS_WIDTH; destRect[3] = BERTUS_HEIGHT;
-		sdl3.SDL_SetRenderScale(renderer, scale, scale);
-		sdl3.SDL_RenderTextureRotated(renderer, usedBertusTexture, null, destRect, 0.0, null, g.SDL_FLIP_NONE);
+		DrawBertus(x, y, usedBertusTexture);
 
 		// When Bertus is at the edge of the screen, he must be painted twice, once half on the left, once half on the right of the screen.
 		int secondDraw = 0;
 		if (x > ((SCREEN_WIDTH-1) - BERTUS_WIDTH)) secondDraw = x-SCREEN_WIDTH;
 		if ((x > -BERTUS_WIDTH_D2) and (x < 0)) secondDraw = x+SCREEN_WIDTH;
-		if not (secondDraw == 0) {
-			destRect[0] = secondDraw; destRect[1] = y; destRect[2] = BERTUS_WIDTH; destRect[3] = BERTUS_HEIGHT;
-			sdl3.SDL_SetRenderScale(renderer, scale, scale);
-			sdl3.SDL_RenderTextureRotated(renderer, usedBertusTexture, null, destRect, 0.0, null, g.SDL_FLIP_NONE);
-		}
+		if not (secondDraw == 0)
+			DrawBertus(secondDraw, y, usedBertusTexture);
 
 		PrintScore();
 	}
 
-	if (gameStatus == "intro screen")
+	if (gameStatus == "intro screen") {
+		DrawBertus(320, 160, bertusTexture);
 		IntroScreenInformation();
-	else if (gameStatus == "game over")
+	} else if (gameStatus == "game over")
 		GameOverInformation();
 
 	sdl3.SDL_RenderPresent(renderer);
