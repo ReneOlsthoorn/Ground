@@ -294,13 +294,12 @@ The choices made in Ground might not be to your liking. Perhaps you want to use 
 don't want a reference count system. Why not write your own language? Use the lexer from this compiler or borrow some
 code generation constructs. It might be less work than you think and you end up being an expert.
 
-### Running the smoothscroller.g example
-You will need 3 additional files to run the smoothscroller.g sample. First, the font which is located in the Resources
-folder and is called ```charset16x16.png```.  
-Second, the GroundSideLibrary.dll which is on https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-Third, the SDL3.dll in https://github.com/libsdl-org/SDL/releases/download/release-3.2.8/SDL3-3.2.8-win32-x64.zip.  
-Put the 3 files in de same folder as the generated smoothscroller.exe and it will run.  
-You can also download all the necessary files at: https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
+### Running the examples
+The most easy way to run all the examples is using Visual Studio. Compile the GroundCompiler and you will get a 
+folder called bin\Debug\net9.0  
+In that location, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
+The zipfile contains additional libraries(such as SDL3 and soloud), sounds and images.
+After that, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
 <p align="center">
