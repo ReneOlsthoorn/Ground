@@ -2,6 +2,7 @@
 #template retrovm
 //https://lodev.org/cgtutor/plasma.html
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -21,10 +22,10 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is s
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.Graphics_ScreenDIMx, g.Graphics_ScreenDIMy);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
-u32[] pixels = null;
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int pitch = g.Graphics_ScreenLineSize;
 int xscrollNeedle = 0;
 int scrollTextNeedle = 0;
@@ -69,7 +70,7 @@ for (int i = 0; i < 256; i++) {
     palette[i] = color.ToInteger();
 }
 
-byte[] font256OnDisk = sidelib.LoadImage("charset16x16.png");
+byte[] font256OnDisk = sidelib.LoadImage("image/charset16x16.png");
 if (font256OnDisk == null) {
 	user32.MessageBox(null, "The font charset16x16.png cannot be found!", "Message", g.MB_OK);
 	return;

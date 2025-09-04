@@ -42,7 +42,7 @@ int pitch = g.GC_ScreenLineSize;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 asm data {racetrack_p dq 0}
-g.[racetrack_p] = sidelib.LoadImage("playfield1024.png");
+g.[racetrack_p] = sidelib.LoadImage("image/playfield1024.png");
 if (g.[racetrack_p] == null) { user32.MessageBox(null, "The playfield1024.png cannot be found!", "Message", g.MB_OK); return; }
 sidelib.FlipRedAndGreenInImage(g.[racetrack_p], MAP_SIZE, MAP_SIZE);
 u32[MAP_SIZE, MAP_SIZE] racetrack = g.[racetrack_p];

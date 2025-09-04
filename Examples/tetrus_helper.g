@@ -6,16 +6,6 @@ int currentTime = 0;
 msvcrt.time64(&currentTime);
 msvcrt.srand(currentTime);
 
-class SDL_AudioSpec {
-	u32 format;
-	i32 channels;
-	i32 freq;
-}
-SDL_AudioSpec spec;
-ptr stream = null;
-u8* wavData = null;
-u32 wavDataLen = 0;
-
 function writeText(ptr renderer, float x, float y, string text) {
 	f32 scale = 3.0;
 	sdl3.SDL_SetRenderScale(renderer, scale, scale);

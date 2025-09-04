@@ -736,13 +736,16 @@ section '.idata' import data readable writeable
           user32, 'user32.dll', \
           msvcrt, 'msvcrt.dll', \
 		  sdl3, 'SDL3.dll', \
-		  sidelib, 'GroundSideLibrary.dll'
+		  sdl3_image, 'SDL3_image.dll', \
+		  sidelib, 'GroundSideLibrary.dll', \
+		  soloud, 'soloud_x64.dll' 
 
   include '..\..\..\Include\kernel32_api.inc'
   include '..\..\..\Include\user32_api.inc'
   include '..\..\..\Include\msvcrt_api.inc'
   include '..\..\..\Include\sdl3_api.inc'
   include '..\..\..\Include\sidelib_api.inc'
+  include '..\..\..\Include\soloud_api.inc'
 
 
 section '.data' data readable writeable

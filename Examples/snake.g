@@ -16,6 +16,7 @@
 #include user32.g
 #include sidelib.g
 #include snake_helper.g
+#include soloud.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
@@ -34,28 +35,30 @@ u32[6] fgColorList = [ 0xff7D7D7C, 0xffffff00, 0xffffffff, 0xffff00ff, 0xff00fff
 u32[6] bgColorList = [ 0xffBBBBBB, 0xffffff00, 0xffbbbbbb, 0xffff00ff, 0xffFEE92D, 0xffffffff ];
 int[6] keyboardStack = [ ] asm;
 int keyboardStackNeedle = 0;
-byte[SDL3_EVENT_SIZE] event = [];
-u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
-u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Snake", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
-bool wavLoaded = sdl3.SDL_LoadWAV("coin.wav", &spec, &wavData, &wavDataLen);
-stream = sdl3.SDL_OpenAudioDeviceStream(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null, null);
-if (!wavLoaded or (stream == null)) { user32.MessageBox(null, "The sound cannot be loaded!", "Message", g.MB_OK); return; }
+ptr soloudObject = soloud.Soloud_create();
+int soloudResult = soloud.Soloud_init(soloudObject);
+if (soloudResult != 0) return;
+ptr sfxrObject = soloud.Sfxr_create();
+int sfxrLoaded = soloud.Sfxr_loadParams(sfxrObject, "sound/sfxr/powerup.sfs");
+if (sfxrLoaded != 0) return;
+f32 theVolume = 1.0;
+soloud.Sfxr_setVolume(sfxrObject, theVolume);
+soloud.Sfxr_setLooping(sfxrObject, 0);   // 1 = true, 0 = false
+
 function playSound() {
-	sdl3.SDL_ResumeAudioStreamDevice(stream);
-	sdl3.SDL_PutAudioStreamData(stream, wavData, wavDataLen);
+	soloud.Soloud_play(soloudObject, sfxrObject);
 }
 
 
@@ -230,6 +233,27 @@ function RestartGame() {
 	GenerateFood();
 }
 
+function IntroScreenInformation() {
+	writeText(renderer, 60.0, 50.0, "Feed the Snake 100 meals!");
+	writeText(renderer, 60.0, 70.0, "Use cursor keys to steer.");
+	writeText(renderer, 60.0, 90.0, " Press [space] to start.");
+}
+
+function GameOverInformation() {
+	writeText(renderer, 60.0, 50.0, "   *** Game over ***");
+	writeText(renderer, 60.0, 70.0, "Do not let the Snake bite");
+	writeText(renderer, 60.0, 90.0, "  itself or hit a wall!");
+	writeText(renderer, 60.0, 110.0, " The Snake size was " + snakeLength + ".");
+	writeText(renderer, 60.0, 130.0, "Press [space] to restart");
+}
+
+function GameFinishedInformation() {
+	writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
+	writeText(renderer, 70.0, 70.0, "Finally after 100 meals,");
+	writeText(renderer, 70.0, 90.0, " the Snake is satisfied!");
+	writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
+}
+
 
 RestartGame();
 gameStatus = "intro screen";
@@ -270,26 +294,12 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
-	if (gameStatus == "intro screen") {
-		writeText(renderer, 60.0, 50.0, "Feed the Snake 100 meals!");
-		writeText(renderer, 60.0, 70.0, "Use cursor keys to steer.");
-		writeText(renderer, 60.0, 90.0, " Press [space] to start.");
-	}
-
-	if (gameStatus == "game over") {
-		writeText(renderer, 60.0, 50.0, "   *** Game over ***");
-		writeText(renderer, 60.0, 70.0, "Do not let the Snake bite");
-		writeText(renderer, 60.0, 90.0, "  itself or hit a wall!");
-		writeText(renderer, 60.0, 110.0, " The Snake size was " + snakeLength + ".");
-		writeText(renderer, 60.0, 130.0, "Press [space] to restart");
-	}
-
-	if (gameStatus == "game finished") {
-		writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
-		writeText(renderer, 70.0, 70.0, "Finally after 100 meals,");
-		writeText(renderer, 70.0, 90.0, " the Snake is satisfied!");
-		writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
-	}
+	if (gameStatus == "intro screen")
+		IntroScreenInformation();
+	else if (gameStatus == "game over")
+		GameOverInformation();
+	else if (gameStatus == "game finished")
+		GameFinishedInformation();
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks)
@@ -298,6 +308,10 @@ while (StatusRunning)
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
 }
+
+soloud.Sfxr_destroy(sfxrObject);
+soloud.Soloud_deinit(soloudObject);
+soloud.Soloud_destroy(soloudObject);
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

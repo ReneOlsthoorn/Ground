@@ -28,7 +28,7 @@ int debugBestTicks = 0xffff;
 asm data {frameCount dq 0}
 f32[4] destRect = [];
 
-ptr tennisSurface = sdl3_image.IMG_Load("de_tennisbaan.jpg");
+ptr tennisSurface = sdl3_image.IMG_Load("image/de_tennisbaan.jpg");
 if (tennisSurface == null) {
 	user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK);
 	return;
@@ -40,7 +40,7 @@ if (tenniscourtTexture == null) {
 }
 sdl3.SDL_DestroySurface(tennisSurface);
 
-ptr ballSurface = sdl3_image.IMG_Load("tennisbal_32x32.png");
+ptr ballSurface = sdl3_image.IMG_Load("image/tennisbal_32x32.png");
 if (ballSurface == null) {
 	user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK);
 	return;

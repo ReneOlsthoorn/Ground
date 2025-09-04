@@ -170,6 +170,7 @@ namespace GroundCompiler
                     cpu.FreeRegister(reg);
                 }
                 EmitExpression(assignment.RightOfEqualSignNode);
+                EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
                 reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                 if (parentSymbol.DataType.IsReferenceType)
                     emitter.AddReference(assignment.RightOfEqualSignNode);

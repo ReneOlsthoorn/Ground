@@ -93,5 +93,14 @@ import sdl3,\
 	   sdl3_SDL_GetMouseState, 'SDL_GetMouseState',\
 	   sdl3_SDL_PumpEvents, 'SDL_PumpEvents',\
 	   sdl3_SDL_HasMouse, 'SDL_HasMouse',\
+	   sdl3_SDL_SetTextureScaleMode, 'SDL_SetTextureScaleMode',\
 	   sdl3_SDL_GetKeyboardState, 'SDL_GetKeyboardState',\
+	   sdl3_SDL_srand, 'SDL_srand',\
+	   sdl3_SDL_rand, 'SDL_rand',\
+	   sdl3_SDL_randf, 'SDL_randf',\
+	   sdl3_SDL_rand_bits, 'SDL_rand_bits',\
+	   sdl3_SDL_rand_r, 'SDL_rand_r',\
+	   sdl3_SDL_randf_r, 'SDL_randf_r',\
+	   sdl3_SDL_rand_bits_r, 'SDL_rand_bits_r',\
+	   sdl3_SDL_SetTextureAlphaMod, 'SDL_SetTextureAlphaMod',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'

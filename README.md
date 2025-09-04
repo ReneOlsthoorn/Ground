@@ -235,7 +235,8 @@ retrieves the value pointed to by eventType and compares it with SDL_QUIT.
 In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
 
 ### Some remarks
-At this moment, you can only declare a Classes at the root level. Inner classes are not supported.
+* You can only declare Classes at the root level. Inner classes are not supported.
+* Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
 
 ### Optimizer
 Ground contains an optimizer (in Optimizer.cs), which will replace literals and removes unused variables. It will 
@@ -307,15 +308,16 @@ You can also download all the necessary files at: https://github.com/ReneOlsthoo
 Smoothscrolling is always good.
 </p>
 
+### Jump
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.png?raw=true" width="500" /><br/>
+Jump on the platforms. 3D starfield background.
+</p>
+
 ### The Chipmunk Tennis example
 There is also an example which interfaces with the Chipmunk Physics engine. Check it out, it's fun.  
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" />
-</p>
-
-### The 3D Travelling Through Stars example
-<p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Stars.png?raw=true" width="500" />
 </p>
 
 ### The Plasma example with no colorcycling
@@ -374,3 +376,4 @@ Motor racing game. Avoid the other motor racers on the road!
 2025.08.02: Enhanced Tetrus playability (rotating at sides, manual keyboard repeat).  
 2025.08.23: Added Racer game.  
 2025.08.30: Racer's engine sound added using Soloud.  
+2025.09.04: Jump game added containing Sfxr sounds.  

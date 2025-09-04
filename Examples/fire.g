@@ -35,7 +35,7 @@ bool drawTheScene = true;
 int coolingMapHeight = SCREEN_HEIGHT;
 int coolingMapOffset = coolingMapHeight - 1;
 asm data {logo_p dq 0}
-g.[logo_p] = sidelib.LoadImage("groundlogo_960x109.png");
+g.[logo_p] = sidelib.LoadImage("image/groundlogo_960x109.png");
 if (g.[logo_p] == null) {
 	user32.MessageBox(null, "The groundlogo_960x109.png cannot be found!", "Message", g.MB_OK);
 	return;

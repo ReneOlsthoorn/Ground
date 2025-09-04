@@ -49,12 +49,13 @@ bool clipHitting = false;      // is the clip now touched?
 float clipLeft;
 float clipRight;
 
+
 ptr soloudObject = soloud.Soloud_create();
 int soloudResult = soloud.Soloud_init(soloudObject);
 if (soloudResult != 0) { return; }
 
 ptr wavObject = soloud.Wav_create();
-int wavLoaded = soloud.Wav_load(wavObject, "engine.wav");
+int wavLoaded = soloud.Wav_load(wavObject, "sound/engine.wav");
 if (wavLoaded != 0) return;
 
 f32 theVolume = 0.0;
@@ -68,7 +69,7 @@ f32 theSoundSpeed = 1.0;
 soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, theSoundSpeed);
 
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Racer", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
@@ -345,9 +346,25 @@ function DrawPlayer() {
 	sdl3.SDL_RenderTextureRotated(renderer, texturePtr, null, destRect, 0.0, null, g.SDL_FLIP_NONE);
 }
 
+function PrintDebugInformation() {
+	if (clipHitting)
+		writeText(renderer, 10.0, 14.0, "Clipping.");
+
+	//if (speed > ENEMY_ARRIVAL_SPEED)
+	//	writeText(renderer, 10.0, 24.0, "Enemies arriving.");
+
+	if (actor1.isHit())
+		writeText(renderer, 10.0, 24.0, "Hit!");
+}
+
+
 
 while (StatusRunning)
 {
+	f32 snelheid = (speed / 10.0) + 1.0;
+	soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, snelheid);    // Play a bit slower; 1.0f is normal
+
+
 	while (sdl3.SDL_PollEvent(&event[0])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -415,22 +432,13 @@ while (StatusRunning)
 	actor2.draw();
 	DrawPlayer();
 
-	if (clipHitting)
-		writeText(renderer, 10.0, 14.0, "Clipping.");
-
-	//if (speed > ENEMY_ARRIVAL_SPEED)
-	//	writeText(renderer, 10.0, 24.0, "Enemies arriving.");
-
-	if (actor1.isHit())
-		writeText(renderer, 10.0, 24.0, "Hit!");
+	PrintDebugInformation();
 
 	sdl3.SDL_RenderPresent(renderer);
 
-	f32 snelheid = (speed / 10.0) + 1.0;
-	soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, snelheid);    // Play a bit slower; 1.0f is normal
-
 	frameCount++;
 }
+
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(pl1Texture);
@@ -443,3 +451,7 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
+
+soloud.Wav_destroy(wavObject);
+soloud.Soloud_deinit(soloudObject);
+soloud.Soloud_destroy(soloudObject);

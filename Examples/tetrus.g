@@ -13,6 +13,7 @@
 #include kernel32.g
 #include user32.g
 #include sidelib.g
+#include soloud.g
 #include tetrus_helper.g
 
 class Point {
@@ -66,14 +67,29 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
-bool wavLoaded = sdl3.SDL_LoadWAV("coin.wav", &spec, &wavData, &wavDataLen);
-stream = sdl3.SDL_OpenAudioDeviceStream(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null, null);
-if (!wavLoaded or (stream == null)) { user32.MessageBox(null, "The sound cannot be loaded!", "Message", g.MB_OK); return; }
-function playSound() {
-	sdl3.SDL_ResumeAudioStreamDevice(stream);
-	sdl3.SDL_PutAudioStreamData(stream, wavData, wavDataLen);
-}
+ptr soloudObject = soloud.Soloud_create();
+int soloudResult = soloud.Soloud_init(soloudObject);
+if (soloudResult != 0) return;
+ptr sfxrObject = soloud.Sfxr_create();
+int sfxrLoaded = soloud.Sfxr_loadParams(sfxrObject, "sound/sfxr/explosion4.sfs");
+if (sfxrLoaded != 0) return;
+ptr dropObject = soloud.Sfxr_create();
+int dropLoaded = soloud.Sfxr_loadParams(dropObject, "sound/sfxr/hit3.sfs");
+if (dropLoaded != 0) return;
+ptr sfxrSelectObject = soloud.Sfxr_create();
+int sfxrSelectLoaded = soloud.Sfxr_loadParams(sfxrSelectObject, "sound/sfxr/select.sfs");
+if (sfxrSelectLoaded != 0) return;
 
+f32 theVolume = 1.0;
+soloud.Sfxr_setVolume(sfxrObject, theVolume);
+soloud.Sfxr_setVolume(dropObject, theVolume);
+theVolume = 0.5;
+soloud.Sfxr_setVolume(sfxrSelectObject, theVolume);
+//soloud.Sfxr_setLooping(sfxrObject, 0);   // 1 = true, 0 = false
+
+function playSound() { soloud.Soloud_play(soloudObject, sfxrObject); }
+function playDrop() { soloud.Soloud_play(soloudObject, dropObject); }
+function playTurn() { soloud.Soloud_play(soloudObject, sfxrSelectObject); }
 
 function FillGridElementPixels(pointer p, u32 color) asm {
   push	rdi
@@ -178,8 +194,8 @@ function CheckChangeDirection() {
 	int gewensteRichting = keyboardStack[0];
 	if (gewensteRichting == 1)  { dx = -1; }
 	if (gewensteRichting == 2)  { dx = 1; }
-	if (gewensteRichting == 3)  { rotateDelta = 1; }
-	if (gewensteRichting == 4)  { rotateDelta = 1; }
+	if (gewensteRichting == 3)  { rotateDelta = 1; playTurn(); }
+	if (gewensteRichting == 4)  { rotateDelta = 1; playTurn(); }
 
 	for (i in 1..keyboardStackNeedle) {
 		keyboardStack[i-1] = keyboardStack[i];
@@ -295,6 +311,7 @@ function MovePiece() {
 		for (i in 0 ..< 4) { board[oldFigure[i].x, oldFigure[i].y] = activeFigureColor; }
 
 		waitCount = 30;
+		playDrop();
 		GenerateNewPiece();
 
 		if (CollisionStatus() < 0) {
@@ -314,6 +331,36 @@ function RestartGame() {
 	linesDoneCounter = 0;
 	gameTimeFrameStart = frameCount;
 }
+
+
+function IntroScreenInformation() {
+	writeText(renderer, 60.0, 70.0, ("  Try to fully fill " + linesToComplete));
+	writeText(renderer, 60.0, 80.0, "    horizontal lines.");
+	writeText(renderer, 60.0, 110.0, " Press [space] to start.");
+}
+
+function GameOverInformation() {
+	writeText(renderer, 60.0, 50.0, "   *** Game over ***");
+	writeText(renderer, 60.0, 70.0, "  You needed " + linesToComplete + " lines.");
+	writeText(renderer, 60.0, 80.0, "  You have done " + linesDoneCounter + " lines.");
+	writeText(renderer, 60.0, 130.0, "Press [space] to restart");
+}
+
+function GameFinishedInformation() {
+	writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
+	writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines");
+	writeText(renderer, 70.0, 80.0, "in " + secondsGameTime + " seconds!");
+	writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
+}
+
+function GameRunningInformation() {
+	writeText(renderer, 5.0, 40.0, "Remaining");
+	writeText(renderer, 5.0, 50.0, "lines: " + (linesToComplete - linesDoneCounter));
+	writeText(renderer, 5.0, 70.0, "Time");
+	secondsGameTime = (frameCount - gameTimeFrameStart) / 60;
+	writeText(renderer, 5.0, 80.0, "elapsed: " + secondsGameTime);
+}
+
 
 RestartGame();
 gameStatus = "intro screen";
@@ -366,33 +413,10 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
-	if (gameStatus == "intro screen") {
-		writeText(renderer, 60.0, 70.0, ("  Try to fully fill " + linesToComplete));
-		writeText(renderer, 60.0, 80.0, "    horizontal lines.");
-		writeText(renderer, 60.0, 110.0, " Press [space] to start.");
-	}
-
-	if (gameStatus == "game over") {
-		writeText(renderer, 60.0, 50.0, "   *** Game over ***");
-		writeText(renderer, 60.0, 70.0, "  You needed " + linesToComplete + " lines.");
-		writeText(renderer, 60.0, 80.0, "  You have done " + linesDoneCounter + " lines.");
-		writeText(renderer, 60.0, 130.0, "Press [space] to restart");
-	}
-
-	if (gameStatus == "game finished") {
-		writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
-		writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines");
-		writeText(renderer, 70.0, 80.0, "in " + secondsGameTime + " seconds!");
-		writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
-	}
-
-	if (gameStatus == "game running") {
-		writeText(renderer, 5.0, 40.0, "Remaining");
-		writeText(renderer, 5.0, 50.0, "lines: " + (linesToComplete - linesDoneCounter));
-		writeText(renderer, 5.0, 70.0, "Time");
-		secondsGameTime = (frameCount - gameTimeFrameStart) / 60;
-		writeText(renderer, 5.0, 80.0, "elapsed: " + secondsGameTime);
-	}
+	if (gameStatus == "intro screen") IntroScreenInformation();
+	else if (gameStatus == "game over") GameOverInformation();
+	else if (gameStatus == "game finished") GameFinishedInformation();
+	else if (gameStatus == "game running") GameRunningInformation();
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks)
@@ -401,6 +425,11 @@ while (StatusRunning)
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
 }
+soloud.Sfxr_destroy(sfxrSelectObject);
+soloud.Sfxr_destroy(sfxrObject);
+soloud.Sfxr_destroy(dropObject);
+soloud.Soloud_deinit(soloudObject);
+soloud.Soloud_destroy(soloudObject);
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

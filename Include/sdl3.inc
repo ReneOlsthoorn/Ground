@@ -14,9 +14,9 @@ SDL_INIT_CAMERA 	= 0x00010000
 ; The flags on a window
 
 SDL_WINDOW_FULLSCREEN	      = 0x00000001	; fullscreen window
-SDL_WINDOW_OPENGL	      = 0x00000002	; window usable with OpenGL context
-SDL_WINDOW_OCCLUDED	      = 0x00000004
-SDL_WINDOW_HIDDEN	      = 0x00000008	; window is not visible
+SDL_WINDOW_OPENGL	          = 0x00000002	; window usable with OpenGL context
+SDL_WINDOW_OCCLUDED	          = 0x00000004
+SDL_WINDOW_HIDDEN	          = 0x00000008	; window is not visible
 SDL_WINDOW_BORDERLESS	      = 0x00000010	; no window decoration
 SDL_WINDOW_RESIZABLE	      = 0x00000020	; window can be resized
 SDL_WINDOW_MINIMIZED	      = 0x00000040	; window is minimized
@@ -24,7 +24,7 @@ SDL_WINDOW_MAXIMIZED	      = 0x00000080	; window is maximized
 SDL_WINDOW_INPUT_GRABBED      = 0x00000100	; window has grabbed input focus
 SDL_WINDOW_INPUT_FOCUS	      = 0x00000200	; window has input focus
 SDL_WINDOW_MOUSE_FOCUS	      = 0x00000400	; window has mouse focus
-SDL_WINDOW_EXTERNAL	      = 0x00000800
+SDL_WINDOW_EXTERNAL	          = 0x00000800
 SDL_WINDOW_HIGH_PIXEL_DENSITY      = 0x00002000
 
 ; Used to indicate that you don't care what the window position is.
@@ -55,6 +55,12 @@ SDL_TEXTUREMODULATE_ALPHA = 0x00000002	; srcA = srcA * alpha
 SDL_FLIP_NONE	    = 0x00000000	; Do not flip
 SDL_FLIP_HORIZONTAL = 0x00000001	; flip horizontally
 SDL_FLIP_VERTICAL   = 0x00000002	; flip vertically
+
+
+SDL_SCALEMODE_INVALID = -1
+SDL_SCALEMODE_NEAREST = 0        ; nearest pixel sampling
+SDL_SCALEMODE_LINEAR = 1         ; linear filtering
+
 
 ; The blend mode used in SDL_RenderCopy() and drawing operations.
 

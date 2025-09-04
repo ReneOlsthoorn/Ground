@@ -3,6 +3,7 @@
 
 #template sdl3
 
+#include graphics_defines.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -20,10 +21,10 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 int frameCount = 0;
-u32[960, 560] pixels = null;
-byte[128] event = [];
-u32* eventType = &event[0];
-u32* eventScancode = &event[24];
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_KEYBOARDEVENT_TYPE_U32];
+u32* eventScancode = &event[SDL3_KEYBOARDEVENT_SCANCODE_U32];
 bool StatusRunning = true;
 bool thread1Busy = false;
 bool thread2Busy = false;
@@ -43,7 +44,7 @@ int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 
 asm data {racetrack_p dq 0}
-g.[racetrack_p] = sidelib.LoadImage("playfield1024.png");
+g.[racetrack_p] = sidelib.LoadImage("image/playfield1024.png");
 if (g.[racetrack_p] == null) {
 	user32.MessageBox(null, "The playfield1024.png cannot be found!", "Message", g.MB_OK);
 	return;

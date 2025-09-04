@@ -21,6 +21,7 @@
 #include user32.g
 #include sidelib.g
 #include bertus_helper.g
+#include soloud.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[SDL3_EVENT_SIZE] event = [];
@@ -44,7 +45,7 @@ int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31
 int* levelPtr = &level1[0];
 int levelSize = sizeof(level1) / sizeof(int);
 asm data {spritesheet_p dq 0}
-g.[spritesheet_p] = sidelib.LoadImage("Bertus.png");
+g.[spritesheet_p] = sidelib.LoadImage("image/Bertus.png");
 if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
 sidelib.FlipRedAndGreenInImage(g.[spritesheet_p], SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT);
 u32[SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT] spritesheet = g.[spritesheet_p];
@@ -53,12 +54,28 @@ ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Bertus", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
+
+ptr soloudObject = soloud.Soloud_create();
+int soloudResult = soloud.Soloud_init(soloudObject);
+if (soloudResult != 0) return;
+ptr sfxrObject = soloud.Sfxr_create();
+int sfxrLoaded = soloud.Sfxr_loadParams(sfxrObject, "sound/sfxr/jump.sfs");
+if (sfxrLoaded != 0) return;
+f32 theVolume = 1.0;
+soloud.Sfxr_setVolume(sfxrObject, theVolume);
+soloud.Sfxr_setLooping(sfxrObject, 0);   // 1 = true, 0 = false
+
+int jumpsoundHandle;
+//soloud.Soloud_setVolume(soloudObject, handle_sound, theVolume);
+
+
+
 
 
 class CubeShape {
@@ -319,25 +336,45 @@ function MoveElements() {
 }
 
 
-class SDL_AudioSpec {
-	u32 format;
-	i32 channels;
-	i32 freq;
-}
-SDL_AudioSpec spec;
-string wavPath = "jump.wav";
-ptr stream = null;
-u8* wavData = null;
-u32 wavDataLen = 0;
-bool wavLoaded = sdl3.SDL_LoadWAV(wavPath, &spec, &wavData, &wavDataLen);
-stream = sdl3.SDL_OpenAudioDeviceStream(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null, null);
-if (!wavLoaded or !stream)
-	StatusRunning = false;
+function playSound() { jumpsoundHandle = soloud.Soloud_play(soloudObject, sfxrObject); }
+function PrintTheScore() { writeText(renderer, 20.0, 30.0, "Score: " + score); }
 
-function playSound() {
-	sdl3.SDL_ResumeAudioStreamDevice(stream);
-	sdl3.SDL_PutAudioStreamData(stream, wavData, wavDataLen);
+function LevelIsComplete() {
+	if (level == 4) {
+		writeText(renderer, 60.0, 60.0, "All 4 levels completed!");
+		writeText(renderer, 100.0, 80.0, "Game finished!");
+		writeText(renderer, 100.0, 100.0, "Score is " + score);
+	}
+	else {
+		writeText(renderer, 100.0, 70.0, "Level " + level + " complete!");
+		levelCompleteFramecount++;
+		if (levelCompleteFramecount > 125) {
+			level++;
+			GotoLevel();
+		} else {
+			for (i in 0..< shape.nrElements()) {
+				shape.getXY(i);
+				int theIndex = shape.getIndexForElement(i);
+				int theBlockNr = SPRITESHEET_BLOCK_YELLOW;
+				int remain = (levelCompleteFramecount / 10) % 2;
+				if (remain == 1) { theBlockNr = SPRITESHEET_BLOCK_BLUE; }
+				blockState[theIndex] = theBlockNr;
+			}
+		}
+	}
 }
+
+function GameIsOver() {
+	writeText(renderer, 100.0, 70.0, "*** Game over! ***");
+	writeText(renderer, 100.0, 90.0, "    Try again...");
+	gameOverFramecount++;
+	if (gameOverFramecount > 125) {	
+		if (level == 1)
+			score = 1000;
+		GotoLevel();
+	}
+}
+
 
 // BEGIN Mainloop:
 GotoLevel();
@@ -377,58 +414,29 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
-	if (levelCompleteFramecount > 0) {
-		if (level == 4) {
-			writeText(renderer, 60.0, 60.0, "All 4 levels completed!");
-			writeText(renderer, 100.0, 80.0, "Game finished!");
-			writeText(renderer, 100.0, 100.0, "Score is " + score);
-		}
-		else {
-			writeText(renderer, 100.0, 70.0, "Level " + level + " complete!");
-			levelCompleteFramecount++;
-			if (levelCompleteFramecount > 125) {
-				level++;
-				GotoLevel();
-			} else {
-				for (i in 0..< shape.nrElements()) {
-					shape.getXY(i);
-					int theIndex = shape.getIndexForElement(i);
-					int theBlockNr = SPRITESHEET_BLOCK_YELLOW;
-					int remain = (levelCompleteFramecount / 10) % 2;
-					if (remain == 1) { theBlockNr = SPRITESHEET_BLOCK_BLUE; }
-					blockState[theIndex] = theBlockNr;
-				}
-			}
-		}
-	}
-
-	if (gameOverFramecount > 0) {
-		writeText(renderer, 100.0, 70.0, "*** Game over! ***");
-		writeText(renderer, 100.0, 90.0, "    Try again...");
-		gameOverFramecount++;
-		if (gameOverFramecount > 125) {	
-			if (level == 1)
-				score = 1000;
-			GotoLevel();
-		}
-	}	
-	if (gameOverFramecount == 0 && levelCompleteFramecount == 0)
-		writeText(renderer, 20.0, 30.0, "Score: " + score);
+	if (levelCompleteFramecount > 0)
+		LevelIsComplete();
+	else if (gameOverFramecount > 0)
+		GameIsOver();
+	else if (gameOverFramecount == 0 and levelCompleteFramecount == 0)
+		PrintTheScore();
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
-	if (frameCount % 60 == 0 && score > 0 and levelCompleteFramecount == 0) { score--; }
+	if (frameCount % 60 == 0 and score > 0 and levelCompleteFramecount == 0) { score--; }
 }
 // END Mainloop
 
-sdl3.SDL_free(wavData);
+
+soloud.Sfxr_destroy(sfxrObject);
+soloud.Soloud_deinit(soloudObject);
+soloud.Soloud_destroy(soloudObject);
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-
 sidelib.FreeImage(g.[spritesheet_p]);
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.

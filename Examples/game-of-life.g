@@ -231,6 +231,12 @@ function ShowNextFigure() {
 	generations = 0;
 }
 
+function PrintInformation() {
+	writeText(renderer, 10.0, 4.0, "Figure: " + figureShow + " Generation: " + generations); // + " X: " + gridPosX + " Y: " + gridPosY);
+	writeText(renderer, 10.0, 14.0, "Press [space] for next.");
+}
+
+
 ShowNextFigure();
 while (StatusRunning)
 {
@@ -261,8 +267,7 @@ while (StatusRunning)
 	sdl3.SDL_GetMouseState(&mouseX, &mouseY);
 	int gridPosX = mouseX / GRID_ELEMENT_PIXELS;
 	int gridPosY = mouseY / GRID_ELEMENT_PIXELS;
-	writeText(renderer, 10.0, 4.0, "Figure: " + figureShow + " Generation: " + generations); // + " X: " + gridPosX + " Y: " + gridPosY);
-	writeText(renderer, 10.0, 14.0, "Press [space] for next.");
+	PrintInformation();
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;

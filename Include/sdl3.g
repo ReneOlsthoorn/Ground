@@ -49,5 +49,15 @@ dll sdl3 function SDL_GetMouseState(ptr x, ptr y) : u32;
 dll sdl3 function SDL_PumpEvents();
 dll sdl3 function SDL_HasMouse();
 dll sdl3 function SDL_GetKeyboardState(ptr numkeys) : ptr;
+dll sdl3 function SDL_SetTextureScaleMode(ptr texture, int scalemode);
+dll sdl3 function SDL_SetTextureAlphaMod(ptr texture, int alpha);
+
+dll sdl3 function SDL_srand(int seed);
+dll sdl3 function SDL_rand(i32 n) : i32;
+dll sdl3 function SDL_randf() : f32;
+dll sdl3 function SDL_rand_bits() : i32;
+dll sdl3 function SDL_rand_r(ptr state, i32 n) : i32;
+dll sdl3 function SDL_randf_r(ptr state) : f32;
+dll sdl3 function SDL_rand_bits_r(ptr state) : i32;
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  //SDL_Surface* as result
