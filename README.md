@@ -74,7 +74,7 @@ the original sourcecode in the comment column of the debugger.
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called bin\Debug\net9.0 in your solution's location.  
-In that folder, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
+In that folder, you must unzip the Resources/GroundResources.zip also found on the web at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
 The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
 available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example.
@@ -296,7 +296,7 @@ code generation constructs. It might be less work than you think and you end up 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called bin\Debug\net9.0 in your solution's location.  
-In that folder, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
+In that folder, you must unzip the Resources/GroundResources.zip also found on the web at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
 The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
 available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
