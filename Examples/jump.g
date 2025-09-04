@@ -193,6 +193,7 @@ function PrintScore() {
 
 function RestartGame() {
 	bertusRandomSeed = 123123;
+	score = 0;
 	x = BERTUS_START_X;
 	y = 100;
 	h = 200;
