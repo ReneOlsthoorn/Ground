@@ -72,11 +72,12 @@ Ground will generate a x64dbg database file there. After compilation, you can lo
 the original sourcecode in the comment column of the debugger.
 
 ### Running the examples
-You will need additional files to run the examples.  
-Unpack the GroundResources.zip into your bin/Debug/net9.0 folder.
-It includes the GroundSideLibrary.dll which includes a C PNG loader and is available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-It also includes SDL3.
-For instance try the mode7 example. In the Progam.cs in the Main function, enter fileName = "mode7.g";
+The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
+will get a folder called bin\Debug\net9.0 in your solution's location.  
+In that folder, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
+The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
+available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example.
 The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
 The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
@@ -293,11 +294,12 @@ don't want a reference count system. Why not write your own language? Use the le
 code generation constructs. It might be less work than you think and you end up being an expert.
 
 ### Running the examples
-The most easy way to run all the examples is using Visual Studio. Compile the GroundCompiler and you will get a 
-folder called bin\Debug\net9.0  
-In that location, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
-The zipfile contains additional libraries(such as SDL3 and soloud), sounds and images.  
-After that, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
+The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
+will get a folder called bin\Debug\net9.0 in your solution's location.  
+In that folder, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
+The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
+available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
 <p align="center">
