@@ -297,8 +297,8 @@ code generation constructs. It might be less work than you think and you end up 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Compile the GroundCompiler and you will get a 
 folder called bin\Debug\net9.0  
-In that location, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true
-The zipfile contains additional libraries(such as SDL3 and soloud), sounds and images.
+In that location, you must unzip the Resources zipfile located at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundExecutables.zip?raw=true  
+The zipfile contains additional libraries(such as SDL3 and soloud), sounds and images.  
 After that, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
