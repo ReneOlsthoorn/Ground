@@ -48,7 +48,6 @@ int y = 100;
 int h = 200;
 float dx = 0.0;
 float dy = 0.0;
-f32 fontScale = 1.3;
 
 
 ptr thread1Handle = kernel32.GetCurrentThread();
@@ -93,28 +92,23 @@ if (sfxrLoaded != 0) return;
 function playJump() { soloud.Soloud_play(soloudObject, jumpSfxr); }
 function playFall() { soloud.Soloud_play(soloudObject, fallSfxr); }
 
+f32 fontScale = 1.3;
 function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_SetRenderScale(renderer, fontScale, fontScale);
-	f32 theX = x;
-	f32 theY = y;
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
+	sdl3.SDL_RenderDebugText(renderer, x+2.0, y, text);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
+	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
 function InitStarField()
 {
-	for (int i = 0; i < numberOfStars; i++)
+	for (i in 0 ..< numberOfStars)
 	{
-		float rand = sdl3.SDL_randf_r(&SeedStarfield);
-		float starX = (rand - 0.5) * 100.0;
-		rand = sdl3.SDL_randf_r(&SeedStarfield);
-		float starY = (rand - 0.5) * 100.0;
-		rand = sdl3.SDL_randf_r(&SeedStarfield);
-		float starZ = (rand * 900.0) + 100.0;
-		rand = sdl3.SDL_randf_r(&SeedStarfield);
-		float starZV = (rand * 4.5) + 0.5;
+		float starX = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
+		float starY = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
+		float starZ = (sdl3.SDL_randf_r(&SeedStarfield) * 900.0) + 100.0;
+		float starZV = (sdl3.SDL_randf_r(&SeedStarfield) * 4.5) + 0.5;
 		star_x[i] = starX;
 		star_y[i] = starY;
 		star_z[i] = starZ;
@@ -136,7 +130,7 @@ function SetPixel(int x, int y, u32 color)
 
 function StarField()
 {
-	for (int i = 0; i < numberOfStars; i++)
+	for (i in 0 ..< numberOfStars)
 	{
 		SetPixel(star_screenx[i], star_screeny[i], 0xff000000);
 		star_z[i] = star_z[i] - star_zv[i];
@@ -152,12 +146,9 @@ function StarField()
 
 		if ((x > 955) or (x < 5) or (y > 555) or (y < 5) or (star_z[i] < 0.0))
 		{
-			float rand = sdl3.SDL_randf_r(&SeedStarfield);
-			float starX = (rand - 0.5) * 100.0;
-			rand = sdl3.SDL_randf_r(&SeedStarfield);
-			float starY = (rand - 0.5) * 100.0;
-			rand = sdl3.SDL_randf_r(&SeedStarfield);
-			float starZ = (rand + 0.1) * 900.0;
+			float starX = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
+			float starY = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
+			float starZ = (sdl3.SDL_randf_r(&SeedStarfield) + 0.1) * 900.0;
 			star_x[i] = starX;
 			star_y[i] = starY;
 			star_z[i] = starZ;
@@ -205,11 +196,10 @@ function GameOverInformation() {
 	writeText(renderer, 140.0, 150.0, "Press [space] to restart.");
 }
 
-function DrawBertus(int x, int y, ptr theUsedTexture) {
-	f32 scale = 1.0;
+function DrawBertus(int x, int y, ptr theUsedTexture, float rotation) {
 	destRect[0] = x;  destRect[1] = y; destRect[2] = BERTUS_WIDTH; destRect[3] = BERTUS_HEIGHT;
-	sdl3.SDL_SetRenderScale(renderer, scale, scale);
-	sdl3.SDL_RenderTextureRotated(renderer, theUsedTexture, null, destRect, 0.0, null, g.SDL_FLIP_NONE);
+	sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
+	sdl3.SDL_RenderTextureRotated(renderer, theUsedTexture, null, destRect, rotation, null, g.SDL_FLIP_NONE);
 }
 
 
@@ -270,7 +260,7 @@ while (StatusRunning)
 		for (i in 0 ..< NR_PLATFORMS) {
 			if ((x > platX[i]-BERTUS_WIDTH) and (x < platX[i]+PLATFORM_WIDTH) and (y > platY[i]-BERTUS_HEIGHT) and (y < platY[i]+PLATFORM_HEIGHT-BERTUS_HEIGHT) and (dy > 0.0)) {
 				playJump();
-				dy = -10.0;
+				dy = -10.5;
 			}
 		}
 	}
@@ -282,10 +272,8 @@ while (StatusRunning)
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
-	f32 scale = 1.0;
-
 	if (gameStatus == "game running") {
-		sdl3.SDL_SetRenderScale(renderer, scale, scale);
+		sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
 		for (i in 0 ..< NR_PLATFORMS) {
 			if ((platX[i] < SCREEN_WIDTH - PLATFORM_WIDTH) and (platY[i] >= -PLATFORM_HEIGHT)) {
 				destRect[0] = platX[i];  destRect[1] = platY[i]; destRect[2] = PLATFORM_WIDTH; destRect[3] = PLATFORM_HEIGHT;
@@ -297,23 +285,25 @@ while (StatusRunning)
 		if (dy < -7.0)
 			usedBertusTexture = bertusJumpTexture;
 
-		DrawBertus(x, y, usedBertusTexture);
+		DrawBertus(x, y, usedBertusTexture, 0.0);
 
 		// When Bertus is at the edge of the screen, he must be painted twice, once half on the left, once half on the right of the screen.
 		int secondDraw = 0;
 		if (x > ((SCREEN_WIDTH-1) - BERTUS_WIDTH)) secondDraw = x-SCREEN_WIDTH;
 		if ((x > -BERTUS_WIDTH_D2) and (x < 0)) secondDraw = x+SCREEN_WIDTH;
 		if not (secondDraw == 0)
-			DrawBertus(secondDraw, y, usedBertusTexture);
+			DrawBertus(secondDraw, y, usedBertusTexture, 0.0);
 
 		PrintScore();
 	}
 
 	if (gameStatus == "intro screen") {
-		DrawBertus(320, 160, bertusTexture);
+		DrawBertus(315, 155, bertusTexture, 0.0);
 		IntroScreenInformation();
-	} else if (gameStatus == "game over")
+	} else if (gameStatus == "game over") {
+		DrawBertus(280, 170, bertusTexture, 180.0);
 		GameOverInformation();
+	}
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
