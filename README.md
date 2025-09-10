@@ -331,11 +331,8 @@ Example which uses the Chipmunk Physics engine.
 
 ### The Bertus game
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" />
-</p>
-<p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Bertus_Highscore.jpg?raw=true" width="488" /><br/>
-Try to beat my score. Will not be easy!
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" /><br/>
+Try to beat the 4 levels!
 </p>
 
 ### Snake game
@@ -362,6 +359,12 @@ Solve 30 lines to complete.
 Motor racing game. Avoid the other motor racers.
 </p>
 
+### Bugs
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bugs.jpg?raw=true" width="500" /><br/>
+Let the bugs eat eachother and don't let any escape!
+</p>
+
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
@@ -376,3 +379,4 @@ Motor racing game. Avoid the other motor racers.
 2025.08.23: Added Racer game.  
 2025.08.30: Racer's engine sound added using Soloud.  
 2025.09.04: Jump game added containing Sfxr sounds.  
+2025.09.10: Bugs game added.  

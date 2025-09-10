@@ -238,6 +238,16 @@ namespace GroundCompiler
                 VariableRead(theVariable);
                 exprDatatype = theVariable.ExprType;
             }
+            else if ((expr.RightNode is PropertyExpression propExpr) && expr.Operator.Contains(TokenType.Asterisk))
+            {
+                if (propExpr.ObjectNode is Variable objVar)
+                {
+                    PropertySet propSet = new PropertySet(propExpr.ObjectNode, propExpr.Name, assignment.Operator, assignment.RightOfEqualSignNode);
+                    propSet.Parent = propExpr.Parent;
+                    VisitorPropertySet(propSet);
+                    return;
+                }
+            }
 
             if (expr.Operator.Contains(TokenType.Asterisk))
             {

@@ -20,21 +20,19 @@
 #include kernel32.g
 #include user32.g
 #include sidelib.g
-#include bertus_helper.g
 #include soloud.g
+#include bertus_helper.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
-byte[SDL3_EVENT_SIZE] event = [];
-u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
-u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-bool StatusRunning = true;
 int frameCount = 0;
+bool StatusRunning = true;
 int level = 1;
 int levelCompleteFramecount = 0;
 int gameOverFramecount = 0;
 int nrBlocksHit = 0;
 int nrEnemyBalls = 4;
 int score = 1000;
+int SeedRandom = 12313;
 int[] jumpSimulation = [-6,-4,-2,-1,0,0,0,0,0,0,0,0,1,2,4,6] asm;  // Simulates a jump
 int[] randomBallSpread = [0,1,2,3,4,5,6,1,2,3,4,5,2,3,4,3] asm;
 int[] blockState =  [0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0] asm;  // length: 49. State of each possible block.
@@ -44,6 +42,7 @@ int[] level3 = [8,9,10,11,15,16,17,18,19,21,22,25,26,29,30,32,33,35,36,37,38,39,
 int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31,32,34,35,36,37,38,39,40] asm;
 int* levelPtr = &level1[0];
 int levelSize = sizeof(level1) / sizeof(int);
+
 asm data {spritesheet_p dq 0}
 g.[spritesheet_p] = sidelib.LoadImage("image/Bertus.png");
 if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
@@ -60,24 +59,6 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
-
-// Loading sounds...
-ptr soloudObject = soloud.Soloud_create();
-int soloudResult = soloud.Soloud_init(soloudObject);
-if (soloudResult != 0) return;
-ptr jumpSfxr = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(jumpSfxr, "sound/sfxr/jump.sfs");
-if (sfxrLoaded != 0) return;
-ptr fallSfxr = soloud.Sfxr_create();
-sfxrLoaded = soloud.Sfxr_loadParams(fallSfxr, "sound/sfxr/fall.sfs");
-if (sfxrLoaded != 0) return;
-ptr hurtSfxr = soloud.Sfxr_create();
-sfxrLoaded = soloud.Sfxr_loadParams(hurtSfxr, "sound/sfxr/hurt.sfs");
-if (sfxrLoaded != 0) return;
-
-function playJump() { soloud.Soloud_play(soloudObject, jumpSfxr); }
-function playFall() { soloud.Soloud_play(soloudObject, fallSfxr); }
-function playHurt() { soloud.Soloud_play(soloudObject, hurtSfxr); }
 
 
 class CubeShape {
@@ -198,7 +179,7 @@ function initBertus() {
 }
 
 function getRandomLevelIndex() : int {
-	int randomValue = randomBallSpread[(msys_frand(&seedRandom) % 16)];
+	int randomValue = randomBallSpread[(sdl3.SDL_rand_bits_r(&SeedRandom) % 16)];
 	return randomValue;
 }
 
@@ -225,6 +206,7 @@ function initBall(int idx) {
 
 
 function GotoLevel() {
+	// SeedRandom = 123123;
 	nrBlocksHit = 0;
 	bertus.reset();
 	for (i in 0 ..< nrEnemyBalls) { balls[i].reset(); }
@@ -291,7 +273,7 @@ function MoveElements() {
 		for (j in 0 ..< nrEnemyBalls) {
 			if (balls[j].fallenOffCounter == 0 && balls[j].x == (shape.x+16) && balls[j].y >= shape.y && balls[j].y <= shape.y+5) {
 				balls[j].arrivedAtIndex = theIndex;
-				random = msys_frand(&seedRandom);
+				random = sdl3.SDL_rand_bits_r(&SeedRandom);
 				if (random % 2 == 0) {
 					balls[j].jump(32,48,SPRITESHEET_IMAGE_BALL);
 				} else {
@@ -387,17 +369,19 @@ while (StatusRunning)
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
 
-		if ((bertus.movex == 0) && (bertus.movey == 0)) {
-			if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-				if (bertus.falling == false and bertus.visible == true) {
-					if (*eventScancode == g.SDL_SCANCODE_LEFT)  { bertus.jump(-32,-48,0); score--;  playJump(); }    // naar boven links
-					if (*eventScancode == g.SDL_SCANCODE_RIGHT) { bertus.jump(32,48,5);   score--;  playJump(); }    // naar onder rechts
-					if (*eventScancode == g.SDL_SCANCODE_UP)    { bertus.jump(32,-48,1);  score--;  playJump(); }    // naar boven rechts
-					if (*eventScancode == g.SDL_SCANCODE_DOWN)  { bertus.jump(-32,48,7);  score--;  playJump(); }    // naar onder links
-				}
-				if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
-					StatusRunning = false;
-			}
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
+				StatusRunning = false;
+		}
+	}
+
+	u8* keyState = sdl3.SDL_GetKeyboardState(null);
+	if ((bertus.movex == 0) && (bertus.movey == 0)) {
+		if (bertus.falling == false and bertus.visible == true) {
+			if (keyState[g.SDL_SCANCODE_LEFT])  { bertus.jump(-32,-48,0); score--;  playJump(); }    // naar boven links
+			if (keyState[g.SDL_SCANCODE_RIGHT]) { bertus.jump(32,48,5);   score--;  playJump(); }    // naar onder rechts
+			if (keyState[g.SDL_SCANCODE_UP])    { bertus.jump(32,-48,1);  score--;  playJump(); }    // naar boven rechts
+			if (keyState[g.SDL_SCANCODE_DOWN])  { bertus.jump(-32,48,7);  score--;  playJump(); }    // naar onder links
 		}
 	}
 
@@ -431,11 +415,7 @@ while (StatusRunning)
 // END Mainloop
 
 
-soloud.Sfxr_destroy(jumpSfxr);
-soloud.Sfxr_destroy(fallSfxr);
-soloud.Sfxr_destroy(hurtSfxr);
-soloud.Soloud_deinit(soloudObject);
-soloud.Soloud_destroy(soloudObject);
+deleteSoundObjects();
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

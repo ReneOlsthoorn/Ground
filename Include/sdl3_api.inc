@@ -95,6 +95,7 @@ import sdl3,\
 	   sdl3_SDL_HasMouse, 'SDL_HasMouse',\
 	   sdl3_SDL_SetTextureScaleMode, 'SDL_SetTextureScaleMode',\
 	   sdl3_SDL_GetKeyboardState, 'SDL_GetKeyboardState',\
+	   sdl3_SDL_memcpy, 'SDL_memcpy',\
 	   sdl3_SDL_srand, 'SDL_srand',\
 	   sdl3_SDL_rand, 'SDL_rand',\
 	   sdl3_SDL_randf, 'SDL_randf',\
@@ -102,5 +103,8 @@ import sdl3,\
 	   sdl3_SDL_rand_r, 'SDL_rand_r',\
 	   sdl3_SDL_randf_r, 'SDL_randf_r',\
 	   sdl3_SDL_rand_bits_r, 'SDL_rand_bits_r',\
+	   sdl3_SDL_cos, 'SDL_cos',\
+	   sdl3_SDL_sin, 'SDL_sin',\
 	   sdl3_SDL_SetTextureAlphaMod, 'SDL_SetTextureAlphaMod',\
+	   sdl3_SDL_ConvertSurface, 'SDL_ConvertSurface',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'

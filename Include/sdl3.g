@@ -15,6 +15,19 @@
 #define SDL3_KEYBOARDEVENT_DOWN_U8 36
 #define SDL3_KEYBOARDEVENT_REPEAT_U8 37
 
+class SDL_Surface {
+    u32 flags;        // dd 0
+    u32 pixelformat;  // dd 4
+    i32 width;        // dd 8
+    i32 height;       // dd 12
+    i32 pitch;        // dd 16
+    i32 filler_;      // dd 20
+	ptr pixels;       // dq 24
+	i32 refcount;     // dd 32
+	i32 filler_2;     // dd 36
+	u64 reserved;     // dq 40
+}  //size 48
+
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
 dll sdl3 function SDL_CreateRenderer(ptr window, string name);
@@ -45,12 +58,14 @@ dll sdl3 function SDL_ResumeAudioStreamDevice(ptr stream) : bool;
 dll sdl3 function SDL_GetAudioStreamAvailable(ptr stream) : int;
 dll sdl3 function SDL_PutAudioStreamData(ptr stream, ptr buf, int len) : bool;
 dll sdl3 function SDL_free(ptr mem);
-dll sdl3 function SDL_GetMouseState(ptr x, ptr y) : u32;
+dll sdl3 function SDL_GetMouseState(ptr x, ptr y) : u32;  // result = mousestatemask
 dll sdl3 function SDL_PumpEvents();
 dll sdl3 function SDL_HasMouse();
 dll sdl3 function SDL_GetKeyboardState(ptr numkeys) : ptr;
 dll sdl3 function SDL_SetTextureScaleMode(ptr texture, int scalemode);
 dll sdl3 function SDL_SetTextureAlphaMod(ptr texture, int alpha);
+dll sdl3 function SDL_memcpy(ptr dst, ptr src, int len) : ptr;
+dll sdl3 function SDL_ConvertSurface(ptr surface, int format) : ptr;
 
 dll sdl3 function SDL_srand(int seed);
 dll sdl3 function SDL_rand(i32 n) : i32;
@@ -60,4 +75,7 @@ dll sdl3 function SDL_rand_r(ptr state, i32 n) : i32;
 dll sdl3 function SDL_randf_r(ptr state) : f32;
 dll sdl3 function SDL_rand_bits_r(ptr state) : i32;
 
-dll sdl3_image function IMG_Load(string filename) : ptr;  //SDL_Surface* as result
+dll sdl3 function SDL_cos(float value) : float;
+dll sdl3 function SDL_sin(float value) : float;
+
+dll sdl3_image function IMG_Load(string filename) : ptr;  // result = SDL_Surface*

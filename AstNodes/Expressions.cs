@@ -160,9 +160,13 @@ namespace GroundCompiler.Expressions
             base.Initialize();
 
             ClassStatement? classStatement = null;
-            if (ObjectNode.ExprType.isClass())
+            if (ObjectNode.ExprType.isClass() || Datatype.IsPointerType(ObjectNode.ExprType))
             {
-                classStatement = ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                if (Datatype.IsPointerType(ObjectNode.ExprType))
+                    classStatement = ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
+                else
+                    classStatement = ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+
                 var classScope = classStatement!.GetScope();
                 var theVar = classScope!.GetVariable(Name.Lexeme);
 
@@ -372,9 +376,7 @@ namespace GroundCompiler.Expressions
                 this.ExprType = RightNode.ExprType;
 
                 if (Operator.Contains(TokenType.Asterisk))
-                    if (this.ExprType.Base == null)
-                        this.ExprType = Datatype.Default;
-                    else
+                    if (this.ExprType.Base != null)
                         this.ExprType = this.ExprType.Base;
             }
             if (Operator.Types.Contains(TokenType.Ampersand))

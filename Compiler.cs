@@ -323,11 +323,21 @@ namespace GroundCompiler
                     return null;
                 }
 
-                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                // Is there a pointer?
+                // A pointer is a special. It will not use the indexed memory, but direct memory.
+                if (Datatype.IsPointerType(expr.ObjectNode.ExprType))
+                {
+                    classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
+                    instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                }
+                else
+                {
+                    classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                    instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
 
-                VariableRead(objectNodeAsVariable);
-                emitter.GetMemoryPointerFromIndex();
+                    VariableRead(objectNodeAsVariable);
+                    emitter.GetMemoryPointerFromIndex();
+                }
             }
 
             if (objectNodeAsThis != null)
@@ -367,30 +377,40 @@ namespace GroundCompiler
             var objectNodeAsArray = expr.ObjectNode as ArrayAccess;
             var objectNodeAsThis = expr.ObjectNode as ThisExpression;
 
-            if (expr.ValueNode != null)
+            ClassStatement? classStatement = null;
+            if (Datatype.IsPointerType(expr.ObjectNode.ExprType))
             {
-                EmitExpression(expr.ValueNode);
-
-                if (expr.Name.Contains(TokenType.Literal))
-                {
-                    string theLiteralVariable = expr.Name.Lexeme;
-                    if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(Datatype.TypeEnum.String))
-                        theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
-
-                    emitter.StoreCurrent(theLiteralVariable);
-                    return null;
-                }
-
-                if (objectNodeAsVariable?.Name.Lexeme == "g")
-                {
-                    string theLiteralVariable = expr.Name.Lexeme;
-                    emitter.StoreCurrent($"[{theLiteralVariable}]");
-                    return null;
-                }
-
-                emitter.Push(expr.ValueNode.ExprType);
+                // Als er een pointer binnenkomt, dan gaan we ervan uit dat de value al emitted is.
+                classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
             }
-            ClassStatement? classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+            else
+            {
+                if (expr.ValueNode != null)
+                {
+                    EmitExpression(expr.ValueNode);
+
+                    if (expr.Name.Contains(TokenType.Literal))
+                    {
+                        string theLiteralVariable = expr.Name.Lexeme;
+                        if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(Datatype.TypeEnum.String))
+                            theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+
+                        emitter.StoreCurrent(theLiteralVariable);
+                        return null;
+                    }
+
+                    if (objectNodeAsVariable?.Name.Lexeme == "g")
+                    {
+                        string theLiteralVariable = expr.Name.Lexeme;
+                        emitter.StoreCurrent($"[{theLiteralVariable}]");
+                        return null;
+                    }
+
+                    emitter.Push(expr.ValueNode.ExprType);
+                }
+                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+            }
+
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
             
             string reg;
@@ -404,7 +424,8 @@ namespace GroundCompiler
             if (objectNodeAsVariable != null)
             {
                 VariableRead(objectNodeAsVariable);
-                emitter.GetMemoryPointerFromIndex();
+                if (!Datatype.IsPointerType(expr.ObjectNode.ExprType))
+                    emitter.GetMemoryPointerFromIndex();
             }
 
             if (objectNodeAsThis != null)
@@ -972,11 +993,22 @@ namespace GroundCompiler
             {
                 EmitExpression(expr.RightNode);
                 exprDatatype = groupStmt.ExprType;
-            } else if (expr.RightNode is Variable theVariable)
+            }
+            else if (expr.RightNode is Variable theVariable)
             {
                 VariableRead(theVariable);
                 exprDatatype = theVariable.ExprType;
-            } else
+            }
+            else if ((expr.RightNode is PropertyExpression theProp) && expr.Operator.Contains(TokenType.Asterisk))
+            {
+                if (theProp.ObjectNode is Variable objVar)
+                {
+                    VariableRead(objVar);
+                    EmitExpression(theProp);
+                    return null;
+                }
+            }
+            else
                 EmitExpression(expr.RightNode);
 
             // -a

@@ -181,10 +181,8 @@ namespace GroundCompiler
             return Cached[theType];
         }
 
-        public static bool ContainsDatatype(string theType)
-        {
-            return Cached.ContainsKey(theType);
-        }
+        public static bool ContainsDatatype(string theType) => Cached.ContainsKey(theType);
+        public static bool IsPointerType(Datatype datatype) => datatype.Contains(Datatype.TypeEnum.Pointer);
 
     }
 }

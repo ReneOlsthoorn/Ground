@@ -20,3 +20,14 @@ function msys_rand(int* seed) : u32
 	u32 result = (seed[0] >> 16) and 32767;
 	return result;
 }
+
+function DegreeToRadians(float angle_deg) : float {
+	return angle_deg * (3.141592653 / 180.0);
+}
+
+function IsPointInCircle(float px, float py, float cx, float cy, float radius) : bool {
+    float dx = px - cx;
+    float dy = py - cy;
+    bool result = (dx * dx + dy * dy) < (radius * radius);
+	return result;
+}
