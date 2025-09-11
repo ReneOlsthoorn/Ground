@@ -22,6 +22,7 @@ f32[4] destRect = [];
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 string gameStatus = "intro screen";    // "intro screen", "game running", "next level", "game over"
 int nextLevelCount = 0;
+int RandomSeed = 123123;
 
 function IsPointInCircle(float px, float py, float cx, float cy, float radius) : bool {
     float dx = px - cx;
@@ -122,10 +123,10 @@ Actor[NR_BUGS] bugs = [ ];
 function RestartGame() {
 	gameStatus = "game running";
 	for (i in 0..< NR_BUGS) {
-		bugs[i].x = ((sdl3.SDL_randf() - 0.5) * 330.0) + 488.0;
-		bugs[i].y = ((sdl3.SDL_randf() - 0.5) * 330.0) + 285.0;
-		bugs[i].rotation = sdl3.SDL_randf() * 360.0;
-		float rand = (sdl3.SDL_randf() - 0.5) * 12.0;
+		bugs[i].x = ((sdl3.SDL_randf_r(&RandomSeed) - 0.5) * 330.0) + 488.0;
+		bugs[i].y = ((sdl3.SDL_randf_r(&RandomSeed) - 0.5) * 330.0) + 285.0;
+		bugs[i].rotation = sdl3.SDL_randf_r(&RandomSeed) * 360.0;
+		float rand = (sdl3.SDL_randf_r(&RandomSeed) - 0.5) * 12.0;
 		if (rand < 0.0)
 			rand = rand - 3.0;
 		else
@@ -140,12 +141,14 @@ gameStatus = "intro screen";
 int writeColor = 0;
 function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_SetRenderScale(renderer, 3.0, 4.0);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, x+0.5, y+0.5, text);
 	if (writeColor == 1)
 		sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0x00, 0x00, 0xff);
 	else if (writeColor == 2)
-		sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0x00, 0xff);
 	else
-		sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
@@ -275,7 +278,7 @@ while (StatusRunning)
 	}
 	if (gameStatus == "next level") {
 		nextLevelCount = nextLevelCount + 1;
-		if (nextLevelCount == 100) {
+		if (nextLevelCount == 180) {
 			RestartGame();
 		}
 	}
