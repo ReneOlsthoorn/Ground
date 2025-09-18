@@ -398,3 +398,4 @@ available downloaded Ollama Ai-model in the sourcecode, and Run the code.
 2025.08.30: Racer's engine sound added using Soloud.  
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
+2025.09.18: Vier-op-een-rij (ConnectFour) added.  
