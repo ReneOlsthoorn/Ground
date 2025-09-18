@@ -55,7 +55,7 @@ The modern C datatypes are strange for a 64 bit system. An int is 4 bytes and fl
 which is 50 years at this moment. In Ground, a float is 8 bytes and int 8 bytes.  
 Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
 innerloops.  
-See ```[GroundProjectFolder]/Examples/mode7_optimized.g``` for an example of innerloop optimization.
+See ```<GroundProjectFolder>/Examples/mode7_optimized.g``` for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
@@ -379,7 +379,7 @@ Play Connect 4 (vier-op-een-rij) against Ollama Ai models!</p>
 
 ### How to run Connect Four:
 1. Start your local Ollama.
-1. Unzip ```[GroundProjectFolder]/GroundResources/misc/ConnectFour.ai.zip``` somewhere. Open the solution and select an 
+1. Unzip ```<GroundProjectFolder>/GroundResources/misc/ConnectFour.ai.zip``` somewhere. Open the solution and select an 
 available downloaded Ollama Ai-model in the sourcecode, and Run the code.
 1. In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
 
