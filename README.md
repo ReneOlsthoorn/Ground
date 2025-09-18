@@ -372,13 +372,13 @@ Motor racing game. Avoid the other motor racers.
 Let the bugs eat eachother and don't let any escape!
 </p>
 
-### Play Connect Four against your local LLM Ai
+### Join the Hype! Play Connect Four against your local LLM Ai
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Connect4.jpg?raw=true" width="500" /><br/>
 Play Connect 4 (vier-op-een-rij) against Ollama Ai models!</p>
 
-### How to run Connect Four:
-1. Start your local Ollama.
+### How to run Connect Four
+1. Start your local Ollama. You can download Ollama at: https://ollama.com/
 1. Unzip ```<GroundProjectFolder>/GroundResources/misc/ConnectFour.ai.zip``` somewhere. Open the solution and select an 
 available downloaded Ollama Ai-model in the sourcecode, and Run the code.
 1. In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
