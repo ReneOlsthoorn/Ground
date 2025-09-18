@@ -47,15 +47,15 @@ The asm block is literally copied to the assembler. If you want, you can inspect
 every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format and the x64 calling convention.  
 
-Many programmers use C as their low-level programming language. Understandably so. The quality of the generated code
-is good and it can be compiled for many different processors. However, many C compilers do not allow the mixing of 
-C and assembly in the same function. The reason is clear: manual inserted assembly makes optimization of the 
-generated code hard.  
-The modern C datatypes are strange for a 64 bit system. An int is 4 bytes and float is 4 bytes. This shows it's age
-which is 50 years at this moment. In Ground, a float is 8 bytes and int 8 bytes.  
-Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
-innerloops.  
-See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
+Many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
+The quality of the generated code is good and it can be compiled for many different processors. 
+However, there are limitations:
+1. Many C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual 
+inserted assembly makes optimization of the generated code hard.
+1. Highlevel constructs like classes are not available, and moving to C++ is a mistake.
+1. The C datatypes are strange for a 64 bit system. Having 4-byte int and float is a mistake.
+So, Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
+innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
