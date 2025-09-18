@@ -1,15 +1,16 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows. The name reflects the vision that highspeed code 
-needs to stay in contact with it's ground, which is x86-64. It allows x86-64 assembly to be added anywhere in the code. 
-Mixing ground- and assembly is possible by using the generated symbolic constants in your assembly code.  
-The language has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
-compact for-loops, statements like "while" and "if", datatypes like "string" and "float", etc...  
+This is the compiler for the programming language Ground for Windows. It allows mixing highlevel programming 
+constructs with x86-64 assembly. As a programmer, you need to stay in contact with assembly so you can develop
+fast code. In Ground, assembly can be added anywhere. Mixing Ground and Assembly is possible by using the 
+generated symbolic constants.  
+Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
+compact for-loops, statements like "while" and "if", arrays and datatypes like "string" and "float", etc...  
 See file Examples\unittests.g on how to use the language.  
 The compiler itself is created in C# and generates x86-64 assembly which is assembled with the freely available
 FASM for Windows.  
-The code that Ground generates is poured into an assembly template which can be chosen. This will result in
-small .EXE files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
+The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
+files when the template is chosen wisely. For instance, there is a "console" template, but also a "sdl3" 
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template.  
 The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello-world.exe is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
@@ -18,8 +19,7 @@ known system DLL's, like msvcrt, is promoted. Several games are coded with Groun
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
 
-The central concept of Ground is the ability to replace a statement with x86-64. For example, we have the following
-code in mode7.g:
+It's easy in Ground to replace a statement with x86-64. For example, we have the following code in mode7.g:
 ```
 		for (x in 0..< g.GC_Screen_DimX) {
 			float fSampleWidth = x / float_ScreenDIMx;
@@ -48,13 +48,14 @@ every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime env
 format and the x64 calling convention.  
 
 Many programmers use C as their low-level programming language. Understandably so. The quality of the generated code
-is very good and it can be compiled for many different processors. However, it is 50 years old at this moment. Many 
-C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual inserted 
-assembly makes optimization of the generated code hard.  
-It used to be possible in Visual Studio to start an assembly block at a random place, but nowadays the entire function
-must be assembly or C. This creates a distance. Ground tries to close this gap. It respects x86-64 assembly and allows 
-it everywhere. The Ground code is more compact, so typical usage of x86-64 is in innerloops.  
-See Examples\mode7_optimized.g for an example of innerloop optimization.
+is good and it can be compiled for many different processors. However, many C compilers do not allow the mixing of 
+C and assembly in the same function. The reason is clear: manual inserted assembly makes optimization of the 
+generated code hard.  
+The modern C datatypes are strange for a 64 bit system. An int is 4 bytes and float is 4 bytes. This shows it's age
+which is 50 years at this moment. In Ground, a float is 8 bytes and int 8 bytes.  
+Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
+innerloops.  
+See [GroundProjectFolder]/Examples/mode7_optimized.g for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
@@ -74,12 +75,15 @@ the original sourcecode in the comment column of the debugger.
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called bin\Debug\net9.0 in your solution's location.  
-In that folder, you must unzip the Resources/GroundResources.zip also found on the web at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
-The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
-available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example.
-The mode7.g is the unoptimized version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame.
-The mode7_optimized is the optimized version and has an innerloop of 1ms.
+In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
+https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
+The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
+https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+After unzipping, you must go to your bin\Debug\net9.0 folder and run the batchfile called Load.bat to download and 
+unzip SDL3, SDL3_image and LibCurl. After loading these DLL's, you can change line 20 in 
+Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example. The mode7.g is the unoptimized 
+version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is 
+the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
 </p>
@@ -296,10 +300,13 @@ code generation constructs. It might be less work than you think and you end up 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called bin\Debug\net9.0 in your solution's location.  
-In that folder, you must unzip the Resources/GroundResources.zip also found on the web at:  https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
-The zipfile contains additional libraries (such as SDL3 and soloud), sounds and images. The used GroundSideLibrary.dll is 
-available on github https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
+In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
+https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
+The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
+https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+After unzipping, you must go to your bin\Debug\net9.0 folder and run the batchfile called Load.bat to download and 
+unzip SDL3, SDL3_image and LibCurl. 
+After loading these DLL's, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
 <p align="center">
@@ -365,6 +372,15 @@ Motor racing game. Avoid the other motor racers.
 Let the bugs eat eachother and don't let any escape!
 </p>
 
+### Play Connect Four (vier-op-een-rij) against your local LLM Ai
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Connect4.jpg?raw=true" width="500" /><br/>
+Play Connect 4 (vier-op-een-rij) against Ollama Ai models!
+1. Start your local Ollama.
+2. Unzip [GroundProjectFolder]/GroundResources/misc/ConnectFour.ai.zip somewhere. Open the solution and select an 
+available downloaded Ollama Ai-model in the sourcecode, and Run the code.
+3. In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
+</p>
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  

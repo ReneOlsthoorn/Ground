@@ -180,12 +180,14 @@ section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
           user32, 'user32.dll', \
           gdi32,  'gdi32.dll', \
+          libcurl, 'libcurl-x64.dll', \
           msvcrt, 'msvcrt.dll'
 
   include '..\..\..\Include\kernel32_api.inc'
   include '..\..\..\Include\user32_api.inc'
   include '..\..\..\Include\gdi32_api.inc'
   include '..\..\..\Include\msvcrt_api.inc'
+  include '..\..\..\Include\libcurl_api.inc'
 
 
 section '.data' data readable writeable
@@ -230,8 +232,8 @@ bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 
 carriage_return_bytes	db 13,10,0
-leak_message			db 13,10,'*** memoryleak! ***',0
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
+leak_message			db 13,10,'*** memoryleak! ***',0
 memchecker_message		db 13,10,'Variable memory used (bytes): ',0
 indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0
 refchecker_message		db 13,10,'Reference memory max: %d of total %d elements.',0

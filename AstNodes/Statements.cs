@@ -136,14 +136,13 @@ namespace GroundCompiler.Statements
             fontPtrDatatype.IsValueType = true;
             this.Scope.DefineHardcodedVariable("GC_ScreenFont", fontPtrDatatype);
 
-            AddDynamicDLL("sdl3");
-            AddDynamicDLL("sdl3_image");
-            AddDynamicDLL("kernel32");
-            AddDynamicDLL("user32");
-            AddDynamicDLL("gdi32");
-            AddDynamicDLL("sidelib");
-            AddDynamicDLL("chipmunk");
-            AddDynamicDLL("soloud");
+            var dllStatements = this.AllNodes().OfType<DllStatement>().ToList();
+            foreach (var dllStmt in dllStatements)
+            {
+                string groupName = dllStmt.GroupName;
+                if (!this.Scope.Contains(groupName))
+                    AddDynamicDLL(groupName);
+            }
         }
 
         public void AddDynamicDLL(string dllName)

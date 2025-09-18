@@ -304,6 +304,7 @@ section '.idata' import data readable writeable
 		  sdl3_image, 'SDL3_image.dll', \
 		  sidelib, 'GroundSideLibrary.dll', \
 		  chipmunk, 'chipmunk.dll', \
+		  libcurl, 'libcurl-x64.dll', \
 		  soloud, 'soloud_x64.dll' 
 
   include '..\..\..\Include\kernel32_api.inc'
@@ -313,7 +314,7 @@ section '.idata' import data readable writeable
   include '..\..\..\Include\sidelib_api.inc'
   include '..\..\..\Include\chipmunk_api.inc'
   include '..\..\..\Include\soloud_api.inc'
-
+  include '..\..\..\Include\libcurl_api.inc'
 
 section '.data' data readable writeable
 Negation_XMM            db 0,0,0,0,0,0,0,80h

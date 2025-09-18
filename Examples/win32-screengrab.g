@@ -1,5 +1,5 @@
 
-#template win32console
+#template consoleplus
 #include msvcrt.g
 #include user32.g
 #include gdi32.g
