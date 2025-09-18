@@ -55,7 +55,7 @@ The modern C datatypes are strange for a 64 bit system. An int is 4 bytes and fl
 which is 50 years at this moment. In Ground, a float is 8 bytes and int 8 bytes.  
 Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
 innerloops.  
-See ```<GroundProjectFolder>/Examples/mode7_optimized.g``` for an example of innerloop optimization.
+See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
@@ -74,12 +74,12 @@ the original sourcecode in the comment column of the debugger.
 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
-will get a folder called bin\Debug\net9.0 in your solution's location.  
+will get a folder called ```<GroundProjectFolder>\bin\Debug\net9.0``` in your solution's location.  
 In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
 https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
 The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
 https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you must go to your bin\Debug\net9.0 folder and run the batchfile called Load.bat to download and 
+After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called Load.bat to download and 
 unzip SDL3, SDL3_image and LibCurl. After loading these DLL's, you can change line 20 in 
 Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example. The mode7.g is the unoptimized 
 version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is 
@@ -299,12 +299,12 @@ code generation constructs. It might be less work than you think and you end up 
 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
-will get a folder called bin\Debug\net9.0 in your solution's location.  
+will get a folder called ```<GroundProjectFolder>\bin\Debug\net9.0``` in your solution's location.  
 In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
 https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
 The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
 https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you must go to your bin\Debug\net9.0 folder and run the batchfile called Load.bat to download and 
+After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called Load.bat to download and 
 unzip SDL3, SDL3_image and LibCurl. 
 After loading these DLL's, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
