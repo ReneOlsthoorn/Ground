@@ -52,8 +52,9 @@ The quality of the generated code is good and it can be compiled for many differ
 However, there are limitations:
 1. Many C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual 
 inserted assembly makes optimization of the generated code hard.
-1. Highlevel constructs like classes are not available, and moving to C++ is a mistake.
-1. The C datatypes are strange for a 64 bit system. Having 4-byte int and float is a mistake.
+1. Highlevel constructs like classes are not available and moving to C++ is a mistake.
+1. The C datatypes are strange for a 64 bit system. Having 4-byte int and float is wrong.
+
 So, Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
 innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
 
