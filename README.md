@@ -1,5 +1,5 @@
 # Ground
-<p align="justify">
+
 This is the compiler for the programming language Ground for Windows. It allows mixing highlevel programming 
 constructs with x86-64 assembly. As a programmer, you need to stay in contact with assembly so you can develop
 fast code. In Ground, assembly can be added anywhere. Mixing Ground and Assembly is possible by using the 
@@ -15,7 +15,6 @@ template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create yo
 The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello-world.exe is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
 known system DLL's, like msvcrt, is promoted. Several games are coded with Ground:
-</p>
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
