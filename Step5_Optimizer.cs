@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace GroundCompiler
 {
-    public class Optimizer
+    public class Step5_Optimizer
     {
         public static void Optimize(AstNode rootNode)
         {

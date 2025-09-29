@@ -2,20 +2,20 @@
 
 namespace GroundCompiler
 {
-    public class Lexer
+    public class Step2_Lexer
     {
         public string sourcecode;
         public int needle;          // position of the lexer in the sourcecode
         public int lineCounter;     // linecounter of sourcecode
         public Dictionary<string, Token>? defines = null;
 
-        public Lexer(PreProcessor preprocessor)
+        public Step2_Lexer(Step1_PreProcessor preprocessor)
         {
             this.sourcecode = preprocessor.sourcecode + "\n";
             defines = preprocessor.defines;
         }
 
-        public Lexer(string sourcecode)
+        public Step2_Lexer(string sourcecode)
         {
             this.sourcecode = sourcecode + "\n";
         }
@@ -94,7 +94,7 @@ namespace GroundCompiler
                     if (token.Type == TokenType.Unknown)
                     {
                         string[] sourcecodeLines = sourcecode.Split('\n');
-                        Compiler.Error($"Unknown token: \'{c}\' at line {lineCounter}: {sourcecodeLines[lineCounter-1]}");
+                        Step6_Compiler.Error($"Unknown token: \'{c}\' at line {lineCounter}: {sourcecodeLines[lineCounter-1]}");
                     }
                 }
                 token.LineNumber = lineCounter;

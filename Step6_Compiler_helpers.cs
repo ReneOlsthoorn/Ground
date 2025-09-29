@@ -4,7 +4,7 @@ using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
-    public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
+    public partial class Step6_Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
         public Symbol? GetSymbol(string name, Scope scope)
         {
@@ -13,7 +13,7 @@ namespace GroundCompiler
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Compiler.Error($"Symbol {name} does not exist.");
+                    Step6_Compiler.Error($"Symbol {name} does not exist.");
             }
             return symbol;
         }
@@ -112,7 +112,7 @@ namespace GroundCompiler
                     emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
             }
             else if (symbol is GroupSymbol groupSymbol)
-                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
@@ -128,11 +128,11 @@ namespace GroundCompiler
             else if (symbol is ParentScopeVariable parentSymbol)
                 emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
             else if (symbol is FunctionSymbol funcSymbol)
-                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
             else if (symbol is HardcodedVariable hardcodedSymbol)
-                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
             else if (symbol is GroupSymbol groupSymbol)
-                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
@@ -179,11 +179,11 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
             else if (symbol is FunctionSymbol funcSymbol)
-                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
+                Step6_Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
             else if (symbol is HardcodedVariable hardcodedSymbol)
                 EmitExpression(assignment.RightOfEqualSignNode);
             else if (symbol is GroupSymbol groupSymbol)
-                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
+                Step6_Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
         }
 
 
@@ -212,11 +212,11 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
             else if (symbol is FunctionSymbol funcSymbol)
-                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
             else if (symbol is HardcodedVariable hardcodedSymbol)
-                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
             else if (symbol is GroupSymbol groupSymbol)
-                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
         }
 
 
@@ -258,7 +258,7 @@ namespace GroundCompiler
                 else if (exprDatatype.Contains(Datatype.TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
                     emitter.StorePointingTo(exprDatatype);
             } else
-                Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
+                Step6_Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
         }
 
 

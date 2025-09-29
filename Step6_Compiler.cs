@@ -5,17 +5,17 @@ using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
-    public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
+    public partial class Step6_Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
         public CPU_X86_64 cpu;
-        CodeEmitterX64 emitter;
+        Step6b_CodeEmitter emitter;
         AstPrinter AstPrint = new AstPrinter();
         readonly string CodeTemplateName;
 
-        public Compiler(string template, Dictionary<string, Token>? defines = null) {
+        public Step6_Compiler(string template, Dictionary<string, Token>? defines = null) {
             CodeTemplateName = template;
             cpu = new CPU_X86_64();
-            emitter = new CodeEmitterX64(cpu, defines);
+            emitter = new Step6b_CodeEmitter(cpu, defines);
         }
 
         public string GenerateAssembly(Statement stmt)
@@ -620,7 +620,7 @@ namespace GroundCompiler
             {
                 theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
-                    Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
+                    Step6_Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
 
                 string name = functionNameVariable.Name.Lexeme;
                 var needleScope = scope;
@@ -951,7 +951,7 @@ namespace GroundCompiler
                 else if (expr.RightNode is ArrayAccess arrayAccess)
                     ArrayAccess(arrayAccess, assignment: null, addressOf: true);
                 else
-                    Compiler.Error("AddressOf can only be done on a variable.");
+                    Step6_Compiler.Error("AddressOf can only be done on a variable.");
                 return null;
             }
 
@@ -983,7 +983,7 @@ namespace GroundCompiler
                     emitter.Pop();
                 }
                 else
-                    Compiler.Error("a++ or a-- can only be done on a variable.");
+                    Step6_Compiler.Error("a++ or a-- can only be done on a variable.");
                 return null;
             }
 

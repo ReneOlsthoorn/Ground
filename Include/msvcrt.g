@@ -13,8 +13,13 @@ dll msvcrt function atan2(float y, float x) : float;
 dll msvcrt function sqrt(float x) : float;
 dll msvcrt function fread(ptr buffer, int sizeElement, int elementCount, ptr stream) : int;  // result = nr elements loaded
 dll msvcrt function printf(string format, int value);
+dll msvcrt function fprintf(ptr stream, string format, int value);
+dll msvcrt function fflush(ptr stream);
 dll msvcrt function abs(int value) : int;
 dll msvcrt function rand() : int;
 dll msvcrt function srand(int seed);
 dll msvcrt function time64(ptr time);
 dll msvcrt function pow(float x, float y) : float;
+dll msvcrt function strlen(ptr str) : int;
+dll msvcrt function strcpy(ptr dest, ptr src) : ptr;
+dll msvcrt function strstr(ptr haystack, ptr needle) : ptr;

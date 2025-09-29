@@ -37,7 +37,7 @@ namespace GroundCompiler.Expressions
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Compiler.Error($"Symbol {name} does not exist.");
+                    Step6_Compiler.Error($"Symbol {name} does not exist.");
 
                 if (symbol is HardcodedVariable || symbol is HardcodedFunctionSymbol || symbol is FunctionSymbol || symbol is GroupSymbol || symbol is ClassSymbol)
                     return symbol;
@@ -59,7 +59,7 @@ namespace GroundCompiler.Expressions
                     ownerScope = needleScope.Owner;
                 }
                 if (ownerScope == null)
-                    Compiler.Error("Expression>>GetSymbol error.");
+                    Step6_Compiler.Error("Expression>>GetSymbol error.");
 
                 return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!, variableSymbol!);
             }
@@ -320,7 +320,7 @@ namespace GroundCompiler.Expressions
                 ExprType = Datatype.GetDatatype("byte");
             }
             else
-                Compiler.Error("Literal: ConvertToByteValue error");
+                Step6_Compiler.Error("Literal: ConvertToByteValue error");
         }
 
         public byte? GetByteValue()
@@ -337,7 +337,7 @@ namespace GroundCompiler.Expressions
                 }
                 catch (OverflowException oe)
                 {
-                    Compiler.Error(oe.Message);
+                    Step6_Compiler.Error(oe.Message);
                 }
                 return byteVal;
             }
@@ -474,7 +474,7 @@ namespace GroundCompiler.Expressions
                     if (elementType == null)
                         elementType = element.ExprType.Name;
                     else if (element.ExprType.Name != elementType && !Datatype.IsCompatible(Datatype.GetDatatype(elementType), Datatype.GetDatatype(element.ExprType.Name)))
-                        Compiler.Error("All elements in a List must have the same type");
+                        Step6_Compiler.Error("All elements in a List must have the same type");
                 }
             }
 

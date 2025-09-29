@@ -17,7 +17,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "sudoku.g";    // racer  jump  bertus  tetrus  snake  bugs  game-of-life  unittests  sudoku  smoothscroller  smoothscroller_optimized  mode7  mode7_optimized  chipmunk_tennis  plasma_non_colorcycling  fire  win32-screengrab  connect4
+                fileName = "sudoku.g";    // racer  jump  bertus  tetrus  snake  bugs  game-of-life  unittests  sudoku  smoothscroller  smoothscroller_optimized  mode7  mode7_optimized  chipmunk_tennis  plasma_non_colorcycling  fire  win32-screengrab  connect4  chess
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
@@ -40,30 +40,30 @@ namespace GroundCompiler
         {
             string sourcecode = File.ReadAllText(sourceFullFilepath);
 
-            Console.WriteLine("*** Preprocessor. Process compiler directives and collect defines.");
-            var preprocessor = new PreProcessor(sourcecode);
+            Console.WriteLine("*** Step 1: Preprocessor. Process compiler directives and collect defines.");
+            var preprocessor = new Step1_PreProcessor(sourcecode);
             preprocessor.ProcessCompilerDirectives();
 
-            Console.WriteLine("*** Convert sourcecode to tokens.");
-            var lexer = new Lexer(preprocessor);
+            Console.WriteLine("*** Step 2: Lexer. Convert sourcecode to tokens.");
+            var lexer = new Step2_Lexer(preprocessor);
             var tokens = lexer.GetTokens();
             lexer.WriteDebugInfo(tokens);
 
-            Console.WriteLine("*** Convert tokens into an Abstract Syntax Tree.");
-            var parser = new Parser(tokens);
+            Console.WriteLine("*** Step 3: Parser: Convert tokens into an Abstract Syntax Tree.");
+            var parser = new Step3_Parser(tokens);
             var ast = parser.GetAbstractSyntaxTree();
             parser.WriteDebugInfo(ast);
 
-            Console.WriteLine("*** Type Checking: Initialize the Abstract Syntax Tree.");
-            TypeChecker.Initialize(ast);
-            Console.WriteLine("*** Type Checking: Evaluate the Abstract Syntax Tree.");     
-            TypeChecker.Evaluate(ast);
+            Console.WriteLine("*** Step 4a: Type Checker. Initialize the Abstract Syntax Tree.");
+            Step4_TypeChecker.Initialize(ast);
+            Console.WriteLine("*** Step 4b: Type Checker. Evaluate the Abstract Syntax Tree.");     
+            Step4_TypeChecker.Evaluate(ast);
 
-            Console.WriteLine("*** Optimize the AST.");
-            Optimizer.Optimize(ast);
+            Console.WriteLine("*** Step 5: Optimizer. Literal folding, Unused variable removal, etc...Optimize the AST.");
+            Step5_Optimizer.Optimize(ast);
 
-            Console.WriteLine("*** Convert AST to x86-64 assembly.");
-            Compiler compiler = new Compiler(template: preprocessor.usedTemplate, defines: preprocessor.defines);
+            Console.WriteLine("*** Step 6: Compiler. Convert AST to x86-64 assembly.");
+            Step6_Compiler compiler = new Step6_Compiler(template: preprocessor.usedTemplate, defines: preprocessor.defines);
             generatedCode = compiler.GenerateAssembly(ast);
 
             Assemble();

@@ -23,7 +23,7 @@ namespace GroundCompiler
                     reservedRegisters[reg] = usage;
                     return reg;
                 }
-            Compiler.Error("No free register in GetTmpRegister.");
+            Step6_Compiler.Error("No free register in GetTmpRegister.");
             return "";
         }
 
@@ -40,7 +40,7 @@ namespace GroundCompiler
                     }
                     return reg;
                 }
-            Compiler.Error("No free register in GetRestoredRegister.");
+            Step6_Compiler.Error("No free register in GetRestoredRegister.");
             return "";
         }
 
@@ -52,7 +52,7 @@ namespace GroundCompiler
                     reservedRegisters[reg] = usage;
                     return reg;
                 }
-            Compiler.Error("No free register in GetTmpFloatRegister.");
+            Step6_Compiler.Error("No free register in GetTmpFloatRegister.");
             return "";
         }
 
@@ -63,7 +63,7 @@ namespace GroundCompiler
         public void ReserveRegister(string reg, string usage = "")
         {
             if (reservedRegisters.ContainsKey(reg))
-                Compiler.Error($"CPU_X86_64: ReserveRegister {reg} failed.");
+                Step6_Compiler.Error($"CPU_X86_64: ReserveRegister {reg} failed.");
 
             reservedRegisters[reg] = usage;
         }

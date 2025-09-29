@@ -8,11 +8,11 @@ namespace GroundCompiler
         public string ProcedureName;
         public FunctionStatement FunctionStatement { get; set; }
         public ClassStatement? ClassStatement { get; set; }
-        public CodeEmitterX64 Emitter { get; set; }
+        public Step6b_CodeEmitter Emitter { get; set; }
         public Action? MainCallback = null;     // callback which is called as main-part of the code generation.
         public int? StackSpaceToReserve = null;
 
-        public EmittedProcedure(FunctionStatement functionStatement, ClassStatement? classStatement, CodeEmitterX64 emitter, string? name = null)
+        public EmittedProcedure(FunctionStatement functionStatement, ClassStatement? classStatement, Step6b_CodeEmitter emitter, string? name = null)
         {
             this.FunctionStatement = functionStatement;
             this.ClassStatement = classStatement;
@@ -31,7 +31,7 @@ namespace GroundCompiler
         public int AmountStackSpaceToReserve()
         {
             if (StackSpaceToReserve == null)
-                Compiler.Error("AmountStackSpaceToReserve is not calculated yet!");
+                Step6_Compiler.Error("AmountStackSpaceToReserve is not calculated yet!");
 
             return StackSpaceToReserve!.Value;
         }
@@ -61,7 +61,7 @@ namespace GroundCompiler
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
 
                     if (varSymbol.Properties.ContainsKey("asm array"))
-                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ {TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
+                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ {Step4_TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
                     else
                         Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }

@@ -4,11 +4,11 @@ using GroundCompiler.Expressions;
 
 namespace GroundCompiler
 {
-    public class Parser
+    public class Step3_Parser
     {
         private TokenDispenser tokenDispenser;
 
-        public Parser(IEnumerable<Token> tokens) { tokenDispenser = new TokenDispenser(tokens); }
+        public Step3_Parser(IEnumerable<Token> tokens) { tokenDispenser = new TokenDispenser(tokens); }
         public Token Peek() { return tokenDispenser.PeekNextToken(); }
         public Token PeekPlus2() { return tokenDispenser.PeekNextToken2(); }
         public Token NextToken() { return tokenDispenser.GetNextToken(); }
@@ -76,7 +76,7 @@ namespace GroundCompiler
 
         public static void Error(Token token, String message)
         {
-            Compiler.Error(message, token);
+            Step6_Compiler.Error(message, token);
         }
 
         public ProgramNode GetAbstractSyntaxTree()
@@ -157,7 +157,7 @@ namespace GroundCompiler
                     // sizeType is already set correctly
                     break;
                 default:
-                    Compiler.Error("PokeStatement: Size not recognized.");
+                    Step6_Compiler.Error("PokeStatement: Size not recognized.");
                     break;
             }
             Token nameToken = NextToken();

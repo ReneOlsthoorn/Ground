@@ -306,7 +306,7 @@ https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zi
 The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
 https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called Load.bat to download and 
-unzip SDL3, SDL3_image and LibCurl. 
+unzip SDL3, SDL3_image, LibCurl and StockFish.  
 After loading these DLL's, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
@@ -384,6 +384,12 @@ Play Connect 4 (vier-op-een-rij) against Ollama Ai models!</p>
 available downloaded Ollama Ai-model in the sourcecode, and Run the code.
 1. In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
 
+### Play Chess against StockFish
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
+Play Chess locally against StockFish!
+</p>
+
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
@@ -400,3 +406,4 @@ available downloaded Ollama Ai-model in the sourcecode, and Run the code.
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
 2025.09.18: Vier-op-een-rij (ConnectFour) added.  
+2025.09.29: Chess added.  

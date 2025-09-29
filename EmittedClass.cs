@@ -8,10 +8,10 @@ namespace GroundCompiler
     {
         public string ClassName;
         public ClassStatement ClassStatement { get; set; }
-        public CodeEmitterX64 Emitter { get; set; }
+        public Step6b_CodeEmitter Emitter { get; set; }
         public Action<FunctionStatement>? MethodCallback = null;     // callback which is called as main-part of the code generation.
 
-        public EmittedClass(ClassStatement classStatement, CodeEmitterX64 emitter, string? name = null)
+        public EmittedClass(ClassStatement classStatement, Step6b_CodeEmitter emitter, string? name = null)
         {
             this.ClassStatement = classStatement;
             Emitter = emitter;

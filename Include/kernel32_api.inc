@@ -31,4 +31,7 @@
           kernel32_GetVersion,'GetVersion',\
           kernel32_GetVersionExA,'GetVersionExA',\
           kernel32_GetThreadContext,'GetThreadContext',\
+          kernel32_CreatePipe,'CreatePipe',\
+          kernel32_SetHandleInformation,'SetHandleInformation',\
+          kernel32_CreateProcessA,'CreateProcessA',\
           kernel32_GetThreadLocale,'GetThreadLocale'

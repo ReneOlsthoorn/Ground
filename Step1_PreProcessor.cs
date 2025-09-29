@@ -2,14 +2,14 @@
 
 namespace GroundCompiler
 {
-    public class PreProcessor
+    public class Step1_PreProcessor
     {
         public string sourcecode;
         public Dictionary<string, Token> defines;
         public string usedTemplate = "console";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
 
-        public PreProcessor(string sourcecode) {
+        public Step1_PreProcessor(string sourcecode) {
             this.sourcecode = sourcecode;
             defines = new Dictionary<string, Token>();
         }
@@ -60,7 +60,7 @@ namespace GroundCompiler
                 string defineKey = line.Split()[1].Trim();
                 string defineValue = line.Split()[2].Trim();
 
-                var defineLexer = new Lexer(defineValue);
+                var defineLexer = new Step2_Lexer(defineValue);
                 var defineTokens = defineLexer.GetTokens().ToList();
                 defines[defineKey] = defineTokens[0];
 

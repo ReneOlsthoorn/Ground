@@ -4,7 +4,7 @@ using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
-    public class TypeChecker
+    public class Step4_TypeChecker
     {
         public class NodeReplace
         {

@@ -2,9 +2,11 @@
   import  msvcrt, \
           msvcrt_sprintf,'sprintf', \
           msvcrt_printf, 'printf', \
+          msvcrt_fprintf,'fprintf', \
           msvcrt_fopen,  'fopen', \
           msvcrt_fclose, 'fclose', \
           msvcrt_fwrite, 'fwrite', \
+          msvcrt_fflush, 'fflush', \
           msvcrt_fputs,  'fputs', \
           msvcrt_fseek,  'fseek', \
           msvcrt_fread,  'fread', \
@@ -24,4 +26,7 @@
           msvcrt_abs,    '_abs64', \
           msvcrt_time64, '_time64', \
           msvcrt_pow,    'pow', \
+          msvcrt_strlen, 'strlen', \
+          msvcrt_strstr, 'strstr', \
+          msvcrt_strcpy, 'strcpy', \
           msvcrt_getch,  '_getch'

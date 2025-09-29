@@ -31,7 +31,7 @@ namespace GroundCompiler
         public void Match(Token token, TokenType tokenType)
         {
             if (token.Type != tokenType)
-                Compiler.Error($"Expected {tokenType.ToString()}.");
+                Step6_Compiler.Error($"Expected {tokenType.ToString()}.");
         }
 
         public void MatchNext(TokenType tokenType)
