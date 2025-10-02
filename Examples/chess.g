@@ -51,9 +51,8 @@ class Piece {
 	bool isWhite;
 	bool visible;
 
-	function IsKing() : bool {
-		return (this.type == 1);
-	}
+	function IsKing() : bool { return (this.type == 1); }
+	function IsPawn() : bool { return (this.type == 0); }
 
 	function FillXY() {
 		if not (this.visible)
@@ -93,7 +92,7 @@ class Piece {
 		p[2] = 0;
 	}
 
-	function IsAtMoveStart(byte* p) {
+	function HasPosition(byte* p) {
 		if not (this.visible)
 			return false;
 		int startGridX = p[0]-0x61;
@@ -102,11 +101,11 @@ class Piece {
 		return result;
 	}
 
-	function SetAtMoveEnd(byte* p) {
+	function SetPosition(byte* p) {
 		if not (this.visible)
 			return;
-		this.gridX = p[2]-0x61;
-		this.gridY = 7-(p[3]-0x31);
+		this.gridX = p[0]-0x61;
+		this.gridY = 7-(p[1]-0x31);
 		this.FillXY();
 	}
 }
@@ -153,13 +152,14 @@ function SetStartPosition() {
 }
 
 function RestartGame() {
+	SetPiecesTextures();
 	isWaitingForUser = false;
 	isPlayingWhite = true;
 	gameStatus = "game running";
 	SetStartPosition();
+	movesListNeedle = movesList;
 }
 RestartGame();
-
 
 function PrintMoves() {
 	if (NrMoves() == 0)
@@ -194,15 +194,16 @@ function MovePiece(ptr moveStr) {
 	if (p[0] == 0)
 		return;
 	for (i in 0 ..< NR_PIECES) {
-		if (pieces[i].IsAtMoveStart(p+2)) {
+		if (pieces[i].HasPosition(p+2))
 			pieces[i].visible = false;
-		}
 	}
 	for (i in 0 ..< NR_PIECES) {
-		if (pieces[i].IsAtMoveStart(p)) {
+		if (pieces[i].HasPosition(p)) {
 			int oldGridX = pieces[i].gridX;
-			pieces[i].SetAtMoveEnd(p);
+			int oldGridY = pieces[i].gridY;
+			pieces[i].SetPosition(p+2);
 			int newGridX = pieces[i].gridX;
+			int newGridY = pieces[i].gridY;
 
 			// Check casting and perform Rook move.
 			if (pieces[i].IsKing() and (msvcrt.abs(oldGridX-newGridX) == 2)) {
@@ -219,6 +220,16 @@ function MovePiece(ptr moveStr) {
 					pieces[0].gridX = 3;
 					pieces[0].FillXY();
 				}
+			} else if (isPlayingWhite and pieces[i].IsPawn() and newGridY == 0) {
+				p[4] = 0x71;  //q
+				p[5] = 0;
+				pieces[i].type = 2; //transform into queen
+				pieces[i].texture = pieceTextures[8];
+			} else if (pieces[i].IsPawn() and newGridY == 7) {
+				p[4] = 0x71;  //q
+				p[5] = 0;
+				pieces[i].type = 2; //transform into queen
+				pieces[i].texture = pieceTextures[2];
 			}
 		}
 	}
@@ -237,7 +248,8 @@ function WaitForUserMove() {
 	MovePiece(movesListNeedle-8);
 }
 
-function AddBestMove() : bool {
+
+function AddComputerMove() : bool {
 	string bestMoveStr = "bestmove ";
 	byte* result = msvcrt.strstr(textInBuffer, &bestMoveStr);
 	if (result == 0) {
@@ -254,6 +266,13 @@ function AddBestMove() : bool {
 	newMovesListNeedle[i] = 0;
 	movesListNeedle = movesListNeedle + BYTES_PER_MOVE;
 	MovePiece(movesListNeedle-8);
+
+	// Save game.
+	int gameFile = msvcrt.fopen("chessgame.bin", "wb");
+	int gameFileSize = movesListNeedle - movesList;
+	msvcrt.fwrite(movesList, gameFileSize, 1, gameFile);
+	msvcrt.fclose(gameFile);
+
 	return true;
 }
 
@@ -264,6 +283,12 @@ int hStdInRead;
 int hStdInWrite;
 u32 bytesRead = 0;
 u32 bytesWritten = 0;
+
+function AppendToLog(ptr cstrBuffer) {
+	//int logFile = msvcrt.fopen("logfile.txt", "ab");
+	//msvcrt.fprintf(logFile, "%s", cstrBuffer);
+	//msvcrt.fclose(logFile);
+}
 
 function WriteToProcess(int stdInWrite, byte* data, u32* bytesWritten) : bool {
     return kernel32.WriteFile(stdInWrite, data, msvcrt.strlen(data), bytesWritten, null);
@@ -279,13 +304,16 @@ function ReadFromProcess(int stdOutRead, byte* buffer, u32 bufferSize, u32* byte
 function ReadFromStockFish(int sleepTime) : bool {
     kernel32.Sleep(sleepTime);
     bool result = ReadFromProcess(hStdOutRead, textInBuffer, READBUFFERSIZE, &bytesRead);
+	AppendToLog(textInBuffer);
     return result;
 }
 
 function WriteToStockFish(byte* cmd) : bool {
+	AppendToLog(cmd);
     return WriteToProcess(hStdInWrite, cmd, &bytesWritten);
 }
 function WriteToStockFishString(string cmd) : bool {
+	AppendToLog(&cmd);
     return WriteToProcess(hStdInWrite, &cmd, &bytesWritten);
 }
 
@@ -343,36 +371,28 @@ function Thread2() {
 		return;
 	}
 
-	int logFile = msvcrt.fopen("logfile.txt", "wb");
-
     ReadFromStockFish(2000);
-	msvcrt.fprintf(logFile, "%s", textInBuffer);
     WriteToStockFishString("uci\n");
     ReadFromStockFish(2000);
-	msvcrt.fprintf(logFile, "%s", textInBuffer);
     WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
-    WriteToStockFishString("setoption name UCI_Elo value 10\n");
+    WriteToStockFishString("setoption name UCI_Elo value 2\n");
     WriteToStockFishString("isready\n");
     ReadFromStockFish(1000);
-	msvcrt.fprintf(logFile, "%s", textInBuffer);
 
     WriteToStockFishString("ucinewgame\n");
 	while (StatusRunning) {
 		WaitForUserMove();
 		WriteToStockFishString("position startpos"); //" moves e2e4\n");
 		InsertMoves();
-		msvcrt.fprintf(logFile, "%s", movesOutput);
 		WriteToStockFishString("go movetime 1000\n");
 
 		bool moveFound = false;
 		while (!moveFound) {
 			ReadFromStockFish(2000);
-			msvcrt.fprintf(logFile, "%s", textInBuffer);
-			moveFound = AddBestMove();
+			moveFound = AddComputerMove();
 		}
 	}
 
-	msvcrt.fclose(logFile);
 	kernel32.CloseHandle(hStdInRead);
     kernel32.CloseHandle(hStdOutWrite);
     kernel32.CloseHandle(hStdOutRead);
@@ -383,7 +403,37 @@ function Thread2() {
 GC_CreateThread(Thread2);
 
 
+function ReplayLoadedMoves() {
+	ptr movesNeedle = movesList;
+	while (movesNeedle < movesListNeedle) {
+		MovePiece(movesNeedle);
+		movesNeedle = movesNeedle + BYTES_PER_MOVE;
+	}
+}
+
+function LoadGameFile() {
+	int gameFile = msvcrt.fopen("chessgame.bin", "rb");
+	if (gameFile != 0) {
+		msvcrt.fseek64(gameFile, 0, g.msvcrt_SEEK_END);
+		int gameSize = msvcrt.ftell(gameFile);
+		msvcrt.fseek64(gameFile, 0, g.msvcrt_SEEK_SET);
+		msvcrt.fread(movesList, gameSize, 1, gameFile);
+		movesListNeedle = movesList + gameSize;
+		msvcrt.fclose(gameFile);
+		ReplayLoadedMoves();
+	}
+}
+LoadGameFile();
+
 bool mouseLeftAllowed = true;
+
+bool newGameMouseLeftAllowed = true;
+f32[4] newGameRect = [825.0, 20.0, 70.0, 20.0];
+
+bool oneMoveBackMouseLeftAllowed = true;
+f32[4] oneMoveBackRect = [825.0, 40.0, 70.0, 20.0];
+
+
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
@@ -448,7 +498,44 @@ while (StatusRunning)
 		startSelection.Render();
 	}
 
+	sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
 	PrintReady();
+
+	bool newGameHit = (mouseX >= newGameRect[0]) and (mouseX <= (newGameRect[0] + newGameRect[2])) and (mouseY >= newGameRect[1]) and (mouseY <= (newGameRect[1] + newGameRect[3]));
+	if (newGameHit) {
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0xff, 0xff);
+		if (mouseLeftPressed and newGameMouseLeftAllowed) {
+			newGameMouseLeftAllowed = false;
+		} else if (!mouseLeftPressed and !newGameMouseLeftAllowed) {
+			RestartGame();
+			newGameMouseLeftAllowed = true;
+		}
+	}
+	else {
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+		newGameMouseLeftAllowed = true;
+	}
+	sdl3.SDL_RenderDebugText(renderer, newGameRect[0], newGameRect[1], "New Game");
+
+	bool oneMoveBackHit = (mouseX >= oneMoveBackRect[0]) and (mouseX <= (oneMoveBackRect[0] + oneMoveBackRect[2])) and (mouseY >= oneMoveBackRect[1]) and (mouseY <= (oneMoveBackRect[1] + oneMoveBackRect[3]));
+	if (oneMoveBackHit) {
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0xff, 0xff);
+		if (mouseLeftPressed and oneMoveBackMouseLeftAllowed) {
+			oneMoveBackMouseLeftAllowed = false;
+		} else if (!mouseLeftPressed and !oneMoveBackMouseLeftAllowed) {
+			movesListNeedle = movesListNeedle - 16; // Go one enemy move and one usermove back
+			if (movesListNeedle < movesList)
+				movesListNeedle = movesList;
+			SetStartPosition();
+			ReplayLoadedMoves();
+			oneMoveBackMouseLeftAllowed = true;
+		}
+	}
+	else {
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+		oneMoveBackMouseLeftAllowed = true;
+	}
+	sdl3.SDL_RenderDebugText(renderer, oneMoveBackRect[0], oneMoveBackRect[1], "Backspace");
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;

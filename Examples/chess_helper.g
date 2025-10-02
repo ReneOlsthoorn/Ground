@@ -12,7 +12,6 @@ u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int pitch = g.GC_ScreenLineSize;
 
-
 class STARTUPINFOA {
     u32 cb;
     u32 _filler01;
@@ -82,7 +81,6 @@ function writeBytePtrText(ptr renderer, float x, float y, byte* text) {
 
 function PrintReady() {
     if (isWaitingForUser) {
-	    sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
 	    sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
 	    sdl3.SDL_RenderDebugText(renderer, 4.0, 4.0, "Ready.");
     }

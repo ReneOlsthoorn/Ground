@@ -272,14 +272,19 @@ namespace GroundCompiler
         }
 
 
-        public void PopCompareFloat(string trueJmpCondition = "je")
+        public void PopCompareFloat(string trueJmpCondition, Datatype conversionDatatype)
         {
             var exitLabel = NewLabel();
 
             var floatReg = cpu.GetTmpFloatRegister();
             PopFloat($"{floatReg}");
             Codeline($"mov   rax, 1");
-            Codeline($"comisd xmm0, {floatReg}");
+
+            if (conversionDatatype.SizeInBytes == 4)
+                Codeline($"comiss xmm0, {floatReg}");
+            else
+                Codeline($"comisd xmm0, {floatReg}");
+
             Codeline($"{trueJmpCondition}    {exitLabel}");
             Codeline($"mov   rax, 0");
             Codeline($"jmp   {exitLabel}");
@@ -856,10 +861,7 @@ namespace GroundCompiler
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 8))
                 Codeline($"movq   xmm0, rax");
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 4))
-            {
                 Codeline($"movd   xmm0, eax");
-                this.resizeCurrentFloatingPoint(sourceNrBytes: 4, destinationNrBytes: 8);
-            }
         }
         public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
         {

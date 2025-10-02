@@ -9,6 +9,7 @@
           msvcrt_fflush, 'fflush', \
           msvcrt_fputs,  'fputs', \
           msvcrt_fseek,  'fseek', \
+          msvcrt_fseek64,  '_fseeki64', \
           msvcrt_fread,  'fread', \
           msvcrt_fgets,  'fgets', \
           msvcrt_ftell,  'ftell', \

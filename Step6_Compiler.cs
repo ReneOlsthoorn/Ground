@@ -508,31 +508,31 @@ namespace GroundCompiler
                     break;
                 case TokenType.Greater:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("ja");
+                        emitter.PopCompareFloat("ja", conversionDatatype);
                     else
                         emitter.PopGreaterToBoolean();
                     break;
                 case TokenType.GreaterEqual:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("jae");
+                        emitter.PopCompareFloat("jae", conversionDatatype);
                     else
                         emitter.PopGreaterEqualToBoolean();
                     break;
                 case TokenType.Less:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("jb");
+                        emitter.PopCompareFloat("jb", conversionDatatype);
                     else
                         emitter.PopLessToBoolean();
                     break;
                 case TokenType.LessEqual:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("jbe");
+                        emitter.PopCompareFloat("jbe", conversionDatatype);
                     else
                         emitter.PopLessEqualToBoolean();
                     break;
                 case TokenType.IsEqual:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("je");
+                        emitter.PopCompareFloat("je", conversionDatatype);
                     else
                     {
                         emitter.PopSub(expr, conversionDatatype);
@@ -541,7 +541,7 @@ namespace GroundCompiler
                     break;
                 case TokenType.NotIsEqual:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                        emitter.PopCompareFloat("jne");
+                        emitter.PopCompareFloat("jne", conversionDatatype);
                     else
                     {
                         emitter.PopSub(expr, conversionDatatype);
@@ -923,18 +923,16 @@ namespace GroundCompiler
                     emitter.LoadConstantString(strConstant.IndexspaceRownr);
             }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.Integer))
-            {
                 emitter.LoadConstant64(Convert.ToInt64(expr.Value));
-            }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, "const float");
                 emitter.LoadConstantFloat64(id);
+                if (expr.ExprType.SizeInBytes == 4)
+                    emitter.resizeCurrentFloatingPoint(8, 4);
             }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.Boolean))
-            {
                 emitter.LoadBoolean((bool)expr.Value);
-            }
 
             return null;
         }

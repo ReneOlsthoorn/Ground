@@ -107,4 +107,5 @@ import sdl3,\
 	   sdl3_SDL_sin, 'SDL_sin',\
 	   sdl3_SDL_SetTextureAlphaMod, 'SDL_SetTextureAlphaMod',\
 	   sdl3_SDL_ConvertSurface, 'SDL_ConvertSurface',\
+	   sdl3_SDL_RenderFillRect, 'SDL_RenderFillRect',\
        sdl3_SDL_DestroySurface,'SDL_DestroySurface'
