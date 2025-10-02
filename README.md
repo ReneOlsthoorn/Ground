@@ -59,7 +59,7 @@ So, Ground tries to close the gap between compact highlevel constructs and assem
 innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
-The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
+The generated code is reentrant, so multiple threads can run the same code if you use local variables. See the chess example. Recursion is also
 possible as can be seen in the sudoku.g example.
 
 <p align="center">
