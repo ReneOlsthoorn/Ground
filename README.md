@@ -62,6 +62,10 @@ Ground has a reference count system, so garbage collection is automatic. This ma
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example.
 
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
+</p>
+
 ### Installing FASM 1.73:
 Ground uses FASM to assemble the generated code. Download Fasm at https://flatassembler.net/fasmw17332.zip.
 Set the INCLUDE environment variable to ```<installation directory>\INCLUDE```.
