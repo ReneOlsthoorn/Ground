@@ -2,11 +2,11 @@
 
 This is the compiler for the programming language Ground for Windows. It allows mixing highlevel programming 
 constructs with x86-64 assembly. As a programmer, you need to stay in contact with assembly so you can develop
-fast code. In Ground, assembly can be added anywhere. Mixing Ground and Assembly is possible by using the 
-generated symbolic constants.  
+fast code. In Ground, assembly can be added anywhere.  
 Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like "while" and "if", arrays and datatypes like "string" and "float", etc...  
-See file Examples\unittests.g on how to use the language.  
+See file ```<GroundProjectFolder>\Examples\unittests.g``` on how to use the language.  
+Mixing Ground and assembly is possible by using the generated symbolic constants.  
 The compiler itself is created in C# and generates x86-64 assembly which is assembled with the freely available
 FASM for Windows.  
 The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
@@ -14,7 +14,7 @@ files when the template is chosen wisely. For instance, there is a "console" tem
 template which loads the SDL3.dll and SDL3_image.dll. Ofcourse you can create your own template.  
 The hello-world.g is 43 bytes, the generated hello-world.asm is 7k and the hello-world.exe is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
-known system DLL's, like msvcrt, is promoted. Several games are coded with Ground:
+known system DLL's, like MSVCRT, is promoted. Several game examples are included with Ground:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
@@ -53,15 +53,14 @@ However, there are limitations:
 1. Many C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual 
 inserted assembly makes optimization of the generated code hard.
 1. Highlevel constructs like classes are not available and moving to C++ is a mistake.
-1. The C datatypes are strange for a 64 bit system. Having 4-byte int and float is wrong.
+1. The C datatypes are strange for a 64 bit system. Having a 4-byte int and float is wrong.
 
 So, Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
 innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
-The generated code is reentrant, so multiple threads can run the same code if you use local variables. See the chess example. Recursion is also
-possible as can be seen in the sudoku.g example.
-
+The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
+possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
 </p>
@@ -80,12 +79,11 @@ the original sourcecode in the comment column of the debugger.
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called ```<GroundProjectFolder>\bin\Debug\net9.0``` in your solution's location.  
-In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
-https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
-The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
+In that folder, you must unzip the ```<GroundProjectFolder>\Resources\GroundResources.zip```
+The zipfile contains additional DLL's, sounds and images. The included GroundSideLibrary.dll is available on github at: 
 https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called Load.bat to download and 
-unzip SDL3, SDL3_image and LibCurl. After loading these DLL's, you can change line 20 in 
+After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called 
+Load.bat to download and automatically unzip SDL3, SDL3_image, LibCurl and StockFish. After this, you can change line 20 in 
 Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example. The mode7.g is the unoptimized 
 version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is 
 the optimized version and has an innerloop of 1ms.
@@ -94,10 +92,95 @@ the optimized version and has an innerloop of 1ms.
 </p>
 
 ### Variables
-Outside arrays or class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are 
+Apart from arrays and class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are 
 the datatypes respected.
 
-### Details on the memory model in Ground.
+### Choosing a template
+With the special #template directive, the programmer can choose a generation template. The default is console. See the
+directory Templates for the console.fasm template. Use the sdl3 template for SDL3 applications without console window.
+A lot of functions are shared between the console.fasm and sdl3.fasm templates.
+
+### include a file
+With the #include directive, you can include DLL definitions or other code into your sourcefile.
+
+### Only 64-bit
+The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
+they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since Windows 7,
+which was released in 2009, the 64-bit version is pushed as the default. Nowadays, Windows 11 only ships as 64-bit 
+version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
+
+### Using MSVCRT
+When you compile a C program with Visual Studio, it links ```VCRUNTIME140.dll```. That DLL is not by default available on
+Windows. It also is a hassle for the users to manually install the VCRuntime. The way to avoid this is simple: don't 
+use the default C runtime, use ```MSVCRT.DLL```!  
+MSVCRT is available on all Windows version since Windows XP. It is also a KnownDLL. See the registry at:
+```Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs```
+
+### Mixing of ground code and assembly
+The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
+So, there are a lot of ways to mix the two.
+First of all, you can use the asm { } everywhere. The assembly code between the brackets will literally be used.
+Second, there is a special group, called g, which directly refers to an assembly variable. The advantage is that you 
+stay in the ground language context.
+So ```g.SDL_WINDOWPOS_UNDEFINED``` will resolve to the SDL_WINDOWPOS_UNDEFINED equate.
+```g.[pixels_p]``` will resolve to the content of the pixels_p variable.
+
+A powerful mixing is this:
+```
+byte[61,36] screenArray = g.[screentext1_p];
+```
+The content of the screentext1_p variable is put inside the screenArray and the coder can make statements like:
+```
+screenArray[30,10] = "A";
+```
+
+An other piece to investigate is:
+```
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+if (*eventType == g.SDL_QUIT) { running = false; }
+```
+The first line allocated SDL3_EVENT_SIZE, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
+retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
+In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
+
+### Some remarks
+* You can only declare Classes at the root level. Inner classes are not supported.
+* Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
+
+### Optimizer
+Ground contains an optimizer (in Optimizer.cs), which will replace literals and removes unused variables. It will 
+scan the assembly code for usage of variables to avoid removing used variables.
+```
+int a = (2*5)+5+3+(4/2);
+int b = 4*10;
+int c = b / a;
+```
+Will result in the following generated code:
+```
+mov   rax, 2
+```
+The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
+also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
+println function.
+
+### GroundSideLibrary
+There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
+Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
+done with existing C libraries. The GroundSideLibrary is a .DLL which contains all that C code and creates an 
+interface for it.
+
+### State of Ground : Alpha
+The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
+Ground is created to facilitate the production of compact high performance code.  
+Ground will always be Alpha!
+
+### Write your own language!
+The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
+don't want a reference count system. Why not write your own language? Use the lexer from this compiler or borrow some
+code generation constructs. It might be less work than you think and you end up being an expert.
+
+### Technical details on the memory model in Ground.
 The stack is 512k and is defined at the top of the generated assembly file.
 
 There are three memory spaces:
@@ -195,81 +278,6 @@ RAX/XMM0 is used to exchange the value the store or to read. RDX helps in that p
 Most functions start with ```push rbp``` followed by ```mov rbp, rsp```. This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at ```[rbp]```.
 
-### Choosing a template
-With the special #template directive, the programmer can choose a generation template. The default is console. See the
-directory Templates for the console.fasm template. Use the sdl3 template for SDL3 applications without console window.
-A lot of functions are shared between the console.fasm and sdl3.fasm templates.
-
-### include a file
-With the #include directive, you can include DLL definitions or other code into your sourcefile.
-
-### Only 64-bit
-The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
-they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since Windows 7,
-which was released in 2009, the 64-bit version is pushed as the default. Nowadays, Windows 11 only ships as 64-bit 
-version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
-
-### Using MSVCRT
-When you compile a C program with Visual Studio, it links ```VCRUNTIME140.dll```. That DLL is not by default available on
-Windows. It also is a hassle for the users to manually install the VCRuntime. The way to avoid this is simple: don't 
-use the default C runtime, use ```MSVCRT.DLL```!  
-MSVCRT is available on all Windows version since Windows XP. It is also a KnownDLL. See the registry at:
-```Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs```
-
-### Mixing of ground code and assembly
-The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
-So, there are a lot of ways to mix the two.
-First of all, you can use the asm { } everywhere. The assembly code between the brackets will literally be used.
-Second, there is a special group, called g, which directly refers to an assembly variable. The advantage is that you 
-stay in the ground language context.
-So ```g.SDL_WINDOWPOS_UNDEFINED``` will resolve to the SDL_WINDOWPOS_UNDEFINED equate.
-```g.[pixels_p]``` will resolve to the content of the pixels_p variable.
-
-A powerful mixing is this:
-```
-byte[61,36] screenArray = g.[screentext1_p];
-```
-The content of the screentext1_p variable is put inside the screenArray and the coder can make statements like:
-```
-screenArray[30,10] = "A";
-```
-
-An other piece to investigate is:
-```
-byte[SDL3_EVENT_SIZE] event = [];
-u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
-if (*eventType == g.SDL_QUIT) { running = false; }
-```
-The first line allocated SDL3_EVENT_SIZE, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
-retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
-In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
-
-### Some remarks
-* You can only declare Classes at the root level. Inner classes are not supported.
-* Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
-
-### Optimizer
-Ground contains an optimizer (in Optimizer.cs), which will replace literals and removes unused variables. It will 
-scan the assembly code for usage of variables to avoid removing used variables.
-```
-int a = (2*5)+5+3+(4/2);
-int b = 4*10;
-int c = b / a;
-```
-Will result in the following generated code:
-```
-mov   rax, 2
-```
-The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
-also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
-println function.
-
-### GroundSideLibrary
-There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
-Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
-done with existing C libraries. The GroundSideLibrary is a .DLL which contains all that C code and creates an 
-interface for it.
-
 ## Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
@@ -291,27 +299,6 @@ At this moment in 2024, several expert users are migrating to Linux because Wind
 your computer. I agree that collecting data is wrong. However, it can be disabled. Search for "How to disable 
 Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the platform 
 that we owe so much too soon without valid reasons.
-
-### State of Ground : Alpha
-The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
-Ground is created to facilitate the production of compact high performance code.  
-Ground will always be Alpha!
-
-### Write your own language!
-The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
-don't want a reference count system. Why not write your own language? Use the lexer from this compiler or borrow some
-code generation constructs. It might be less work than you think and you end up being an expert.
-
-### Running the examples
-The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
-will get a folder called ```<GroundProjectFolder>\bin\Debug\net9.0``` in your solution's location.  
-In that folder, you must unzip the Resources/GroundResources.zip also found on the web at: 
-https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/GroundResources.zip?raw=true  
-The zipfile contains additional libraries, sounds and images. The used GroundSideLibrary.dll is available on github at: 
-https://github.com/ReneOlsthoorn/GroundSideLibrary.  
-After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called Load.bat to download and 
-unzip SDL3, SDL3_image, LibCurl and StockFish.  
-After loading these DLL's, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "jump.g"` to run the Jump game.
 
 ### Smoothscroller
 <p align="center">
@@ -398,15 +385,12 @@ Play Chess locally against StockFish!
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
 2025.03.27: SDL3 support and added win32-screengrab.g example.  
-2025.04.15: Bertus game added. Written in 400 lines of code.  
+2025.04.15: Bertus game added.  
 2025.06.06: Asm arrays added (see snake.g)  
 2025.06.10: Game Of Life added.  
-2025.06.13: Removed usage of innerclasses in the structure of the compiler. Using namespaces now.  
 2025.06.20: Optimizer extended. It will replace literals now, and remove unused variables.  
 2025.07.14: Added Tetrus game.  
-2025.08.02: Enhanced Tetrus playability (rotating at sides, manual keyboard repeat).  
 2025.08.23: Added Racer game.  
-2025.08.30: Racer's engine sound added using Soloud.  
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
 2025.09.18: Vier-op-een-rij (ConnectFour) added.  
