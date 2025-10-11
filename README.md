@@ -50,17 +50,17 @@ format and the x64 calling convention.
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
 However, there are major annoyances:
-1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has /GS, SDL checks and runtime checks.
-1. A massive runtime library is included when you create a HelloWorld.exe. Before you know it, you need to 
-ship vc_redist.x64.exe with your little 4k demo.
-1. Strange workarounds are needed when your try to "ignore all default libraries", such as #define _NO_CRT_STDIO_INLINE 
-and _fltused. The default stacksize is 4k! On a system with more than 8 Gb memory!
+1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has ```/GS```, ```SDL checks``` and runtime checks.
+1. A massive runtime library is included when you create a ```HelloWorld.exe```. Before you know it, you need to 
+ship ```vc_redist.x64.exe``` with your little 4k demo.
+1. Strange workarounds are needed when your try to "ignore all default libraries", such as ```#define _NO_CRT_STDIO_INLINE``` 
+and ```_fltused```. The default stacksize is 4k on a system with more than 8 Gb memory!
 1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
 inserted assembly makes optimization too hard for the compiler.
 1. Highlevel constructs like classes are not available and moving to C++ is a mistake. Good luck with C++'s 
-reinterpret_cast\<Object\>(-1) or std::shared_ptr\<\>. Maybe you will also wonder why the copy-constructor is not 
+```reinterpret_cast\<Object\>(-1)``` or ```std::shared_ptr\<\>```. Maybe you will also wonder why the copy-constructor is not 
 called when the compiler is doing "Return value optimization".
-1. The Visual Studio C datatypes "int" and "float" are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
+1. The Visual Studio C datatypes ```int``` and ```float``` are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
 
 Ground tries to leave all the Visual Studio C/C++ problems behind and close the gap between compact highlevel 
 constructs and assembly. Typical usage of x86-64 is in innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for 
