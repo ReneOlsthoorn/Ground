@@ -106,12 +106,12 @@ Apart from arrays and class structs, you should use 64-bit datatypes like int of
 the datatypes respected.
 
 ### Choosing a template
-With the special #template directive, the programmer can choose a generation template. The default is console. See the
-directory Templates for the console.fasm template. Use the sdl3 template for SDL3 applications without console window.
+With the special ```#template``` directive, the programmer can choose a generation template. The default is ```console```. See the
+directory Templates for the console.fasm template. Use the ```sdl3``` template for SDL3 applications without console window.
 A lot of functions are shared between the console.fasm and sdl3.fasm templates.
 
 ### include a file
-With the #include directive, you can include DLL definitions or other code into your sourcefile.
+With the ```#include``` directive, you can include DLL definitions or other code into your sourcefile.
 
 ### Only 64-bit
 The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
@@ -129,11 +129,11 @@ MSVCRT is available on all Windows version since Windows XP. It is also a KnownD
 ### Mixing of ground code and assembly
 The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
 So, there are a lot of ways to mix the two.
-First of all, you can use the asm { } everywhere. The assembly code between the brackets will literally be used.
+First of all, you can use the ```asm { }``` everywhere. The assembly code between the brackets will literally be used.
 Second, there is a special group, called g, which directly refers to an assembly variable. The advantage is that you 
 stay in the ground language context.
-So ```g.SDL_WINDOWPOS_UNDEFINED``` will resolve to the SDL_WINDOWPOS_UNDEFINED equate.
-```g.[pixels_p]``` will resolve to the content of the pixels_p variable.
+So ```g.SDL_WINDOWPOS_UNDEFINED``` will resolve to the ```SDL_WINDOWPOS_UNDEFINED``` equate.
+```g.[pixels_p]``` will resolve to the content of the ```pixels_p``` variable.
 
 A powerful mixing is this:
 ```
@@ -172,12 +172,12 @@ mov   rax, 2
 ```
 The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
 also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
-println function.
+```println``` function.
 
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
-done with existing C libraries. The GroundSideLibrary is a .DLL which contains all that C code and creates an 
+done with existing C libraries. The ```GroundSideLibrary``` is a .DLL which contains all that C code and creates an 
 interface for it.
 
 ### State of Ground : Alpha
@@ -284,19 +284,20 @@ first part of a comparison is a substraction. When the result is zero, the value
 however, this substraction is skipped and a byte-for-byte string comparison is done.
 
 ### More details on code generation:
-RAX/XMM0 is used to exchange the value the store or to read. RDX helps in that process.  
+```RAX/XMM0``` is used to exchange the value the store or to read. ```RDX``` helps in that process.  
 Most functions start with ```push rbp``` followed by ```mov rbp, rsp```. This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at ```[rbp]```.
 
 ## Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
-Recently, I took time to remember my old Commodore 64 and Amiga 500 days. Back then, I was heavily invested in the 
+Recently, I took time to remember my old ```Commodore 64``` and ```Amiga 500``` days. Back then, I was heavily invested in the 
 Amiga 500, because it seemed to be the successor of the C64. However, the platform did not upgrade for a long time. 
-The Commodore Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released at the end of 1992. 
+The Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released at the end of 1992. 
 That was more than 7 years later. I really felt let down by Commodore in 1990.  
+  
 Later it became clear that Commodore had no focus on the Amiga in the years 1988-1990. They were busy with the PC-line, 
-like releasing the PC-60-III, the CDTV project and the C-65 project. The C-65 had the new CSG-4510 processor running 
+like releasing the ```PC-60-III```, the ```CDTV``` project and the ```C-65``` project. The C-65 had the new ```CSG-4510``` processor running 
 at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels 
 and 256 colors.  
 There was so little focus on the Amiga, that Commodore neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
