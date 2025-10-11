@@ -16,7 +16,7 @@ template which loads the ```SDL3.dll``` and ```SDL3_image.dll```. Ofcourse you c
   
 The ```hello-world.g``` is 43 bytes, the generated ```hello-world.asm``` is 7k and the ```hello-world.exe``` is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
-known system DLL's, like ```MSVCRT```, is promoted. Several game examples are included with Ground:
+known system DLL's, like ```MSVCRT.DLL```, is promoted. Several game examples are included with Ground:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
@@ -82,7 +82,7 @@ Add the ```<installation directory>``` to the System variables Path variable.
 
 ### Sourcecode visible while debugging in x64dbg:
 If you want to debug with x64dbg, assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
-directory. Switch on the generateDebugInfo boolean in Program.cs and check if the used x64dbg folder is correct, because 
+directory. Switch on the ```generateDebugInfo``` boolean in Program.cs and check if the used x64dbg folder is correct, because 
 Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
 the original sourcecode in the comment column of the debugger.
 
@@ -90,19 +90,19 @@ the original sourcecode in the comment column of the debugger.
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called ```<GroundProjectFolder>\bin\Debug\net9.0``` in your solution's location.  
 In that folder, you must unzip the ```<GroundProjectFolder>\Resources\GroundResources.zip```
-The zipfile contains additional DLL's, sounds and images. The included GroundSideLibrary.dll is available on github at: 
-https://github.com/ReneOlsthoorn/GroundSideLibrary.  
+The zipfile contains additional DLL's, sounds and images. The sourcecode for the included GroundSideLibrary.dll is 
+available on github at: https://github.com/ReneOlsthoorn/GroundSideLibrary.  
 After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net9.0``` folder and run the batchfile called 
-Load.bat to download and automatically unzip SDL3, SDL3_image, LibCurl and StockFish. After this, you can change line 20 in 
-Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 example. The mode7.g is the unoptimized 
-version. The innerloop needs 5ms(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is 
-the optimized version and has an innerloop of 1ms.
+```Load.bat``` to download and automatically unzip ```SDL3```, ```SDL3_image```, ```LibCurl``` and ```StockFish```. 
+After this, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
+example. The mode7.g is the unoptimized version. The innerloop needs 5ms (on my machine with a Ryzen 7 5700g) to 
+complete each frame. The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
 </p>
 
 ### Variables
-Apart from arrays and class structs, you should use 64-bit datatypes like int of float. Only in context of arrays and classes are 
+Apart from arrays and class structs, you should use 64-bit datatypes like ```int``` of ```float```. Only in context of arrays and classes are 
 the datatypes respected.
 
 ### Choosing a template
@@ -114,9 +114,9 @@ A lot of functions are shared between the console.fasm and sdl3.fasm templates.
 With the ```#include``` directive, you can include DLL definitions or other code into your sourcefile.
 
 ### Only 64-bit
-The AMD Opteron in 2003 was the first x86 processor to get 64-bit extensions. Although AMD was much smaller than Intel,
-they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since Windows 7,
-which was released in 2009, the 64-bit version is pushed as the default. Nowadays, Windows 11 only ships as 64-bit 
+The ```AMD Opteron``` in 2003 was the first x86 processor to get 64-bit extensions. Although ```AMD``` was much smaller than ```Intel```,
+they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since ```Windows 7```,
+which was released in 2009, the 64-bit version is pushed as the default. Nowadays, ```Windows 11``` only ships as 64-bit 
 version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
 
 ### Using MSVCRT
@@ -150,16 +150,16 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 if (*eventType == g.SDL_QUIT) { running = false; }
 ```
-The first line allocated SDL3_EVENT_SIZE, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
-retrieves the value pointed to by eventType and compares it with SDL_QUIT.  
-In smoothscroller.g, you see a lot of examples of mixing ground and assembly.
+The first line allocated ```SDL3_EVENT_SIZE```, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
+retrieves the value pointed to by eventType and compares it with ```SDL_QUIT```.  
+In ```smoothscroller.g```, you see a lot of examples of mixing ground and assembly.
 
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
 
 ### Optimizer
-Ground contains an optimizer (in Optimizer.cs), which will replace literals and removes unused variables. It will 
+Ground contains an optimizer (in ```Optimizer.cs```), which will replace literals and removes unused variables. It will 
 scan the assembly code for usage of variables to avoid removing used variables.
 ```
 int a = (2*5)+5+3+(4/2);
@@ -176,7 +176,7 @@ also results in a literal. So the optimizer removes a, b and c and a literal val
 
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
-Linux, BSD and macOS. A lot of C libraries do an excellent job. For instance the unpacking of a .PNG file can be
+Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the unpacking of a ```.PNG``` file can be
 done with existing C libraries. The ```GroundSideLibrary``` is a .DLL which contains all that C code and creates an 
 interface for it.
 
@@ -191,7 +191,7 @@ don't want a reference count system. Why not write your own language? Use the le
 code generation constructs. It might be less work than you think and you end up being an expert.
 
 ### Technical details on the memory model in Ground.
-The stack is 512k and is defined at the top of the generated assembly file.
+The ```stack``` is 512k and is defined at the top of the generated assembly file.
 
 There are three memory spaces:
 1. Variable space. (4mb by default)
@@ -292,15 +292,15 @@ for the fastcall convention. This also means that the pointer for the parentfram
 Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old ```Commodore 64``` and ```Amiga 500``` days. Back then, I was heavily invested in the 
-Amiga 500, because it seemed to be the successor of the C64. However, the platform did not upgrade for a long time. 
+```Amiga 500```, because it seemed to be the successor of the ```C-64```. However, the platform did not upgrade for a long time. 
 The Amiga was released in 1985, but the next model for the masses was the ```Amiga 1200``` released at the end of 1992. 
 That was more than 7 years later. I really felt let down by Commodore in 1990.  
   
 Later it became clear that Commodore had no focus on the Amiga in the years 1988-1990. They were busy with the PC-line, 
 like releasing the ```PC-60-III```, the ```CDTV``` project and the ```C-65``` project. The C-65 had the new ```CSG-4510``` processor running 
-at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new ```VIC-III``` chip displaying 320x200 pixels 
+at 3.5 Mhz, two ```SID``` chips, 128k of RAM, a ```DMA``` controller with ```blitter``` and new ```VIC-III``` chip displaying 320x200 pixels 
 and 256 colors.  
-Commodore totally neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
+Meanwhile, Commodore totally neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
 As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
 Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. ```Microsoft Office 4.2``` containing ```MS-Word 6.0```, 
 ```MS-Excel 5.0``` and ```MS-Powerpoint 4.0``` on 25 ```1.44"``` disks was a tremendous hit. Everyone wanted it.  
