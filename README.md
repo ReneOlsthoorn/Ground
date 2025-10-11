@@ -319,67 +319,57 @@ too soon without valid reasons, because we owe so much to it.
 ### Smoothscroller
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
-Scrolling is always good.
-</p>
+Scrolling is always good.</p>
 
 ### Jump
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.jpg?raw=true" width="500" /><br/>
-Jump on the platforms. 3D starfield background.
-</p>
+Jump on the platforms. 3D starfield background.</p>
 
 ### The Chipmunk Tennis example
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" /><br/>
-Example which uses the Chipmunk Physics engine.
-</p>
+Example which uses the Chipmunk Physics engine.</p>
 
 ### The Plasma example with no colorcycling
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
-Smoother than Amiga 500 plasma.
-</p>
+Smoother than an Amiga 500 plasma.</p>
 
 ### The Fire example
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" />
-</p>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" /><br/>
+Early PC effect.</p>
 
 ### The Bertus game
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" /><br/>
-Try to beat the 4 levels!
-</p>
+Try to beat the 4 levels!</p>
 
-### Snake game
+### Classic Snake game
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Snake.jpg?raw=true" width="498" /><br/>
-Feed the snake 100 meals.
-</p>
+Feed the snake 100 meals.</p>
 
 ### Game Of Life
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_GameOfLife.jpg?raw=true" width="500" /><br/>
-Watch the Game Of Life patterns blow up! The current version has 20 different patterns.
-</p>
+Watch the Game Of Life patterns blow up! The current version has 20 different patterns.</p>
 
 ### Tetrus
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Tetrus.jpg?raw=true" width="500" /><br/>
-Solve 30 lines to complete.
-</p>
+Solve 30 lines to complete.</p>
 
 ### Racer
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" /><br/>
-Motor racing game. Avoid the other motor racers.
-</p>
+Motor racing game. Avoid the other motor racers.</p>
 
 ### Bugs
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bugs.jpg?raw=true" width="500" /><br/>
-Let the bugs eat eachother and don't let any escape!
-</p>
+Let the bugs eat eachother and don't let any escape!</p>
 
 ### Join the Hype! Play Connect Four against your local LLM Ai
 <p align="center">
@@ -390,7 +380,8 @@ Read the instructions in the connect4.g sourcecode.</p>
 ### Play Chess against StockFish
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
-Play Chess locally against StockFish!</p>
+Play Chess locally against StockFish!<br/>
+Default set to ELO 1, so you must be able to win...</p>
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  

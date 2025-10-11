@@ -374,8 +374,8 @@ function Thread2StockFish() {
     ReadFromStockFish(2000);
     WriteToStockFishString("uci\n");
     ReadFromStockFish(2000);
-    //WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
-    //WriteToStockFishString("setoption name UCI_Elo value 1\n");
+    WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
+    WriteToStockFishString("setoption name UCI_Elo value 1\n");
     WriteToStockFishString("isready\n");
     ReadFromStockFish(1000);
 
