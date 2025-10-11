@@ -293,18 +293,18 @@ Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old ```Commodore 64``` and ```Amiga 500``` days. Back then, I was heavily invested in the 
 Amiga 500, because it seemed to be the successor of the C64. However, the platform did not upgrade for a long time. 
-The Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released at the end of 1992. 
+The Amiga was released in 1985, but the next model for the masses was the ```Amiga 1200``` released at the end of 1992. 
 That was more than 7 years later. I really felt let down by Commodore in 1990.  
   
 Later it became clear that Commodore had no focus on the Amiga in the years 1988-1990. They were busy with the PC-line, 
 like releasing the ```PC-60-III```, the ```CDTV``` project and the ```C-65``` project. The C-65 had the new ```CSG-4510``` processor running 
-at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels 
+at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new ```VIC-III``` chip displaying 320x200 pixels 
 and 256 colors.  
-There was so little focus on the Amiga, that Commodore neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
+Commodore totally neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
 As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
-Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. Microsoft Office 4.2 containing MS-Word 6.0, 
-MS-Excel 5.0 and MS-Powerpoint 4.0 on 25 1.44" disks was a tremendous hit. Everyone wanted it.  
-At the same time DOOM 2 released, a tremendous hit for gamers. Everyone wanted it.  
+Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. ```Microsoft Office 4.2``` containing ```MS-Word 6.0```, 
+```MS-Excel 5.0``` and ```MS-Powerpoint 4.0``` on 25 1.44" disks was a tremendous hit. Everyone wanted it.  
+At the same time ```DOOM 2``` released, a tremendous hit for gamers. Everyone wanted it.  
 The PC platform had cheap hardware, so everyone was in. This resulted in total MARKET DOMINATION by the PC.  
 In 1994, I bought an ESCOM 486DX2 66 MHz PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
