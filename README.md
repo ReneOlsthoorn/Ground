@@ -13,6 +13,7 @@ FASM for Windows.
 The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
 files when the template is chosen wisely. For instance, there is a ```console``` template, but also a ```sdl3``` 
 template which loads the ```SDL3.dll``` and ```SDL3_image.dll```. Ofcourse you can create your own template.  
+  
 The ```hello-world.g``` is 43 bytes, the generated ```hello-world.asm``` is 7k and the ```hello-world.exe``` is 6k.  
 A second reason why the .EXE will remain small is that all external code is loaded at load-time. The usage of the 
 known system DLL's, like ```MSVCRT```, is promoted. Several game examples are included with Ground:
