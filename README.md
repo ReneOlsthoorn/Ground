@@ -337,7 +337,7 @@ Example which uses the Chipmunk Physics engine.
 ### The Plasma example with no colorcycling
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
-Looks like an ```Amiga 500``` plasma.
+Smoother than Amiga 500 plasma.
 </p>
 
 ### The Fire example
