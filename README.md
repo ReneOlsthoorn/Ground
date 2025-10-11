@@ -47,16 +47,24 @@ The asm block is literally copied to the assembler. If you want, you can inspect
 every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
 format and the x64 calling convention.  
 
-Many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
-The quality of the generated code is good and it can be compiled for many different processors. 
-However, there are limitations:
-1. Many C compilers do not allow the mixing of C and assembly in the same function. The reason is clear: manual 
-inserted assembly makes optimization of the generated code hard.
-1. Highlevel constructs like classes are not available and moving to C++ is a mistake.
-1. The C datatypes are strange for a 64 bit system. Having a 4-byte int and float is wrong.
+On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
+The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
+However, there are major annoyances:
+1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has /GS, SDL checks and runtime checks.
+1. A massive runtime library is included when you create a HelloWorld.exe. Before you know it, you need to 
+ship vc_redist.x64.exe with your little 4k demo.
+1. Strange workarounds are needed when your try to "ignore all default libraries", such as #define _NO_CRT_STDIO_INLINE 
+and _fltused. The default stacksize is 4k! On a system with more than 8 Gb memory!
+1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
+inserted assembly makes optimization too hard for the compiler.
+1. Highlevel constructs like classes are not available and moving to C++ is a mistake. Good luck with C++'s 
+reinterpret_cast\<Object\>(-1) or std::shared_ptr\<\>. Maybe you will also wonder why the copy-constructor is not 
+called when the compiler is doing "Return value optimization".
+1. The Visual Studio C datatypes "int" and "float" are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
 
-So, Ground tries to close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is in
-innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for an example of innerloop optimization.
+Ground tries to leave all the Visual Studio C/C++ problems behind and close the gap between compact highlevel 
+constructs and assembly. Typical usage of x86-64 is in innerloops. See ```<GroundProjectFolder>\Examples\mode7_optimized.g``` for 
+an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
@@ -131,7 +139,7 @@ byte[61,36] screenArray = g.[screentext1_p];
 ```
 The content of the screentext1_p variable is put inside the screenArray and the coder can make statements like:
 ```
-screenArray[30,10] = "A";
+screenArray[30,10] = 'A';
 ```
 
 An other piece to investigate is:
@@ -279,31 +287,34 @@ Most functions start with ```push rbp``` followed by ```mov rbp, rsp```. This ma
 for the fastcall convention. This also means that the pointer for the parentframe is at ```[rbp]```.
 
 ## Ground is an Ode to the x86-64 Windows PC
-Ever since 1994, that is 30 years ago, I use the Microsoft DOS/Windows platform on Intel x86 compatible machines.
+Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old Commodore 64 and Amiga 500 days. Back then, I was heavily invested in the 
 Amiga 500, because it seemed to be the successor of the C64. However, the platform did not upgrade for a long time. 
-The Commodore Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released in 1992. 
+The Commodore Amiga was released in 1985, but the next model for the masses was the Amiga 1200 released at the end of 1992. 
 That was more than 7 years later. I really felt let down by Commodore in 1990.  
-Later it became clear that Commodore had no focus on the Amiga in 1988,1989 and 1990. They were busy with the PC-line, 
+Later it became clear that Commodore had no focus on the Amiga in the years 1988-1990. They were busy with the PC-line, 
 like releasing the PC-60-III, the CDTV project and the C-65 project. The C-65 had the new CSG-4510 processor running 
 at 3.5 Mhz, two SID chips, 128k of RAM, a DMA controller with blitter and new VIC-III chip displaying 320x200 pixels 
 and 256 colors.  
-Not only was there no focus on the Amiga, but Commodore also neglected the Amiga Ranger prototypes created by Jay 
-Miner in 1988.  
-As a programmer, you have intellectual- and time investments in a platform and when it becomes inactive you feel lost.
-Fortunately, the good thing was that I moved to the Wintel platform and bought an ESCOM 486DX2 66 MHz PC in 1994. Now,
-30 years and numerous PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick 
-and choose your moment to upgrade. We were truly blessed with this platform for 30 years. This must be said!  
+There was so little focus on the Amiga, that Commodore neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
+As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
+Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. Microsoft Office 4.2 containing MS-Word 6.0, 
+MS-Excel 5.0 and MS-Powerpoint 4.0 on 25 1.44" disks was a tremendous hit. Everyone wanted it.  
+At the same time DOOM 2 released, a tremendous hit for gamers. Everyone wanted it.  
+The PC platform had cheap hardware, so everyone was in. This resulted in total MARKET DOMINATION by the PC.  
+In 1994, I bought an ESCOM 486DX2 66 MHz PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
+PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
+We are truly blessed with this platform for over 30 years. This must be said!  
 At this moment in 2024, several expert users are migrating to Linux because Windows collects data about the usage of 
 your computer. I agree that collecting data is wrong. However, it can be disabled. Search for "How to disable 
-Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the platform 
-that we owe so much too soon without valid reasons.
+Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the PC platform 
+too soon without valid reasons, because we owe so much to it.
 
 ### Smoothscroller
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
-Smoothscrolling is always good.
+Scrolling is always good...
 </p>
 
 ### Jump
@@ -367,20 +378,13 @@ Let the bugs eat eachother and don't let any escape!
 ### Join the Hype! Play Connect Four against your local LLM Ai
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Connect4.jpg?raw=true" width="500" /><br/>
-Play Connect 4 (vier-op-een-rij) against Ollama Ai models!</p>
-
-### How to run Connect Four
-1. Start your local Ollama. You can download Ollama at: https://ollama.com/
-1. Unzip ```<GroundProjectFolder>/GroundResources/misc/ConnectFour.ai.zip``` somewhere. Open the solution and select an 
-available downloaded Ollama Ai-model in the sourcecode, and Run the code.
-1. In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
+Play Connect 4 (vier-op-een-rij) against Ollama Ai models!<br/>
+Read the instructions in the connect4.g sourcecode.</p>
 
 ### Play Chess against StockFish
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
-Play Chess locally against StockFish!
-</p>
-
+Play Chess locally against StockFish!</p>
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
@@ -393,5 +397,6 @@ Play Chess locally against StockFish!
 2025.08.23: Added Racer game.  
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
-2025.09.18: Vier-op-een-rij (ConnectFour) added.  
+2025.09.18: ConnectFour (Vier-op-een-rij) added.  
 2025.09.29: Chess added.  
+2025.10.11: Support for single char value's like 'a'.  

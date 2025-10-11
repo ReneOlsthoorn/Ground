@@ -15,6 +15,7 @@ dll kernel32 function SetHandleInformation(u64 hObject, u32 dwMask, u32 dwFlags)
 dll kernel32 function CreateProcessA(string lpApplicationName, int lpCommandLine, int lpProcessAttributes, int lpThreadAttributes, bool bInheritHandles, u32 dwCreationFlags, ptr lpEnvironment, ptr lpCurrentDirectory, ptr lpStartupInfo, ptr lpProcessInformation) : bool;
 dll kernel32 function ReadFile(int hFile, ptr lpBuffer, u32 nNumberOfBytesToRead, ptr lpNumberOfBytesRead, ptr lpOverlapped) : bool;
 dll kernel32 function WriteFile(int hFile, ptr lpBuffer, u32 nNumberOfBytesToWrite, ptr lpNumberOfBytesWritten, ptr lpOverlapped) : bool;
+dll kernel32 function TerminateProcess(ptr processhandle, int exitcode) : int;
 
 asm equates {
 kernel32_THREAD_BASE_PRIORITY_LOWRT = 15

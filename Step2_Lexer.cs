@@ -90,6 +90,7 @@ namespace GroundCompiler
 
                     if (SkipIfMatch("\"")) { ReadString(token); break; }
                     if (SkipIfMatch("`"))  { ReadGraveAccentString(token); break; }
+                    if (SkipIfMatch("'"))  { ReadCharValue(token); break; }
 
                     if (token.Type == TokenType.Unknown)
                     {
@@ -182,13 +183,13 @@ namespace GroundCompiler
             token.Type = TokenType.Identifier;   // in other cases, it's an identifier
         }
 
-
         public string ReadMatching(Func<char, char, bool> CharValidFunction)
         {
             int startPos = needle;
-            while (CharValidFunction(NextChar(), FollowingChar())) { }
-            int endPos = needle;
+            while (CharValidFunction(CurrentChar(), FollowingChar()))
+                NextChar();
 
+            int endPos = needle;
             return sourcecode.Substring(startPos, endPos - startPos);
         }
 
@@ -197,9 +198,8 @@ namespace GroundCompiler
             string s = ReadMatching(IsHexadecimalDigit);
             long number = 0;
             foreach (char c in s)
-            {
                 number = (number * 16) + HexadecimalValue(c);
-            }
+
             token.Datatype = Datatype.GetDatatype("u64");
             token.Value = number;
             token.Lexeme = "0x" + s;
@@ -208,7 +208,6 @@ namespace GroundCompiler
         public void ReadDecimal(Token token)
         {
             string s = ReadMatching(IsDigitOrPoint);
-
             if (s.Contains("."))
             {
                 double d = double.Parse(s, CultureInfo.InvariantCulture);
@@ -217,12 +216,10 @@ namespace GroundCompiler
                 token.Lexeme = d.ToString(CultureInfo.InvariantCulture);
                 return;
             }
-
             long number = 0;
             foreach (char c in s)
-            {
                 number = (number * 10) + (c - '0');
-            }
+
             token.Datatype = Datatype.GetDatatype("i64");
             token.Value = number;
             token.Lexeme = s;
@@ -231,7 +228,6 @@ namespace GroundCompiler
         public void ReadNumber(Token token)
         {
             token.Type = TokenType.Literal;
-
             if (SkipIfMatch("0X") || SkipIfMatch("0x"))
             {
                 ReadHexadecimal(token);
@@ -242,16 +238,13 @@ namespace GroundCompiler
 
         public void ReadString(Token token)
         {
+            string s = ReadMatching(IsNotStringEnd);
             token.Type = TokenType.Literal;
             token.Datatype = Datatype.GetDatatype("string");
-            if (CurrentChar() == '\"')
+            token.Value = "";
+            token.Lexeme = "\"\"";
+            if (s.Length > 0)
             {
-                token.Value = "";
-                token.Lexeme = $"\"\"";
-            }
-            else
-            {
-                string s = ReadMatching(IsNotStringEnd);
                 s = s.Replace("\\r", "\r").Replace("\\n", "\n");
                 token.Value = s;
                 token.Lexeme = $"\"{s}\"";
@@ -261,16 +254,13 @@ namespace GroundCompiler
 
         public void ReadGraveAccentString(Token token)
         {
+            string s = ReadMatching(IsNotGraveAccentStringEnd);
             token.Type = TokenType.Literal;
             token.Datatype = Datatype.GetDatatype("string");
-            if (CurrentChar() == '`')
+            token.Value = "";
+            token.Lexeme = "\"\"";
+            if (s.Length > 0)
             {
-                token.Value = "";
-                token.Lexeme = $"\"\"";
-            }
-            else
-            {
-                string s = ReadMatching(IsNotGraveAccentStringEnd);
                 s = s.Replace("\\r", "\r").Replace("\\n", "\n");
                 token.Value = s;
                 token.Lexeme = $"\"{s}\"";
@@ -278,6 +268,20 @@ namespace GroundCompiler
             NextChar();
         }
 
+        public void ReadCharValue(Token token)
+        {
+            string s = ReadMatching(IsNotCharValueEnd);
+            token.Type = TokenType.Literal;
+            token.Datatype = Datatype.GetDatatype("u8");
+            token.Value = 0;
+            token.Lexeme = "";
+            if (s.Length > 0)
+            {
+                token.Value = s[0];
+                token.Lexeme = s[0].ToString();
+            }
+            NextChar();
+        }
 
         public void SkipUntil(string text)
         {
@@ -352,6 +356,7 @@ namespace GroundCompiler
         public bool IsIdentifierRest(char c, char followingChar = ' ') { return (IsIdentifierStart(c) || IsDigit(c) || (c == '$')); }
         public bool IsNotStringEnd(char c, char followingChar = ' ') { return (c != '\"'); }
         public bool IsNotGraveAccentStringEnd(char c, char followingChar = ' ') { return (c != '`'); }
+        public bool IsNotCharValueEnd(char c, char followingChar = ' ') { return (c != '\''); }
         public bool IsNotRightBrace(char c, char followingChar = ' ') { return (c != '}'); }
         public bool IsSpace(char c, char followingChar = ' ') { return (c == ' ' || c == '\t' || c == '\r' || c == '\n'); }
         public bool IsHexadecimalDigit(char c, char followingChar = ' ') { return (IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }

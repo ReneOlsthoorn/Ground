@@ -17,17 +17,18 @@
 #include user32.g
 #include sidelib.g
 
+bool isPlayingWhite = true;
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 bool StatusRunning = true;
 int frameCount = 0;
 string gameStatus = "game running";
-bool isPlayingWhite = true;
 ptr movesList = msvcrt.calloc(1, MOVES_STORAGE * BYTES_PER_MOVE);
 ptr movesListNeedle = movesList;
 ptr textInBuffer = msvcrt.calloc(1, READBUFFERSIZE);
 ptr movesOutput = msvcrt.calloc(1, READBUFFERSIZE);
 bool isWaitingForUser = false;
+bool thread2Busy = true;
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Chess", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
@@ -35,11 +36,6 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 #include chess_helper.g
-
-function NrMoves() {
-	int result = (movesListNeedle - movesList) >> 3;
-	return result;
-}
 
 class Piece {
 	int gridX;		// 0..7
@@ -87,16 +83,16 @@ class Piece {
 	}
 
 	function GetAlphaPosition(byte* p) {
-		p[0] = this.gridX + 0x61;		// 0x61 = 'a'
-		p[1] = 0x31 + (7 - this.gridY);	// 0x30 = '0'
+		p[0] = this.gridX + 'a';
+		p[1] = '1' + (7 - this.gridY);
 		p[2] = 0;
 	}
 
 	function HasPosition(byte* p) {
 		if not (this.visible)
 			return false;
-		int startGridX = p[0]-0x61;
-		int startGridY = 7-(p[1]-0x31);
+		int startGridX = p[0] - 'a';
+		int startGridY = 7-(p[1] - '1');
 		bool result = (this.gridX == startGridX and this.gridY == startGridY);
 		return result;
 	}
@@ -104,12 +100,15 @@ class Piece {
 	function SetPosition(byte* p) {
 		if not (this.visible)
 			return;
-		this.gridX = p[0]-0x61;
-		this.gridY = 7-(p[1]-0x31);
+		this.gridX = p[0] - 'a';
+		this.gridY = 7-(p[1] - '1');
 		this.FillXY();
 	}
 }
 
+function NrMoves() : int {
+	return ((movesListNeedle - movesList) >> 3);
+}
 
 Piece[NR_PIECES] pieces = [ ];
 Piece selector;			// Not a real piece. It is the selection when you go over a field with the mouse.
@@ -154,12 +153,13 @@ function SetStartPosition() {
 function RestartGame() {
 	SetPiecesTextures();
 	isWaitingForUser = false;
-	isPlayingWhite = true;
+	//isPlayingWhite = true;
 	gameStatus = "game running";
 	SetStartPosition();
 	movesListNeedle = movesList;
 }
 RestartGame();
+
 
 function PrintMoves() {
 	if (NrMoves() == 0)
@@ -220,13 +220,13 @@ function MovePiece(ptr moveStr) {
 					pieces[0].gridX = 3;
 					pieces[0].FillXY();
 				}
-			} else if (isPlayingWhite and pieces[i].IsPawn() and newGridY == 0) {
-				p[4] = 0x71;  //q
+			} else if (pieces[i].IsPawn() and newGridY == 0) {
+				p[4] = 'q';
 				p[5] = 0;
 				pieces[i].type = 2; //transform into queen
 				pieces[i].texture = pieceTextures[8];
 			} else if (pieces[i].IsPawn() and newGridY == 7) {
-				p[4] = 0x71;  //q
+				p[4] = 'q';
 				p[5] = 0;
 				pieces[i].type = 2; //transform into queen
 				pieces[i].texture = pieceTextures[2];
@@ -240,26 +240,27 @@ function WaitForUserMove() {
 	int valueToWaitFor = 0;
 	if (isPlayingWhite)
 		valueToWaitFor = 1;
-	while ((NrMoves() % 2) != valueToWaitFor) {
+	while (((NrMoves() % 2) != valueToWaitFor) and StatusRunning) {
 		isWaitingForUser = true;
-		kernel32.Sleep(500);
+		kernel32.Sleep(100);
 	}
-	isWaitingForUser = false;
-	MovePiece(movesListNeedle-8);
+	if (StatusRunning) {
+		isWaitingForUser = false;
+		if (movesListNeedle != movesList)
+			MovePiece(movesListNeedle-8);
+	}
 }
-
 
 function AddComputerMove() : bool {
 	string bestMoveStr = "bestmove ";
 	byte* result = msvcrt.strstr(textInBuffer, &bestMoveStr);
-	if (result == 0) {
+	if (result == 0)
 		return false;
-	}
-	result = result + 9;
+	result = result + 9;  //length of "bestmove "
 
 	int i = 0;
 	byte* newMovesListNeedle = movesListNeedle;
-	while (result[i] != 0x20) {
+	while ((result[i] != 0x20) and (result[i] != 0x0a) and (result[i] != 0)) {
 		newMovesListNeedle[i] = result[i];
 		i++;
 	}
@@ -350,8 +351,7 @@ function InsertMoves() {
 }
 
 
-function Thread2() {
-
+function Thread2StockFish() {
     kernel32.CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0);
     kernel32.SetHandleInformation(hStdOutRead, g.kernel32_HANDLE_FLAG_INHERIT, 0);
 
@@ -374,22 +374,24 @@ function Thread2() {
     ReadFromStockFish(2000);
     WriteToStockFishString("uci\n");
     ReadFromStockFish(2000);
-    WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
-    WriteToStockFishString("setoption name UCI_Elo value 2\n");
+    //WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
+    //WriteToStockFishString("setoption name UCI_Elo value 1\n");
     WriteToStockFishString("isready\n");
     ReadFromStockFish(1000);
 
     WriteToStockFishString("ucinewgame\n");
 	while (StatusRunning) {
 		WaitForUserMove();
-		WriteToStockFishString("position startpos"); //" moves e2e4\n");
-		InsertMoves();
-		WriteToStockFishString("go movetime 1000\n");
+		if (StatusRunning) {
+			WriteToStockFishString("position startpos");
+			InsertMoves();
+			WriteToStockFishString("go movetime 1000\n");
 
-		bool moveFound = false;
-		while (!moveFound) {
-			ReadFromStockFish(2000);
-			moveFound = AddComputerMove();
+			bool moveFound = false;
+			while (!moveFound) {
+				ReadFromStockFish(2000);
+				moveFound = AddComputerMove();
+			}
 		}
 	}
 
@@ -397,11 +399,17 @@ function Thread2() {
     kernel32.CloseHandle(hStdOutWrite);
     kernel32.CloseHandle(hStdOutRead);
     kernel32.CloseHandle(hStdInWrite);
+
+	string terminateSuccessStr = "terminate success";
+	int tm = kernel32.TerminateProcess(pi.hProcess, 0);
+	if (tm != 0)
+		AppendToLog(&terminateSuccessStr);
+
     kernel32.CloseHandle(pi.hProcess);
     kernel32.CloseHandle(pi.hThread);
+	thread2Busy = false;
 }
-GC_CreateThread(Thread2);
-
+GC_CreateThread(Thread2StockFish);
 
 function ReplayLoadedMoves() {
 	ptr movesNeedle = movesList;
@@ -426,13 +434,10 @@ function LoadGameFile() {
 LoadGameFile();
 
 bool mouseLeftAllowed = true;
-
 bool newGameMouseLeftAllowed = true;
-f32[4] newGameRect = [825.0, 20.0, 70.0, 20.0];
-
+f32[4] newGameRect = [825.0, 20.0, 70.0, 12.0];
 bool oneMoveBackMouseLeftAllowed = true;
-f32[4] oneMoveBackRect = [825.0, 40.0, 70.0, 20.0];
-
+f32[4] oneMoveBackRect = [825.0, 50.0, 70.0, 12.0];
 
 while (StatusRunning)
 {
@@ -540,6 +545,8 @@ while (StatusRunning)
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
 }
+
+while (thread2Busy) { }
 
 FreePieceTextures();
 msvcrt.free(movesList);

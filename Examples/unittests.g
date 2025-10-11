@@ -204,7 +204,9 @@ asm {
 assert(i == 108);
 
 
-string[] strArray = [ "Hello", "World" ];
+string[] strArray = [ "Hello", "Horld" ];
+byte* horldP = &strArray[1];
+horldP[0] = 'W';
 assert(strArray[1] == "World");
 
 

@@ -334,7 +334,15 @@ namespace GroundCompiler
                 else
                 {
                     if (addressOf)
-                        emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
+                    {
+                        //if array[i] is a reference type, get the memoryPointer for that element. An array of class elements do not contain memory pointers, but the real instance.
+                        if (targetType.IsReferenceType && (!targetType.isClass()))
+                        {
+                            emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
+                            emitter.GetMemoryPointerFromIndex();
+                        } else
+                            emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
+                    }
                     else
                         emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
                 }

@@ -33,5 +33,6 @@
           kernel32_GetThreadContext,'GetThreadContext',\
           kernel32_CreatePipe,'CreatePipe',\
           kernel32_SetHandleInformation,'SetHandleInformation',\
+          kernel32_TerminateProcess,'TerminateProcess',\
           kernel32_CreateProcessA,'CreateProcessA',\
           kernel32_GetThreadLocale,'GetThreadLocale'

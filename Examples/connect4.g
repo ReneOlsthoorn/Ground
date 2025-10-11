@@ -1,4 +1,9 @@
 
+// How to run Connect Four:
+// > Start your local Ollama. You can download Ollama at: https://ollama.com/
+// > Unzip <GroundProjectFolder>/GroundResources/misc/ConnectFour.ai.zip somewhere. Open the solution and select an available downloaded Ollama Ai-model in the sourcecode, and Run the code.
+// > In the GroundCompiler, compile and run connect4.g which will use LibCurl to communicate with the local ConnectFour.ai service.
+
 #template sdl3
 
 #include graphics_defines.g
