@@ -301,6 +301,7 @@ like releasing the ```PC-60-III```, the ```CDTV``` project and the ```C-65``` pr
 at 3.5 Mhz, two ```SID``` chips, 128k of RAM, a ```DMA``` controller with ```blitter``` and new ```VIC-III``` chip displaying 320x200 pixels 
 and 256 colors.  
 Meanwhile, Commodore totally neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
+  
 As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
 Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. ```Microsoft Office 4.2``` containing ```MS-Word 6.0```, 
 ```MS-Excel 5.0``` and ```MS-Powerpoint 4.0``` on 25 ```1.44"``` disks was a tremendous hit. Everyone wanted it.  
