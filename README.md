@@ -5,7 +5,7 @@ constructs with x86-64 assembly. As a programmer, you need to stay in contact wi
 fast code. In Ground, assembly can be added anywhere.  
 Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like ```while``` and ```if```, arrays and datatypes like ```string``` and ```float```, etc...  
-See file ```\Examples\unittests.g``` on how to use the language.  
+See file ```.\Examples\unittests.g``` on how to use the language.  
   
 Mixing Ground and assembly is possible by using the generated symbolic constants.  
 The compiler itself is created in C# and generates x86-64 assembly which is assembled with the freely available
@@ -65,7 +65,7 @@ called when the compiler is doing ```Return value optimization```.
 1. The Visual Studio C datatypes ```int``` and ```float``` are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
 
 Ground tries to leave all the Visual Studio C/C++ problems behind and close the gap between compact highlevel 
-constructs and assembly. Typical usage of x86-64 is in innerloops. See ```\Examples\mode7_optimized.g``` for 
+constructs and assembly. Typical usage of x86-64 is in innerloops. See ```.\Examples\mode7_optimized.g``` for 
 an example of innerloop optimization.
 
 Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
