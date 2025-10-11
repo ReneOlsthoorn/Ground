@@ -310,6 +310,7 @@ The PC platform had cheap hardware, so everybody joined. This resulted in total 
 In 1994, I bought an ```ESCOM 486DX2 66 MHz``` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We are truly blessed with this platform for over 30 years. This must be said!  
+  
 At this moment in 2024, several expert users are migrating to Linux because Windows collects data about the usage of 
 your computer. I agree that collecting data is wrong. However, it can be disabled. Search for "How to disable 
 Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the PC platform 
