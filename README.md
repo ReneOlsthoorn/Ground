@@ -319,7 +319,7 @@ too soon without valid reasons, because we owe so much to it.
 ### Smoothscroller
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
-Scrolling is always good...
+Scrolling is always good.
 </p>
 
 ### Jump
@@ -336,7 +336,8 @@ Example which uses the Chipmunk Physics engine.
 
 ### The Plasma example with no colorcycling
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" />
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
+Looks like an ```Amiga 500``` plasma.
 </p>
 
 ### The Fire example
