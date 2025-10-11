@@ -303,8 +303,8 @@ and 256 colors.
 Commodore totally neglected the Amiga Ranger prototypes created by Jay Miner in 1988.  
 As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
 Fortunately, a clear winner was arising: The Microsoft DOS/Windows platform. ```Microsoft Office 4.2``` containing ```MS-Word 6.0```, 
-```MS-Excel 5.0``` and ```MS-Powerpoint 4.0``` on 25 1.44" disks was a tremendous hit. Everyone wanted it.  
-At the same time ```DOOM 2``` released, a tremendous hit for gamers. Everyone wanted it.  
+```MS-Excel 5.0``` and ```MS-Powerpoint 4.0``` on 25 ```1.44"``` disks was a tremendous hit. Everyone wanted it.  
+At the same time ```DOOM 2``` released, a tremendous hit for gamers. Again, everyone wanted it.  
 The PC platform had cheap hardware, so everyone was in. This resulted in total MARKET DOMINATION by the PC.  
 In 1994, I bought an ESCOM 486DX2 66 MHz PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
