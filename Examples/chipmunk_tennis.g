@@ -2,7 +2,7 @@
 
 #template sdl3
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g

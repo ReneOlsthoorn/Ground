@@ -3,7 +3,7 @@
 
 #template sdl3
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -15,9 +15,9 @@ int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Mode 7 optimized", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Mode 7 optimized", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is slow with render
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 int frameCount = 0;
@@ -39,7 +39,7 @@ float space_y = 100.0;
 float scale_y = 200.0;
 int horizon = 15;
 float float_ScreenDIMx = 960.0;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 
@@ -61,7 +61,7 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 		float fEndX = fWorldX + (msvcrt.cos(fWorldAngle - fFoVHalf) * distance);
 		float fEndY = fWorldY - (msvcrt.sin(fWorldAngle - fFoVHalf) * distance);
 
-		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+		for (int x = 0; x < SCREEN_WIDTH; x++) {
 
 			//float fSampleWidth = x / float_ScreenDIMx;
 			float fSampleWidth;
@@ -141,9 +141,9 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 function Thread2() {
 	while (StatusRunning) {
 		if (thread2Busy) {
-			int halfHeight = g.GC_Screen_DimY / 2;
-			ptr threadPixel_p = g.[pixels_p]+(g.GC_Screen_DimX * halfHeight * g.GC_ScreenPixelSize);
-            Innerloop(halfHeight, g.GC_Screen_DimY, threadPixel_p);
+			int halfHeight = SCREEN_HEIGHT / 2;
+			ptr threadPixel_p = g.[pixels_p]+(SCREEN_WIDTH * halfHeight * SCREEN_PIXELSIZE);
+            Innerloop(halfHeight, SCREEN_HEIGHT, threadPixel_p);
 			thread2Busy = false;
 		}
 	}
@@ -175,7 +175,7 @@ while (StatusRunning)
 	if (thread1Busy) {
 		loopStartTicks = sdl3.SDL_GetTicks();
 		ptr threadPixel_p = g.[pixels_p];
-		int halfHeight = g.GC_Screen_DimY / 2;
+		int halfHeight = SCREEN_HEIGHT / 2;
 		Innerloop(0, halfHeight, threadPixel_p);
 		thread1Busy = false;
 	}

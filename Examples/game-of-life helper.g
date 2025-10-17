@@ -18,7 +18,7 @@ function FillGridElementPixels(pointer p, u32 color) asm {
   mov   rcx, 0
 .loop:
   mov   [rdi], eax
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   inc   rcx
   cmp	rcx, GRID_ELEMENT_PIXELS
   jne	.loop
@@ -32,11 +32,11 @@ function FillGridElementBody(pointer p, u32 fgColor, u32 bgColor) asm {
   mov   rax, [fgColor@FillGridElementBody]
   mov   rdx, [bgColor@FillGridElementBody]
   mov	[rdi], edx
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   mov   rcx, 0
 .loop:
   mov   [rdi], eax
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   inc   rcx
   cmp	rcx, GRID_ELEMENT_PIXELS_KERN
   jne	.loop

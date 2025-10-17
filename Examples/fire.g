@@ -3,7 +3,7 @@
 
 #template sdl3
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -16,8 +16,8 @@ int frameCount = 0;
 byte[SCREEN_WIDTH, SCREEN_HEIGHT] coolPixels = null;
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 u32 seedRandom = 123123;
-int coolmapWidth = g.GC_Screen_DimX;
-int coolmapHeight = g.GC_Screen_DimY;
+int coolmapWidth = SCREEN_WIDTH;
+int coolmapHeight = SCREEN_HEIGHT;
 u32[nrPaletteElements] palette = [];
 int paletteCounter = 0;
 int arraySize = SCREEN_WIDTH * SCREEN_HEIGHT;
@@ -28,7 +28,7 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 bool drawTheScene = true;
@@ -165,7 +165,7 @@ while (StatusRunning)
 	asm {
 		mov	rcx, SCREEN_WIDTH*(SCREEN_HEIGHT-1)
 		mov rdx, [fireBufferNew@main]
-		add rdx, GC_Screen_DimX
+		add rdx, SCREEN_WIDTH
 		mov r8, [fireBufferOld@main]
 		call Utils_CopyArray
 	}
@@ -198,7 +198,7 @@ asm {
 
 	for (int y = 0; y < (SCREEN_HEIGHT-1); y++) {
 		int coolingY = (y + coolingMapOffset) % SCREEN_HEIGHT;
-		int coolingPosY = coolingY * g.GC_Screen_DimX;
+		int coolingPosY = coolingY * SCREEN_WIDTH;
 asm {
   mov	rcx, [y@main]
   mov	rdx, [coolingPosY@main]
@@ -247,7 +247,7 @@ ASM_Fire:
 	push r14
 	push r15
 
-	mov r8, GC_Screen_DimY
+	mov r8, SCREEN_HEIGHT
 	sub r8d, ecx
 
 	mov r9, [palette@main]
@@ -262,7 +262,7 @@ ASM_Fire:
 	add r15, rdx                ; r15 = fire_coolingMap + coolingPosY
 	mov rdi, [pixels_p]
 	mov r14, [fireBufferOld@main]
-	mov r13, GC_Screen_DimX
+	mov r13, SCREEN_WIDTH
 
 	mov eax, ecx
 	mul r13d

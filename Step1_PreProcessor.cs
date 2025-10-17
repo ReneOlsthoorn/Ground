@@ -31,6 +31,8 @@ namespace GroundCompiler
 
                     if (sourcecode[i] == '\n')
                         endMarkerFound = true;
+                    else
+                        endMarkerFound = false;
 
                     if (i == sourcecodeCount - 1)
                         endReached = true;
@@ -57,12 +59,11 @@ namespace GroundCompiler
             }
             if (line.StartsWith("#define"))
             {
-                string defineKey = line.Split()[1].Trim();
-                string defineValue = line.Split()[2].Trim();
-
-                var defineLexer = new Step2_Lexer(defineValue);
+                string restOfLine = line.Substring(7);
+                var defineLexer = new Step2_Lexer(restOfLine);
                 var defineTokens = defineLexer.GetTokens().ToList();
-                defines[defineKey] = defineTokens[0];
+                string defineKey = defineTokens[0].Lexeme;
+                defines[defineKey] = Token.DetermineIntegerToken(defineTokens.Skip(1).ToList(), defines);
 
                 ClearLineAtIndex(index);
                 return true;

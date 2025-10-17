@@ -3,7 +3,7 @@
 
 #define NR_BUGS 5
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -16,7 +16,7 @@ int frameCount = 0;
 byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 f32[4] srcRect = [];
 f32[4] destRect = [];
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -32,14 +32,14 @@ function IsPointInCircle(float px, float py, float cx, float cy, float radius) :
 }
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Bugs", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Bugs", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 ptr surface = sdl3_image.IMG_Load("image/bugs_wood.jpg");
 if (surface == null) { user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK); return; }
 ptr convertedSurface = sdl3.SDL_ConvertSurface(surface, g.SDL_PIXELFORMAT_ARGB8888);
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 SDL_Surface* psurface = convertedSurface;
 ptr surfacePixels = *psurface.pixels;

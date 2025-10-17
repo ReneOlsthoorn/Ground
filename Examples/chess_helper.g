@@ -10,7 +10,7 @@ int RandomSeed = 123123;
 byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 
 class STARTUPINFOA {
     u32 cb;

@@ -193,6 +193,18 @@ namespace GroundCompiler
             return sourcecode.Substring(startPos, endPos - startPos);
         }
 
+        public void ReadBinary(Token token)
+        {
+            string s = ReadMatching(IsBinaryDigit);
+            long number = 0;
+            foreach (char c in s)
+                number = (number * 2) + BinaryValue(c);
+
+            token.Datatype = Datatype.GetDatatype("u64");
+            token.Value = number;
+            token.Lexeme = "0b" + s;
+        }
+
         public void ReadHexadecimal(Token token)
         {
             string s = ReadMatching(IsHexadecimalDigit);
@@ -228,6 +240,11 @@ namespace GroundCompiler
         public void ReadNumber(Token token)
         {
             token.Type = TokenType.Literal;
+            if (SkipIfMatch("0B") || SkipIfMatch("0b"))
+            {
+                ReadBinary(token);
+                return;
+            }
             if (SkipIfMatch("0X") || SkipIfMatch("0x"))
             {
                 ReadHexadecimal(token);
@@ -360,6 +377,7 @@ namespace GroundCompiler
         public bool IsNotRightBrace(char c, char followingChar = ' ') { return (c != '}'); }
         public bool IsSpace(char c, char followingChar = ' ') { return (c == ' ' || c == '\t' || c == '\r' || c == '\n'); }
         public bool IsHexadecimalDigit(char c, char followingChar = ' ') { return (IsDigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')); }
+        public bool IsBinaryDigit(char c, char followingChar = ' ') { return (c == '0' || c == '1' || c == '.' || c == 'X' || c == 'x'); }
         static int HexadecimalValue(char c)
         {
             if (c >= '0' && c <= '9')
@@ -367,6 +385,16 @@ namespace GroundCompiler
             if (c >= 'a' && c <= 'f')
                 return c - 'a' + 10;
             return c - 'A' + 10;
+        }
+        static int BinaryValue(char c)
+        {
+            if (c == '.')
+                return 0;
+            if (c == 'X' || c == 'x')
+                return 1;
+            if (c == '0' || c == '1')
+                return c - '0';
+            return 0;
         }
 
         public char GetFirstNonSpaceChar()

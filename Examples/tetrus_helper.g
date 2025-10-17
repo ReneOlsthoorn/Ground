@@ -1,7 +1,7 @@
 
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 int currentTime = 0;
 msvcrt.time64(&currentTime);
 msvcrt.srand(currentTime);

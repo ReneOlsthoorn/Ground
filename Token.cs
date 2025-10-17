@@ -1,4 +1,6 @@
 ﻿
+using GroundCompiler.Expressions;
+
 namespace GroundCompiler
 {
     public enum TokenType
@@ -131,5 +133,48 @@ namespace GroundCompiler
             return $"{LineNumber}:{Types[0]} {Utils.StringAsDebug(Lexeme)} {valueAsString}";
         }
 
+        public static Token GetDefaultIntegerToken()
+        {
+            Token token = new Token();
+            token.Type = TokenType.Literal;
+            token.Datatype = Datatype.GetDatatype("i64");
+            token.Value = 0;
+            token.Lexeme = "0";
+            return token;
+        }
+
+        public static Token DetermineIntegerToken(List<Token> tokenList, Dictionary<string, Token> defines)
+        {
+            if (tokenList.Count == 1 && tokenList[0].Contains(TokenType.Literal))
+                return tokenList[0];
+
+            for (int i = 0; i < tokenList.Count; i++)
+            {
+                Token token = tokenList[i];
+                if (token.Contains(TokenType.Identifier))
+                    tokenList[i] = defines[token.Lexeme];
+            }
+
+            // Only i64 multiplications and additions are allowed in define's.
+            Token resultToken = GetDefaultIntegerToken();
+            resultToken.Value = tokenList[0].Value;
+            resultToken.Lexeme = tokenList[0].Lexeme;
+            TokenDispenser dispenser = new TokenDispenser(tokenList.Skip(1).ToList());
+            while (true)
+            {
+                Token operatorToken = dispenser.GetNextToken();
+                if (operatorToken.Contains(TokenType.EndOfFile))
+                    break;
+                Token valueToken = dispenser.GetNextToken();
+                if (valueToken.Contains(TokenType.EndOfFile))
+                    break;
+                if (operatorToken.Contains(TokenType.Asterisk))
+                    resultToken.Value = Convert.ToInt64(resultToken.Value) * Convert.ToInt64(valueToken.Value);
+                if (operatorToken.Contains(TokenType.Plus))
+                    resultToken.Value = Convert.ToInt64(resultToken.Value) + Convert.ToInt64(valueToken.Value);
+            }
+            resultToken.Lexeme = resultToken.Value.ToString();
+            return resultToken;
+        }
     }
 }

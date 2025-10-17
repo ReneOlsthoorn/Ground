@@ -12,7 +12,7 @@
 #define PLAYER_STEERING 0.00008
 #define PLAYER_MAX_STEERING 0.003
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -70,9 +70,9 @@ soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, theSoundSpe
 
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Racer", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Racer", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 #include racer-helper.g

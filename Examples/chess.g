@@ -10,7 +10,7 @@
 #define BYTES_PER_MOVE 8
 #define READBUFFERSIZE 32000
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -31,7 +31,7 @@ bool isWaitingForUser = false;
 bool thread2Busy = true;
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Chess", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Chess", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 sdl3.SDL_SetRenderVSync(renderer, 1);
 

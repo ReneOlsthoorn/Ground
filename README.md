@@ -23,14 +23,14 @@ known system DLL's, like ```MSVCRT.DLL```, is promoted. Several game examples ar
 
 It's easy in Ground to replace a statement with x86-64. For example, we have the following code in mode7.g:
 ```
-		for (x in 0..< g.GC_Screen_DimX) {
+		for (x in 0..< SCREEN_WIDTH) {
 			float fSampleWidth = x / float_ScreenDIMx;
 			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 ```
 
 We can replace a statement with x86-64:
 ```
-		for (x in 0..< g.GC_Screen_DimX) {
+		for (x in 0..< SCREEN_WIDTH) {
 			float fSampleWidth = x / float_ScreenDIMx;
 			//float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 			float fSampleX;

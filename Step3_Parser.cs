@@ -100,17 +100,23 @@ namespace GroundCompiler
                 arrayNrs = new List<UInt64>();
                 do
                 {
-                    if (Match(TokenType.RightSquareBracket))
-                        break;
-
                     if (Check(Datatype.TypeEnum.Number))
                     {
                         Token numberToken = NextToken();
                         UInt64 sizeIndicator = Convert.ToUInt64(numberToken.Value);
                         arrayNrs.Add(sizeIndicator);
+
+                        if (Check(TokenType.Asterisk) && CheckPlus2(TokenType.Literal))
+                        {
+                            Match(TokenType.Asterisk);
+                            Token numberMultiplierToken = NextToken();
+                            arrayNrs[arrayNrs.Count - 1] = arrayNrs[arrayNrs.Count - 1] * Convert.ToUInt64(numberMultiplierToken.Value);
+                        }
                     }
                 } while (Match(TokenType.Comma));
-                Match(TokenType.RightSquareBracket);
+                if (!Match(TokenType.RightSquareBracket))
+                    Step6_Compiler.Error("Unknown token at array: " + Peek().Lexeme);
+
                 datatypeStr += "[]";
             }
             if (Match(TokenType.Asterisk))
@@ -220,23 +226,55 @@ namespace GroundCompiler
                 {
                     var rangeDatatype = Datatype.GetDatatype("int");
                     Binary rangeExpr = ParseExpression() as Binary;
+
+                    Literal leftLiteral = rangeExpr.LeftNode as Literal;
+                    Literal rightLiteral = rangeExpr.RightNode as Literal;
+
+                    bool ascending = true;
+                    if (leftLiteral != null && rightLiteral != null)
+                    {
+                        if ((long)(leftLiteral.Value) > (long)(rightLiteral.Value))
+                            ascending = false;
+                    }
+
                     initializer = new VarStatement(rangeDatatype, rangeIdentifier, rangeExpr.LeftNode);
                     initializer.Properties["for-loop-variable"] = true;
 
                     Token rangeToOrUntilToken = new Token();
-                    rangeToOrUntilToken.Lexeme = rangeExpr.Operator.Lexeme == ".." ? "<=" : "<";
-                    rangeToOrUntilToken.Types = new List<TokenType> { TokenType.Operator, TokenType.BooleanResultOperator };
-                    if (rangeExpr.Operator.Lexeme == "..")
-                        rangeToOrUntilToken.Types.Add(TokenType.LessEqual);
+                    if (ascending)
+                        rangeToOrUntilToken.Lexeme = rangeExpr.Operator.Lexeme == ".." ? "<=" : "<";
                     else
-                        rangeToOrUntilToken.Types.Add(TokenType.Less);
+                        rangeToOrUntilToken.Lexeme = rangeExpr.Operator.Lexeme == ".." ? ">=" : ">";
+
+                    rangeToOrUntilToken.Types = new List<TokenType> { TokenType.Operator, TokenType.BooleanResultOperator };
+                    if (ascending)
+                    {
+                        if (rangeExpr.Operator.Lexeme == "..")
+                            rangeToOrUntilToken.Types.Add(TokenType.LessEqual);
+                        else
+                            rangeToOrUntilToken.Types.Add(TokenType.Less);
+                    }
+                    else
+                    {
+                        if (rangeExpr.Operator.Lexeme == "..")
+                            rangeToOrUntilToken.Types.Add(TokenType.GreaterEqual);
+                        else
+                            rangeToOrUntilToken.Types.Add(TokenType.Greater);
+                    }
 
                     var rangeConditionVariable = new Variable(rangeIdentifier);
                     Expression rangeConditionExp = new Binary(rangeConditionVariable, rangeToOrUntilToken, rangeExpr.RightNode);
 
                     Token incrementToken = new Token();
-                    incrementToken.Lexeme = "++";
-                    incrementToken.Types = new List<TokenType> { TokenType.Operator, TokenType.PlusPlus };
+                    if (ascending)
+                    {
+                        incrementToken.Lexeme = "++";
+                        incrementToken.Types = new List<TokenType> { TokenType.Operator, TokenType.PlusPlus };
+                    } else
+                    {
+                        incrementToken.Lexeme = "--";
+                        incrementToken.Types = new List<TokenType> { TokenType.Operator, TokenType.MinusMinus };
+                    }
                     Expression rangeIncrementExp = new Unary(incrementToken, rangeConditionVariable, postfix: true);
 
                     Consume(TokenType.CloseBracket, "ForStatement: Expect ')' after 'for' clauses");

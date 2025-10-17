@@ -7,9 +7,10 @@ include '..\..\..\Include\sdl3.inc'
 include '..\..\..\Templates\part_equates.fasm'
 include '..\..\..\Templates\part_macros.fasm'
 
-GC_Screen_DimX = 960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
-GC_Screen_DimY = 560
-GC_ScreenPixelSize = 4
+SCREEN_WIDTH=960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
+SCREEN_HEIGHT=560
+SCREEN_PIXELSIZE=4
+SCREEN_LINESIZE=SCREEN_WIDTH*SCREEN_PIXELSIZE
 GC_Screen_TextColumns = 60 + 1  ;one extra column at the far right for scrolling
 GC_Screen_TextRows = 35 + 1     ;one extra row at the bottom for scrolling
 GC_Screen_TextSize = GC_Screen_TextColumns * GC_Screen_TextRows
@@ -344,7 +345,7 @@ DrawAllCRTLines:
   call	DrawCRTLine_TEXT4_FONT1024
 .aftermode:
   inc	r12d
-  cmp	r12d, GC_Screen_DimY
+  cmp	r12d, SCREEN_HEIGHT
   jnz	.loop
   pop	r13 r11 r12
   ret
@@ -360,7 +361,7 @@ DrawCRTLine_TEXT1_FONT32:
   mov	rbp, rsp
   sub	rsp, 0x10
 
-  mov	rax, GC_Screen_DimX*4
+  mov	rax, SCREEN_WIDTH*4
   mul	rcx
   add	rax, [bg_image_p]
   mov	[rbp-8], rax        ; pointer naar bg_image_p op y positie is nu berekend.
@@ -368,7 +369,7 @@ DrawCRTLine_TEXT1_FONT32:
   mov	r15, [font32_charcolor_p]
   mov	rdi, [pixels_p]
   mov	r9, rcx
-  mov	rax, GC_Screen_DimX*4
+  mov	rax, SCREEN_WIDTH*4
   mul	rcx
   add	rdi, rax
 ; rdi is the destination in the pixels_p
@@ -404,7 +405,7 @@ DrawCRTLine_TEXT1_FONT32:
   add	rdi, 4
   add	rdx, 4
   inc	r14d
-  cmp	r14d, GC_Screen_DimX
+  cmp	r14d, SCREEN_WIDTH
   jz	.exit_loop
   inc	r8d					; next pixel
   cmp	r8d, 16
@@ -453,7 +454,7 @@ DrawCRTLine_TEXT1_FONT32:
   add	rdi, 4
   add	rdx, 4			; next pixel in bg_image
   inc	r14d
-  cmp	r14d, GC_Screen_DimX
+  cmp	r14d, SCREEN_WIDTH
   jz	.exit_loop
   inc	r8d					; next pixel
   cmp	r8d, 16
@@ -477,7 +478,7 @@ DrawCRTLine_TEXT1_FONT256:
   push  rsi rdi r11 r12 r13
   mov	rdi, [pixels_p]
   mov	r9, rcx
-  mov	rax, GC_Screen_DimX*4
+  mov	rax, SCREEN_WIDTH*4
   mul	rcx
   add	rdi, rax
 ; rdi is the destination in the pixels_p
@@ -518,7 +519,7 @@ DrawCRTLine_TEXT1_FONT256:
   add	rdi, 4
 
   inc	ecx
-  cmp	ecx, GC_Screen_DimX
+  cmp	ecx, SCREEN_WIDTH
   jz	.exit_loop
   inc	r8d					; next pixel
   cmp	r8d, 16
@@ -541,7 +542,7 @@ DrawCRTLine_TEXT4_FONT1024:
   push	rsi rdi r11 r12 r13
   mov	rdi, [pixels_p]
   mov	r9, rcx
-  mov	rax, GC_Screen_DimX*4
+  mov	rax, SCREEN_WIDTH*4
   mul	rcx
   add	rdi, rax
 ; rdi is the destination in the pixels_p
@@ -582,7 +583,7 @@ DrawCRTLine_TEXT4_FONT1024:
 ;  movsd
 
   inc	ecx
-  cmp	ecx, GC_Screen_DimX
+  cmp	ecx, SCREEN_WIDTH
   jz	.exit_loop
   inc	r8d					; next pixel
   cmp	r8d, 16
@@ -608,7 +609,7 @@ PlotSprite:
   mov	rdi, rdx
   mov	r10d, r8d
   shl	r10d, 2
-  mov	rdx, GC_Screen_DimX
+  mov	rdx, SCREEN_WIDTH
   shl	edx, 2
 .newLine:
   mov	ecx, 0
@@ -653,7 +654,7 @@ _f_PlotSprite:
   mov	rdi, rdx
   mov	r10d, r8d
   shl	r10d, 2
-  mov	rdx, GC_Screen_DimX
+  mov	rdx, SCREEN_WIDTH
   shl	edx, 2
 .newLine:
   mov	ecx, 0
@@ -705,7 +706,7 @@ _f_PlotSheetSprite:
   mov	rdi, rdx
   mov	r10d, r8d
   shl	r10d, 2
-  mov	rdx, GC_Screen_DimX
+  mov	rdx, SCREEN_WIDTH
   shl	edx, 2
 .newLine:
   mov	ecx, 0

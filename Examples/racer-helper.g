@@ -2,7 +2,7 @@
 byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 f32[4] destRect = [];
 
 ptr pl1Surface = sdl3_image.IMG_Load("image/racer_p1_38x75.png");

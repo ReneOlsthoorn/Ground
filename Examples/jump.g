@@ -11,7 +11,7 @@
 #define PLATFORM_MARGIN_TOP 56
 #define BERTUS_START_X 100
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -26,7 +26,7 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 u8* eventRepeat = &event[SDL3_KEYBOARDEVENT_REPEAT_U8];
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 f32[4] srcRect = [];
 f32[4] destRect = [];
 int score = 0;
@@ -54,9 +54,9 @@ ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Jump", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Jump", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 sdl3.SDL_srand(bertusRandomSeed);
@@ -119,7 +119,7 @@ InitStarField();
 
 function SetPixel(int x, int y, u32 color)
 {
-	if ((x > 955) or (x < 5) or (y > 555) or (y < 5))
+	if ((x > SCREEN_WIDTH-5) or (x < 5) or (y > SCREEN_HEIGHT-5) or (y < 5))
 		return;
 
 	pixels[x,y] = color;
@@ -134,8 +134,8 @@ function StarField()
 	{
 		SetPixel(star_screenx[i], star_screeny[i], 0xff000000);
 		star_z[i] = star_z[i] - star_zv[i];
-		star_screenx[i] = ((star_x[i] / star_z[i]) * 6000.0) + 480.0;
-		star_screeny[i] = ((star_y[i] / star_z[i]) * 4000.0) + 280.0;
+		star_screenx[i] = ((star_x[i] / star_z[i]) * 6000.0) + SCREEN_WIDTH_D2_F;
+		star_screeny[i] = ((star_y[i] / star_z[i]) * 4000.0) + SCREEN_HEIGHT_D2_F;
 
 		int x = star_screenx[i];
 		int y = star_screeny[i];
@@ -144,7 +144,7 @@ function StarField()
 		u32 pixelColor = 0xff000000 or brightness or brightness << 8 or brightness << 16;
 		SetPixel(x, y, pixelColor);
 
-		if ((x > 955) or (x < 5) or (y > 555) or (y < 5) or (star_z[i] < 0.0))
+		if ((x > SCREEN_WIDTH-5) or (x < 5) or (y > SCREEN_HEIGHT-5) or (y < 5) or (star_z[i] < 0.0))
 		{
 			float starX = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
 			float starY = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;

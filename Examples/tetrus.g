@@ -7,7 +7,7 @@
 #define GRID_ELEMENT_PIXELS_KERN 22
 #define GRID_POSY_OFFSET 4
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -61,9 +61,9 @@ int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
-ptr window = sdl3.SDL_CreateWindow("Tetrus", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Tetrus", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
@@ -98,7 +98,7 @@ function FillGridElementPixels(pointer p, u32 color) asm {
   mov   rcx, 0
 .loop:
   mov   [rdi], eax
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   inc   rcx
   cmp	rcx, GRID_ELEMENT_PIXELS
   jne	.loop
@@ -112,11 +112,11 @@ function FillGridElementBody(pointer p, u32 fgColor, u32 bgColor) asm {
   mov   rax, [fgColor@FillGridElementBody]
   mov   rdx, [bgColor@FillGridElementBody]
   mov	[rdi], edx
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   mov   rcx, 0
 .loop:
   mov   [rdi], eax
-  add	rdi, GC_ScreenPixelSize
+  add	rdi, SCREEN_PIXELSIZE
   inc   rcx
   cmp	rcx, GRID_ELEMENT_PIXELS_KERN
   jne	.loop

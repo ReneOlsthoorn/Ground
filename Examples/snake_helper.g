@@ -4,7 +4,7 @@ u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 u32 seedRandom = 5;
 
 function writeText(ptr renderer, float x, float y, string text) {

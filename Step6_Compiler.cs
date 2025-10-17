@@ -263,7 +263,10 @@ namespace GroundCompiler
             {
                 Expression expr = list.ElementsNodes[i];
                 if (list.ExprType.Contains(Datatype.TypeEnum.Array))
+                {
+                    expr.Properties["old ExprType"] = expr.ExprType;
                     expr.ExprType = list.ExprType.Base;
+                }
 
                 EmitExpression(expr);
                 emitter.StoreCurrentInBasedIndex(sizeEachElement, baseReg, i, expr.ExprType);
@@ -926,10 +929,22 @@ namespace GroundCompiler
                 emitter.LoadConstant64(Convert.ToInt64(expr.Value));
             else if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
-                string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, "const float");
-                emitter.LoadConstantFloat64(id);
-                if (expr.ExprType.SizeInBytes == 4)
-                    emitter.resizeCurrentFloatingPoint(8, 4);
+                Datatype? oldDatatype = expr.Properties.ContainsKey("old ExprType") ? expr.Properties["old ExprType"] as Datatype : null;
+                if (oldDatatype != null && !oldDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
+                {
+                    if (oldDatatype.Contains(Datatype.TypeEnum.Integer))
+                    {
+                        emitter.LoadConstant64(Convert.ToInt64(expr.Value));
+                        emitter.IntegerToFloat(expr.ExprType.SizeInBytes);
+                    }
+                }
+                else
+                {
+                    string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, "const float");
+                    emitter.LoadConstantFloat64(id);
+                    if (expr.ExprType.SizeInBytes == 4)
+                        emitter.resizeCurrentFloatingPoint(8, 4);
+                }
             }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.Boolean))
                 emitter.LoadBoolean((bool)expr.Value);

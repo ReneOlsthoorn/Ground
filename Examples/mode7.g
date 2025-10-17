@@ -3,7 +3,7 @@
 
 #template sdl3
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -38,7 +38,7 @@ float space_y = 100.0;
 float scale_y = 200.0;
 int horizon = 15;
 float float_ScreenDIMx = SCREEN_WIDTH;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 asm data {racetrack_p dq 0}

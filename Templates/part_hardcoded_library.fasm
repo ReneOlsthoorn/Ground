@@ -4,6 +4,19 @@
 ; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
 ; Extra storage in function?  push rbp;  mov rbp, rsp;  sub rsp, 8h;  mov [rbp-8h], rcx;  ...   mov rsp, rbp;  pop rbp;  ret;
 
+value@_f_BitValue@gc equ rbp+G_PARAMETER1
+bitnr@_f_BitValue@gc equ rbp+G_PARAMETER2
+_f_BitValue@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [value@_f_BitValue@gc]
+  mov   rcx, qword [bitnr@_f_BitValue@gc]
+  shr	rax, cl
+  and	rax, 1
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
+
 
 _f_input_int:
   push  rbp

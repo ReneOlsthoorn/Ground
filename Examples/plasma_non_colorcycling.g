@@ -5,7 +5,7 @@
 #define palettesize 512
 #define sinustablesize 16384
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -42,9 +42,9 @@ for (int i = 0; i < palettesize; i++) {
 }
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Plasma without colorcycling", g.GC_Screen_DimX, g.GC_Screen_DimY, 0);
+ptr window = sdl3.SDL_CreateWindow("Plasma without colorcycling", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, g.GC_Screen_DimX, g.GC_Screen_DimY);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 int frameCount = 0;
@@ -55,7 +55,7 @@ u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-int pitch = g.GC_ScreenLineSize;
+int pitch = SCREEN_LINESIZE;
 bool thread1Busy = false;
 bool thread2Busy = false;
 
@@ -64,7 +64,7 @@ for (i = 0; i < sinustablesize; i++)
 	sinusTable[i] = 32768.0 + (32768.0 * msvcrt.sin((i / 16384.0) * MATH_2PI));
 
 function Plasma_loop(int y) {
-	for (int x = 0; x < g.GC_Screen_DimX; x++) {
+	for (int x = 0; x < SCREEN_WIDTH; x++) {
 		int x2 = x + ((sinusTable[(y*80) % sinustablesize]) >> 8);
 		int fx1 = (x2*19) + ((frameCount*13) % sinustablesize);
 		int fx2 = (x2*8) + ((frameCount*48) % sinustablesize);
@@ -83,7 +83,7 @@ function Plasma_loop(int y) {
 function Thread2() {
 	while (StatusRunning) {
 		if (thread2Busy) {
-			for (int y = 0; y < g.GC_Screen_DimY >> 1; y++)
+			for (int y = 0; y < SCREEN_HEIGHT >> 1; y++)
 				Plasma_loop(y);
 
 			thread2Busy = false;
@@ -113,7 +113,7 @@ while (StatusRunning)
 	loopStartTicks = sdl3.SDL_GetTicks();
 
 	if (thread1Busy) {
-		for (int y = g.GC_Screen_DimY >> 1; y < g.GC_Screen_DimY; y++)
+		for (int y = SCREEN_HEIGHT >> 1; y < SCREEN_HEIGHT; y++)
 			Plasma_loop(y);
 
 		thread1Busy = false;

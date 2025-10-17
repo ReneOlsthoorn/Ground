@@ -65,6 +65,11 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
             fn.FunctionStmt.Parent = group;
 
+            fn = group.Scope.DefineHardcodedFunction("BitValue", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("bitnr", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
             fn = this.Scope.DefineHardcodedFunction("print");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 

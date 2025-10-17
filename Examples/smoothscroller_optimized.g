@@ -2,7 +2,7 @@
 #template retrovm
 //https://lodev.org/cgtutor/plasma.html
 
-#include graphics_defines.g
+#include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
@@ -44,11 +44,11 @@ byte[] font256_p_original = msvcrt.calloc(1, 256 * 256);
 g.[font32_p] = font32_p_original;
 g.[font256_p] = font256_p_original;
 
-g.[bg_image_p] = msvcrt.calloc(1, g.GC_Screen_DimX * g.GC_Screen_DimY * g.GC_ScreenPixelSize);
+g.[bg_image_p] = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * SCREEN_PIXELSIZE);
 u32[960,560] bg_image = g.[bg_image_p];
 
 asm data {plasma_p dq 0}
-g.[plasma_p] = msvcrt.calloc(1, g.GC_Screen_DimX * g.GC_Screen_DimY * g.GC_ScreenPixelSize);
+g.[plasma_p] = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * SCREEN_PIXELSIZE);
 u32[960,560] plasma = g.[plasma_p];
 asm data {plasma_palette dd 256 dup(0)}
 u32[256] palette = g.plasma_palette;
@@ -183,15 +183,15 @@ g.[next_copperline] = 0;   // Default next_copperline is -1, which triggers noth
 bool plasmaArrayIsCalculated = false;
 
 function PlasmaCalculation() {
-	for (int y = 0; y < g.GC_Screen_DimY; y++) {
-		for (int x = 0; x < g.GC_Screen_DimX; x++) {
+	for (int y = 0; y < SCREEN_HEIGHT; y++) {
+		for (int x = 0; x < SCREEN_WIDTH; x++) {
 			u32 pixelColor;
 
 			//pixelColor = plasma[x, y];
 			int xyBufferOffset;
 			asm {
 				mov	rax, [y@PlasmaCalculation]
-				mov	rdx, GC_Screen_DimX*4
+				mov	rdx, SCREEN_WIDTH*4
 				mul	rdx
 				mov r8, [x@PlasmaCalculation]
 				shl r8, 2
@@ -205,7 +205,7 @@ function PlasmaCalculation() {
 			if (plasmaArrayIsCalculated == false) {
 				pixelColor = (128.0 + (127.0 * msvcrt.sin(x / 32.0)) +
 						 128.0 + (127.0 * msvcrt.sin(y / 64.0)) + 
-						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt((x - g.GC_Screen_DimX / 2.0) * (x - g.GC_Screen_DimX / 2.0) + (y - g.GC_Screen_DimY / 2.0) * (y - g.GC_Screen_DimY / 2.0)) / 16.0)) + 
+						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt((x - SCREEN_WIDTH / 2.0) * (x - SCREEN_WIDTH / 2.0) + (y - SCREEN_HEIGHT / 2.0) * (y - SCREEN_HEIGHT / 2.0)) / 16.0)) + 
 						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt(x * x + y * y) / 64.0))
 						 ) / 4;
 				plasma[x,y] = pixelColor;
