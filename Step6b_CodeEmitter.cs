@@ -854,6 +854,11 @@ namespace GroundCompiler
             }
             Codeline($"mov   [{baseReg}+({indexReg}*{nrBytes})], {cpu.RAX_Register_Sized(nrBytes)}");
         }
+        public void SignExtend(Datatype theType)
+        {
+            if (theType.IsValueType && theType.Contains(Datatype.TypeEnum.Signed) && theType.Contains(Datatype.TypeEnum.Integer) && theType.SizeInBytes < 8)
+                Codeline($"movsx rax, {cpu.RAX_Register_Sized(theType.SizeInBytes)}");
+        }
         public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
@@ -921,7 +926,7 @@ namespace GroundCompiler
                 return;
 
             foreach (var key in preprocessorDefines.Keys)
-                GeneratedCode_Equates.Add($"{key}={preprocessorDefines[key].Lexeme}\r\n");
+                GeneratedCode_Equates.Add($"GC_{key}={preprocessorDefines[key].Lexeme}\r\n");
         }
     }
 }

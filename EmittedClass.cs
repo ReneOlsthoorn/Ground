@@ -18,15 +18,7 @@ namespace GroundCompiler
             ClassName = (name != null) ? name : this.ClassStatement.Name.Lexeme;
         }
 
-        public int AmountStackSpaceToReserve()
-        {
-            int result = 0;
-
-            foreach (var inst in ClassStatement.InstanceVariableNodes)
-                result += inst.ResultType.SizeInBytes;
-
-            return result;
-        }
+        public int AmountStackSpaceToReserve() => ClassStatement.SizeInBytes();
 
         public void EmitClassNameLabel()
         {
@@ -40,8 +32,11 @@ namespace GroundCompiler
             int offset = 0;
             foreach (var varSymbol in theVariables)
             {
+                int sizeOfVariable = varSymbol.DataType.SizeInBytes;
+                int sizeAddedForAlignment = this.ClassStatement.Align(sizeOfVariable, offset);
+                offset += sizeAddedForAlignment;
                 Emitter.Writeline($"{varSymbol.Name}@{ClassName} = {offset}");
-                offset += varSymbol.DataType.SizeInBytes;
+                offset += sizeOfVariable;
             }
         }
 

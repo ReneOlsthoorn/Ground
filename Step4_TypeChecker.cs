@@ -134,7 +134,8 @@ namespace GroundCompiler
                                 AstNode assignedElement = (AstNode)theVar.Properties["assigned element"]!;
                                 if (assignedElement is Expressions.List listExpr)
                                     theSizeOf = (UInt64)listExpr.SizeInBytes();
-                            }
+                            } else
+                                theSizeOf = (UInt64)theVar.GetDatatype()!.SizeInBytes;
                         }
                         else
                         {
@@ -144,6 +145,38 @@ namespace GroundCompiler
                     var theResultLiteral = new Literal("int", theSizeOf);
                     if (functionCall.Parent != null)
                         toReplace.Add(new NodeReplace(functionCall.Parent!, functionCall, theResultLiteral));
+
+                } else if (functionVar.Name.Lexeme.ToLower() == "countof")
+                {
+                    Int64 theSizeOf = -1;
+                    Int64 theElementSize = -1;
+
+                    if (functionCall.ArgumentNodes[0] is Variable exprVar)
+                    {
+                        var theVar = exprVar.GetScope()?.GetVariableAnywhere(exprVar.Name.Lexeme);
+                        if (theVar != null)
+                        {
+                            if (theVar is ParentScopeVariable parentVar)
+                                theVar = parentVar.TheLocalVariable;
+
+                            if (theVar.Properties.ContainsKey("assigned element"))
+                            {
+                                AstNode assignedElement = (AstNode)theVar.Properties["assigned element"]!;
+                                if (assignedElement is Expressions.List listExpr)
+                                {
+                                    theSizeOf = (Int64)listExpr.SizeInBytes();
+                                    theElementSize = (Int64)listExpr.ExprType.Base!.SizeInBytes;
+                                }
+                            }
+                        }
+                    }
+
+                    if (theSizeOf != -1)
+                    {
+                        var theResultLiteral = new Literal("int", (theSizeOf / theElementSize));
+                        if (functionCall.Parent != null)
+                            toReplace.Add(new NodeReplace(functionCall.Parent!, functionCall, theResultLiteral));
+                    }
                 }
             }
         }

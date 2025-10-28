@@ -165,8 +165,8 @@ function PreSunFase2() {
 		writeText(renderer, 125.0, 174.0, "              You feel the Eternity            ");
 }
 function PreSunFase3() {
-	if (frameCount > 3000 and frameCount < 3040)
-		writeText(renderer, 125.0, 174.0, "                       Oh..                    ");
+	if (frameCount > 3200 and frameCount < 3240)
+		writeText(renderer, 125.0, 174.0, "                       Ai..                    ");
 
 	if (frameCount > 3340)
 		StatusRunning = false;

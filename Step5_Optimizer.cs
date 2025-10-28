@@ -154,7 +154,7 @@ namespace GroundCompiler
                 return false;
 
             bool onceTrue = false;
-            foreach (Binary binaryExpr in expr.FindAllNodes(typeof(Binary)))
+            foreach (Binary binaryExpr in expr.FindAllNodes(typeof(Binary)).ToList())
             {
                 if (binaryExpr.CanBothSidesBeCombined())
                 {

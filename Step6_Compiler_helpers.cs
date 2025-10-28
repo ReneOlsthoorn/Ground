@@ -340,11 +340,15 @@ namespace GroundCompiler
                         {
                             emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
                             emitter.GetMemoryPointerFromIndex();
-                        } else
+                        }
+                        else
                             emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
                     }
                     else
+                    {
                         emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
+                        emitter.SignExtend(targetType);
+                    }
                 }
                 cpu.FreeRegister(baseReg);
                 cpu.FreeRegister(indexReg);

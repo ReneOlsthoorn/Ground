@@ -46,7 +46,7 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
-#include game-of-life helper.g
+#include game_of_life_helper.g
 
 function NrNeighbours(int x, int y) : int {
 	int nr = 0;
@@ -86,7 +86,7 @@ function CalculateCenterCellIn3x3Block(int x, int y) {
 function DoGenerationX64() {
 
 	asm {
-	  mov	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  mov	rcx, GC_GRID_ELEMENTS_X * GC_GRID_ELEMENTS_Y
 	  lea	rdx, [nextBoard@main]
 	  xor	eax, eax
 	  call	StoreBytes
@@ -112,7 +112,7 @@ function DoGenerationX64() {
 	  inc	r8
 	  inc	r9
 	  inc	rcx
-	  cmp	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  cmp	rcx, GC_GRID_ELEMENTS_X * GC_GRID_ELEMENTS_Y
 	  jne	.loop
 .exit:
 	}
@@ -134,7 +134,7 @@ function DoGenerationX64() {
 	  inc	r9
 	  inc	r10
 	  inc	rcx
-	  cmp	rcx, GRID_ELEMENTS_X * GRID_ELEMENTS_Y
+	  cmp	rcx, GC_GRID_ELEMENTS_X * GC_GRID_ELEMENTS_Y
 	  jne	.loop
 .exit:
 	}
@@ -177,7 +177,7 @@ function DoGeneration() {
 		}
 }
 
-#include game-of-life patterns.g
+#include game_of_life_patterns.g
 
 function ShowNextFigure() {
 	int halfX = GRID_ELEMENTS_X / 2;

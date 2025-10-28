@@ -163,9 +163,9 @@ while (StatusRunning)
 
 	asm {SpeedFireLoop:}
 	asm {
-		mov	rcx, SCREEN_WIDTH*(SCREEN_HEIGHT-1)
+		mov	rcx, GC_SCREEN_WIDTH*(GC_SCREEN_HEIGHT-1)
 		mov rdx, [fireBufferNew@main]
-		add rdx, SCREEN_WIDTH
+		add rdx, GC_SCREEN_WIDTH
 		mov r8, [fireBufferOld@main]
 		call Utils_CopyArray
 	}
@@ -182,7 +182,7 @@ asm {
   mov	rcx, 0
   mov	rsi, [logo_p]
   mov	rdi, [fireBufferOld@main]
-  add	rdi, SCREEN_WIDTH*200
+  add	rdi, GC_SCREEN_WIDTH*200
 .logoPixel:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0
@@ -191,7 +191,7 @@ asm {
   mov	[rdi+rcx], al
 .nextLogoPixel:
   add	rcx, 1
-  cmp	rcx, SCREEN_WIDTH*108
+  cmp	rcx, GC_SCREEN_WIDTH*108
   jne	.logoPixel
   pop	rdi rsi
 }
@@ -247,7 +247,7 @@ ASM_Fire:
 	push r14
 	push r15
 
-	mov r8, SCREEN_HEIGHT
+	mov r8, GC_SCREEN_HEIGHT
 	sub r8d, ecx
 
 	mov r9, [palette@main]
@@ -262,7 +262,7 @@ ASM_Fire:
 	add r15, rdx                ; r15 = fire_coolingMap + coolingPosY
 	mov rdi, [pixels_p]
 	mov r14, [fireBufferOld@main]
-	mov r13, SCREEN_WIDTH
+	mov r13, GC_SCREEN_WIDTH
 
 	mov eax, ecx
 	mul r13d

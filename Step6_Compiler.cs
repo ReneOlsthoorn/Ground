@@ -668,19 +668,30 @@ namespace GroundCompiler
                     var arg = expr.ArgumentNodes[0];
                     if (arg is Variable theZeroVar)
                     {
-                        int sizeInBytes = theZeroVar.ExprType.SizeInBytes;
+                        long sizeToClean = 0;
+                        if (expr.ArgumentNodes.Count == 1)
+                            sizeToClean = theZeroVar.ExprType.SizeInBytes;
+                        else if (expr.ArgumentNodes.Count == 2)
+                        {
+                            var theLiteral = expr.ArgumentNodes[1] as Literal;
+                            if (theLiteral != null && theLiteral.ExprType.Contains(Datatype.TypeEnum.Integer))
+                                sizeToClean = (long)theLiteral!.Value!;
+                            else
+                                Error("Invalid Literal in zero function.");
+                        }
+                        else
+                            Error("Invalid number of arguments in zero function. Only 1 or 2 allowed.");
+
                         EmitExpression(arg);
                         if (arg.ExprType.IsReferenceType)
                             emitter.GetMemoryPointerFromIndex();
 
-                        emitter.Codeline($"push  rcx");  // rcx = nr of bytes
-                        emitter.Codeline($"push  rdx");  // rdx = destination pointer
-                        emitter.Codeline($"mov   rdx, rax");
-                        emitter.Codeline($"mov   rcx, {sizeInBytes}");
+                        emitter.Codeline($"push  rcx rdi");  // rcx = nr of bytes, rdi = destination pointer
+                        emitter.Codeline($"mov   rdi, rax");
+                        emitter.Codeline($"mov   rcx, {sizeToClean}");
                         emitter.Codeline($"xor   eax, eax");
-                        emitter.Codeline($"call  StoreBytes");
-                        emitter.Codeline($"pop   rdx");
-                        emitter.Codeline($"pop   rcx");
+                        emitter.Codeline($"rep stosb");
+                        emitter.Codeline($"pop   rdi rcx");
                         return null;
                     }
                 }

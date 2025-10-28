@@ -157,6 +157,7 @@ In ```smoothscroller.g```, you see a lot of examples of mixing ground and assemb
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
+* Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
 
 ### Optimizer
 Ground contains an optimizer (in ```Optimizer.cs```), which will replace literals and removes unused variables. It will 
@@ -311,10 +312,12 @@ In 1994, I bought an ```ESCOM 486DX2 66 MHz``` PC with 420MB harddisk and 4MB me
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We are truly blessed with this platform for over 30 years. This must be said!  
   
-At this moment in 2024, several expert users are migrating to Linux because Windows collects data about the usage of 
-your computer. I agree that collecting data is wrong. However, it can be disabled. Search for "How to disable 
-Microsoft Compatibility Telemetry". It is basically a scheduled task that can be disabled. Don't leave the PC platform 
-too soon without valid reasons, because we owe so much to it.
+At this moment in 2025, several expert users are migrating to Linux because Windows collects data about the usage of 
+your computer. Microsoft wants to make Windows a sensory device for an "AI" companion. I strongly disagree with this route.
+Most people don't want all their actions and data stored in the cloud. The user is no longer in control at that moment.
+You want a computer to help you, not to spy on you.  
+At this moment, this spying can be disabled. Search for "How to disable Microsoft Compatibility Telemetry". It is basically a 
+scheduled task that can be disabled. Don't leave the PC platform too soon without valid reasons, because we owe so much to it.  
 
 ### Smoothscroller
 <p align="center">
@@ -383,6 +386,12 @@ Read the instructions in the connect4.g sourcecode.</p>
 Play Chess locally against StockFish!<br/>
 Default set to ELO 1, so you must be able to win...</p>
 
+### High Noon shootout
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_High_Noon.jpg?raw=true" width="500" /><br/>
+A proper shootout at High Noon in Videopac G7000 Retro style.</p>
+
+
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
 2025.03.27: SDL3 support and added win32-screengrab.g example.  
@@ -397,3 +406,5 @@ Default set to ELO 1, so you must be able to win...</p>
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  
 2025.09.29: Chess added.  
 2025.10.11: Support for single char value's like 'a'.  
+2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
+2025.10.28: High Noon game added. countof added.  

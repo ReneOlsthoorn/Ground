@@ -37,7 +37,6 @@ float fFoVHalf = MATH_PI / 4.0;		// 180 degrees divided by four = 45 degrees. De
 float space_y = 100.0;
 float scale_y = 200.0;
 int horizon = 15;
-float float_ScreenDIMx = SCREEN_WIDTH;
 int pitch = SCREEN_LINESIZE;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
@@ -57,13 +56,13 @@ function Innerloop() {
 		float fEndY = fWorldY - (msvcrt.sin(fWorldAngle - fFoVHalf) * distance);
 
 		for (x in 0 ..< SCREEN_WIDTH) {
-			float fSampleWidth = x / float_ScreenDIMx;
+			float fSampleWidth = x / SCREEN_WIDTH_F;
 			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
 			float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);
 			int iSampleX = fSampleX;
 			int iSampleY = fSampleY;
 
-			u32 pixelColor = 0;
+			u32 pixelColor = 0xff000000;
 			if ((iSampleX >= 0) and (iSampleX < MAP_SIZE) and (iSampleY >= 0) and (iSampleY < MAP_SIZE)) {
 				pixelColor = racetrack[iSampleX, iSampleY];
 			}

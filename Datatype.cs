@@ -122,11 +122,7 @@ namespace GroundCompiler
         public static void AddClass(ClassStatement classStatement)
         {
             string name = classStatement.Name.Lexeme;
-
-            int sizeInBytes = 0;
-            foreach (VarStatement vs in classStatement.InstanceVariableNodes)
-                sizeInBytes += vs.ResultType.SizeInBytes;
-
+            int sizeInBytes = classStatement.SizeInBytes();
             var newDatatype = Datatype.FromData(name, [ TypeEnum.CustomClass ], false, sizeInBytes);
             newDatatype.Properties["classStatement"] = classStatement;
             Cached.Add(name, newDatatype);

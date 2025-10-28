@@ -423,6 +423,10 @@ assert(c7 == 2);
 class Klasse8 {
     i32 width;
     i32 height;
+
+	function Add() {
+		this.width++;
+	}
 }
 Klasse8 inst8;
 inst8.height = 15;
@@ -447,6 +451,63 @@ float[] route = [
 
 int routesize = sizeof(route) / sizeof(float);
 assert(routesize == 6);
+
+
+i8[2] waarden = [1,-4];
+if not (waarden[1] < 0) {
+	assert(false);
+}
+assert(countof(waarden) == 2);
+
+int[4] gewoonIntWaarden = [5,6,7,8];
+assert(sizeof(gewoonIntWaarden) == 32);
+assert(countof(gewoonIntWaarden) == 4);
+
+class BitmapFileHeaderPacked packed {
+    u16 bfType;
+    u32 bfSize;
+    u16 bfReserved1;
+    u16 bfReserved2;
+    u32 bfOffBits;
+}
+class BitmapFileHeaderNotPacked {
+    u16 bfType;
+    u32 bfSize;
+    u16 bfReserved1;
+    u16 bfReserved2;
+    u32 bfOffBits;
+}
+BitmapFileHeaderPacked bitmapTest1;
+assert(sizeof(bitmapTest1) == 14);
+assert(sizeof(BitmapFileHeaderNotPacked) == 16);
+
+byte justAByte = 0b10000101;
+assert(justAByte == 0x85);
+
+justAByte = 0b.X..XX.X;
+assert(justAByte == 0x4d);
+
+justAByte = 'A';
+assert(justAByte == 65);
+
+#define TEST_DEFINE	16
+#define TEST_SECOND	TEST_DEFINE * 2
+assert(TEST_SECOND == 32);
+
+i = 10;
+for (i in 1..5)
+	i = i + 20;
+assert(i == 22);  // flow: i = 1 + 20;  i = 21 + 1;  Compare 22 with 5 larger, so exit.
+
+
+inst8.width = 10;
+assert(inst8.width == 10);
+
+inst8.Add();
+assert(inst8.width == 11);
+
+inst8.width++;
+assert(inst8.width == 12);
 
 
 println("SUCCESS: unittests were completed with SUCCESS.");

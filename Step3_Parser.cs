@@ -67,7 +67,7 @@ namespace GroundCompiler
         }
 
         //[DebuggerStepThrough]
-        private Token Consume(TokenType type, String message)
+        private Token Consume(TokenType type, String message = "Consume error.")
         {
             if (Check(type)) { return tokenDispenser.GetNextToken(); }
             Error(Peek(), message);
@@ -599,6 +599,14 @@ namespace GroundCompiler
         private ClassStatement ClassDeclaration()
         {
             var name = Consume(TokenType.Identifier, "Expect class name before body.");
+            bool isPacked = false;
+
+            if (Check(TokenType.Identifier))
+            {
+                var alignment = Consume(TokenType.Identifier);
+                if (alignment.Lexeme.ToLower() == "packed")
+                    isPacked = true;
+            }
 
             Consume(TokenType.LeftBrace, "Expect '{' before class body.");
             var methods = new List<FunctionStatement>();
@@ -614,6 +622,8 @@ namespace GroundCompiler
             Consume(TokenType.RightBrace, "Expect '}' after class body.");
 
             var result = new ClassStatement(name, instanceVariables, methods);
+            if (isPacked)
+                result.SetPacked();
             Datatype.AddClass(result);
             return result;
         }

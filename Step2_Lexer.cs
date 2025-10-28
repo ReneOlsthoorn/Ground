@@ -41,8 +41,13 @@ namespace GroundCompiler
                 while (token.Type == TokenType.Unknown)
                 {
                     char c = GetFirstNonSpaceChar();
-                    if (SkipIfMatch("//")) {
+                    if (SkipIfMatch("//")) {  // single line comment
                         SkipUntil("\n");
+                        continue;
+                    }
+                    if (SkipIfMatch("/*")) { // multiline comment
+                        SkipUntil("*/");
+                        SkipIfMatch("*/");
                         continue;
                     }
                     if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
@@ -65,7 +70,7 @@ namespace GroundCompiler
                     if (SkipIfMatch("..", token, TokenType.Operator, TokenType.RangeTo)) break;
 
                     if (SkipIfMatch("=",  token, TokenType.Operator, TokenType.Assign)) break;
-                    if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.Not)) break;
+                    if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Not)) break;
                     if (SkipIfMatch("+",  token, TokenType.Operator, TokenType.Plus)) break;
                     if (SkipIfMatch("-",  token, TokenType.Operator, TokenType.Minus)) break;
                     if (SkipIfMatch(">",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Greater)) break;
@@ -151,9 +156,9 @@ namespace GroundCompiler
             if (sLower == "dll") { fill(token, sLower, TokenType.Dll); return; }
             if (sLower == "class") { fill(token, sLower, TokenType.Class); return; }
             if (sLower == "group") { fill(token, sLower, TokenType.Group); return; }
-            if (sLower == "and") { fill(token, sLower, TokenType.Operator, TokenType.LogicalAnd); return; }
-            if (sLower == "or") { fill(token, sLower, TokenType.Operator, TokenType.LogicalOr); return; }
-            if (sLower == "not") { fill(token, sLower, TokenType.Operator, TokenType.Not); return; }
+            if (sLower == "and") { fill(token, sLower, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalAnd); return; }
+            if (sLower == "or") { fill(token, sLower, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalOr); return; }
+            if (sLower == "not") { fill(token, sLower, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Not); return; }
             if (sLower == "poke") { fill(token, sLower, TokenType.Keyword, TokenType.Poke); return; }
             if (sLower == "function") { fill(token, sLower, TokenType.Keyword, TokenType.Function); return; }
             if (sLower == "while") { fill(token, sLower, TokenType.Keyword, TokenType.While); return; }
@@ -337,7 +342,8 @@ namespace GroundCompiler
         {
             if (sourcecode.Length <= needle + text.Length)
                 return false;
-            return (sourcecode.Substring(needle, text.Length) == text);
+            string sourceText = sourcecode.Substring(needle, text.Length);
+            return (sourceText == text);
         }
 
         public char NextChar()

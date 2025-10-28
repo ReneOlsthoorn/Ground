@@ -15,18 +15,16 @@
 #define SDL3_KEYBOARDEVENT_DOWN_U8 36
 #define SDL3_KEYBOARDEVENT_REPEAT_U8 37
 
-class SDL_Surface {
-    u32 flags;        // dd 0
-    u32 pixelformat;  // dd 4
-    i32 width;        // dd 8
-    i32 height;       // dd 12
-    i32 pitch;        // dd 16
-    i32 filler_;      // dd 20
-	ptr pixels;       // dq 24
-	i32 refcount;     // dd 32
-	i32 filler_2;     // dd 36
-	u64 reserved;     // dq 40
-}  //size 48
+class SDL_Surface {     //sizeof: 48 bytes
+    u32 flags;
+    u32 pixelformat;
+    i32 width;
+    i32 height;
+    i32 pitch;
+	ptr pixels;
+	i32 refcount;
+	u64 reserved;
+}
 
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);

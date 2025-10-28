@@ -4,42 +4,44 @@
 #include user32.g
 #include gdi32.g
 
-class Bitmap {
-    i32 bmType;       // dd 4
-    i32 bmWidth;      // dd 8
-    i32 bmHeight;     // dd 12
-    i32 bmWidthBytes; // dd 16
-    u16 bmPlanes;     // dw 18
-    u16 bmBitsPixel;  // dw 20
-    u16 _fill1;       // dw 22
-    u16 _fill2;       // dw 24
-    u64 bmBits;       // dq 32
+class Bitmap {			//sizeof: 32 bytes
+    i32 bmType;
+    i32 bmWidth;
+    i32 bmHeight;
+    i32 bmWidthBytes;
+    u16 bmPlanes;
+    u16 bmBitsPixel;
+    u64 bmBits;
 }
 
-class BitmapInfoHeader {
-    u32 biSize;			// dd 4
-    i32 biWidth;		// dd 8
-    i32 biHeight;		// dd 12
-    u16 biPlanes;		// dw 14
-    u16 biBitCount;		// dw 16
-    u32 biCompression;	// dd 20
-    u32 biSizeImage;	// dd 24
-    i32 biXPelsPerMeter; //dd 28
-    i32 biYPelsPerMeter; //dd 32
-    u32 biClrUsed;		// dd 36
-    u32 biClrImportant;	// dd 40
+class BitmapInfoHeader {	//sizeof: 40 bytes
+    u32 biSize;
+    i32 biWidth;
+    i32 biHeight;
+    u16 biPlanes;
+    u16 biBitCount;
+    u32 biCompression;
+    u32 biSizeImage;
+    i32 biXPelsPerMeter;
+    i32 biYPelsPerMeter;
+    u32 biClrUsed;
+    u32 biClrImportant;
 }
 
-class BitmapFileHeader {
-    u16 bfType;			// dw 2
-    u32 bfSize;			// dd 6
-    u16 bfReserved1;    // dw 8
-    u16 bfReserved2;    // dw 10
-    u32 bfOffBits;      // dd 14
+class BitmapFileHeader packed {	//sizeof: 14 bytes
+    u16 bfType;
+    u32 bfSize;
+    u16 bfReserved1;
+    u16 bfReserved2;
+    u32 bfOffBits;
 }
 
 
 function Screengrab() {
+	assert(sizeof(Bitmap) == 32);
+	assert(sizeof(BitmapInfoHeader) == 40);
+	assert(sizeof(BitmapFileHeader) == 14);
+
 	ptr screenDC = user32.GetDC(NULL);             // Get the Device Contect for the entire screen.
 	msvcrt.printf("screenDC: %p \r\n", screenDC);
 

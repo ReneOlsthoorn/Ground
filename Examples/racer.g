@@ -75,7 +75,7 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
-#include racer-helper.g
+#include racer_helper.g
 
 
 class Actor {

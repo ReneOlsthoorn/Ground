@@ -63,7 +63,7 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
 
-			//float fSampleWidth = x / float_ScreenDIMx;
+			//float fSampleWidth = x / SCREEN_WIDTH_F;
 			float fSampleWidth;
 			asm {
 				mov	rax, [x@Innerloop]
@@ -99,7 +99,7 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 
 			int iSampleX = fSampleX;
 			int iSampleY = fSampleY;
-			u32 pixelColor = 0;
+			u32 pixelColor = 0xff000000;
 
 			//if ((iSampleX >= 0) and (iSampleX < 1024) and (iSampleY >= 0) and (iSampleY < 1024)) {
 			//	pixelColor = racetrack[iSampleX, iSampleY];

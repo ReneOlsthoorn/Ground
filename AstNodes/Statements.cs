@@ -111,6 +111,7 @@ namespace GroundCompiler.Statements
             this.Scope.DefineHardcodedVariable("GC_Screen_TextColumns", Datatype.GetDatatype("int"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
+            this.Scope.DefineHardcodedFunction("countof", Datatype.GetDatatype("int"));
 
             fn = this.Scope.DefineHardcodedFunction("SDL3_ClearScreenPixels");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("color", Datatype.GetDatatype("int")));
@@ -570,6 +571,38 @@ namespace GroundCompiler.Statements
             }
             return false;
         }
+
+        public int Align(int sizeOfVariable, int currentIndex)
+        {
+            if (this.IsPacked())
+                return 0;
+            int bytesOutOfAlignment = currentIndex % sizeOfVariable;
+            if (bytesOutOfAlignment == 0)
+                return 0;
+            int toAdd = sizeOfVariable - bytesOutOfAlignment;
+            return toAdd;
+        }
+
+        public int SizeInBytes()
+        {
+            // Every instance must be aligned on it's natural size (2,4,8) according the x64 ABI (Application Binary Interface)
+            // However, a struct like BitmapFileHeader is an old format that uses no alignment.
+            // When the "alignment" property is "packed", it will use no alignment. 
+            int result = 0;
+
+            foreach (var inst in this.InstanceVariableNodes)
+            {
+                int sizeOfVariable = inst.ResultType.SizeInBytes;
+                int sizeAddedForAlignment = this.Align(sizeOfVariable, result);
+                result += sizeAddedForAlignment;
+                result += sizeOfVariable;
+            }
+
+            return result;
+        }
+
+        public void SetPacked() => this.Properties["alignment"] = "packed";
+        public bool IsPacked() => (this.Properties.ContainsKey("alignment") && ((string)this.Properties["alignment"]!) == "packed");
 
         public Scope GetScopeFromStatement() => this.Scope;
         public Token GetScopeName() => this.Name;
