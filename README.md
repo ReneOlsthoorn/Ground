@@ -389,7 +389,7 @@ Default set to ELO 1, so you must be able to win...</p>
 ### High Noon shootout
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_High_Noon.jpg?raw=true" width="500" /><br/>
-A proper shootout at High Noon in Videopac G7000 Retro style.</p>
+A proper shootout at High Noon in Videopac G7000 retro style.</p>
 
 
 ### Changelog
