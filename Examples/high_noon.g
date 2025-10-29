@@ -346,7 +346,7 @@ while (StatusRunning)
 
 	if (deathTimeout > 0 and gameStatus == "game running") {
 		deathTimeout = deathTimeout - 1;
-		if (deathTimeout == 140 or deathTimeout == 170)
+		if (deathTimeout == 170)
 			playHurt();
 		if (deathTimeout == 0)
 			NewDuel();
