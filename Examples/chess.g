@@ -9,6 +9,7 @@
 #define MOVES_STORAGE 1000
 #define BYTES_PER_MOVE 8
 #define READBUFFERSIZE 32000
+#define LOADFILEBUFFERSIZE 20000
 
 #include graphics_defines960x560.g
 #include msvcrt.g
@@ -16,19 +17,24 @@
 #include kernel32.g
 #include user32.g
 #include sidelib.g
+#include comdlg32.g
 
 bool isPlayingWhite = true;
+bool modeElo1 = false;
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 bool StatusRunning = true;
 int frameCount = 0;
 string gameStatus = "game running";
-ptr movesList = msvcrt.calloc(1, MOVES_STORAGE * BYTES_PER_MOVE);
-ptr movesListNeedle = movesList;
+byte* movesList = msvcrt.calloc(1, MOVES_STORAGE * BYTES_PER_MOVE);
+byte* movesListNeedle = movesList;
 ptr textInBuffer = msvcrt.calloc(1, READBUFFERSIZE);
 ptr movesOutput = msvcrt.calloc(1, READBUFFERSIZE);
 bool isWaitingForUser = false;
 bool thread2Busy = true;
+MouseState mouseState;
+ptr loadFileBuffer = msvcrt.calloc(1, LOADFILEBUFFERSIZE);
+
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Chess", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
@@ -36,6 +42,7 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 #include chess_helper.g
+
 
 class Piece {
 	int gridX;		// 0..7
@@ -110,6 +117,10 @@ function NrMoves() : int {
 	return ((movesListNeedle - movesList) >> 3);
 }
 
+function WaitingForWhite() : bool {
+	return ((NrMoves() % 2) == 0);
+}
+
 Piece[NR_PIECES] pieces = [ ];
 Piece selector;			// Not a real piece. It is the selection when you go over a field with the mouse.
 Piece startSelection;
@@ -150,10 +161,16 @@ function SetStartPosition() {
 	}
 }
 
+function MakeThread2Freeze() {
+	FreezeThread2 = true;
+	while (!Thread2Frozen) {
+		kernel32.Sleep(100);
+	}
+}
+
 function RestartGame() {
 	SetPiecesTextures();
 	isWaitingForUser = false;
-	//isPlayingWhite = true;
 	gameStatus = "game running";
 	SetStartPosition();
 	movesListNeedle = movesList;
@@ -235,21 +252,32 @@ function MovePiece(ptr moveStr) {
 	}
 }
 
-function WaitForUserMove() {
-	int nrMoves = NrMoves();
-	int valueToWaitFor = 0;
-	if (isPlayingWhite)
-		valueToWaitFor = 1;
-	while (((NrMoves() % 2) != valueToWaitFor) and StatusRunning) {
+
+function WaitForChange() {
+asm {
+WaitForChangeRestart:
+}
+	Thread2Frozen = false;
+	int oldNrMoves = NrMoves();
+	while ((oldNrMoves == NrMoves()) and StatusRunning and !FreezeThread2) {
 		isWaitingForUser = true;
 		kernel32.Sleep(100);
 	}
+	while (FreezeThread2) {
+		Thread2Frozen = true;
+		kernel32.Sleep(100);
+asm {
+	jmp WaitForChangeRestart
+}
+	}
+
+	isWaitingForUser = false;
 	if (StatusRunning) {
-		isWaitingForUser = false;
-		if (movesListNeedle != movesList)
+		if ((oldNrMoves+1) == NrMoves())
 			MovePiece(movesListNeedle-8);
 	}
 }
+
 
 function AddComputerMove() : bool {
 	string bestMoveStr = "bestmove ";
@@ -268,12 +296,6 @@ function AddComputerMove() : bool {
 	movesListNeedle = movesListNeedle + BYTES_PER_MOVE;
 	MovePiece(movesListNeedle-8);
 
-	// Save game.
-	int gameFile = msvcrt.fopen("chessgame.bin", "wb");
-	int gameFileSize = movesListNeedle - movesList;
-	msvcrt.fwrite(movesList, gameFileSize, 1, gameFile);
-	msvcrt.fclose(gameFile);
-
 	return true;
 }
 
@@ -286,9 +308,11 @@ u32 bytesRead = 0;
 u32 bytesWritten = 0;
 
 function AppendToLog(ptr cstrBuffer) {
-	//int logFile = msvcrt.fopen("logfile.txt", "ab");
-	//msvcrt.fprintf(logFile, "%s", cstrBuffer);
-	//msvcrt.fclose(logFile);
+	/*
+	int logFile = msvcrt.fopen("logfile.txt", "ab");
+	msvcrt.fprintf(logFile, "%s", cstrBuffer);
+	msvcrt.fclose(logFile);
+	*/
 }
 
 function WriteToProcess(int stdInWrite, byte* data, u32* bytesWritten) : bool {
@@ -374,14 +398,17 @@ function Thread2StockFish() {
     ReadFromStockFish(2000);
     WriteToStockFishString("uci\n");
     ReadFromStockFish(2000);
-    WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
-    WriteToStockFishString("setoption name UCI_Elo value 1\n");
+	if (modeElo1) {
+		WriteToStockFishString("setoption name UCI_LimitStrength value true\n");
+		WriteToStockFishString("setoption name UCI_Elo value 1\n");
+	}
     WriteToStockFishString("isready\n");
     ReadFromStockFish(1000);
 
     WriteToStockFishString("ucinewgame\n");
 	while (StatusRunning) {
-		WaitForUserMove();
+		if not (NrMoves() == 0 and !isPlayingWhite)
+			WaitForChange();
 		if (StatusRunning) {
 			WriteToStockFishString("position startpos");
 			InsertMoves();
@@ -411,34 +438,26 @@ function Thread2StockFish() {
 }
 GC_CreateThread(Thread2StockFish);
 
+
 function ReplayLoadedMoves() {
+	bool mustFreeze = !Thread2Frozen;
+	if (mustFreeze)
+		MakeThread2Freeze();
+	SetPiecesTextures();
+	SetStartPosition();
 	ptr movesNeedle = movesList;
 	while (movesNeedle < movesListNeedle) {
 		MovePiece(movesNeedle);
 		movesNeedle = movesNeedle + BYTES_PER_MOVE;
 	}
+	if (mustFreeze)
+		FreezeThread2 = false;
 }
 
-function LoadGameFile() {
-	int gameFile = msvcrt.fopen("chessgame.bin", "rb");
-	if (gameFile != 0) {
-		msvcrt.fseek64(gameFile, 0, g.msvcrt_SEEK_END);
-		int gameSize = msvcrt.ftell(gameFile);
-		msvcrt.fseek64(gameFile, 0, g.msvcrt_SEEK_SET);
-		msvcrt.fread(movesList, gameSize, 1, gameFile);
-		movesListNeedle = movesList + gameSize;
-		msvcrt.fclose(gameFile);
-		ReplayLoadedMoves();
-	}
-}
-LoadGameFile();
+#include chess_file_handling.g
 
-bool mouseLeftAllowed = true;
-bool newGameMouseLeftAllowed = true;
-f32[4] newGameRect = [825.0, 20.0, 70.0, 12.0];
-bool oneMoveBackMouseLeftAllowed = true;
-f32[4] oneMoveBackRect = [825.0, 50.0, 70.0, 12.0];
 
+bool moveSelectionLeftAllowed = true;
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
@@ -460,25 +479,22 @@ while (StatusRunning)
 		}
 	}
 
-	f32 mouseX;
-	f32 mouseY;
-	u32 mouseState = sdl3.SDL_GetMouseState(&mouseX, &mouseY);
-	bool mouseLeftPressed = mouseState & g.SDL_BUTTON_LMASK;
+	mouseState.GetMouseState();
 
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 	if (gameStatus == "game running") {
 		for (i in 0 ..< NR_PIECES)
 			pieces[i].Render();
 
-		selector.FillFrom(mouseX, mouseY);
+		selector.FillFrom(mouseState.x, mouseState.y);
 		selector.Render();
 
 		PrintMoves();
 
-		if (mouseLeftPressed and mouseLeftAllowed) {
+		if (mouseState.LeftPressed and moveSelectionLeftAllowed) {
 			if (startSelection.visible) {
-				endSelection.FillFrom(mouseX, mouseY);
-				mouseLeftAllowed = false;
+				endSelection.FillFrom(mouseState.x, mouseState.y);
+				moveSelectionLeftAllowed = false;
 
 				if ((endSelection.gridX == startSelection.gridX) and (endSelection.gridY == startSelection.gridY)) {
 					startSelection.visible = false;
@@ -493,11 +509,11 @@ while (StatusRunning)
 					endSelection.visible = false;
 				}
 			} else {
-				startSelection.FillFrom(mouseX, mouseY);
-				mouseLeftAllowed = false;
+				startSelection.FillFrom(mouseState.x, mouseState.y);
+				moveSelectionLeftAllowed = false;
 			}
-		} else if (!mouseLeftPressed and !mouseLeftAllowed) {
-			mouseLeftAllowed = true;
+		} else if (!mouseState.LeftPressed and !moveSelectionLeftAllowed) {
+			moveSelectionLeftAllowed = true;
 		}
 
 		startSelection.Render();
@@ -506,41 +522,44 @@ while (StatusRunning)
 	sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
 	PrintReady();
 
-	bool newGameHit = (mouseX >= newGameRect[0]) and (mouseX <= (newGameRect[0] + newGameRect[2])) and (mouseY >= newGameRect[1]) and (mouseY <= (newGameRect[1] + newGameRect[3]));
-	if (newGameHit) {
-		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0xff, 0xff);
-		if (mouseLeftPressed and newGameMouseLeftAllowed) {
-			newGameMouseLeftAllowed = false;
-		} else if (!mouseLeftPressed and !newGameMouseLeftAllowed) {
-			RestartGame();
-			newGameMouseLeftAllowed = true;
-		}
+	buttonNewGame.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
+	if (buttonNewGame.IsClicked()) {
+		MakeThread2Freeze();
+		RestartGame();
+		FreezeThread2 = false;
 	}
-	else {
-		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
-		newGameMouseLeftAllowed = true;
+		
+	buttonMoveBack.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
+	if (buttonMoveBack.IsClicked()) {
+		MakeThread2Freeze();
+		if (movesListNeedle > movesList)
+			movesListNeedle = movesListNeedle - 8;
+		SetPiecesTextures();
+		SetStartPosition();
+		ReplayLoadedMoves();
+		FreezeThread2 = false;
 	}
-	sdl3.SDL_RenderDebugText(renderer, newGameRect[0], newGameRect[1], "New Game");
 
-	bool oneMoveBackHit = (mouseX >= oneMoveBackRect[0]) and (mouseX <= (oneMoveBackRect[0] + oneMoveBackRect[2])) and (mouseY >= oneMoveBackRect[1]) and (mouseY <= (oneMoveBackRect[1] + oneMoveBackRect[3]));
-	if (oneMoveBackHit) {
-		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0xff, 0xff);
-		if (mouseLeftPressed and oneMoveBackMouseLeftAllowed) {
-			oneMoveBackMouseLeftAllowed = false;
-		} else if (!mouseLeftPressed and !oneMoveBackMouseLeftAllowed) {
-			movesListNeedle = movesListNeedle - 16; // Go one enemy move and one usermove back
-			if (movesListNeedle < movesList)
-				movesListNeedle = movesList;
-			SetStartPosition();
-			ReplayLoadedMoves();
-			oneMoveBackMouseLeftAllowed = true;
-		}
+	buttonLoadTmp.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
+	if (buttonLoadTmp.IsClicked()) {
+		MakeThread2Freeze();
+		LoadTmpGameFile();
+		FreezeThread2 = false;
 	}
-	else {
-		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
-		oneMoveBackMouseLeftAllowed = true;
+
+	buttonSaveTmp.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
+	if (buttonSaveTmp.IsClicked()) {
+		MakeThread2Freeze();
+		SaveTmpGame();
+		FreezeThread2 = false;
 	}
-	sdl3.SDL_RenderDebugText(renderer, oneMoveBackRect[0], oneMoveBackRect[1], "Backspace");
+
+	buttonLoadFile.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
+	if (buttonLoadFile.IsClicked()) {
+		MakeThread2Freeze();
+		SelectAndLoadFile();
+		FreezeThread2 = false;
+	}
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
@@ -552,6 +571,7 @@ FreePieceTextures();
 msvcrt.free(movesList);
 msvcrt.free(textInBuffer);
 msvcrt.free(movesOutput);
+msvcrt.free(loadFileBuffer);
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);

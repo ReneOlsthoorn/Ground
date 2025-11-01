@@ -23,6 +23,11 @@ namespace GroundCompiler
             return "(break)";
         }
 
+        public string VisitorContinue(ContinueStatement stmt)
+        {
+            return "(continue)";
+        }
+
         public string VisitorAssembly(AssemblyStatement stmt)
         {
             return "(assembly)";

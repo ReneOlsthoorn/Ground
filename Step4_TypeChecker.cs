@@ -77,9 +77,9 @@ namespace GroundCompiler
                         if (list.ElementsNodes.Count == 0)
                         {
                             UInt64 nrBytes = list.SizeInBytes();                           
-                            asmStr = $"{theGeneratedLabel} db {nrBytes} dup(0)";
+                            asmStr = $"align 8\r\n{theGeneratedLabel} db {nrBytes} dup(0)";
                         } else
-                            asmStr = $"{theGeneratedLabel} {asmDataSize} {string.Join(",", theValues)}";
+                            asmStr = $"align 8\r\n{theGeneratedLabel} {asmDataSize} {string.Join(",", theValues)}";
 
                         asmStrToken.Value = asmStr;
                         asmStrToken.Properties["attributes"] = "data";

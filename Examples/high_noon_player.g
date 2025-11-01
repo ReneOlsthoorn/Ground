@@ -108,10 +108,10 @@ class Actor {
 		this.bullet_flying = true;
 		this.bullet_delta_y = 0.0;
 		if (this.facingRight) {
-			this.bullet_x = this.x + 2.0;
+			this.bullet_x = this.x + 3.0;
 			this.bullet_delta_x = FULL_BULLET_SPEED;
 		} else {
-			this.bullet_x = this.x - 2.0;
+			this.bullet_x = this.x - 3.0;
 			this.bullet_delta_x = -FULL_BULLET_SPEED;
 		}
 		playShoot();

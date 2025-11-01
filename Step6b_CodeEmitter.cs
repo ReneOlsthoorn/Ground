@@ -59,6 +59,7 @@ namespace GroundCompiler
 
         public void EmitLiteralFloats(List<FloatConstantSymbol> globalLiteralFloats)
         {
+            Writeline($"align 8");
             foreach (var variable in globalLiteralFloats)
             {
                 string quoted = ((double)variable.Value).ToString("0.0000000000", CultureInfo.InvariantCulture);
@@ -657,6 +658,12 @@ namespace GroundCompiler
 
                 Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
             }
+        }
+
+        public void LeaInstanceVar(string instVar, string reg, Datatype datatype)
+        {
+            var nrBytes = datatype.SizeInBytes;
+            Codeline($"lea   rax, {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
         }
 
         public void IncrementCurrent()

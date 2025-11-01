@@ -510,4 +510,15 @@ inst8.width++;
 assert(inst8.width == 12);
 
 
+j = 10;
+for (i in 1..5) {
+	if (i == 2)
+		continue;
+	if (i == 4)
+		break;
+	j = j + 10;
+}
+assert(j == 30);  // flow: j=10+10, j=20+10
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

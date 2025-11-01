@@ -167,6 +167,7 @@ namespace GroundCompiler
             if (sLower == "for")   { fill(token, sLower, TokenType.Keyword, TokenType.For);   return; }
             if (sLower == "asm")   { fill(token, sLower, TokenType.Keyword, TokenType.Assembly); return; }
             if (sLower == "break") { fill(token, sLower, TokenType.Keyword, TokenType.Break); return; }
+            if (sLower == "continue") { fill(token, sLower, TokenType.Keyword, TokenType.Continue); return; }
             if (sLower == "this")  { fill(token, sLower, TokenType.Keyword, TokenType.This); return; }
             if (sLower == "null")  { fill(token, sLower, TokenType.Keyword, TokenType.Null); return; }
             if (sLower == "return") { fill(token, sLower, TokenType.Keyword, TokenType.Return); return; }

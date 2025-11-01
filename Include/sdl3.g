@@ -15,17 +15,6 @@
 #define SDL3_KEYBOARDEVENT_DOWN_U8 36
 #define SDL3_KEYBOARDEVENT_REPEAT_U8 37
 
-class SDL_Surface {     //sizeof: 48 bytes
-    u32 flags;
-    u32 pixelformat;
-    i32 width;
-    i32 height;
-    i32 pitch;
-	ptr pixels;
-	i32 refcount;
-	u64 reserved;
-}
-
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
 dll sdl3 function SDL_CreateRenderer(ptr window, string name);
@@ -80,3 +69,33 @@ dll sdl3 function SDL_RenderFillRect(ptr renderer, ptr rect);
 dll sdl3 function SDL_RenderReadPixels(ptr renderer, ptr rect) : ptr;  // result = SDL_Surface*
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  // result = SDL_Surface*
+
+
+
+class SDL_Surface {     //sizeof: 48 bytes
+    u32 flags;
+    u32 pixelformat;
+    i32 width;
+    i32 height;
+    i32 pitch;
+	ptr pixels;
+	i32 refcount;
+	u64 reserved;
+}
+
+
+class MouseState {
+	bool LeftPressed;
+	bool RightPressed;
+	f32 x_f32;
+	f32 y_f32;
+	int x;
+	int y;
+    function GetMouseState() {
+		u32 mouseState = sdl3.SDL_GetMouseState(&this.x_f32, &this.y_f32);
+		this.LeftPressed = mouseState & g.SDL_BUTTON_LMASK;
+		this.RightPressed = mouseState & g.SDL_BUTTON_RMASK;
+		this.x = this.x_f32;
+		this.y = this.y_f32;
+    }
+}

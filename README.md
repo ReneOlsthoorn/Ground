@@ -312,12 +312,14 @@ In 1994, I bought an ```ESCOM 486DX2 66 MHz``` PC with 420MB harddisk and 4MB me
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We are truly blessed with this platform for over 30 years. This must be said!  
   
-At this moment in 2025, several expert users are migrating to Linux because Windows collects data about the usage of 
-your computer. Microsoft wants to make Windows a sensory device for an "AI" companion. I strongly disagree with this route.
-Most people don't want all their actions and data stored in the cloud. The user is no longer in control at that moment.
-You want a computer to help you, not to spy on you.  
-At this moment, this spying can be disabled. Search for "How to disable Microsoft Compatibility Telemetry". It is basically a 
-scheduled task that can be disabled. Don't leave the PC platform too soon without valid reasons, because we owe so much to it.  
+At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much data about the usage of 
+your computer. Microsoft wants to make Windows a sensory device for an "AI" companion and forces users to give up privacy. I strongly 
+disagree with this route. I think this data collecting should be made optional.  
+Most people don't know that their actions and data is stored with Microsoft in the cloud. They want a computer to help them, not to spy on them.  
+At this moment, this spying can be disabled.  Use a tool as such as "O&O ShutUp10++" to disable Copilot and Recall.  
+Microsoft is heading in the wrong direction because they offer no option to turn off this data collecting. I think it's a shame, because
+they have such a great history. At this moment third party tools are able to turn off the spying, so I will not migrate to Linux yet.  
+I'm not leaving the PC Windows platform too soon. I owe so much to it.  
 
 ### Smoothscroller
 <p align="center">
@@ -408,3 +410,4 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 2025.10.11: Support for single char value's like 'a'.  
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
 2025.10.28: High Noon game added. countof added.  
+2025.10.31: Continue statement added.

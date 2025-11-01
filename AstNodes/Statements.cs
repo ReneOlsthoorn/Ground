@@ -21,6 +21,7 @@ namespace GroundCompiler.Statements
             R VisitorExpression(ExpressionStatement stmt);
             R VisitorReturn(ReturnStatement stmt);
             R VisitorBreak(BreakStatement stmt);
+            R VisitorContinue(ContinueStatement stmt);
             R VisitorAssembly(AssemblyStatement stmt);
         }
 
@@ -414,11 +415,13 @@ namespace GroundCompiler.Statements
     {
         public Expression ConditionNode;
         public Statement BodyNode;
+        public Statement? IncrementNode;     // for-loop situation if available
 
-        public WhileStatement(Expression condition, Statement body)
+        public WhileStatement(Expression condition, Statement body, Statement? incrementNode = null)
         {
             ConditionNode = condition;
             BodyNode = body;
+            IncrementNode = incrementNode;
         }
 
         public override IEnumerable<AstNode> Nodes
@@ -430,6 +433,9 @@ namespace GroundCompiler.Statements
 
                 if (BodyNode != null)
                     yield return BodyNode;
+
+                if (IncrementNode != null)
+                    yield return IncrementNode;
             }
         }
 
@@ -445,6 +451,12 @@ namespace GroundCompiler.Statements
             {
                 newNode.Parent = this;
                 BodyNode = (Statement)newNode;
+                return true;
+            }
+            if (Object.ReferenceEquals(IncrementNode, oldNode))
+            {
+                newNode.Parent = this;
+                IncrementNode = (Statement)newNode;
                 return true;
             }
             return false;
@@ -718,6 +730,23 @@ namespace GroundCompiler.Statements
         public override R Accept<R>(IVisitor<R> visitor)
         {
             return visitor.VisitorBreak(this);
+        }
+    }
+
+
+    public class ContinueStatement : Statement
+    {
+        public Token Keyword;
+
+        public ContinueStatement(Token keyword)
+        {
+            Keyword = keyword;
+        }
+
+        [DebuggerStepThrough]
+        public override R Accept<R>(IVisitor<R> visitor)
+        {
+            return visitor.VisitorContinue(this);
         }
     }
 

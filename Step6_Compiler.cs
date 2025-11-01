@@ -194,6 +194,14 @@ namespace GroundCompiler
             return null;
         }
 
+        public object? VisitorContinue(ContinueStatement stmt)
+        {
+            var whileStmt = stmt.FindParentType(typeof(WhileStatement)) as WhileStatement;
+            if (whileStmt != null)
+                emitter.JumpToLabel((string)whileStmt.Properties["continueLabel"]!);
+
+            return null;
+        }
 
         public object? VisitorIf(IfStatement stmt)
         {
@@ -218,10 +226,22 @@ namespace GroundCompiler
             string testLabel = emitter.NewLabel();
             string doneLabel = emitter.NewLabel();
             whileStmt.Properties["breakLabel"] = doneLabel;
+            string? continueLabel = null;
+            if (whileStmt.IncrementNode != null)
+            {
+                continueLabel = emitter.NewLabel();
+                whileStmt.Properties["continueLabel"] = continueLabel;
+            }
             emitter.InsertLabel(testLabel);
             EmitExpression(whileStmt.ConditionNode);
             emitter.JumpToLabelIfFalse(doneLabel);
             EmitStatement(whileStmt.BodyNode);
+            if (whileStmt.IncrementNode != null)
+            {
+                if (continueLabel != null)
+                    emitter.InsertLabel(continueLabel);
+                EmitStatement(whileStmt.IncrementNode);
+            }
             emitter.JumpToLabel(testLabel);
             emitter.InsertLabel(doneLabel);
             return null;
@@ -974,6 +994,8 @@ namespace GroundCompiler
                     VariableAddressOf(theVariable);
                 else if (expr.RightNode is ArrayAccess arrayAccess)
                     ArrayAccess(arrayAccess, assignment: null, addressOf: true);
+                else if (expr.RightNode is PropertyExpression propExpr)
+                    PropertyExpressionAddressOf(propExpr);
                 else
                     Step6_Compiler.Error("AddressOf can only be done on a variable.");
                 return null;

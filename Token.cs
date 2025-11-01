@@ -63,6 +63,7 @@ namespace GroundCompiler
         If,           // if
         Else,         // else
         Break,        // break
+        Continue,     // continue
         Return,       // return
         Print,        // print statement
         Function,     // function statement

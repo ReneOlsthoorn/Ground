@@ -187,6 +187,23 @@ namespace GroundCompiler
         }
 
 
+        public void PropertyExpressionAddressOf(PropertyExpression expr)
+        {
+            var classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+            var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+
+            var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+            string procName = functionStmt!.Name.Lexeme;
+            string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+            emitter.LoadFunctionParameter64(theName);
+
+            string instVarReg = cpu.GetTmpRegister();
+            emitter.Codeline($"mov   {instVarReg}, rax");
+            emitter.LeaInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
+            cpu.FreeRegister(instVarReg);
+        }
+
+
         public void VariableAddressOf(Variable variableExpr)
         {
             // A reference type must always return the memory location, and never the Lea of the variable.

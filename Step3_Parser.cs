@@ -280,8 +280,7 @@ namespace GroundCompiler
                     Consume(TokenType.CloseBracket, "ForStatement: Expect ')' after 'for' clauses");
 
                     var sugarBody = ParseStatement();
-                    sugarBody = new BlockStatement(new List<Statement> { sugarBody, new ExpressionStatement(rangeIncrementExp) });
-                    sugarBody = new WhileStatement(rangeConditionExp, sugarBody);
+                    sugarBody = new WhileStatement(rangeConditionExp, sugarBody, new ExpressionStatement(rangeIncrementExp));
                     sugarBody = new BlockStatement(new List<Statement> { initializer, sugarBody });
                     return sugarBody;
                 }
@@ -303,13 +302,10 @@ namespace GroundCompiler
 
             var body = ParseStatement();
 
-            if (increment != null)
-                body = new BlockStatement(new List<Statement> { body, new ExpressionStatement(increment) });
-
             if (condition == null)
                 condition = new Literal(true);
 
-            body = new WhileStatement(condition, body);
+            body = new WhileStatement(condition, body, (increment != null) ? new ExpressionStatement(increment) : null);
 
             if (initializer != null)
                 body = new BlockStatement(new List<Statement> { initializer, body });
@@ -336,6 +332,13 @@ namespace GroundCompiler
             return new BreakStatement(token);
         }
 
+        private Statement ContinueStatement()
+        {
+            var token = NextToken();
+            Consume(TokenType.SemiColon, "ContinueStatement: Expected ';' after 'continue'.");
+            return new ContinueStatement(token);
+        }
+
 
         private Statement ExpressionStatement()
         {
@@ -355,6 +358,7 @@ namespace GroundCompiler
             if (Match(TokenType.Return)) return ReturnStatement();
             if (Check(TokenType.Assembly)) return AssemblyStatement();
             if (Check(TokenType.Break)) return BreakStatement();
+            if (Check(TokenType.Continue)) return ContinueStatement();
             if (Match(TokenType.For)) return ForStatement();
             if (Match(TokenType.If)) return IfStatement();
             if (Match(TokenType.While)) return WhileStatement();
