@@ -145,6 +145,43 @@ namespace GroundCompiler
 
             if (optimizeAgain)
                 Optimize(rootNode);
+
+            // Replace a literal divide and multiple with a power of two literal with bitshifting.
+            foreach (Binary binaryExpr in rootNode.FindAllNodes(typeof(Binary)).ToList())
+            {
+                if (binaryExpr.Operator.Lexeme == "/" && binaryExpr.RightNode is Literal divideliteralExpr) {
+                    if (divideliteralExpr.ExprType.Contains(Datatype.TypeEnum.Integer))
+                    {
+                        Int64 theLiteralValue = (Int64)divideliteralExpr.Value!;
+                        if (IsPowerOfTwo(theLiteralValue))
+                        {
+                            int power = (int)Math.Log(theLiteralValue, 2);
+                            binaryExpr.Operator.Lexeme = ">>";
+                            binaryExpr.Operator.Types = new List<TokenType> { TokenType.Operator, TokenType.ShiftRight };
+                            divideliteralExpr.Value = power;
+                        }
+                    }
+                }
+                if (binaryExpr.Operator.Lexeme == "*" && binaryExpr.RightNode is Literal multiplyLiteralExpr)
+                {
+                    if (multiplyLiteralExpr.ExprType.Contains(Datatype.TypeEnum.Integer))
+                    {
+                        Int64 theLiteralValue = (Int64)multiplyLiteralExpr.Value!;
+                        if (IsPowerOfTwo(theLiteralValue))
+                        {
+                            int power = (int)Math.Log(theLiteralValue, 2);
+                            binaryExpr.Operator.Lexeme = "<<";
+                            binaryExpr.Operator.Types = new List<TokenType> { TokenType.Operator, TokenType.ShiftLeft };
+                            multiplyLiteralExpr.Value = power;
+                        }
+                    }
+                }
+            }
+        }
+
+        public static bool IsPowerOfTwo(Int64 value)
+        {
+            return value > 0 && (value & (value - 1)) == 0;
         }
 
 

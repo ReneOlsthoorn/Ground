@@ -172,8 +172,15 @@ Will result in the following generated code:
 mov   rax, 2
 ```
 The optimizer will fold the numbers of variable a and b and substitute the values in the calculation of c, which 
-also results in a literal. So the optimizer removes a, b and c and a literal value is used as an argument in the 
-```println``` function.
+also results in a literal. The optimizer can also result in better readable code. For instance, look at the 
+following function:
+```
+function NrMoves() : int {
+	return ((movesListNeedle - movesList) / BYTES_PER_MOVE);
+}
+```
+The BYTES_PER_MOVE is defined as 8, so you are tempted to do a ```>> 3``` in stead of a divide by 8. A shift right 
+is faster than a divide operand. However, this is not needed because the optimizer does it for you.
 
 ### GroundSideLibrary
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
@@ -312,14 +319,12 @@ In 1994, I bought an ```ESCOM 486DX2 66 MHz``` PC with 420MB harddisk and 4MB me
 PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We are truly blessed with this platform for over 30 years. This must be said!  
   
-At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much data about the usage of 
-your computer. Microsoft wants to make Windows a sensory device for an "AI" companion and forces users to give up privacy. I strongly 
-disagree with this route. I think this data collecting should be made optional.  
-Most people don't know that their actions and data is stored with Microsoft in the cloud. They want a computer to help them, not to spy on them.  
-At this moment, this spying can be disabled.  Use a tool as such as "O&O ShutUp10++" to disable Copilot and Recall.  
-Microsoft is heading in the wrong direction because they offer no option to turn off this data collecting. I think it's a shame, because
-they have such a great history. At this moment third party tools are able to turn off the spying, so I will not migrate to Linux yet.  
-I'm not leaving the PC Windows platform too soon. I owe so much to it.  
+At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
+it to the cloud or uses it for AI. Microsoft wants to make Windows a sensory device for an AI companion and forces users to give 
+up privacy. I strongly disagree with this route, because it should be made optional.  
+Use a third-party tool as such as "O&O ShutUp10++" to disable Copilot and Recall. However, with each new update, the settings 
+can be turned on again. The whole situation is a shame, because Windows has such a great history. At this moment, I will not 
+migrate to Linux yet because I owe so much to the Windows platform.  
 
 ### Smoothscroller
 <p align="center">

@@ -114,39 +114,41 @@ while (StatusRunning)
 		for (i in 0 ..< NR_PIECES)
 			pieces[i].Render();
 
-		selector.FillFrom(mouseState.x, mouseState.y);
-		selector.GetAlphaPosition(selectorPosition);
-		writeBytePtrText(renderer, 940.0, 550.0, selectorPosition);
-		selector.Render();
-
 		PrintMoves();
 
-		if (mouseState.LeftPressed and moveSelectionLeftAllowed) {
-			if (startSelection.visible) {
-				endSelection.FillFrom(mouseState.x, mouseState.y);
-				moveSelectionLeftAllowed = false;
+		if (isWaitingForUser) {
+			selector.FillFrom(mouseState.x, mouseState.y);
+			selector.GetAlphaPosition(selectorPosition);
+			writeBytePtrText(renderer, 940.0, 550.0, selectorPosition);
+			selector.Render();
 
-				if ((endSelection.gridX == startSelection.gridX) and (endSelection.gridY == startSelection.gridY)) {
-					startSelection.visible = false;
-					endSelection.visible = false;			
+			if (mouseState.LeftPressed and moveSelectionLeftAllowed) {
+				if (startSelection.visible) {
+					endSelection.FillFrom(mouseState.x, mouseState.y);
+					moveSelectionLeftAllowed = false;
+
+					if ((endSelection.gridX == startSelection.gridX) and (endSelection.gridY == startSelection.gridY)) {
+						startSelection.visible = false;
+						endSelection.visible = false;			
+					} else {
+						// Store a new move
+						startSelection.GetAlphaPosition(movesListNeedle);
+						endSelection.GetAlphaPosition(movesListNeedle+2);
+						movesListNeedle = movesListNeedle + BYTES_PER_MOVE;
+
+						startSelection.visible = false;
+						endSelection.visible = false;
+					}
 				} else {
-					// Store a new move
-					startSelection.GetAlphaPosition(movesListNeedle);
-					endSelection.GetAlphaPosition(movesListNeedle+2);
-					movesListNeedle = movesListNeedle + BYTES_PER_MOVE;
-
-					startSelection.visible = false;
-					endSelection.visible = false;
+					startSelection.FillFrom(mouseState.x, mouseState.y);
+					moveSelectionLeftAllowed = false;
 				}
-			} else {
-				startSelection.FillFrom(mouseState.x, mouseState.y);
-				moveSelectionLeftAllowed = false;
+			} else if (!mouseState.LeftPressed and !moveSelectionLeftAllowed) {
+				moveSelectionLeftAllowed = true;
 			}
-		} else if (!mouseState.LeftPressed and !moveSelectionLeftAllowed) {
-			moveSelectionLeftAllowed = true;
-		}
 
-		startSelection.Render();
+			startSelection.Render();
+		}
 	}
 
 	sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);

@@ -141,7 +141,7 @@ buttonLoadFile.label = "Load File ...";
 
 
 function NrMoves() : int {
-	return ((movesListNeedle - movesList) >> 3);
+	return ((movesListNeedle - movesList) / BYTES_PER_MOVE);
 }
 
 
