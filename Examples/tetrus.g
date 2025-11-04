@@ -2,10 +2,10 @@
 #template sdl3
 
 #define GRID_ELEMENTS_X 10
-#define GRID_ELEMENTS_Y 20
+#define GRID_ELEMENTS_Y 19
 #define GRID_ELEMENT_PIXELS 24
 #define GRID_ELEMENT_PIXELS_KERN 22
-#define GRID_POSY_OFFSET 4
+#define GRID_POSY_OFFSET 52
 
 #include graphics_defines960x560.g
 #include msvcrt.g
@@ -14,7 +14,6 @@
 #include user32.g
 #include sidelib.g
 #include soloud.g
-#include tetrus_helper.g
 
 class Point {
 	int x;
@@ -22,28 +21,26 @@ class Point {
 }
 Point[4] activeFigure = [];  //active figure on screen with 4 points.
 Point[4] oldFigure = [];     //backup copy of figureActive when performing rotation, etc...
+int oldFigureHorizontal;
 
-int[4,7] figures = [
-	2,3,4,5, // O
-	1,3,5,7, // I
-	3,5,4,6, // S
-	2,4,5,7, // Z
-	2,3,5,7, // L
-	3,5,7,6, // J
-	3,5,4,7  // T
+int[32,7] figures = [
+    4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2, // O
+    3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3,  3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3, // I
+    3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2,  3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2, // Z
+    4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0,  4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0, // S
+	3,1, 4,1, 5,1, 3,2,  4,0, 4,1, 3,0, 4,2,  5,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,2, // L
+	3,1, 4,1, 5,1, 5,2,  4,0, 4,1, 3,2, 4,2,  3,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,0, // J
+	3,1, 4,1, 5,1, 4,2,  4,0, 3,1, 4,1, 4,2,  4,0, 3,1, 4,1, 5,1,  4,0, 4,1, 5,1, 4,2  // T
 ] asm;
-int activeFigureColor = 0;
-int dx = 0;
-int rotateDelta = 0;
-int linesToComplete = 30;
-int linesDoneCounter = 0;
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
-int waitCount;				//integer which determines at which modulo of frameCount a game 'tick will occur.
+int waitCount = 30;				//integer which determines at which modulo of frameCount a game 'tick will occur.
 string gameStatus = "intro screen";    // "intro screen", "game running", "game over", "game finished"
 bool StatusRunning = true;
 int frameCount = 0;
+int framesWaited = 0;
+int framesKeyRepeat = 0;
 u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
 u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
 int[6] keyboardStack = [ ] asm;
@@ -53,8 +50,22 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_KEYBOARDEVENT_TYPE_U32];
 u32* eventScancode = &event[SDL3_KEYBOARDEVENT_SCANCODE_U32];
 u8* eventRepeat = &event[SDL3_KEYBOARDEVENT_REPEAT_U8];
+int activeFigureIndex;
+int activeFigureColor = 0;
+int activeFigureVertical = 0;
+int activeFigureHorizontal = 0;
+int dx = 0;
+int rotateState = 0;  // 0,1,2,3
+int rotateDelta = 0;
+int linesToComplete = 30;
+int linesDoneCounter = 0;
 int gameTimeFrameStart;
 int secondsGameTime;
+int loopStartTicks = 0;
+int debugBestTicks = 0xffff;
+int pitch = SCREEN_LINESIZE;
+int RandomSeed = 123123;    //msvcrt.time64(&RandomSeed);
+
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -66,6 +77,8 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
+sdl3.SDL_srand(RandomSeed);
+
 
 ptr soloudObject = soloud.Soloud_create();
 int soloudResult = soloud.Soloud_init(soloudObject);
@@ -90,6 +103,22 @@ soloud.Sfxr_setVolume(sfxrSelectObject, theVolume);
 function playSound() { soloud.Soloud_play(soloudObject, sfxrObject); }
 function playDrop() { soloud.Soloud_play(soloudObject, dropObject); }
 function playTurn() { soloud.Soloud_play(soloudObject, sfxrSelectObject); }
+
+function writeText(ptr renderer, float x, float y, string text) {
+	f32 scale = 3.0;
+	sdl3.SDL_SetRenderScale(renderer, scale, scale);
+	f32 theX = x;
+	f32 theY = y;
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
+}
+
+function ScreenPointerForXY(int x, int y) : ptr {	
+	ptr result = g.[pixels_p] + ((y*SCREEN_WIDTH)+x)*SCREEN_PIXELSIZE;
+	return result;
+}
 
 function FillGridElementPixels(pointer p, u32 color) asm {
   push	rdi
@@ -130,8 +159,7 @@ function DrawGridElement(int x, int y, int shape) {
 	u32 bgColor = bgColorList[shape];
 
 	int spelVlakXOffset = (SCREEN_WIDTH - (GRID_ELEMENTS_X * GRID_ELEMENT_PIXELS)) / 2;
-	int spelVlakYOffset = 50;
-	pointer p = &pixels[(x * GRID_ELEMENT_PIXELS)+spelVlakXOffset, y * GRID_ELEMENT_PIXELS + spelVlakYOffset];
+	pointer p = &pixels[(x * GRID_ELEMENT_PIXELS)+spelVlakXOffset, (y * GRID_ELEMENT_PIXELS) + GRID_POSY_OFFSET];
 	int offsetToNextLine = SCREEN_WIDTH << 2;
 
 	FillGridElementPixels(p, bgColor);
@@ -205,12 +233,16 @@ function CheckChangeDirection() {
 
 
 function GenerateNewPiece() {
-	int n = msvcrt.rand() % 7;
+	int n = sdl3.SDL_rand_r(&RandomSeed, 7);
+	activeFigureIndex = n;
 	activeFigureColor = n+1;
+	activeFigureVertical = 0;
+	activeFigureHorizontal = 0;
+	rotateState = 0;
 
 	for (i in 0 ..< 4) {
-		activeFigure[i].x = 4 + figures[i, n] % 2;
-	    activeFigure[i].y = figures[i, n] / 2;
+		activeFigure[i].x = figures[(i*2), n];
+	    activeFigure[i].y = figures[(i*2)+1, n];
 	}
 }
 
@@ -220,6 +252,7 @@ function CopyActiveToOld() {
 		oldFigure[i].x = activeFigure[i].x;
 		oldFigure[i].y = activeFigure[i].y;
 	}
+	oldFigureHorizontal = activeFigureHorizontal;
 }
 
 function CopyOldToActive() {
@@ -227,36 +260,30 @@ function CopyOldToActive() {
 		activeFigure[i].x = oldFigure[i].x;
 		activeFigure[i].y = oldFigure[i].y;
 	}
+	activeFigureHorizontal = oldFigureHorizontal;
 }
 
+function ChangeRotateState(int delta) {
+	rotateState = rotateState + delta;
+	if (rotateState > 3)
+		rotateState = rotateState - 4;
+	else if (rotateState < 0)
+		rotateState = rotateState + 4;
+}
 
-Point rotationPoint;
 function Rotate() {
+	ChangeRotateState(1);
+	if (activeFigureIndex == 0)
+		return;
 	CopyActiveToOld();
-
-	rotationPoint.x = activeFigure[1].x;  // center of rotation
-	rotationPoint.y = activeFigure[1].y;
 	for (i in 0 ..< 4) {
-		int x = activeFigure[i].y - rotationPoint.y;
-		int y = activeFigure[i].x - rotationPoint.x;
-		activeFigure[i].x = rotationPoint.x - x;
-		activeFigure[i].y = rotationPoint.y + y;
+		activeFigure[i].x = figures[(rotateState*8)+(i*2), activeFigureIndex] + activeFigureHorizontal;
+		activeFigure[i].y = figures[(rotateState*8)+(i*2)+1, activeFigureIndex] + activeFigureVertical;
 	}
-
 	int collStatus = CollisionStatus();
 	if (collStatus < 0) {
-		while (collStatus == -1) {  // a point of the piece is too much on the left. Try moving the piece to the right.
-			for (i in 0 ..< 4)
-				activeFigure[i].x = activeFigure[i].x + 1;
-			collStatus = CollisionStatus();
-		}
-		while (collStatus == -2) {
-			for (i in 0 ..< 4)
-				activeFigure[i].x = activeFigure[i].x - 1;
-			collStatus = CollisionStatus();
-		}
-		if (CollisionStatus() < 0)
-			CopyOldToActive();
+		CopyOldToActive();
+		ChangeRotateState(-1);
 	}
 }
 
@@ -297,14 +324,17 @@ function MovePiece() {
 
 	for (i in 0 ..< 4)
 		activeFigure[i].x = activeFigure[i].x + dx;
+	activeFigureHorizontal = activeFigureHorizontal + dx;
 
 	if (CollisionStatus() < 0)
 		CopyOldToActive();
 
-	if (frameCount % waitCount != 0) { return; }
+	if (framesWaited < waitCount) { return; }
+	framesWaited = 0;
 
 	for (i in 0 ..< 4)
 		activeFigure[i].y = activeFigure[i].y + 1;
+	activeFigureVertical = activeFigureVertical + 1;
 
 	if (CollisionStatus() < 0)
 	{
@@ -366,6 +396,8 @@ RestartGame();
 gameStatus = "intro screen";
 while (StatusRunning)
 {
+	u8* keyState = sdl3.SDL_GetKeyboardState(null);
+
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -381,10 +413,12 @@ while (StatusRunning)
 					else
 						RestartGame();
 				} else {
-					keyboardStack[keyboardStackNeedle] = 4; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; }
+					keyboardStack[keyboardStackNeedle] = 4;
+					if (keyboardStackNeedle < 4)
+						keyboardStackNeedle++;
 				}
 			}
-			if (*eventScancode == g.SDL_SCANCODE_DOWN)    { waitCount = 3; }
+			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { waitCount = 3; }
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
 		}
@@ -392,8 +426,12 @@ while (StatusRunning)
 			waitCount = 30;
 	}
 
-	u8* keyState = sdl3.SDL_GetKeyboardState(null);
-	if (frameCount % 7 == 0) {
+	if (keyState[g.SDL_SCANCODE_RIGHT] or keyState[g.SDL_SCANCODE_LEFT]) {
+		waitCount = 30;
+	}
+
+	if (framesKeyRepeat >= 7) {
+		framesKeyRepeat = 0;
 		if (keyHitThisFrame == false) {
 			if (keyState[g.SDL_SCANCODE_LEFT]) { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (keyState[g.SDL_SCANCODE_RIGHT]) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
@@ -424,6 +462,8 @@ while (StatusRunning)
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
+	framesWaited++;
+	framesKeyRepeat++;
 }
 soloud.Sfxr_destroy(sfxrSelectObject);
 soloud.Sfxr_destroy(sfxrObject);

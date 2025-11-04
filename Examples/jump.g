@@ -10,6 +10,7 @@
 #define NR_PLATFORMS 12
 #define PLATFORM_MARGIN_TOP 56
 #define BERTUS_START_X 100
+#define NUMBER_OF_STARS 700
 
 #include graphics_defines960x560.g
 #include msvcrt.g
@@ -34,14 +35,13 @@ int[NR_PLATFORMS] platX = [] asm;
 int[NR_PLATFORMS] platY = [] asm;
 string gameStatus = "intro screen";    // "intro screen", "game running", "game over"
 
-int numberOfStars = 700;
 int SeedStarfield = 123123;
-float[700] star_x = []; //van -500 tot 500
-float[700] star_y = []; //van -500 tot 500
-float[700] star_z = []; //van 100 tot 1000
-float[700] star_zv = []; //speed: from .5 to 5
-int[700] star_screenx = [];
-int[700] star_screeny = [];
+float[NUMBER_OF_STARS] star_x = []; //van -500 tot 500
+float[NUMBER_OF_STARS] star_y = []; //van -500 tot 500
+float[NUMBER_OF_STARS] star_z = []; //van 100 tot 1000
+float[NUMBER_OF_STARS] star_zv = []; //speed: from .5 to 5
+int[NUMBER_OF_STARS] star_screenx = [];
+int[NUMBER_OF_STARS] star_screeny = [];
 int bertusRandomSeed = 123123;
 int x = BERTUS_START_X;
 int y = 100;
@@ -103,7 +103,7 @@ function writeText(ptr renderer, float x, float y, string text) {
 
 function InitStarField()
 {
-	for (i in 0 ..< numberOfStars)
+	for (i in 0 ..< NUMBER_OF_STARS)
 	{
 		float starX = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
 		float starY = (sdl3.SDL_randf_r(&SeedStarfield) - 0.5) * 100.0;
@@ -130,7 +130,7 @@ function SetPixel(int x, int y, u32 color)
 
 function StarField()
 {
-	for (i in 0 ..< numberOfStars)
+	for (i in 0 ..< NUMBER_OF_STARS)
 	{
 		SetPixel(star_screenx[i], star_screeny[i], 0xff000000);
 		star_z[i] = star_z[i] - star_zv[i];

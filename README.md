@@ -412,7 +412,5 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 2025.09.10: Bugs game added.  
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  
 2025.09.29: Chess added.  
-2025.10.11: Support for single char value's like 'a'.  
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
-2025.10.28: High Noon game added. countof added.  
-2025.10.31: Continue statement added.
+2025.10.28: High Noon game added.
