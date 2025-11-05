@@ -41,6 +41,7 @@ bool StatusRunning = true;
 int frameCount = 0;
 int framesWaited = 0;
 int framesKeyRepeat = 0;
+bool downPressedForThisPiece = false;
 u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
 u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
 int[6] keyboardStack = [ ] asm;
@@ -341,6 +342,7 @@ function MovePiece() {
 		for (i in 0 ..< 4) { board[oldFigure[i].x, oldFigure[i].y] = activeFigureColor; }
 
 		waitCount = 30;
+		downPressedForThisPiece = false;
 		playDrop();
 		GenerateNewPiece();
 
@@ -418,7 +420,7 @@ while (StatusRunning)
 						keyboardStackNeedle++;
 				}
 			}
-			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { waitCount = 3; }
+			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { waitCount = 3; downPressedForThisPiece = true; }
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
 		}
@@ -433,6 +435,9 @@ while (StatusRunning)
 	if (framesKeyRepeat >= 7) {
 		framesKeyRepeat = 0;
 		if (keyHitThisFrame == false) {
+			if (keyState[g.SDL_SCANCODE_DOWN] and !keyState[g.SDL_SCANCODE_LEFT] and !keyState[g.SDL_SCANCODE_RIGHT] and downPressedForThisPiece) {
+				waitCount = 3;
+			}
 			if (keyState[g.SDL_SCANCODE_LEFT]) { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 			if (keyState[g.SDL_SCANCODE_RIGHT]) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
 		}
