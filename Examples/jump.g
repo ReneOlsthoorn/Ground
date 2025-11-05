@@ -1,6 +1,10 @@
 
 #template sdl3
 
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+#library soloud soloud_x64.dll
+
 #define BERTUS_WIDTH 24
 #define BERTUS_WIDTH_D2 12
 #define BERTUS_HEIGHT 32
@@ -16,9 +20,7 @@
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
-#include soloud.g
+
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 bool StatusRunning = true;

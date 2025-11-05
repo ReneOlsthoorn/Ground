@@ -178,10 +178,13 @@ include '..\..\..\Templates\part_hardcoded_library.fasm'
 
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
+;GC_INSERTIONPOINT_LIBRARIES
           msvcrt, 'msvcrt.dll'
 
   include '..\..\..\Include\kernel32_api.inc'
   include '..\..\..\Include\msvcrt_api.inc'
+;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
+
 
 
 section '.data' data readable writeable

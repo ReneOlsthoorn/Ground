@@ -1,6 +1,6 @@
 ﻿using GroundCompiler.Statements;
 
-namespace GroundCompiler.Symbols
+namespace GroundCompiler
 {
     public class Symbol
     {

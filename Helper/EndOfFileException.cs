@@ -1,5 +1,5 @@
 ﻿
-namespace GroundCompiler.Exceptions
+namespace GroundCompiler
 {
     public class EndOfFileException : Exception
     {

@@ -63,7 +63,7 @@ namespace GroundCompiler
             Step5_Optimizer.Optimize(ast);
 
             Console.WriteLine("*** Step 6: Compiler. Convert AST to x86-64 assembly.");
-            Step6_Compiler compiler = new Step6_Compiler(template: preprocessor.usedTemplate, defines: preprocessor.defines);
+            Step6_Compiler compiler = new Step6_Compiler(preprocessor);
             generatedCode = compiler.GenerateAssembly(ast);
 
             Assemble();

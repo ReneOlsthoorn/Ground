@@ -6,9 +6,9 @@
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
-#include chipmunk.g
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+#library chipmunk chipmunk.dll
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);

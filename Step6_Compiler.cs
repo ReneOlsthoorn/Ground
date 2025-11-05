@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
+using System.Text;
 using GroundCompiler.Expressions;
 using GroundCompiler.Statements;
-using GroundCompiler.Symbols;
 
 namespace GroundCompiler
 {
@@ -11,12 +11,31 @@ namespace GroundCompiler
         Step6b_CodeEmitter emitter;
         AstPrinter AstPrint = new AstPrinter();
         readonly string CodeTemplateName;
+        Step1_PreProcessor preprocessor;
 
-        public Step6_Compiler(string template, Dictionary<string, Token>? defines = null) {
-            CodeTemplateName = template;
+        public Step6_Compiler(Step1_PreProcessor preprocessor) {
+            this.preprocessor = preprocessor;
+            CodeTemplateName = preprocessor.usedTemplate;
             cpu = new CPU_X86_64();
-            emitter = new Step6b_CodeEmitter(cpu, defines);
+            emitter = new Step6b_CodeEmitter(cpu, preprocessor.defines);
         }
+
+        public string LibrariesToInclude()
+        {
+            StringBuilder result = new StringBuilder();
+            foreach (var (libraryName, dllFilename) in preprocessor.libraries)
+                result.AppendLine($"          {libraryName}, '{dllFilename}', \\");
+            return result.ToString();
+        }
+
+        public string LibraryApiIncludes()
+        {
+            StringBuilder result = new StringBuilder();
+            foreach (var (libraryName, dllFilename) in preprocessor.libraries)
+                result.AppendLine($"  include '..\\..\\..\\Include\\{libraryName}_api.inc'");
+            return result.ToString();
+        }
+
 
         public string GenerateAssembly(Statement stmt)
         {
@@ -31,6 +50,8 @@ namespace GroundCompiler
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_MAIN", string.Join("", emitter.GeneratedCode_Main) );
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_PROCEDURES", string.Join("", emitter.GeneratedCode_Procedures));
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_DATA", string.Join("", emitter.GeneratedCode_Data));
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_LIBRARIES\r\n", LibrariesToInclude());
+            tmpl = tmpl.Replace(";GC_INSERTIONPOINT_LIBRARY_API_INCLUDES\r\n", LibraryApiIncludes());
             return tmpl;
         }
 

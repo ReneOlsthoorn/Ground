@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace GroundCompiler
 {
@@ -8,10 +9,12 @@ namespace GroundCompiler
         public Dictionary<string, Token> defines;
         public string usedTemplate = "console";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
+        public List<(string, string)> libraries;
 
         public Step1_PreProcessor(string sourcecode) {
             this.sourcecode = sourcecode;
             defines = new Dictionary<string, Token>();
+            libraries = new List<(string, string)>();
         }
 
         public void ProcessCompilerDirectives()
@@ -57,9 +60,19 @@ namespace GroundCompiler
                 IncludeFileAtIndex(index, fileToInclude);
                 return true;
             }
+            if (line.StartsWith("#library"))
+            {
+                string[] parts = Regex.Split(line, @"\s+");
+                var libraryName = parts[1].Trim();
+                var dllFilename = parts[2].Trim();
+                libraries.Add((libraryName, dllFilename));
+                ClearLineAtIndex(index);
+                IncludeFileAtIndex(index, $"{libraryName}.g");
+                return true;
+            }
             if (line.StartsWith("#define"))
             {
-                string restOfLine = line.Substring(7);
+                string restOfLine = line.Substring("#define".Length);
                 var defineLexer = new Step2_Lexer(restOfLine);
                 var defineTokens = defineLexer.GetTokens().ToList();
                 string defineKey = defineTokens[0].Lexeme;

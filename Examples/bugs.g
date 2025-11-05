@@ -1,15 +1,17 @@
 
 #template sdl3
 
-#define NR_BUGS 5
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+#library soloud soloud_x64.dll
 
 #include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
-#include soloud.g
+
+#define NR_BUGS 5
+
 
 bool StatusRunning = true;
 int frameCount = 0;

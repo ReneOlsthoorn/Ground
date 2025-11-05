@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using GroundCompiler.Statements;
-using GroundCompiler.Symbols;
 
 namespace GroundCompiler.Expressions
 {

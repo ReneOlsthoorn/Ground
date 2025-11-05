@@ -21,9 +21,9 @@
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
-#include comdlg32.g
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+#library comdlg32 comdlg32.dll
 
 
 // SETTINGS

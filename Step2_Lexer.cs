@@ -133,7 +133,7 @@ namespace GroundCompiler
 
                 return token;
             }
-            catch (Exceptions.EndOfFileException)
+            catch (EndOfFileException)
             {
                 return new Token(TokenType.EndOfFile);
             }
@@ -368,7 +368,7 @@ namespace GroundCompiler
         public char CurrentChar()
         {
             if (needle >= sourcecode.Length)
-                throw new Exceptions.EndOfFileException();
+                throw new EndOfFileException();
 
             return sourcecode[needle];
         }

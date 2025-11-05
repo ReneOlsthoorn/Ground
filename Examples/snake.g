@@ -13,10 +13,10 @@
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+#library soloud soloud_x64.dll
 #include snake_helper.g
-#include soloud.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;

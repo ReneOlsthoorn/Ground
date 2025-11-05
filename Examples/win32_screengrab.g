@@ -1,8 +1,10 @@
 
-#template consoleplus
+#template console
+
+#library user32 user32.dll
+#library gdi32 gdi32.dll
 #include msvcrt.g
-#include user32.g
-#include gdi32.g
+
 
 class Bitmap {			//sizeof: 32 bytes
     i32 bmType;
