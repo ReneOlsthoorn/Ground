@@ -339,12 +339,19 @@ pixels_p				dq 0
 
 scanf_int_result        dq 0
 scanf_int_read          db '%d',0
+align 8
 scanf_string_read       db '%s',0
+align 8
 sprintf_float_template  db '%.10f',0 
+align 8
 readalltext_openmode    db 'rb',0
+align 8
 bool_true_tostring      db 'true',0
+align 8
 bool_false_tostring     db 'false',0
+align 8
 carriage_return_bytes	db 13,10,0
+align 8
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
 
 align 8

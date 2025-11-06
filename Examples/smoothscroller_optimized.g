@@ -1,13 +1,16 @@
+
 // Precalculated colorcycling plasma with a smoothscroller. Optimized version.
+// https://lodev.org/cgtutor/plasma.html
+
 #template retrovm
-//https://lodev.org/cgtutor/plasma.html
 
 #include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
-#include user32.g
-#include sidelib.g
+#library user32 user32.dll
+#library sidelib GroundSideLibrary.dll
+
 
 ptr processHandle = kernel32.GetCurrentProcess();
 int oldPriorityClass = kernel32.GetPriorityClass(processHandle);

@@ -8,7 +8,7 @@
 #define BORDERSIZE_VERTICAL 50
 #define NR_PLAYERS 2
 #define NR_TREES 10
-#define FULL_BULLET_SPEED 3.0
+#define FULL_BULLET_SPEED 4.0
 #define COWBOY_WIDTH 8
 #define COWBOY_HEIGHT 16
 #define COWBOY_FRAMES COWBOY_HEIGHT*16
@@ -89,16 +89,17 @@ function NewDuel() {
 		player[1].score = player[1].score + 1;
 	if (player[1].died)
 		player[0].score = player[0].score + 1;
-	player[0].died = false;
-	player[1].died = false;
 
 	bool scoredEnough = (player[0].score >= WIN_SCORE or player[1].score >= WIN_SCORE);
 	bool scoreDifferenceEnough = (msvcrt.abs(player[0].score - player[1].score) >= 1);
 
-	if (scoredEnough and scoreDifferenceEnough) {
+	if (scoredEnough and scoreDifferenceEnough and !player[0].died) {
 		gameStatus = "game over";
 		return;
 	}
+	player[0].died = false;
+	player[1].died = false;
+
 
 	ai.Init();
 	ai.timeOut = 60;
@@ -158,7 +159,7 @@ function PrintIntroScreen() {
 	writeText(renderer, 120.0, 110.0, "Your 1980 Videopac G7000 was ridiculed by your enemy.");
 	writeText(renderer, 140.0, 130.0, " You meet him at High Noon to settle the case.");
 	writeText(renderer, 140.0, 150.0, "   First player to reach a score of 10 wins.");
-	writeText(renderer, 140.0, 170.0, "       On a draw, the match continues.");
+	writeText(renderer, 140.0, 170.0, "    On a draw or death, the match continues.");
 	writeText(renderer, 140.0, 210.0, "           Press [space] to start.");
 }
 

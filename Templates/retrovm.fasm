@@ -732,21 +732,20 @@ _f_PlotSheetSprite:
   retn  G_STACKSPACE_5_PARAM
 
 
+
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
-          user32, 'user32.dll', \
-          msvcrt, 'msvcrt.dll', \
 		  sdl3, 'SDL3.dll', \
 		  sdl3_image, 'SDL3_image.dll', \
-		  sidelib, 'GroundSideLibrary.dll', \
-		  soloud, 'soloud_x64.dll' 
+;GC_INSERTIONPOINT_LIBRARIES
+          msvcrt, 'msvcrt.dll'
+
 
   include '..\..\..\Include\kernel32_api.inc'
-  include '..\..\..\Include\user32_api.inc'
-  include '..\..\..\Include\msvcrt_api.inc'
   include '..\..\..\Include\sdl3_api.inc'
-  include '..\..\..\Include\sidelib_api.inc'
-  include '..\..\..\Include\soloud_api.inc'
+  include '..\..\..\Include\msvcrt_api.inc'
+;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
+
 
 
 section '.data' data readable writeable
@@ -784,17 +783,28 @@ LockObject64            dq 0
 
 scanf_int_result        dq 0
 scanf_int_read          db '%d',0
+align 8
 scanf_string_read       db '%s',0
+align 8
 sprintf_float_template  db '%.10f',0 
+align 8
 readalltext_openmode    db 'rb',0
+align 8
 bool_true_tostring      db 'true',0
+align 8
 bool_false_tostring     db 'false',0
 
+align 8
 carriage_return_bytes	db 13,10,0
+align 8
 leak_message			db 13,10,'*** memoryleak! ***',0
+align 8
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
+align 8
 memchecker_message		db 13,10,'Variable memory used (bytes): ',0
+align 8
 indexchecker_message	db 13,10,'Index memory max: %d of total %d elements.',0
+align 8
 refchecker_message		db 13,10,'Reference memory max: %d of total %d elements.',0
 
 align 8
