@@ -67,6 +67,7 @@ dll sdl3 function SDL_sin(float value) : float;
 
 dll sdl3 function SDL_RenderFillRect(ptr renderer, ptr rect);
 dll sdl3 function SDL_RenderReadPixels(ptr renderer, ptr rect) : ptr;  // result = SDL_Surface*
+dll sdl3 function SDL_RenderLine(ptr renderer, f32 x1, f32 y1, f32 x2, f32 y2) : bool;
 
 dll sdl3_image function IMG_Load(string filename) : ptr;  // result = SDL_Surface*
 
