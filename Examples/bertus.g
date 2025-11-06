@@ -385,7 +385,7 @@ while (StatusRunning)
 		}
 	}
 
-	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
+	sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 

@@ -1,9 +1,7 @@
 
 #template sdl3
 
-
-// DEFINES
-
+//   DEFINES
 #define GRID_COLUMNS 8
 #define GRID_ROWS 8
 #define NR_PIECES 32
@@ -14,9 +12,7 @@
 #define READBUFFERSIZE 32000
 #define LOADFILEBUFFERSIZE 20000
 
-
-// GENERIC INCLUDES
-
+//   GENERIC INCLUDES
 #include graphics_defines960x560.g
 #include msvcrt.g
 #include sdl3.g
@@ -25,15 +21,11 @@
 #library sidelib GroundSideLibrary.dll
 #library comdlg32 comdlg32.dll
 
-
-// SETTINGS
-
+//   SETTINGS
 bool isPlayingWhite = true;
 bool modeELO_1 = false;		// false: stockfish will beat you.  true: maybe you have a chance.
 
-
-// GENERIC GLOBAL VARIABLES
-
+//   GENERIC VARIABLES
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 bool StatusRunning = true;
 int frameCount = 0;
@@ -41,9 +33,7 @@ string gameStatus = "game running";
 bool thread2Busy = true;
 MouseState mouseState;
 
-
-// CREATING A WINDOW
-
+//   CREATING A WINDOW
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Chess", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
@@ -51,9 +41,7 @@ sdl3.SDL_SetRenderVSync(renderer, 1);
 
 #include chess_piece.g
 
-
-// SPECIFIC GLOBAL VARIABLES
-
+//   SPECIFIC VARIABLES
 byte* movesList = msvcrt.calloc(1, MOVES_STORAGE * BYTES_PER_MOVE);
 byte* movesListNeedle = movesList;
 bool isWaitingForUser = false;
@@ -65,7 +53,6 @@ Piece endSelection;
 #include chess_texture.g
 #include chess_helper.g
 #include chess_thread2.g
-
 
 function Init() {
 	selector.visible = false;
@@ -82,9 +69,7 @@ function RestartGame() {
 }
 RestartGame();
 
-
-// MAINLOOP
-
+//   MAINLOOP
 bool moveSelectionLeftAllowed = true;
 while (StatusRunning)
 {

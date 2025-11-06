@@ -110,8 +110,14 @@ With the special ```#template``` directive, the programmer can choose a generati
 directory Templates for the console.fasm template. Use the ```sdl3``` template for SDL3 applications without console window.
 A lot of functions are shared between the console.fasm and sdl3.fasm templates.
 
+### include a library
+With the ```#library``` directive, you can include a library. For instance ```#library user32 user32.dll``` does 3 things:
+1. include user32.g into your sourcecode at that location.
+2. insert the user32.dll into the loadtime DLL list of the template.
+3. insert the user32_api.inc into the template.
+
 ### include a file
-With the ```#include``` directive, you can include DLL definitions or other code into your sourcefile.
+With the ```#include``` directive, you can insert a textfile into your sourcefile.
 
 ### Only 64-bit
 The ```AMD Opteron``` in 2003 was the first x86 processor to get 64-bit extensions. Although ```AMD``` was much smaller than ```Intel```,
@@ -189,9 +195,8 @@ done with existing C libraries. The ```GroundSideLibrary``` is a .DLL which cont
 interface for it.
 
 ### State of Ground : Alpha
-The Ground language is Alpha, so bugs and changes are plenty. Do not use the language if you look for a stable language.
-Ground is created to facilitate the production of compact high performance code.  
-Ground will always be Alpha!
+The Ground language is Alpha, so do not use the language if you look for a stable language.
+Ground is created to facilitate the production of compact high performance code. Ground will always be Alpha!
 
 ### Write your own language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
@@ -292,7 +297,7 @@ first part of a comparison is a substraction. When the result is zero, the value
 however, this substraction is skipped and a byte-for-byte string comparison is done.
 
 ### More details on code generation:
-```RAX/XMM0``` is used to exchange the value the store or to read. ```RDX``` helps in that process.  
+```RAX/XMM0``` is used to exchange the value to store or to read. ```RDX``` helps in that process.  
 Most functions start with ```push rbp``` followed by ```mov rbp, rsp```. This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at ```[rbp]```.
 
@@ -316,15 +321,15 @@ Fortunately, a clear winner was arising: The ```Microsoft DOS/Windows``` platfor
 At the same time ```DOOM 2``` released, a tremendous hit for gamers. Again, everyone wanted it.  
 The PC platform had cheap hardware, so everybody joined. This resulted in total MARKET DOMINATION.  
 In 1994, I bought an ```ESCOM 486DX2 66 MHz``` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
-PC's later, the platform is still a good choice. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
-We are truly blessed with this platform for over 30 years. This must be said!  
+PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
+We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
   
 At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
 it to the cloud or uses it for AI. Microsoft wants to make Windows a sensory device for an AI companion and forces users to give 
 up privacy. I strongly disagree with this route, because it should be made optional.  
 Use a third-party tool as such as "O&O ShutUp10++" to disable Copilot and Recall. However, with each new update, the settings 
-can be turned on again. The whole situation is a shame, because Windows has such a great history. At this moment, I will not 
-migrate to Linux yet because I owe so much to the Windows platform.  
+can be turned on again. The whole situation is a shame, because Windows has such a great history. Like many users, I don't want
+to battle my OS. For the moment, I will not migrate yet to Linux because I owe so much to the Windows platform.  
 
 ### Smoothscroller
 <p align="center">

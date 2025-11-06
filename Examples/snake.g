@@ -1,13 +1,18 @@
 
-#template sdl3
-
 //https://www.codewithfaraz.com/c/94/how-to-create-snake-game-in-c-programming-step-by-step-guide
+
+#template sdl3
 
 #define GRID_ELEMENTS_X 40
 #define GRID_ELEMENTS_Y 23
 #define GRID_ELEMENT_PIXELS 24
 #define GRID_ELEMENT_PIXELS_KERN 22
 #define GRID_POSY_OFFSET 4
+#define KEYSTROKE_LEFT 1
+#define KEYSTROKE_RIGHT 2
+#define KEYSTROKE_UP 3
+#define KEYSTROKE_DOWN 4
+#define MAX_KSTACK 4
 
 #include graphics_defines960x560.g
 #include msvcrt.g
@@ -16,7 +21,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
-#include snake_helper.g
+
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
@@ -35,6 +40,14 @@ u32[6] fgColorList = [ 0xff7D7D7C, 0xffffff00, 0xffffffff, 0xffff00ff, 0xff00fff
 u32[6] bgColorList = [ 0xffBBBBBB, 0xffffff00, 0xffbbbbbb, 0xffff00ff, 0xffFEE92D, 0xffffffff ];
 int[6] keyboardStack = [ ] asm;
 int keyboardStackNeedle = 0;
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
+int loopStartTicks = 0;
+int debugBestTicks = 0xffff;
+int screenpitch = SCREEN_LINESIZE;
+u32 seedRandom = 5;
+
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -46,6 +59,30 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
+
+
+function writeText(ptr renderer, float x, float y, string text) {
+	f32 scale = 3.0;
+	sdl3.SDL_SetRenderScale(renderer, scale, scale);
+	f32 theX = x;
+	f32 theY = y;
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
+}
+
+function msys_frand(u32* seed) : int
+{
+	seed[0] = seed[0] * 0x343FD + 0x269EC3;
+	u32 a = (seed[0] >> 16) & 32767;
+	return a;
+}
+
+function ScreenPointerForXY(int x, int y) : ptr {	
+	ptr result = g.[pixels_p] + ((y*SCREEN_WIDTH)+x)*SCREEN_PIXELSIZE;
+	return result;
+}
 
 ptr soloudObject = soloud.Soloud_create();
 int soloudResult = soloud.Soloud_init(soloudObject);
@@ -186,17 +223,16 @@ function CheckChangeDirection() {
 	if (keyboardStackNeedle == 0) { return; }
 
 	int gewensteRichting = keyboardStack[0];
-	if (gewensteRichting == 1)  { if not (dx == 1 and dy == 0) { dx = -1; dy = 0; } }
-	if (gewensteRichting == 2)  { if not (dx == -1 and dy == 0) { dx = 1; dy = 0; } }
-	if (gewensteRichting == 3)  { if not (dy == 1 and dx == 0) { dy = -1; dx = 0; } }
-	if (gewensteRichting == 4)  { if not (dy == -1 and dx == 0) { dy = 1; dx = 0; } }
+	if (gewensteRichting == KEYSTROKE_LEFT)  { if not (dx == 1 and dy == 0) { dx = -1; dy = 0; } }
+	if (gewensteRichting == KEYSTROKE_RIGHT) { if not (dx == -1 and dy == 0) { dx = 1; dy = 0; } }
+	if (gewensteRichting == KEYSTROKE_UP)    { if not (dy == 1 and dx == 0) { dy = -1; dx = 0; } }
+	if (gewensteRichting == KEYSTROKE_DOWN)  { if not (dy == -1 and dx == 0) { dy = 1; dx = 0; } }
 
 	for (i in 1..keyboardStackNeedle) {
 		keyboardStack[i-1] = keyboardStack[i];
 	}
 	keyboardStackNeedle = keyboardStackNeedle - 1;
 }
-
 
 
 function MoveSnake() {
@@ -222,17 +258,6 @@ function MoveSnake() {
 }
 
 
-function RestartGame() {
-	gameStatus = "game running";
-	waitCount = 10;
-	dx = 1;
-	dy = 0;
-	snakeLength = 3;
-	for (i in 0..< snakeLength) { snakeX[i] = 5-i; snakeY[i] = 10; }
-	UpdateBoard();
-	GenerateFood();
-}
-
 function IntroScreenInformation() {
 	writeText(renderer, 60.0, 50.0, "Feed the Snake 100 meals!");
 	writeText(renderer, 60.0, 70.0, "Use cursor keys to steer.");
@@ -255,8 +280,21 @@ function GameFinishedInformation() {
 }
 
 
+function RestartGame() {
+	gameStatus = "game running";
+	waitCount = 10;
+	dx = 1;
+	dy = 0;
+	snakeLength = 3;
+	for (i in 0..< snakeLength) { snakeX[i] = 5-i; snakeY[i] = 10; }
+	UpdateBoard();
+	GenerateFood();
+}
 RestartGame();
 gameStatus = "intro screen";
+
+
+//   MAINLOOP
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
@@ -264,10 +302,10 @@ while (StatusRunning)
 			StatusRunning = false;
 
 		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
-			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = 3; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { keyboardStack[keyboardStackNeedle] = 4; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyboardStack[keyboardStackNeedle] = KEYSTROKE_LEFT;	if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyboardStack[keyboardStackNeedle] = KEYSTROKE_RIGHT;	if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = KEYSTROKE_UP;	if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_DOWN)  { keyboardStack[keyboardStackNeedle] = KEYSTROKE_DOWN;	if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_SPACE) { 
 				if (gameStatus != "game running") { 
 					if (gameStatus == "intro screen") { 
@@ -282,7 +320,7 @@ while (StatusRunning)
 		}
 	}
 
-	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
+	sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 

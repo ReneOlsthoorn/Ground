@@ -148,7 +148,7 @@ namespace GroundCompiler
             // Replace a literal divide and multiple with a power of two literal with bitshifting.
             foreach (Binary binaryExpr in rootNode.FindAllNodes(typeof(Binary)).ToList())
             {
-                if (binaryExpr.Operator.Lexeme == "/" && binaryExpr.RightNode is Literal divideliteralExpr) {
+                if ((binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Integer) || binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Pointer))  && binaryExpr.Operator.Lexeme == "/" && binaryExpr.RightNode is Literal divideliteralExpr) {
                     if (divideliteralExpr.ExprType.Contains(Datatype.TypeEnum.Integer))
                     {
                         Int64 theLiteralValue = (Int64)divideliteralExpr.Value!;
@@ -161,7 +161,7 @@ namespace GroundCompiler
                         }
                     }
                 }
-                if (binaryExpr.Operator.Lexeme == "*" && binaryExpr.RightNode is Literal multiplyLiteralExpr)
+                if ((binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Integer) || binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Pointer)) && binaryExpr.Operator.Lexeme == "*" && binaryExpr.RightNode is Literal multiplyLiteralExpr)
                 {
                     if (multiplyLiteralExpr.ExprType.Contains(Datatype.TypeEnum.Integer))
                     {

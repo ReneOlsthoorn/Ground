@@ -6,6 +6,11 @@
 #define GRID_ELEMENT_PIXELS 24
 #define GRID_ELEMENT_PIXELS_KERN 22
 #define GRID_POSY_OFFSET 52
+#define KEYSTROKE_LEFT 1
+#define KEYSTROKE_RIGHT 2
+#define KEYSTROKE_UP 3
+#define KEYSTROKE_SPACE 4
+#define MAX_KSTACK 4
 
 #include graphics_defines960x560.g
 #include msvcrt.g
@@ -15,35 +20,32 @@
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
 
-class Point {
-	int x;
-	int y;
-}
-Point[4] activeFigure = [];  //active figure on screen with 4 points.
-Point[4] oldFigure = [];     //backup copy of figureActive when performing rotation, etc...
-int oldFigureHorizontal;
 
+//   The x,y of every point of every puzzle figure. The first 4 are the initial shape, the others are the rotated variants.
 int[32,7] figures = [
-    4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2, // O
-    3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3,  3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3, // I
-    3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2,  3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2, // Z
-    4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0,  4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0, // S
-	3,1, 4,1, 5,1, 3,2,  4,0, 4,1, 3,0, 4,2,  5,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,2, // L
-	3,1, 4,1, 5,1, 5,2,  4,0, 4,1, 3,2, 4,2,  3,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,0, // J
-	3,1, 4,1, 5,1, 4,2,  4,0, 3,1, 4,1, 4,2,  4,0, 3,1, 4,1, 5,1,  4,0, 4,1, 5,1, 4,2  // T
+    4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  4,1, 5,1, 4,2, 5,2,  // O
+    3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3,  3,1, 4,1, 5,1, 6,1,  4,0, 4,1, 4,2, 4,3,  // I
+    3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2,  3,1, 4,1, 4,2, 5,2,  4,0, 4,1, 3,1, 3,2,  // Z
+    4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0,  4,1, 5,1, 3,2, 4,2,  4,1, 4,2, 3,1, 3,0,  // S
+	3,1, 4,1, 5,1, 3,2,  4,0, 4,1, 3,0, 4,2,  5,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,2,  // L
+	3,1, 4,1, 5,1, 5,2,  4,0, 4,1, 3,2, 4,2,  3,0, 3,1, 4,1, 5,1,  4,0, 4,1, 4,2, 5,0,  // J
+	3,1, 4,1, 5,1, 4,2,  4,0, 3,1, 4,1, 4,2,  4,0, 3,1, 4,1, 5,1,  4,0, 4,1, 5,1, 4,2   // T
 ] asm;
 
-u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+//   Colors of the figures.
+u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
+u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
+
+
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
-int waitCount = 30;				//integer which determines at which modulo of frameCount a game 'tick will occur.
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 string gameStatus = "intro screen";    // "intro screen", "game running", "game over", "game finished"
 bool StatusRunning = true;
 int frameCount = 0;
+int waitCount = 30;			//after how many frames a game 'tick' will occur.
 int framesWaited = 0;
 int framesKeyRepeat = 0;
 bool downPressedForThisPiece = false;
-u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
-u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
 int[6] keyboardStack = [ ] asm;
 int keyboardStackNeedle = 0;
 bool keyHitThisFrame = false;
@@ -64,8 +66,14 @@ int gameTimeFrameStart;
 int secondsGameTime;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-int pitch = SCREEN_LINESIZE;
+int screenpitch = SCREEN_LINESIZE;
 int RandomSeed = 123123;    //msvcrt.time64(&RandomSeed);
+class Point {
+	int x;
+	int y;
+}
+Point[4] activeFigure = [];	//active figure on screen with 4 points.
+Point[4] oldFigure = [];	//backup copy of figureActive when performing rotation, etc...
 
 
 ptr thread1Handle = kernel32.GetCurrentThread();
@@ -99,7 +107,7 @@ soloud.Sfxr_setVolume(sfxrObject, theVolume);
 soloud.Sfxr_setVolume(dropObject, theVolume);
 theVolume = 0.5;
 soloud.Sfxr_setVolume(sfxrSelectObject, theVolume);
-//soloud.Sfxr_setLooping(sfxrObject, 0);   // 1 = true, 0 = false
+soloud.Sfxr_setLooping(sfxrObject, false);
 
 function playSound() { soloud.Soloud_play(soloudObject, sfxrObject); }
 function playDrop() { soloud.Soloud_play(soloudObject, dropObject); }
@@ -221,10 +229,10 @@ function CheckChangeDirection() {
 	if (keyboardStackNeedle == 0) { return; }
 
 	int gewensteRichting = keyboardStack[0];
-	if (gewensteRichting == 1)  { dx = -1; }
-	if (gewensteRichting == 2)  { dx = 1; }
-	if (gewensteRichting == 3)  { rotateDelta = 1; playTurn(); }
-	if (gewensteRichting == 4)  { rotateDelta = 1; playTurn(); }
+	if (gewensteRichting == KEYSTROKE_LEFT)	 { dx = -1; }
+	if (gewensteRichting == KEYSTROKE_RIGHT) { dx = 1; }
+	if (gewensteRichting == KEYSTROKE_UP)    { rotateDelta = 1; playTurn(); }
+	if (gewensteRichting == KEYSTROKE_SPACE) { rotateDelta = 1; playTurn(); }
 
 	for (i in 1..keyboardStackNeedle) {
 		keyboardStack[i-1] = keyboardStack[i];
@@ -247,7 +255,7 @@ function GenerateNewPiece() {
 	}
 }
 
-
+int oldFigureHorizontal;
 function CopyActiveToOld() {
 	for (i in 0 ..< 4) {
 		oldFigure[i].x = activeFigure[i].x;
@@ -255,7 +263,6 @@ function CopyActiveToOld() {
 	}
 	oldFigureHorizontal = activeFigureHorizontal;
 }
-
 function CopyOldToActive() {
 	for (i in 0 ..< 4) {
 		activeFigure[i].x = oldFigure[i].x;
@@ -355,16 +362,6 @@ function MovePiece() {
 }
 
 
-function RestartGame() {
-	gameStatus = "game running";
-	waitCount = 30;
-	ClearBoard();
-	GenerateNewPiece();
-	linesDoneCounter = 0;
-	gameTimeFrameStart = frameCount;
-}
-
-
 function IntroScreenInformation() {
 	writeText(renderer, 60.0, 70.0, ("  Try to fully fill " + linesToComplete));
 	writeText(renderer, 60.0, 80.0, "    horizontal lines.");
@@ -394,8 +391,18 @@ function GameRunningInformation() {
 }
 
 
+function RestartGame() {
+	gameStatus = "game running";
+	waitCount = 30;
+	ClearBoard();
+	GenerateNewPiece();
+	linesDoneCounter = 0;
+	gameTimeFrameStart = frameCount;
+}
 RestartGame();
 gameStatus = "intro screen";
+
+//   MAINLOOP
 while (StatusRunning)
 {
 	u8* keyState = sdl3.SDL_GetKeyboardState(null);
@@ -405,9 +412,9 @@ while (StatusRunning)
 			StatusRunning = false;
 
 		if (*eventType == g.SDL_EVENT_KEY_DOWN && *eventRepeat == 0) {
-			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = 3; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_LEFT)  { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = KEYSTROKE_LEFT; if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_RIGHT) { keyHitThisFrame = true; keyboardStack[keyboardStackNeedle] = KEYSTROKE_RIGHT; if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (*eventScancode == g.SDL_SCANCODE_UP)    { keyboardStack[keyboardStackNeedle] = KEYSTROKE_UP; if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
 			if (*eventScancode == g.SDL_SCANCODE_SPACE) { 
 				if (gameStatus != "game running") { 
 					if (gameStatus == "intro screen")
@@ -415,8 +422,8 @@ while (StatusRunning)
 					else
 						RestartGame();
 				} else {
-					keyboardStack[keyboardStackNeedle] = 4;
-					if (keyboardStackNeedle < 4)
+					keyboardStack[keyboardStackNeedle] = KEYSTROKE_SPACE;
+					if (keyboardStackNeedle < MAX_KSTACK)
 						keyboardStackNeedle++;
 				}
 			}
@@ -438,13 +445,13 @@ while (StatusRunning)
 			if (keyState[g.SDL_SCANCODE_DOWN] and !keyState[g.SDL_SCANCODE_LEFT] and !keyState[g.SDL_SCANCODE_RIGHT] and downPressedForThisPiece) {
 				waitCount = 3;
 			}
-			if (keyState[g.SDL_SCANCODE_LEFT]) { keyboardStack[keyboardStackNeedle] = 1; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
-			if (keyState[g.SDL_SCANCODE_RIGHT]) { keyboardStack[keyboardStackNeedle] = 2; if (keyboardStackNeedle < 4) { keyboardStackNeedle++; } }
+			if (keyState[g.SDL_SCANCODE_LEFT]) { keyboardStack[keyboardStackNeedle] = KEYSTROKE_LEFT; if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
+			if (keyState[g.SDL_SCANCODE_RIGHT]) { keyboardStack[keyboardStackNeedle] = KEYSTROKE_RIGHT; if (keyboardStackNeedle < MAX_KSTACK) { keyboardStackNeedle++; } }
 		}
 		keyHitThisFrame = false;
 	}
 
-	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
+	sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 

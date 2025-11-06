@@ -14,7 +14,7 @@ u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 u8* eventRepeat = &event[SDL3_KEYBOARDEVENT_REPEAT_U8];
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
-int pitch = SCREEN_LINESIZE;
+int screenpitch = SCREEN_LINESIZE;
 
 function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
