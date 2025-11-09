@@ -405,7 +405,7 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 
 ### Memory
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="400" /><br/>
 Can you beat 7 levels of the classic memory game?</p>
 
 
