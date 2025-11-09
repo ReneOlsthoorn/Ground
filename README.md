@@ -403,6 +403,11 @@ Default set to ELO 1, so you must be able to win...</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_High_Noon.jpg?raw=true" width="500" /><br/>
 A proper shootout at High Noon in Videopac G7000 retro style.</p>
 
+### Memory
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="500" /><br/>
+Can you beat 7 levels of the classic memory game?</p>
+
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
@@ -418,4 +423,5 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  
 2025.09.29: Chess added.  
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
-2025.10.28: High Noon game added.
+2025.10.28: High Noon game added.  
+2025.11.09: Memory game added.
