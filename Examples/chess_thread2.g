@@ -14,9 +14,13 @@ WaitForChangeRestart:
 		isWaitingForUser = true;
 		kernel32.Sleep(100);
 	}
+	bool freezeWasCommanded = FreezeThread2;
 	while (FreezeThread2) {
 		Thread2Frozen = true;
 		kernel32.Sleep(100);
+	}
+
+	if (freezeWasCommanded) {
 asm {
 	jmp WaitForChangeRestart
 }
@@ -28,6 +32,7 @@ asm {
 			MovePiece(movesListNeedle-8);
 	}
 }
+
 
 
 function AddComputerMove() : bool {

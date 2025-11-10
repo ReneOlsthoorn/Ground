@@ -156,11 +156,15 @@ function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
+int writeBytePtrTextColor = 0;
 function writeBytePtrText(ptr renderer, float x, float y, byte* text) {
 	sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, x+1.0, y+1.0, text);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
+	if (writeBytePtrTextColor == 0)
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
+	if (writeBytePtrTextColor == 1)
+		sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0xff, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
@@ -214,18 +218,28 @@ function PrintMoves() {
 	if (NrMoves() == 0)
 		return;
 
+	if (stepNeedle != null)
+		writeBytePtrTextColor = 1;
+
 	float blackOffset = 80.0;
 	string movesTxt = "White";
 	writeBytePtrText(renderer, 4.0, 20.0, &movesTxt);
 	movesTxt = "Black";
 	writeBytePtrText(renderer, 4.0 + blackOffset, 20.0, &movesTxt);
 
+	if (stepNeedle != null)
+		writeBytePtrTextColor = 0;
+
+
 	float yPos = 30.0;
 	float xPos = 4.0;
 	ptr movesNeedle = movesList;
 	int counter = 0;
 	while (movesNeedle < movesListNeedle) {
+		if (stepNeedle != null and (movesNeedle == stepNeedle - BYTES_PER_MOVE))
+			writeBytePtrTextColor = 1;
 		writeBytePtrText(renderer, xPos, yPos, movesNeedle);
+		writeBytePtrTextColor = 0;
 		if (counter % 2 == 1) {
 			xPos = xPos - 80.0;
 			yPos = yPos + 10.0;
@@ -316,6 +330,22 @@ function ReplayLoadedMoves() {
 }
 
 
+function ReplayTillStepNeedle() {
+	bool mustFreeze = !Thread2Frozen;
+	if (mustFreeze)
+		MakeThread2Freeze();
+	SetStartPosition();
+	SetPiecesTextures();
+	ptr movesNeedle = movesList;
+	while (movesNeedle < stepNeedle) {
+		MovePiece(movesNeedle);
+		movesNeedle = movesNeedle + BYTES_PER_MOVE;
+	}
+	if (mustFreeze)
+		FreezeThread2 = false;
+}
+
+
 function SaveTmpGame() {
 	int gameFile = msvcrt.fopen("chessgame.bin", "wb");
 	int gameFileSize = movesListNeedle - movesList;
@@ -353,6 +383,8 @@ function SelectAndLoadFile() {
 	bool isFileSelected = comdlg32.GetOpenFileNameA(ofn);
 	if not (isFileSelected)
 		return;
+
+	stepNeedle = null;
 
 	ptr gameFile = msvcrt.fopen(szFile, "rb");
 	if (gameFile == 0)

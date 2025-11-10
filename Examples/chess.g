@@ -44,6 +44,7 @@ sdl3.SDL_SetRenderVSync(renderer, 1);
 //   SPECIFIC VARIABLES
 byte* movesList = msvcrt.calloc(1, MOVES_STORAGE * BYTES_PER_MOVE);
 byte* movesListNeedle = movesList;
+byte* stepNeedle = movesList;
 bool isWaitingForUser = false;
 Piece[NR_PIECES] pieces = [ ];
 Piece selector;			// Not a real piece. It is the selection when you go over a field with the mouse.
@@ -54,10 +55,50 @@ Piece endSelection;
 #include chess_helper.g
 #include chess_thread2.g
 
+
+function GoHome() {
+	MakeThread2Freeze();
+	stepNeedle = movesList;
+	ReplayTillStepNeedle();
+	FreezeThread2 = false;
+}
+
+function GoBackward() {
+	if (stepNeedle == null)
+		return;
+	MakeThread2Freeze();
+	if (stepNeedle > movesList)
+		stepNeedle = stepNeedle - BYTES_PER_MOVE;
+	ReplayTillStepNeedle();
+	FreezeThread2 = false;
+}
+
+function GoForward() {
+	if (stepNeedle == null)
+		return;
+	MakeThread2Freeze();
+	if (stepNeedle < movesListNeedle)
+		stepNeedle = stepNeedle + BYTES_PER_MOVE;
+	ReplayTillStepNeedle();
+	FreezeThread2 = false;
+}
+
+function EnterTheLocation() {
+	if (stepNeedle == null)
+		return;
+	MakeThread2Freeze();
+	movesListNeedle = stepNeedle;
+	isPlayingWhite = (NrMoves() % 2) == 0;
+	ReplayLoadedMoves();
+	FreezeThread2 = false;
+	stepNeedle = null;
+}
+
 function Init() {
 	selector.visible = false;
 	startSelection.visible = false;
 	isWaitingForUser = false;
+	stepNeedle = null;
 }
 
 function RestartGame() {
@@ -88,6 +129,24 @@ while (StatusRunning)
 						RestartGame();
 					}
 				}
+			}
+			if (*eventScancode == g.SDL_SCANCODE_HOME) {
+				GoHome();
+			}
+			if (*eventScancode == g.SDL_SCANCODE_UP) {
+				GoBackward();
+			}
+			if (*eventScancode == g.SDL_SCANCODE_LEFT) {
+				GoBackward();
+			}
+			if (*eventScancode == g.SDL_SCANCODE_RIGHT) {
+				GoForward();
+			}
+			if (*eventScancode == g.SDL_SCANCODE_DOWN) {
+				GoForward();
+			}
+			if (*eventScancode == g.SDL_SCANCODE_RETURN) {
+				EnterTheLocation();
 			}
 		}
 	}
