@@ -101,14 +101,8 @@ namespace GroundCompiler
                 if (symbol.Name == "GC_ScreenFont")
                     emitter.LoadSystemVarsVariable("font256_p");
 
-                if (symbol.Name == "GC_Screen_TextRows")
-                    emitter.LoadAssemblyConstant("GC_Screen_TextRows");
-
                 if (symbol.Name == "GC_CurrentExeDir")
                     emitter.LoadAssemblyVariable("currentExeDir");
-
-                if (symbol.Name == "GC_Screen_TextColumns")
-                    emitter.LoadAssemblyConstant("GC_Screen_TextColumns");
             }
             else if (symbol is GroupSymbol groupSymbol)
                 Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");

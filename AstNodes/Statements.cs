@@ -61,6 +61,15 @@ namespace GroundCompiler.Statements
             group.Scope.DefineHardcodedFunction("input_int");
             group.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
 
+            fn = group.Scope.DefineHardcodedFunction("strlen", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+
+            fn = group.Scope.DefineHardcodedFunction("cstr_len", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+
+            fn = group.Scope.DefineHardcodedFunction("cstr_linelen", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+
             fn = group.Scope.DefineHardcodedFunction("ReadAllText", Datatype.GetDatatype("string"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
             fn.FunctionStmt.Parent = group;
@@ -105,10 +114,7 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
 
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
-            this.Scope.DefineHardcodedFunction("GC_WaitVBL");
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
-            this.Scope.DefineHardcodedVariable("GC_Screen_TextRows", Datatype.GetDatatype("int"));
-            this.Scope.DefineHardcodedVariable("GC_Screen_TextColumns", Datatype.GetDatatype("int"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
             this.Scope.DefineHardcodedFunction("countof", Datatype.GetDatatype("int"));

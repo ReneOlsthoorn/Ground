@@ -368,6 +368,28 @@ function LoadTmpGameFile() {
 }
 
 
+function AddToGameTitle(string content) {
+	int strLen = gc.strlen(content);
+	for (i in 0..< strLen) {
+		*gameTitleNeedle = content[i];
+		gameTitleNeedle++;
+	}
+}
+
+function AddValueToGameTitle(string keyStr) {
+	byte* result = msvcrt.strstr(loadFileBuffer, &keyStr);
+
+	if (result != 0) {
+		result = result + gc.strlen(keyStr);
+		int strLen = gc.cstr_linelen(result);
+		for (i in 0..< strLen) {
+			*gameTitleNeedle = result[i];
+			gameTitleNeedle++;
+		}
+	}
+}
+
+
 function SelectAndLoadFile() {
 	zero(ofn);
 	zero(szFile, MAX_PATH);
@@ -394,6 +416,18 @@ function SelectAndLoadFile() {
 	msvcrt.fseek64(gameFile, 0, g.msvcrt_SEEK_SET);
 	msvcrt.fread(loadFileBuffer, gameSize, 1, gameFile);
 	msvcrt.fclose(gameFile);
+
+	gameTitleNeedle = gameTitle;
+	AddToGameTitle("Chess - ");
+	AddValueToGameTitle("// Date:   ");
+	AddToGameTitle(" - White: ");
+	AddValueToGameTitle("// White:  ");
+	AddToGameTitle(" - Black: ");
+	AddValueToGameTitle("// Black:  ");
+	AddToGameTitle(" - ");
+	AddValueToGameTitle("// Result: ");
+	*gameTitleNeedle = 0;
+	sdl3.SDL_SetWindowTitle(window, gameTitle);
 
 	byte* theBytes = loadFileBuffer;
 	bool skipEntireLine = false;

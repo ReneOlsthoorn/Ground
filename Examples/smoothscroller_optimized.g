@@ -91,12 +91,12 @@ byte[61,36] screenArray = g.[screentext1_p];
 byte[61,36] colorsArray = g.[font32_charcolor_p];
 
 function fillLine(int y, int charValue) {
-    for (int x = 0; x < GC_Screen_TextColumns; x++) {
+    for (int x = 0; x < g.GC_Screen_TextColumns; x++) {
         screenArray[x,y] = charValue;
     }
 }
 // fill the screen with the special "bg_image" character (0xff)
-for (int y = 0; y < GC_Screen_TextRows; y++) {
+for (int y = 0; y < g.GC_Screen_TextRows; y++) {
     if not (y >= whichLineToScroll-1 and y <= whichLineToScroll+1) {
         fillLine(y, 0xff);
     }

@@ -34,6 +34,63 @@ _f_input_string:
   pop   rbp
   ret   G_STACKSPACE_0_PARAM
 
+  
+_f_strlen:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  call  GetMemoryPointerFromIndex
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_cstr_len:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_cstr_linelen:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  cmp	dl, 0x0a
+  je	.done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
 
 _f_println:
   push  rbp

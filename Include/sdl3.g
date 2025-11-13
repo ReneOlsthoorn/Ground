@@ -53,6 +53,7 @@ dll sdl3 function SDL_SetTextureScaleMode(ptr texture, int scalemode);
 dll sdl3 function SDL_SetTextureAlphaMod(ptr texture, int alpha);
 dll sdl3 function SDL_memcpy(ptr dst, ptr src, int len) : ptr;
 dll sdl3 function SDL_ConvertSurface(ptr surface, int format) : ptr;
+dll sdl3 function SDL_SetWindowTitle(ptr window, ptr title) : bool;
 
 dll sdl3 function SDL_srand(int seed);
 dll sdl3 function SDL_rand(i32 n) : i32;
@@ -92,11 +93,18 @@ class MouseState {
 	f32 y_f32;
 	int x;
 	int y;
+	bool OldLeftPressed;
+	bool LeftWasClicked;
     function GetMouseState() {
 		u32 mouseState = sdl3.SDL_GetMouseState(&this.x_f32, &this.y_f32);
 		this.LeftPressed = mouseState & g.SDL_BUTTON_LMASK;
 		this.RightPressed = mouseState & g.SDL_BUTTON_RMASK;
 		this.x = this.x_f32;
 		this.y = this.y_f32;
+		if (this.OldLeftPressed && !this.LeftPressed)
+			this.LeftWasClicked = true;
+		else
+			this.LeftWasClicked = false;
+		this.OldLeftPressed = this.LeftPressed;
     }
 }

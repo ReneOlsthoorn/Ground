@@ -325,7 +325,7 @@ function SetLevel(int theLevel) : bool {
 	else if (level == 3)
 		Game(4,3,8);	// 12 pictures = 6 turns all revealed. Plus 2.
 	else if (level == 4)
-		Game(4,4,12);	// 16 pictures = 8 turns all revealed. Plus 5.
+		Game(4,4,13);	// 16 pictures = 8 turns all revealed. Plus 6.
 	else if (level == 5)
 		Game(5,4,20);	// 20 pictures = 10 turns all revealed. Plus 10.
 	else if (level == 6)
@@ -366,6 +366,8 @@ while (StatusRunning)
 
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 	mouseState.GetMouseState();
+	if ((gameStatus != "game running") and mouseState.LeftWasClicked)
+		gameStatus = "game running";
 
 	for (i in 0..< nrTiles) {
 		if not (items[i].visible)

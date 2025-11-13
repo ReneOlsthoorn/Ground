@@ -145,8 +145,7 @@ namespace GroundCompiler
                     if (functionCall.Parent != null)
                         toReplace.Add(new NodeReplace(functionCall.Parent!, functionCall, theResultLiteral));
 
-                } else if (functionVar.Name.Lexeme.ToLower() == "countof")
-                {
+                } else if (functionVar.Name.Lexeme.ToLower() == "countof") {
                     Int64 theSizeOf = -1;
                     Int64 theElementSize = -1;
 

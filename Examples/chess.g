@@ -50,6 +50,8 @@ Piece[NR_PIECES] pieces = [ ];
 Piece selector;			// Not a real piece. It is the selection when you go over a field with the mouse.
 Piece startSelection;
 Piece endSelection;
+byte[256] gameTitle = [ ] asm;
+byte* gameTitleNeedle = gameTitle;
 
 #include chess_texture.g
 #include chess_helper.g
@@ -99,6 +101,10 @@ function Init() {
 	startSelection.visible = false;
 	isWaitingForUser = false;
 	stepNeedle = null;
+	gameTitleNeedle = gameTitle;
+	AddToGameTitle("Chess");
+	*gameTitleNeedle = 0;
+	sdl3.SDL_SetWindowTitle(window, gameTitle);
 }
 
 function RestartGame() {
@@ -218,6 +224,7 @@ while (StatusRunning)
 
 	buttonLoadTmp.Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
 	if (buttonLoadTmp.IsClicked()) {
+		RestartGame();
 		MakeThread2Freeze();
 		LoadTmpGameFile();
 		FreezeThread2 = false;
