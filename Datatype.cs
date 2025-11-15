@@ -116,7 +116,13 @@ namespace GroundCompiler
 
         public static bool IsCompatible(Datatype type1, Datatype type2)
         {
-            return ((type1.SizeInBytes == type2.SizeInBytes) && (type1.IsValueType && type2.IsValueType) && (type1.Contains(TypeEnum.Integer) && type2.Contains(TypeEnum.Integer)));
+            if (type1.Contains(TypeEnum.Integer) && type2.Contains(TypeEnum.Integer))
+                return true;
+            if (type1.Contains(TypeEnum.FloatingPoint) && type2.Contains(TypeEnum.FloatingPoint) && (type1.SizeInBytes == type2.SizeInBytes))
+                return true;
+            if (type1.Name == "string" && type2.Name == "string")
+                return true;
+            return false;
         }
 
         public static void AddClass(ClassStatement classStatement)

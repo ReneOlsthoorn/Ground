@@ -463,7 +463,12 @@ namespace GroundCompiler.Expressions
 
         public override void Initialize()
         {
-            string? elementType = null;
+            Datatype? elementType = null;
+
+            //if (this.Parent is VarStatement varStmt)
+            //    if (varStmt.ResultType.Contains(Datatype.TypeEnum.Array))
+            //        elementType = varStmt.ResultType.Base;
+
             if (ElementsNodes != null)
             {
                 foreach (var element in ElementsNodes)
@@ -471,14 +476,16 @@ namespace GroundCompiler.Expressions
                     element.Parent = this;
                     element.Initialize();
                     if (elementType == null)
-                        elementType = element.ExprType.Name;
-                    else if (element.ExprType.Name != elementType && !Datatype.IsCompatible(Datatype.GetDatatype(elementType), Datatype.GetDatatype(element.ExprType.Name)))
+                        elementType = element.ExprType;
+                    else if (!Datatype.IsCompatible(elementType, element.ExprType))
                         Step6_Compiler.Error("All elements in a List must have the same type");
+                    else
+                        element.ExprType = elementType;
                 }
             }
 
             if (elementType != null)
-                this.ExprType = Datatype.GetDatatype($"{elementType}[]");
+                this.ExprType = Datatype.GetDatatype($"{elementType.Name}[]");
             else
                 this.ExprType = Datatype.GetDatatype($"i64[]");
         }

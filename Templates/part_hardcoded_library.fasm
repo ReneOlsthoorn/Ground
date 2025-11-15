@@ -92,6 +92,31 @@ _f_cstr_linelen:
   ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
 
 
+_f_cstr_convert:
+  push  rbp
+  mov   rbp, rsp
+  push  rsi rdi rcx r8 r9
+
+  mov   rax, qword [rbp+G_PARAMETER2]
+  mov   r8, rax
+  mov	rax, 1			; include the ending zero.
+  mov   rcx, rax
+  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
+
+  mov	rsi, qword [rbp+G_PARAMETER1]
+  mov   r9, rcx
+  mov	rdi, rax
+  mov	rcx, r8
+  rep	movsb			; copy string 1
+  mov	byte [rdi], 0
+  mov   rax, r9
+
+  pop   r9 r8 rcx rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
+
+
 _f_println:
   push  rbp
   mov   rbp, rsp

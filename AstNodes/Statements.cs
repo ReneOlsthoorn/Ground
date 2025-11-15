@@ -67,6 +67,10 @@ namespace GroundCompiler.Statements
             fn = group.Scope.DefineHardcodedFunction("cstr_len", Datatype.GetDatatype("int"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
 
+            fn = group.Scope.DefineHardcodedFunction("cstr_convert", Datatype.GetDatatype("string"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("len", Datatype.GetDatatype("int")));
+
             fn = group.Scope.DefineHardcodedFunction("cstr_linelen", Datatype.GetDatatype("int"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
 

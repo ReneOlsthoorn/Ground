@@ -300,8 +300,9 @@ namespace GroundCompiler
             token.Lexeme = "";
             if (s.Length > 0)
             {
-                token.Value = s[0];
-                token.Lexeme = s[0].ToString();
+                int theValue = (int)s[0];
+                token.Value = theValue;
+                token.Lexeme = theValue.ToString();
             }
             NextChar();
         }
