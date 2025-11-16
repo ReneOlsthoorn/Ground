@@ -1,8 +1,7 @@
 # Ground
 
 This is the compiler for the programming language Ground for Windows. Ground allows mixing high-level programming 
-constructs with x86-64 assembly. As a programmer you will stay in contact with your x86-64 CPU, so you can write 
-fast code.  
+constructs with x86-64 assembly. As a programmer you will stay in contact with your x86-64 CPU.  
 In Ground, assembly can be added anywhere and has constructs like classes (supporting instance variables and methods), 
 functions, groups of functions, compact for-loops, statements like ```while``` and ```if```, arrays and datatypes 
 like ```string``` and ```float```, etc...  
