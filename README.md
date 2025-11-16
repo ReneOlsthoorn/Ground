@@ -1,15 +1,14 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows. It allows mixing high-level programming 
+This is the compiler for the programming language Ground for Windows. It allows for mixing high-level programming 
 constructs with x86-64. The programmer will stay in contact with the CPU because assembly can be added anywhere.  
 Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like ```while``` and ```if```, arrays and datatypes like ```string``` 
 and ```float```, etc...  
 See file ```.\Examples\unittests.g``` on how to use the language.  
   
-Mixing Ground and assembly is possible by using the generated symbolic constants.  
-The compiler itself is created in C# and generates x86-64 assembly which is assembled with the freely available
-FASM for Windows.  
+Mixing Ground and assembly is possible by using generated symbolic constants. The compiler itself is written 
+in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
 The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
 files when the template is chosen wisely. For instance, there is a ```console``` template, but also a ```sdl3``` 
 template which loads the ```SDL3.dll``` and ```SDL3_image.dll```. Ofcourse you can create your own template.  
