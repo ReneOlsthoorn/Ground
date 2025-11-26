@@ -423,4 +423,5 @@ Can you beat 7 levels of the classic memory game?</p>
 2025.09.29: Chess added.  
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
 2025.10.28: High Noon game added.  
-2025.11.09: Memory game added.
+2025.11.09: Memory game added.  
+2025.11.26: Every game has Soundtracker music now. Thanks to MikMod and MSYS2.

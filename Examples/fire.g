@@ -9,6 +9,7 @@
 #include kernel32.g
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
+#library mikmod libmikmod-3.dll
 
 #define nrPaletteElements 256
 
@@ -144,9 +145,33 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is s
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/monday - random voice.mod", 127);
+
+function writeText(ptr renderer, float x, float y, string text) {
+	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, x, y, text);
+}
+function writeBytePtrText(ptr renderer, float x, float y, byte* text) {
+	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0xef, 0xef, 0xef, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, x, y, text);
+}
+
+function PrintSongInfo() {
+	return;
+	writeBytePtrText(renderer, 10.0, 10.0, *mikmodModule.songname);
+	writeText(renderer, 10.0, 20.0, "Pattern position: " + *mikmodModule.patpos);
+	writeText(renderer, 10.0, 30.0, "Song position: " + *mikmodModule.sngpos);
+	writeText(renderer, 10.0, 40.0, "Number of patterns in song: " + *mikmodModule.numpat);
+	writeText(renderer, 10.0, 50.0, "Number of positions in song: " + *mikmodModule.numpos);
+}
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
+	
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -218,6 +243,9 @@ asm {
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
+
+	PrintSongInfo();
+
 	sdl3.SDL_RenderPresent(renderer);
 
 	frameCount++;
@@ -232,9 +260,12 @@ msvcrt.free(coolPixels);
 msvcrt.free(fireBufferOld);
 msvcrt.free(fireBufferNew);
 sidelib.FreeImage(g.[logo_p]);
+SoundtrackerFree();
 
 //string showStr = "Best innerloop time: " + debugBestTicks + "ms";
 //user32.MessageBox(null, showStr, "Message", g.MB_OK);
+
+
 
 asm procedures {
 ASM_Fire:

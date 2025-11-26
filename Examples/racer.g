@@ -4,6 +4,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 
 #define MAX_PLAYER_SPEED 18.0
 #define MAX_PLAYER_SPEED_ON_CLIP 2.0
@@ -358,10 +359,12 @@ function PrintDebugInformation() {
 		writeText(renderer, 10.0, 24.0, "Hit!");
 }
 
-
+#include soundtracker.g
+SoundtrackerInit("sound/mod/bbc shake the world.mod", 127);
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	f32 snelheid = (speed / 10.0) + 1.0;
 	soloud.Soloud_setRelativePlaySpeed(soloudObject, handle_enginesound, snelheid);    // Play a bit slower; 1.0f is normal
 
@@ -452,6 +455,7 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
+SoundtrackerFree();
 
 soloud.Wav_destroy(wavObject);
 soloud.Soloud_deinit(soloudObject);

@@ -8,6 +8,7 @@
 #include kernel32.g
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
+#library mikmod libmikmod-3.dll
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -73,6 +74,7 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
+int spaceCount = 0;
 int frameCount = 0;
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[128] event = [];
@@ -156,26 +158,27 @@ function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
-function PreSunFase1() {
-	if (frameCount > 500 and frameCount < 800)
-		writeText(renderer, 125.0, 174.0, "         Flying through Space is a Bliss       ");
-}
-function PreSunFase2() {
-	if (frameCount > 1800 and frameCount < 2100)
-		writeText(renderer, 125.0, 174.0, "              You feel the Eternity            ");
-}
-function PreSunFase3() {
-	if (frameCount > 3200 and frameCount < 3240)
-		writeText(renderer, 125.0, 174.0, "                       Ai..                    ");
-
-	if (frameCount > 3340)
-		StatusRunning = false;
+function SpaceWrite(int frameTime, string skyWrite) {
+	if (frameCount > frameTime and frameCount < (frameTime+480))
+		writeText(renderer, 125.0, 174.0, skyWrite);
 }
 
 function RenderTexts() {
-	PreSunFase1();
-	PreSunFase2();
-	PreSunFase3();
+	//writeText(renderer, 10.0, 10.0, spaceCount);
+	SpaceWrite(433,  "         Flying through Space is a Bliss       ");
+	SpaceWrite(1380, "              You feel the Eternity            ");
+	SpaceWrite(2308, "         You feel the curved Space and Time    ");
+	SpaceWrite(3227, "          When you fly by Mass and Energy      ");
+	SpaceWrite(4606, "               Come Taste the Stars            ");
+	SpaceWrite(6450, "              Everywhere is your Home          ");
+	SpaceWrite(7371, "              Master Of The Universe           ");
+	SpaceWrite(8290, "       You go deeper and deeper in the Abyss   ");
+	SpaceWrite(10136," Who can defy you? You are Small but Powerful! ");
+	SpaceWrite(11746,"              The Stars are your Fuel          ");
+	SpaceWrite(13700,"                        Ai...                  ");
+
+	if (frameCount > 14200)
+		StatusRunning = false;
 }
 
 function Thread2() {
@@ -190,15 +193,22 @@ function Thread2() {
 ptr thread2Handle = GC_CreateThread(Thread2);
 kernel32.SetThreadPriority(thread2Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/stardust memory.mod", 127);
+
 //frameCount = 3*888;  // speed up seeing the sun.
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[0])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
-		if (*eventType == g.SDL_EVENT_KEY_DOWN)
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
+			if (*eventScancode == g.SDL_SCANCODE_SPACE)
+				spaceCount = frameCount;
+		}
 	}
 
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
@@ -229,7 +239,7 @@ while (StatusRunning)
 	if (!gotoSun) {
 		if (offsetCounter >= 888) {
 			offsetCounter = offsetCounter - 888;
-			if (frameCount >= 2700)
+			if (frameCount >= 13400)
 				gotoSun = true;
 		}
 	} else {
@@ -245,6 +255,7 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
+SoundtrackerFree();
 
 msvcrt.free(precalcValues);
 sidelib.FreeImage(g.[texture_p]);

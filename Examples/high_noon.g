@@ -12,7 +12,7 @@
 #define COWBOY_WIDTH 8
 #define COWBOY_HEIGHT 16
 #define COWBOY_FRAMES COWBOY_HEIGHT*16
-#define WIN_SCORE 10
+#define WIN_SCORE 5
 
 
 // GENERIC INCLUDES
@@ -24,6 +24,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 
 
 // GENERIC GLOBAL VARIABLES
@@ -92,8 +93,10 @@ function NewDuel() {
 
 	bool scoredEnough = (player[0].score >= WIN_SCORE or player[1].score >= WIN_SCORE);
 	bool scoreDifferenceEnough = (msvcrt.abs(player[0].score - player[1].score) >= 1);
+	bool humanPlayerWon = scoredEnough and scoreDifferenceEnough and (player[0].score > player[1].score) and !player[0].died;
+	bool computerWon = scoredEnough and scoreDifferenceEnough and (player[1].score > player[0].score) and !player[1].died;
 
-	if (scoredEnough and scoreDifferenceEnough and !player[0].died) {
+	if (humanPlayerWon or computerWon) {
 		gameStatus = "game over";
 		return;
 	}
@@ -117,6 +120,8 @@ function NewDuel() {
 }
 
 function RestartGame() {
+	player[0].died = false;
+	player[1].died = false;
 	gameStatus = "game running";
 	ai.Init();
 	player[0].score = 0;
@@ -158,16 +163,19 @@ function PrintGameOver() {
 function PrintIntroScreen() {
 	writeText(renderer, 120.0, 110.0, "Your 1980 Videopac G7000 was ridiculed by your enemy.");
 	writeText(renderer, 140.0, 130.0, " You meet him at High Noon to settle the case.");
-	writeText(renderer, 140.0, 150.0, "   First player to reach a score of 10 wins.");
+	writeText(renderer, 140.0, 150.0, "   First player to reach a score of " + WIN_SCORE + " wins.");
 	writeText(renderer, 140.0, 170.0, "    On a draw or death, the match continues.");
 	writeText(renderer, 140.0, 210.0, "           Press [space] to start.");
 }
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/tip - joyride.mod", 50);
 
 // MAINLOOP
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -373,7 +381,7 @@ soloud.Sfxr_destroy(dropObject);
 soloud.Sfxr_destroy(sfxrHurtObject);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
-
+SoundtrackerFree();
 sdl3.SDL_ShowCursor();
 FreeTextures();
 sdl3.SDL_DestroyTexture(bgTexture);

@@ -19,7 +19,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
-
+#library mikmod libmikmod-3.dll
 
 //   The x,y of every point of every puzzle figure. The first 4 are the initial shape, the others are the rotated variants.
 int[32,7] figures = [
@@ -402,9 +402,13 @@ function RestartGame() {
 RestartGame();
 gameStatus = "intro screen";
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/tip - princess of dawn.mod", 50);
+
 //   MAINLOOP
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	u8* keyState = sdl3.SDL_GetKeyboardState(null);
 
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
@@ -482,6 +486,7 @@ soloud.Sfxr_destroy(sfxrObject);
 soloud.Sfxr_destroy(dropObject);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
+SoundtrackerFree();
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

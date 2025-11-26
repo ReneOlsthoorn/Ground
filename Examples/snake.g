@@ -21,6 +21,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -293,10 +294,14 @@ function RestartGame() {
 RestartGame();
 gameStatus = "intro screen";
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/pyramide.mod", 30);
 
 //   MAINLOOP
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
+
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -350,6 +355,7 @@ while (StatusRunning)
 soloud.Sfxr_destroy(sfxrObject);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
+SoundtrackerFree();
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);

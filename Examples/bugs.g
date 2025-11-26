@@ -8,6 +8,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 
 #define NR_BUGS 5
 
@@ -141,7 +142,7 @@ gameStatus = "intro screen";
 
 int writeColor = 0;
 function writeText(ptr renderer, float x, float y, string text) {
-	sdl3.SDL_SetRenderScale(renderer, 3.0, 4.0);
+	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, x+0.5, y+0.5, text);
 	if (writeColor == 1)
@@ -155,26 +156,30 @@ function writeText(ptr renderer, float x, float y, string text) {
 
 function IntroScreenInformation() {
 	writeColor = 0;
-	writeText(renderer, 60.0, 40.0, "Make the bugs eat eachother.");
-	writeText(renderer, 10.0, 60.0, "Use Left Mousebutton to make them move.");
-	writeText(renderer, 80.0, 80.0, "Press [space] to start.");
+	writeText(renderer, 150.0, 120.0, "Make the bugs eat eachother.");
+	writeText(renderer, 100.0, 140.0, "Use Left Mousebutton to make them move.");
+	writeText(renderer, 170.0, 160.0, "Press [space] to start.");
 }
 
 function GameOverInformation() {
 	writeColor = 0;
-	writeText(renderer, 60.0, 40.0, "    *** Game over ***");
-	writeText(renderer, 60.0, 60.0, "      A Bug escaped!");
-	writeText(renderer, 60.0, 80.0, " Press [space] to restart.");
+	writeText(renderer, 150.0, 120.0, "    *** Game over ***");
+	writeText(renderer, 150.0, 140.0, "      A Bug escaped!");
+	writeText(renderer, 150.0, 160.0, " Press [space] to restart.");
 }
 
 function NextLevelInformation() {
 	writeColor = 2;
-	writeText(renderer, 60.0, 40.0, "      Level Completed!");
-	writeText(renderer, 60.0, 60.0, "   Next level coming up...");
+	writeText(renderer, 150.0, 120.0, "      Level Completed!");
+	writeText(renderer, 150.0, 140.0, "   Next level coming up...");
 }
+
+#include soundtracker.g
+SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 30);
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -253,10 +258,10 @@ while (StatusRunning)
 
 	if (warningNeeded) {
 		writeColor = 1;
-		writeText(renderer, 5.0, 5.0,   "Bug on Edge!               Bug on Edge!");
-		writeText(renderer, 5.0, 15.0,  "WARNING!                       WARNING!");
-		writeText(renderer, 5.0, 115.0, "WARNING!                       WARNING!");
-		writeText(renderer, 5.0, 125.0, "Bug on Edge!               Bug on Edge!");
+		writeText(renderer, 5.0, 5.0,   "Bug on Edge!                                   Bug on Edge!");
+		writeText(renderer, 5.0, 15.0,  "WARNING!                                           WARNING!");
+		writeText(renderer, 5.0, 255.0, "WARNING!                                           WARNING!");
+		writeText(renderer, 5.0, 265.0, "Bug on Edge!                                   Bug on Edge!");
 	}
 
 	if (gameStatus == "intro screen")
@@ -292,6 +297,7 @@ soloud.Sfxr_destroy(hurtSfxr);
 soloud.Sfxr_destroy(fallSfxr);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
+SoundtrackerFree();
 
 sdl3.SDL_DestroyTexture(bugTexture);
 sdl3.SDL_DestroyTexture(bug2Texture);

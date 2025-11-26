@@ -8,7 +8,8 @@
 #include kernel32.g
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
-#library chipmunk chipmunk.dll
+#library chipmunk libchipmunk.dll
+#define NR_BALLS 12
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -81,7 +82,7 @@ ptr[4] ballShapes = [];
 
 CpVect p5 = CpVect(0.0, 450.0);
 
-for (int b = 0 ; b < 12; b++) {
+for (int b = 0 ; b < NR_BALLS; b++) {
 	ballBodies[b] = chipmunk.cpSpaceAddBody(space, chipmunk.cpBodyNew(mass, moment));
 	p5.x = p5.x + 64;
 	p5.y = p5.y + 10;
@@ -114,7 +115,7 @@ while (StatusRunning)
 
 	chipmunk.cpSpaceStep(space, timeStep);
 
-	for (b = 0; b < 12; b++) {
+	for (b = 0; b < NR_BALLS; b++) {
 		chipmunk.cpBodyGetPosition(cpvectPos, ballBodies[b]);
 		chipmunk.cpBodyGetVelocity(cpvectVel, ballBodies[b]);
 		angle = chipmunk.cpBodyGetAngle(ballBodies[b]);

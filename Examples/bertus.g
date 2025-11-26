@@ -21,6 +21,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 #include bertus_helper.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -360,11 +361,16 @@ function GameIsOver() {
 	}
 }
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/mlp magic-78.mod", 30);
+mikmod.Player_SetPosition(1);
 
 // BEGIN Mainloop:
 GotoLevel();
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
+
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -423,6 +429,7 @@ sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
 sidelib.FreeImage(g.[spritesheet_p]);
+SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 

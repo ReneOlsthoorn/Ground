@@ -10,6 +10,7 @@
 #include kernel32.g
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
+#library mikmod libmikmod-3.dll
 
 
 ptr processHandle = kernel32.GetCurrentProcess();
@@ -233,9 +234,13 @@ function PlasmaCalculation() {
 	plasmaArrayIsCalculated = true;
 }
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/mlp desire n-tracker.mod", 127);
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
+
 	while (sdl3.SDL_PollEvent(&event[0])) {
 		if (*eventType == g.SDL_EVENT_QUIT) {
 			StatusRunning = false;
@@ -299,6 +304,7 @@ msvcrt.free(g.[screentext4_p]);
 msvcrt.free(g.[font32_charcolor_p]);
 msvcrt.free(g.[bg_image_p]);
 msvcrt.free(g.[plasma_p]);
+SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 kernel32.SetPriorityClass(processHandle, oldPriorityClass);

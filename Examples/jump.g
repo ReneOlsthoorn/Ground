@@ -4,6 +4,7 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
 
 #define BERTUS_WIDTH 24
 #define BERTUS_WIDTH_D2 12
@@ -204,12 +205,16 @@ function DrawBertus(int x, int y, ptr theUsedTexture, float rotation) {
 	sdl3.SDL_RenderTextureRotated(renderer, theUsedTexture, null, destRect, rotation, null, g.SDL_FLIP_NONE);
 }
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/mlp jeremias days today.mod", 30);
 
 RestartGame();
 gameStatus = "intro screen";
 
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
+
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -316,6 +321,7 @@ soloud.Sfxr_destroy(jumpSfxr);
 soloud.Sfxr_destroy(fallSfxr);
 soloud.Soloud_deinit(soloudObject);
 soloud.Soloud_destroy(soloudObject);
+SoundtrackerFree();
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(bertusTexture);
