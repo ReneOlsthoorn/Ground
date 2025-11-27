@@ -208,6 +208,8 @@ function initBall(int idx) {
 
 function GotoLevel() {
 	// SeedRandom = 123123;
+	if (level == 1)
+		score = 1000;
 	nrBlocksHit = 0;
 	bertus.reset();
 	for (i in 0 ..< nrEnemyBalls) { balls[i].reset(); }
@@ -324,14 +326,15 @@ function MoveElements() {
 function PrintTheScore() { writeText(renderer, 20.0, 30.0, "Score: " + score); }
 
 function LevelIsComplete() {
+	levelCompleteFramecount++;
 	if (level == 4) {
 		writeText(renderer, 60.0, 60.0, "All 4 levels completed!");
 		writeText(renderer, 100.0, 80.0, "Game finished!");
 		writeText(renderer, 100.0, 100.0, "Score is " + score);
+		writeText(renderer, 60.0, 130.0, "Press [space] to restart.");
 	}
 	else {
 		writeText(renderer, 100.0, 70.0, "Level " + level + " complete!");
-		levelCompleteFramecount++;
 		if (levelCompleteFramecount > 125) {
 			level++;
 			GotoLevel();
@@ -355,8 +358,6 @@ function GameIsOver() {
 	if (gameOverFramecount == 2)
 		playHurt();
 	if (gameOverFramecount > 125) {	
-		if (level == 1)
-			score = 1000;
 		GotoLevel();
 	}
 }
@@ -378,6 +379,10 @@ while (StatusRunning)
 		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
+			if (*eventScancode == g.SDL_SCANCODE_SPACE and levelCompleteFramecount > 0 and level == 4) {
+				level = 1;
+				GotoLevel();
+			}
 		}
 	}
 
