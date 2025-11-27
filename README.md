@@ -91,8 +91,7 @@ will get a folder called ```<GroundProjectFolder>\bin\Debug\net10.0``` in your s
 In that folder, you must unzip the ```<GroundProjectFolder>\Resources\GroundResources.zip```
 The zipfile contains additional DLL's, sounds and images. The sourcecode for the included GroundSideLibrary.dll is 
 available on github at: https://github.com/ReneOlsthoorn/GroundSideLibrary. The libchipmunk.dll is included because
-the default libchipmunk.dll from MSYS2 does not work. Only the version without symbols works. 
-So I compiled it with Mingw64 like this: ```cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" ..```  
+the default libchipmunk.dll from MSYS2 does not work. More info on that is in the remarks section.  
 After unzipping, you must go to your ```<GroundProjectFolder>\bin\Debug\net10.0``` folder and run the batchfile called 
 ```Load.bat``` to download and automatically unzip ```SDL3```, ```SDL3_image``` and other DLL's. 
 After this, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
@@ -165,6 +164,11 @@ In ```smoothscroller.g```, you see a lot of examples of mixing ground and assemb
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
 * Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
+* I had to build the libchipmunk.dll myself, because only the build without symbols works. 
+I checked out the sourcecode and created a directory called build. Into this directory I created the make files like this: 
+```cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON```  
+In the CMakeLists.txt, I included: ```target_link_options(chipmunk PRIVATE -static)``` as the last line, to prevent the libwinpthread loadtime 
+dependency. After that build the library with ```cmake --build .``` and the ```libchipmunk.dll``` is created in build\src.
 
 ### Optimizer
 Ground contains an optimizer (in ```Optimizer.cs```), which will replace literals and removes unused variables. It will 
