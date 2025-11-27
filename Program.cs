@@ -8,7 +8,7 @@ namespace GroundCompiler
         required public string sourceFilename, sourceFullFilepath;
         string generatedCode = "";
         string currentDir = System.IO.Directory.GetCurrentDirectory();
-        bool runAfterCompilation = true;
+        static bool runAfterCompilation = true;
         bool generateDebugInfo = false;
 
         static void Main(string[] args)
@@ -21,14 +21,14 @@ namespace GroundCompiler
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Test\\{fileName}"));
-                fileName = fileName.Substring(0, fileName.Length - 2);
+                fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
             else
             {
+                runAfterCompilation = false;
                 fileName = args[0];
-                if (fileName.EndsWith(".g", StringComparison.InvariantCultureIgnoreCase))
-                    fileName = fileName.Substring(0, fileName.Length - 2);
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName + ".g"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName));
+                fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
             Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath };
