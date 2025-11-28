@@ -296,10 +296,12 @@ for (i in 0 ..< NR_BALLS)
 #include soundtracker.g
 SoundtrackerInit("sound/mod/mlp desire n-tracker.mod", 127);
 
+
 function IsBallUsable(int ballIndex) : bool {
 	chipmunk.cpBodyGetPosition(cpvectPos, ballBodies[ballIndex]);
 	return (cpvectPos.x < -20.0 or cpvectPos.x > 980.0);
 }
+
 
 while (StatusRunning)
 {
@@ -368,17 +370,19 @@ while (StatusRunning)
 				break;
 		}
 
-		int tmp = sdl3.SDL_rand_r(&RandomSeed, 100);
-		p.x = 980.0;
-		p.y = 400.0 + tmp;
-		chipmunk.cpBodySetPosition(ballBodies[ballToShoot], p);
+		if (usableCounter != NR_BALLS) {
+			int tmp = sdl3.SDL_rand_r(&RandomSeed, 100);
+			p.x = 980.0;
+			p.y = 400.0 + tmp;
+			chipmunk.cpBodySetPosition(ballBodies[ballToShoot], p);
 
-		int newSpeed = 0;
-		newSpeed = sdl3.SDL_rand_r(&RandomSeed, 500);
-		newSpeed = -300 - newSpeed;
-		p.x = newSpeed;
-		p.y = 0.0;
-		chipmunk.cpBodySetVelocity(ballBodies[ballToShoot], p);
+			int newSpeed = 0;
+			newSpeed = sdl3.SDL_rand_r(&RandomSeed, 500);
+			newSpeed = -200 - newSpeed;
+			p.x = newSpeed;
+			p.y = 0.0;
+			chipmunk.cpBodySetVelocity(ballBodies[ballToShoot], p);
+		}
     }
 
 	chipmunk.cpSpaceStep(space, timeStep);

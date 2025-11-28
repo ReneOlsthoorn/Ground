@@ -521,4 +521,19 @@ for (i in 1..5) {
 assert(j == 30);  // flow: j=10+10, j=20+10
 
 
+
+class CpVect {
+	float x;
+	float y;
+}
+CpVect cpvzero = CpVect(0.0, 0.0);
+CpVect cpvTest = CpVect(120.0, 40.0);
+
+function IsBallUsable() : bool {
+	return (cpvTest.x < -20.0 or cpvTest.x > 980.0);
+}
+assert(!IsBallUsable() == true);
+
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

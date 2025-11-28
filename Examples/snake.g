@@ -295,7 +295,7 @@ RestartGame();
 gameStatus = "intro screen";
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/pyramide.mod", 30);
+SoundtrackerInit("sound/mod/pyramide.mod", 64);
 
 //   MAINLOOP
 while (StatusRunning)
