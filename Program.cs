@@ -17,7 +17,7 @@ namespace GroundCompiler
             string fileName, fullPath;
             if (args.Length == 0)
             {
-                fileName = "sudoku.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  smoothscroller_optimized  mode7  mode7_optimized  chipmunk_tennis  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory
+                fileName = "sudoku.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
                     fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Test\\{fileName}"));

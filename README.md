@@ -346,11 +346,6 @@ Scrolling is always good.</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.jpg?raw=true" width="500" /><br/>
 Jump on the platforms. 3D starfield background.</p>
 
-### The Chipmunk Tennis example
-<p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chipmunk_tennis.jpg?raw=true" width="500" /><br/>
-Example which uses the Chipmunk Physics engine.</p>
-
 ### The Plasma example with no colorcycling
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>

@@ -113,15 +113,12 @@ function playSound() { soloud.Soloud_play(soloudObject, sfxrObject); }
 function playDrop() { soloud.Soloud_play(soloudObject, dropObject); }
 function playTurn() { soloud.Soloud_play(soloudObject, sfxrSelectObject); }
 
-function writeText(ptr renderer, float x, float y, string text) {
-	f32 scale = 3.0;
-	sdl3.SDL_SetRenderScale(renderer, scale, scale);
-	f32 theX = x;
-	f32 theY = y;
+function writeText(ptr renderer, f32 x, f32 y, string text) {
+	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, theX+2.0, theY, text);
+	sdl3.SDL_RenderDebugText(renderer, x+2.0, y, text);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, theX, theY, text);
+	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
 function ScreenPointerForXY(int x, int y) : ptr {	
@@ -363,31 +360,29 @@ function MovePiece() {
 
 
 function IntroScreenInformation() {
-	writeText(renderer, 60.0, 70.0, ("  Try to fully fill " + linesToComplete));
-	writeText(renderer, 60.0, 80.0, "    horizontal lines.");
-	writeText(renderer, 60.0, 110.0, " Press [space] to start.");
+	writeText(renderer, 140, 100, ("  Try to fully fill " + linesToComplete));
+	writeText(renderer, 140, 120, "    horizontal lines.");
+	writeText(renderer, 140, 160, " Press [space] to start.");
 }
 
 function GameOverInformation() {
-	writeText(renderer, 60.0, 50.0, "   *** Game over ***");
-	writeText(renderer, 60.0, 70.0, "  You needed " + linesToComplete + " lines.");
-	writeText(renderer, 60.0, 80.0, "  You have done " + linesDoneCounter + " lines.");
-	writeText(renderer, 60.0, 130.0, "Press [space] to restart");
+	writeText(renderer, 140, 100, "   *** Game over ***");
+	writeText(renderer, 140, 120, "  You needed " + linesToComplete + " lines.");
+	writeText(renderer, 140, 140, "  You have done " + linesDoneCounter + " lines.");
+	writeText(renderer, 140, 180, "Press [space] to restart");
 }
 
 function GameFinishedInformation() {
-	writeText(renderer, 70.0, 50.0, "***  Game Completed! ***");
-	writeText(renderer, 70.0, 70.0, "You solved " + linesToComplete + " lines");
-	writeText(renderer, 70.0, 80.0, "in " + secondsGameTime + " seconds!");
-	writeText(renderer, 70.0, 130.0, "Press [space] to restart.");
+	writeText(renderer, 140, 100, "***  Game Completed! ***");
+	writeText(renderer, 140, 120, "You solved " + linesToComplete + " lines");
+	writeText(renderer, 140, 140, "in " + secondsGameTime + " seconds!");
+	writeText(renderer, 140, 180, "Press [space] to restart.");
 }
 
 function GameRunningInformation() {
-	writeText(renderer, 5.0, 40.0, "Remaining");
-	writeText(renderer, 5.0, 50.0, "lines: " + (linesToComplete - linesDoneCounter));
-	writeText(renderer, 5.0, 70.0, "Time");
 	secondsGameTime = (frameCount - gameTimeFrameStart) / 60;
-	writeText(renderer, 5.0, 80.0, "elapsed: " + secondsGameTime);
+	writeText(renderer, 5, 100, "Time elapsed: " + secondsGameTime);
+	writeText(renderer, 5, 120, "Remaining lines: " + (linesToComplete - linesDoneCounter));
 }
 
 
@@ -403,7 +398,7 @@ RestartGame();
 gameStatus = "intro screen";
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/tip - princess of dawn.mod", 50);
+SoundtrackerInit("sound/mod/tip - princess of dawn.mod", 80);
 
 //   MAINLOOP
 while (StatusRunning)

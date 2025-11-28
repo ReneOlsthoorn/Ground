@@ -13,6 +13,11 @@ dll chipmunk function cpMomentForCircle(float mass, float innerRadius, float out
 dll chipmunk function cpSpaceAddBody(ptr space, ptr body);
 dll chipmunk function cpBodyNew(float m, float i);		// result: cpBody*
 dll chipmunk function cpBodySetPosition(ptr cpBody, ptr cpVectPosition);
+dll chipmunk function cpBodySetVelocity(ptr cpBody, ptr cpv);
+dll chipmunk function cpBodySleep(ptr cpBody);
+dll chipmunk function cpBodyIsSleeping(ptr cpBody);
+dll chipmunk function cpBodyGetUserData(ptr cpBody) : int;
+dll chipmunk function cpBodySetUserData(ptr cpBody, int data);
 
 dll chipmunk function cpCircleShapeNew(ptr cpBody, float radius, ptr cpVectOffset);		// result: cpShape*
 
@@ -25,3 +30,10 @@ dll chipmunk function cpShapeFree(ptr cpShape);
 dll chipmunk function cpBodyFree(ptr cpBody);
 
 dll chipmunk function cpSpaceFree(ptr cpSpace);
+
+
+class CpVect {
+	float x;
+	float y;
+}
+CpVect cpvzero = CpVect(0.0, 0.0);

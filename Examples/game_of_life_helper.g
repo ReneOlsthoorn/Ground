@@ -64,7 +64,8 @@ function DrawGridElement(int x, int y, byte shape) {
 		FillGridElementBody(p, fgColor, bgColor);
 		p = p + offsetToNextLine;
 	}
-	FillGridElementPixels(p, bgColor);
+	if (y != GRID_ELEMENTS_Y-1)
+	   FillGridElementPixels(p, bgColor);
 }
 
 

@@ -1,5 +1,5 @@
 
-// Precalculated colorcycling plasma with a smoothscroller.
+// Precalculated colorcycling plasma with a smoothscroller. Optimized version.
 // https://lodev.org/cgtutor/plasma.html
 
 #template retrovm
@@ -11,8 +11,13 @@
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
 #library mikmod libmikmod-3.dll
+#library chipmunk libchipmunk.dll
+#define NR_BALLS 40
 
 
+ptr processHandle = kernel32.GetCurrentProcess();
+int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
+kernel32.SetPriorityClass(processHandle, 0x80); //HIGH_PRIORITY_CLASS
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
@@ -32,7 +37,6 @@ int xscrollNeedle = 0;
 int scrollTextNeedle = 0;
 int whichLineToScroll = 16;
 string scrollText = "Smoothscroller written in Ground!                            You are very " + chr$(0x8f) + chr$(0x8f)+ " old " + chr$(0x8f) + chr$(0x8f) + " if you recognize the font.                   ";
-int frameCount = 0;
 bool StatusRunning = true;
 bool thread1Busy = false;
 bool thread2Busy = false;
@@ -52,7 +56,8 @@ u32[960,560] bg_image = g.[bg_image_p];
 asm data {plasma_p dq 0}
 g.[plasma_p] = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * SCREEN_PIXELSIZE);
 u32[960,560] plasma = g.[plasma_p];
-u32[256] palette = [];
+asm data {plasma_palette dd 256 dup(0)}
+u32[256] palette = g.plasma_palette;
 
 class ColorRGB {
     int red;
@@ -186,7 +191,22 @@ bool plasmaArrayIsCalculated = false;
 function PlasmaCalculation() {
 	for (int y = 0; y < SCREEN_HEIGHT; y++) {
 		for (int x = 0; x < SCREEN_WIDTH; x++) {
-			u32 pixelColor = plasma[x, y];
+			u32 pixelColor;
+
+			//pixelColor = plasma[x, y];
+			int xyBufferOffset;
+			asm {
+				mov	rax, [y@PlasmaCalculation]
+				mov	rdx, SCREEN_WIDTH*4
+				mul	rdx
+				mov r8, [x@PlasmaCalculation]
+				shl r8, 2
+				add	rax, r8
+				mov	[xyBufferOffset@PlasmaCalculation], rax
+				add	rax, [plasma_p]
+				mov	edx, dword [rax]
+				mov	[pixelColor@PlasmaCalculation], edx
+			}
 
 			if (plasmaArrayIsCalculated == false) {
 				pixelColor = (128.0 + (127.0 * msvcrt.sin(x / 32.0)) +
@@ -197,14 +217,89 @@ function PlasmaCalculation() {
 				plasma[x,y] = pixelColor;
 			}
 
-			bg_image[x, y] = palette[ (pixelColor + frameCount) % 256 ];
+			//bg_image[x, y] = palette[ (pixelColor + g.[frameCount]) % 256 ];
+			asm {
+				mov	edx, [pixelColor@PlasmaCalculation]
+				add rdx, [frameCount]
+
+				and rdx, 0xff
+				shl	rdx, 2
+				lea rax, [plasma_palette]
+				mov	eax, [rax+rdx]
+
+				mov rdx, [bg_image_p]
+				mov	rcx, [xyBufferOffset@PlasmaCalculation]
+				mov [rdx+rcx], eax
+			}
 		}
 	}
 	plasmaArrayIsCalculated = true;
 }
 
+int RandomSeed = 123123;
+sdl3.SDL_srand(RandomSeed);
+
+
+ptr ballSurface = sdl3_image.IMG_Load("image/3balls_32.png");
+if (ballSurface == null) return;
+ptr ballTexture = sdl3.SDL_CreateTextureFromSurface(renderer, ballSurface);
+if (ballTexture == null) return;
+sdl3.SDL_DestroySurface(ballSurface);
+
+ptr space = chipmunk.cpSpaceNew();
+chipmunk.cpSpaceSetGravity(space, CpVect(0.0, -300.0));
+
+ptr groundShape = chipmunk.cpSegmentShapeNew(chipmunk.cpSpaceGetStaticBody(space), CpVect(-1000.0, 332.0), CpVect(2000.0, 332.0), 4);
+chipmunk.cpShapeSetFriction(groundShape, 1);
+chipmunk.cpSpaceAddShape(space, groundShape);
+chipmunk.cpShapeSetElasticity(groundShape, 0.9);
+
+float ballRadius = 16.0;
+float ballMass = 1.0;
+float ballMoment = chipmunk.cpMomentForCircle(ballMass, 0.0, ballRadius, cpvzero);
+int ballToShoot = 0;
+
+ptr[NR_BALLS] ballBodies = [];
+ptr[NR_BALLS] ballShapes = [];
+
+CpVect p = CpVect(-50.0, 450.0);
+
+for (int b = 0 ; b < NR_BALLS; b++) {
+	ballBodies[b] = chipmunk.cpSpaceAddBody(space, chipmunk.cpBodyNew(ballMass, ballMoment));
+	p.x = p.x - 64;
+	chipmunk.cpBodySetPosition(ballBodies[b], p);
+	ballShapes[b] = chipmunk.cpSpaceAddShape(space, chipmunk.cpCircleShapeNew(ballBodies[b], ballRadius, cpvzero));
+	chipmunk.cpShapeSetFriction(ballShapes[b], 1);
+	chipmunk.cpShapeSetElasticity(ballShapes[b], 1);
+}
+float timeStep = 1.0 / 60.0;
+
+CpVect cpvectPos;
+CpVect cpvectVel;
+
+f32[4] ballSrcRectVoetbal = [0,0,32,32];
+f32[4] ballSrcRectTennisbal = [0,32,32,32];
+f32[4] ballSrcRectKogel = [0,64,32,32];
+f32[4] ballDestRect = [0,0,32,32];
+ptr ballSrc = &ballSrcRectKogel;
+
+for (i in 0 ..< NR_BALLS)
+{
+	if (i % 3 == 0)
+		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectVoetbal);
+	if (i % 3 == 1)
+		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectTennisbal);
+	if (i % 3 == 2)
+		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectKogel);
+}
+
 #include soundtracker.g
 SoundtrackerInit("sound/mod/mlp desire n-tracker.mod", 127);
+
+function IsBallUsable(int ballIndex) : bool {
+	chipmunk.cpBodyGetPosition(cpvectPos, ballBodies[ballIndex]);
+	return (cpvectPos.x < -20.0 or cpvectPos.x > 980.0);
+}
 
 while (StatusRunning)
 {
@@ -236,10 +331,10 @@ while (StatusRunning)
             screenArray[g.GC_Screen_TextColumns-1, whichLineToScroll] = scrollText[scrollTextNeedle++];
             if (scrollText[scrollTextNeedle] == 0) {
                 scrollTextNeedle = 0;
-				println("The Retro VM actually draws\r\nthe entire screen every frame,\r\nlike the legendary VIC-2 Chip\r\nfrom the Commodore 64.\r\n\r\nThe Retro VM has a textbuffer\r\nthat is able to scroll,\r\nand also to smoothscroll.\r\nIt also has Copper look-a-like functionality,\r\ninspired by the Amiga 500.\r\n");
+				//println("The Retro VM actually draws\r\nthe entire screen every frame,\r\nlike the legendary VIC-2 Chip\r\nfrom the Commodore 64.\r\n\r\nThe Retro VM has a textbuffer\r\nthat is able to scroll,\r\nand also to smoothscroll.\r\nIt also has Copper look-a-like functionality,\r\ninspired by the Amiga 500.\r\n");
             }
         }
-        if (frameCount % 3 == 0) {
+        if (g.[frameCount] % 3 == 0) {
             RotateChar(0x8f);
         }
 
@@ -256,14 +351,62 @@ while (StatusRunning)
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
+
+
+    if (g.[frameCount] % 10 == 0) {
+		ballToShoot++;
+		if (ballToShoot == NR_BALLS)
+			ballToShoot = 0;
+			
+		int usableCounter = 0;
+		while (!IsBallUsable(ballToShoot)) {
+			ballToShoot++;
+			if (ballToShoot == NR_BALLS)
+				ballToShoot = 0;
+			usableCounter++;
+			if (usableCounter == NR_BALLS)
+				break;
+		}
+
+		int tmp = sdl3.SDL_rand_r(&RandomSeed, 100);
+		p.x = 980.0;
+		p.y = 400.0 + tmp;
+		chipmunk.cpBodySetPosition(ballBodies[ballToShoot], p);
+
+		int newSpeed = 0;
+		newSpeed = sdl3.SDL_rand_r(&RandomSeed, 500);
+		newSpeed = -300 - newSpeed;
+		p.x = newSpeed;
+		p.y = 0.0;
+		chipmunk.cpBodySetVelocity(ballBodies[ballToShoot], p);
+    }
+
+	chipmunk.cpSpaceStep(space, timeStep);
+
+	for (b = 0; b < NR_BALLS; b++) {
+		ptr ballBody = ballBodies[b];
+		chipmunk.cpBodyGetPosition(cpvectPos, ballBody);
+		chipmunk.cpBodyGetVelocity(cpvectVel, ballBody);
+		float angle = chipmunk.cpBodyGetAngle(ballBody);
+
+		ballDestRect[0] = cpvectPos.x;
+		ballDestRect[1] = SCREEN_HEIGHT - cpvectPos.y;
+		float theAngle = angle * (180.0 / MATH_PI);
+		ballSrc = chipmunk.cpBodyGetUserData(ballBody);
+		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrc, &ballDestRect, -theAngle, null, g.SDL_FLIP_NONE);
+	}
+
 	sdl3.SDL_RenderPresent(renderer);
 
-	frameCount++;
+	asm { inc [frameCount] }
 }
+
+chipmunk.cpSpaceFree(space);
 
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
+sdl3.SDL_DestroyTexture(ballTexture);
 sdl3.SDL_Quit();
 
 msvcrt.free(g.[font32_p]);
@@ -276,6 +419,7 @@ msvcrt.free(g.[plasma_p]);
 SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
+kernel32.SetPriorityClass(processHandle, oldPriorityClass);
 
 //string showStr = "Best innerloop time: " + debugBestTicks + "ms";
 //user32.MessageBox(null, showStr, "Message", g.MB_OK);

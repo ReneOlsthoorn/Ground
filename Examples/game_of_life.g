@@ -6,18 +6,19 @@
 
 #template sdl3
 
-#define GRID_ELEMENTS_X 120
-#define GRID_ELEMENTS_Y 70
+#define GRID_ELEMENTS_X 160
+#define GRID_ELEMENTS_Y 90
 #define GRID_ELEMENT_PIXELS 8
 #define GRID_ELEMENT_PIXELS_KERN 7
 #define GRID_POSY_OFFSET 0
 
-#include graphics_defines960x560.g
+#include graphics_defines1280x720.g
 #include msvcrt.g
 #include sdl3.g
 #include kernel32.g
 #library user32 user32.dll
 #library sidelib GroundSideLibrary.dll
+#library mikmod libmikmod-3.dll
 
 bool optimizedExecution = true;
 
@@ -192,13 +193,13 @@ function ShowNextFigure() {
 		figureShow = 1;
 
 	if (figureShow == 1) {
-		PlaceSuhajda104P177(35,12);
+		PlaceSuhajda104P177(55,18);
 	}
 	if (figureShow == 2) {
-		PlaceShip1(105,3);
+		PlaceShip1(135,3);
 		Place119P4H1V0(5,10);
-		PlaceShip5(80,40);
-		PlaceShip2(20,40);
+		PlaceShip5(130,55);
+		PlaceShip2(20,55);
 	}
 	if (figureShow == 3) {
 	    PlaceAchimsp16(15, 16);
@@ -236,10 +237,13 @@ function PrintInformation() {
 	writeText(renderer, 10.0, 14.0, "Press [space] for next.");
 }
 
+#include soundtracker.g
+SoundtrackerInit("sound/mod/musiklinjen.mod", 50);
 
 ShowNextFigure();
 while (StatusRunning)
 {
+	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -277,5 +281,6 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
+SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
