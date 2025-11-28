@@ -339,7 +339,7 @@ to battle my OS. For the moment, I will not migrate yet to Linux because I owe s
 ### Smoothscroller
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Smoothscroller.jpg?raw=true" width="500" /><br/>
-Scrolling is always good.</p>
+Scrolling is always good. It does the bouncing objects with the Chipmunk Physics engine.</p>
 
 ### Jump
 <p align="center">
@@ -349,12 +349,12 @@ Jump on the platforms. 3D starfield background.</p>
 ### The Plasma example with no colorcycling
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
-Smoother than an Amiga 500 plasma.</p>
+Smoother than an Amiga 500 Copper plasma.</p>
 
 ### The Fire example
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" /><br/>
-Early PC effect.</p>
+The retro PC demo effect.</p>
 
 ### The Bertus game
 <p align="center">
@@ -396,7 +396,7 @@ Read the instructions in the connect4.g sourcecode.</p>
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
 Play Chess locally against StockFish!<br/>
-Default set to ELO 1, so you must be able to win...</p>
+Set it to ELO 1 in the sourcecode or prepare to be beaten.</p>
 
 ### High Noon shootout
 <p align="center">
@@ -406,7 +406,7 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 ### Memory
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="400" /><br/>
-Can you beat 7 levels of the classic memory game?</p>
+Can you beat 7 levels of classic memory?</p>
 
 ### Ground Gallery
 You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 2.8mb zipfile</a> which contains most of the .exe files.
@@ -417,14 +417,14 @@ You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 
 2025.04.15: Bertus game added.  
 2025.06.06: Asm arrays added (see snake.g)  
 2025.06.10: Game Of Life added.  
-2025.06.20: Optimizer extended. It will replace literals now, and remove unused variables.  
+2025.06.20: Optimizer extended. It will replace literals now and remove unused variables.  
 2025.07.14: Added Tetrus game.  
 2025.08.23: Added Racer game.  
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  
-2025.09.29: Chess added.  
+2025.09.29: Chess added using StockFish.  
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
 2025.10.28: High Noon game added.  
 2025.11.09: Memory game added.  
-2025.11.26: Every game has Soundtracker music now. Thanks to MikMod and MSYS2.
+2025.11.26: Most games have Soundtracker music now. Thanks to MikMod and MSYS2.
