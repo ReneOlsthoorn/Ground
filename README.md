@@ -1,13 +1,13 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows. It allows for mixing high-level programming 
-constructs with x86-64. The programmer will stay in contact with the CPU because assembly can be added anywhere.  
+This is the compiler for the programming language Ground for Windows. It allows mixing high-level programming 
+constructs with x86-64. The programmer stays in control of the CPU because assembly can be added anywhere.  
 Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
 compact for-loops, statements like `while` and `if`, arrays and datatypes like `string` and `float`, etc...  
 See file `.\Examples\unittests.g` on how to use the language.  
   
-Mixing Ground and assembly is possible by using the generated symbolic constants. The compiler itself is written 
-in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
+Ground variables can be referred to in x64 by using the generated symbolic constants. The compiler itself is 
+written in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
 The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
 files when the template is chosen wisely. For instance, there is a `console` template, but also a `sdl3` 
 template which loads the `SDL3.dll` and `SDL3_image.dll`. Ofcourse you can create your own template.  
@@ -59,15 +59,15 @@ and `_fltused`. The default stacksize is 4k on a system with more than 8 Gb memo
 1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
 inserted assembly makes optimization too hard for the compiler.
 1. Highlevel constructs like classes are not available and moving to C++ is a mistake. Good luck with C++'s 
-`reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder why the copy-constructor is not 
+`reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the copy-constructor is not 
 called when the compiler is doing `Return value optimization`.
 1. The Visual Studio C datatypes `int` and `float` are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
 
-Ground tries to leave all the Visual C/C++ problems behind and close the gap between compact highlevel 
+Ground tries to leave all these Visual C/C++ problems behind and close the gap between compact highlevel 
 constructs and assembly. Typical usage of x86-64 is in innerloops. See `.\Examples\mode7_optimized.g` for 
 an example of innerloop optimization.
 
-Ground has a reference count system, so garbage collection is automatic. This makes string concatenation easier.
+Ground has a reference count system, so there is no garbage collector. Reference counting makes string concatenation easier.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
@@ -83,7 +83,7 @@ Add the `<installation directory>` to the System variables Path variable.
 If you want to debug with x64dbg, assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
 directory. Switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg folder is correct, because 
 Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
-the original sourcecode in the comment column of the debugger.
+the original generated assembly in the comment column of the debugger.
 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
@@ -109,7 +109,7 @@ prevented. Use `packed` after the Classes name for that.
 
 ### Choosing a template
 With the special `#template` directive, the programmer can choose a generation template. The default is `console`. See the
-directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without console window.
+directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without a console window.
 A lot of functions are shared between the console.fasm and sdl3.fasm templates.
 
 ### include a library
@@ -133,42 +133,44 @@ of the VC runtime is active that week. It's a mess. Those DLL's are not by defau
 install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
 use the OG `msvcrt.dll`.  
 MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
-`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 is advices to use `ucrt`, so 
+`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
 that will be the future.
 
 ### Mixing of ground code and assembly
-The danger of programming in higher level languages is that the connection with assembly is lost. Ground refuses that.
+The danger of programming in higher level languages is that the control over the CPU is lost. Ground refuses that.
 So, there are ways to mix the two. First of all, you can use the `asm { }` everywhere. The assembly code between the brackets 
-will literally be used. Second, there is a special group, called g, which directly refers to an assembly variable. The advantage is that you 
-stay in the ground language context.
+will literally be used. Second, there is a special group, called g, which directly refers to an assembly variable. The advantage 
+is that you stay in the ground language context.
 So `g.SDL_WINDOWPOS_UNDEFINED` will resolve to the `SDL_WINDOWPOS_UNDEFINED` equate.
-`g.[pixels_p]` will return the content of the `pixels_p` variable.
+`g.[pixels_p]` will return the content of the `pixels_p` assembly variable.
 
 A powerful mixing is this:
 ```
 byte[61,36] screenArray = g.[screentext1_p];
 ```
-The content of the screentext1_p variable is put inside the screenArray and the coder can make statements like:
+The content of the screentext1_p variable will be used by the array screenArray. That is special because normally an array will refer to
+memory that is managed by Ground. This case overrides that and it will use a freely defined pointer to be the base. The coder can make 
+statements like:
 ```
 screenArray[30,10] = 'A';
 ```
 
-An other piece to investigate is:
+Another piece to investigate is:
 ```
 byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 if (*eventType == g.SDL_QUIT) { running = false; }
 ```
-The first line allocated `SDL3_EVENT_SIZE`, that is 128, bytes. The second line creates a pointer of a u32 to the first element. The third line
-retrieves the value pointed to by eventType and compares it with `SDL_QUIT`.  
+The first line allocated `SDL3_EVENT_SIZE`, that is 128, bytes. The second line creates a pointer of a u32 to an element. The third line
+retrieves the value that variable eventType points to and compares it with `SDL_QUIT`.  
 In `smoothscroller.g`, you see a lot of examples of mixing ground and assembly.
 
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
 * Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
-* I had to build the libchipmunk.dll myself, because only the build without symbols works. 
-I checked out the sourcecode and created a directory called build. Into this directory I created the make files like this: 
+* The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
+These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I created the make files like this: 
 `cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON`  
 In the CMakeLists.txt, I included: `target_link_options(chipmunk PRIVATE -static)` as the last line, to prevent the libwinpthread loadtime 
 dependency. After that build the library with `cmake --build .` and the `libchipmunk.dll` is created in build\src.
@@ -207,35 +209,42 @@ The Ground language is Alpha, so do not use the language if you look for a stabl
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
 ### Looking for a high performance programming language with inline assembly. 
-There are many languages to choose from these days. For instance the V language. It has no garbage collection and 
-compiles to C. Unfortunately there is no focus on assembly in V, so it's no option. The Beef language is also
-a serious contender. The backend is LLVM, so no easy assembly. 
-The same thing for Odin that also has an LLVM backend.  
-Odin positions itself as a general purpose language. Well, for traditional software I would recommend C# or Kotlin 
-because they are fast enough (for instance, C# can do parallel execution) and have many libraries. Python is slower 
-but has a strong connection with C libraries. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. 
-It was very easy to make an application with wxWindows. But the GIL always felt problematic. No blame to Guido, 
-because he did a fantastic job creating Python.  
-A very interesting programming language is Pharo Smalltalk. Everything is an object in Smalltalk and the code editor
-is available in the image. I used to be a Smalltalk programmer from 1997-2002 so I still love the language and 
-environment.  
-Back to our search for a high performance language: Wren is a scriping language, Nim compiles to C. Dart has a garbage
-collector and it busy with flutter and has no focus on high performance. Go also has a garbage collector, but a small 
-one. A high performance garbage collector can be faster than reference counting. However, Go does not support inline 
-assembly. Rust has a LLVM backend, so no easy assembly. The same for Zig.
-So, Ground rulez ;-)
+Your PC only has ONE CPU, which can execute your code incredibly fast using a nice language called x86-64. Surely, all
+programming languages will allow you to insert x86-64... NOT!!  
+Let's look at some high performance languages. There are many to choose from these days. For instance the V language. 
+It has no garbage collection and transpiles to C. Unfortunately there is no focus on assembly in V.  
+The Beef language is also great. No garbage collector. C# look-a-like approach. The backend is LLVM, so unfortunately 
+no easy assembly.  
+Odin is great. But same as beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
+Well, for general purpose software I would recommend C# or Kotlin because they are fast enough (for instance, C# can do 
+parallel execution) and have the most libraries available for all kinds of tasks. Microsoft and Java are dominating. 
+Also in the job market.  
+Python is slower but that's no problem for a scripting language. It can connect to native compiled libraries with relative
+ease. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. It was very easy to make an application 
+with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because he did a great job creating 
+Python and there is also so much he can do.  
+By the way: a very interesting general purpose programming language is Pharo Smalltalk. Everything is an object in 
+Smalltalk and the code editor is available in the image. I used to be a Smalltalk programmer from 1997-2002 and I 
+still love the language and environment.  
+But, back to our search for a high performance language: Wren is a scriping language, Nim transpiles to C. Dart has a 
+garbage collector and is busy with flutter and has no focus on high performance. Go also has a garbage collector, but 
+a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
+support inline assembly. Go is a systems programming language and those languages want to abstract the CPU away. That
+way the system can run on every CPU.  
+Rust has a LLVM backend, so no easy assembly. The same for Zig.  
+So, now you understand why Ground is necessary :-)  There is only ONE CPU in your PC. Why lose control of it?
 
 ## Write your own Programming Language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
-don't want a reference count system. Why not write your own language? Use the lexer from this compiler or borrow some
-code generation constructs. It might be less work than you think.  
+don't want a reference count system but a garbage collector. Why not write your own language? Use the lexer from this 
+compiler or borrow some code generation constructs. It might be less work than you think.  
 
 ### Technical details on the memory model in Ground.
 The `stack` is 512k and is defined at the top of the generated assembly file.  
 Ground has got it's own managed memory for reference types like arrays, classes and strings, because doing malloc and 
-free on every object creation will not perform. When doing string concatenation, something must come up with the 
-needed memory. So, you automatically will go to a managed memory situation. Now that the objects are allocated, you
-want to be able to assign them to other variables in other scopes, without copying the memory. So, that will naturally
+free on every object creation will not perform. When doing string concatenation, something must provide the needed
+memory. So, you automatically will go to a managed memory situation. Now that the objects are allocated, you
+want to be able to assign them to other variables in distant scopes, without copying the memory. So, that will naturally
 lead to reference counting. Ground does that. Reference counts are added and subtracted, and when nothing references 
 the object anymore, it is freed within it's own managed memory. There is no garbage collector. The fast processing 
 is done at the end of a function.  
@@ -260,8 +269,8 @@ The reference space is used by two linked lists in a function: the RefCount list
 The function must keep track of the temporary memory that is allocated in the expressions, so it can be freed with ease.
 The RefCount list exists for values that are assigned to variables. Perhaps the lists can be merged, but then an extra 
 property must be added which tells the code that the variable is temporary. My choice was to create separate lists.
-The reference counting system has an overhead during runtime. So, I agree with the creator of the "Beef language" that 
-it's more ideal to have no Garbage Collection or Reference Counting.
+The reference counting system has an overhead during runtime. So, I agree with the creator of the `Beef` language that 
+it's more ideal to have no Garbage Collection or Reference Counting, which Beef facilitates with the `Scope` keyword.
 
 ### Details about the compiler
 There are several steps done before the generated .EXE file is executed:
@@ -269,7 +278,7 @@ There are several steps done before the generated .EXE file is executed:
 1) The Lexer generates tokens from the sourcecode.  
 2) The tokens are grouped in a Abstract Syntax Tree (AST) by the Parser.  
 3) The Optimizer makes the AST more compact, for instance by combining integer or string literals.  
-4) The Compiler converts the AST to x86-64 assembly. It uses FASM 1.73 to generate the Portable Executable file.  
+4) The Compiler converts the AST to x86-64 assembly. It uses FASM to generate the Portable Executable file.  
 
 ### Tokenize details:
 Each token can have multiple types. For instance, the "True" token has 3 types: Literal, Boolean and True. The tokens 
@@ -361,9 +370,9 @@ We were truly blessed with this plaform and it's domination for the last 30 year
 At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
 it to the cloud or uses it for AI. Microsoft wants to make Windows a sensory device for an AI companion and forces users to give 
 up privacy. I strongly disagree with this route, because it should be made optional.  
-Use a third-party tool as such as "O&O ShutUp10++" to disable Copilot and Recall. However, with each new update, the settings 
+Use a third-party tool as such as `O&O ShutUp10++` to disable Copilot and Recall. However, with each new update, the settings 
 can be turned on again. The whole situation is a shame, because Windows has such a great history. Like many users, I don't want
-to battle my OS. For the moment, I will not migrate yet to Linux because I owe so much to the Windows platform.  
+to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to the Windows platform.  
 
 ### Smoothscroller
 <p align="center">
