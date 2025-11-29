@@ -140,5 +140,5 @@ sdl3.SDL_Quit();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 
-string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-user32.MessageBox(null, showStr, "Message", g.MB_OK);
+//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+//user32.MessageBox(null, showStr, "Message", g.MB_OK);
