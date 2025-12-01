@@ -238,7 +238,7 @@ function PrintInformation() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/musiklinjen.mod", 50);
+SoundtrackerInit("sound/mod/musiklinjen.mod", 64);
 
 ShowNextFigure();
 while (StatusRunning)

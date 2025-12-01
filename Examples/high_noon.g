@@ -169,7 +169,7 @@ function PrintIntroScreen() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/tip - joyride.mod", 50);
+SoundtrackerInit("sound/mod/tip - joyride.mod", 64);
 
 // MAINLOOP
 

@@ -5,33 +5,48 @@ namespace GroundCompiler
 {
     public class Program
     {
-        required public string sourceFilename, sourceFullFilepath;
-        string generatedCode = "";
-        string currentDir = System.IO.Directory.GetCurrentDirectory();
-        static bool runAfterCompilation = true;
-        bool generateDebugInfo = false;
+        required public string sourceFilename;      // Filename without extension
+        required public string sourceFullFilepath;  // Path including filename plus extension
+        required public bool runAfterCompilation;   // Should the executable be started. (handy for debug mode)
+        required public bool generateDebugInfo;
+        public string generatedCode = "";
+        private string currentDir = System.IO.Directory.GetCurrentDirectory();
+
 
         static void Main(string[] args)
         {
             string currentDir = System.IO.Directory.GetCurrentDirectory();
             string fileName, fullPath;
+            bool runAfterCompilation = false;
             if (args.Length == 0)
             {
-                fileName = "sudoku.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
+#if DEBUG
+                fileName = "smoothscroller.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath))
-                    fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Test\\{fileName}"));
+                    fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}"));
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
+                runAfterCompilation = true;
+#else
+                Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g");
+                return;
+#endif
             }
             else
             {
-                runAfterCompilation = false;
                 fileName = args[0];
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode\\{fileName}"));
+                if (!File.Exists(fullPath))
+                    fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName));
+                if (!File.Exists(fullPath))
+                {
+                    Console.WriteLine($"GroundCompiler. Error: cannot find {fileName}");
+                    return;
+                }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath };
+            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=false };
             compilation.Build();
         }
 

@@ -405,6 +405,8 @@ while (StatusRunning)
 	asm { inc [frameCount] }
 }
 
+while (thread2Busy) { }
+
 chipmunk.cpSpaceFree(space);
 
 sdl3.SDL_DestroyTexture(texture);
@@ -413,13 +415,16 @@ sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_DestroyTexture(ballTexture);
 sdl3.SDL_Quit();
 
-msvcrt.free(g.[font32_p]);
-msvcrt.free(g.[font256_p]);
-msvcrt.free(g.[screentext1_p]);
-msvcrt.free(g.[screentext4_p]);
+/* strange error when releasing screentext1_p. Windows will release all process memory, so no need to free it. Only in retrovm, I've seen it.
 msvcrt.free(g.[font32_charcolor_p]);
-msvcrt.free(g.[bg_image_p]);
+msvcrt.free(g.[screentext4_p]);
+msvcrt.free(g.[screentext1_p]);
+msvcrt.free(g.[font256_p]);
+msvcrt.free(g.[font32_p]);
+*/
+
 msvcrt.free(g.[plasma_p]);
+msvcrt.free(g.[bg_image_p]);
 SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.

@@ -3,9 +3,9 @@ entry start
 stack 80000h, 80000h
 
 include 'win64a.inc'
-include '..\..\..\Include\sdl3.inc'
-include '..\..\..\Templates\part_equates.fasm'
-include '..\..\..\Templates\part_macros.fasm'
+include 'Include\sdl3.inc'
+include 'Templates\part_equates.fasm'
+include 'Templates\part_macros.fasm'
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES
@@ -131,10 +131,10 @@ assert_exitpoint:
 ; *** END PROCEDURES ***
 
 
-include '..\..\..\Templates\part_memory.fasm'
-include '..\..\..\Templates\part_string.fasm'
-include '..\..\..\Templates\part_utils.fasm'
-include '..\..\..\Templates\part_hardcoded_library.fasm'
+include 'Templates\part_memory.fasm'
+include 'Templates\part_string.fasm'
+include 'Templates\part_utils.fasm'
+include 'Templates\part_hardcoded_library.fasm'
 
 
 PrintScreenString:
@@ -299,9 +299,9 @@ section '.idata' import data readable writeable
           msvcrt, 'msvcrt.dll'
 
 
-  include '..\..\..\Include\kernel32_api.inc'
-  include '..\..\..\Include\sdl3_api.inc'
-  include '..\..\..\Include\msvcrt_api.inc'
+  include 'Include\kernel32_api.inc'
+  include 'Include\sdl3_api.inc'
+  include 'Include\msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
 
 

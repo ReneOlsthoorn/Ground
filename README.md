@@ -94,7 +94,7 @@ available on github at: https://github.com/ReneOlsthoorn/GroundSideLibrary. The 
 the default libchipmunk.dll from MSYS2 does not work. More info on that in the remarks section.  
 After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug\net10.0` folder and run the batchfile called 
 `load.bat` to download and automatically unzip SDL3, SDL3_image and other DLL's.  
-After this, you can change line 20 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
+After this, you can change line 24 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
 example. The mode7.g is the unoptimized version. The innerloop needs 5ms (on my machine with a Ryzen 7 5700g) to 
 complete each frame. The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">

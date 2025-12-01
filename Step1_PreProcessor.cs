@@ -86,13 +86,21 @@ namespace GroundCompiler
 
         public void IncludeFileAtIndex(int index, string fileName)
         {
-            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Include\\{fileName}"));
+#if DEBUG
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\..\\Examples\\test\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\test\\{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+#else
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+#endif
 
             string theText = File.ReadAllText(fullPath);
             StringBuilder sb = new StringBuilder(sourcecode);

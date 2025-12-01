@@ -16,6 +16,7 @@ dll kernel32 function CreateProcessA(string lpApplicationName, int lpCommandLine
 dll kernel32 function ReadFile(int hFile, ptr lpBuffer, u32 nNumberOfBytesToRead, ptr lpNumberOfBytesRead, ptr lpOverlapped) : bool;
 dll kernel32 function WriteFile(int hFile, ptr lpBuffer, u32 nNumberOfBytesToWrite, ptr lpNumberOfBytesWritten, ptr lpOverlapped) : bool;
 dll kernel32 function TerminateProcess(ptr processhandle, int exitcode) : int;
+dll kernel32 function TerminateThread(ptr threadhandle, int exitcode) : bool;
 
 asm equates {
 kernel32_THREAD_BASE_PRIORITY_LOWRT = 15

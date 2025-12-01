@@ -5,6 +5,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <OutputPath>$(SolutionDir)bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)Templates&quot; &quot;$(TargetDir)Templates&quot; /E /Y /I&#xD;&#xA;xcopy &quot;$(ProjectDir)Include&quot; &quot;$(TargetDir)Include&quot; /E /Y /I" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Examples&quot; &quot;$(TargetDir)GroundCode&quot; /E /Y /I" Condition="'$(Configuration)' == 'Release'" />
+  </Target>
+  
 </Project>

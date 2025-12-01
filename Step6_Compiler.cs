@@ -32,7 +32,7 @@ namespace GroundCompiler
         {
             StringBuilder result = new StringBuilder();
             foreach (var (libraryName, dllFilename) in preprocessor.libraries)
-                result.AppendLine($"  include '..\\..\\..\\Include\\{libraryName}_api.inc'");
+                result.AppendLine($"  include 'Include\\{libraryName}_api.inc'");
             return result.ToString();
         }
 
@@ -43,7 +43,7 @@ namespace GroundCompiler
             EmitStatement(stmt);
 
             // Read the codetemplate
-            string tmpl = File.ReadAllText($"..\\..\\..\\Templates\\{this.CodeTemplateName}.fasm");
+            string tmpl = File.ReadAllText($"Templates\\{this.CodeTemplateName}.fasm");
 
             // Fill in the blocks in the template
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_EQUATES", string.Join("", emitter.GeneratedCode_Equates));

@@ -363,7 +363,7 @@ function GameIsOver() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/mlp magic-78.mod", 30);
+SoundtrackerInit("sound/mod/mlp magic-78.mod", 50);
 mikmod.Player_SetPosition(1);
 
 // BEGIN Mainloop:

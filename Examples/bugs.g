@@ -175,7 +175,7 @@ function NextLevelInformation() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 30);
+SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 50);
 
 while (StatusRunning)
 {
