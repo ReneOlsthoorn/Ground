@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using GroundCompiler.Statements;
+using System.Globalization;
 
 namespace GroundCompiler
 {
@@ -261,6 +262,7 @@ namespace GroundCompiler
 
         public void ReadString(Token token)
         {
+            //The strings will be quoted in: Step6_Compiler>>EmitQuotedAssemblyString
             string s = ReadMatching(IsNotStringEnd);
             token.Type = TokenType.Literal;
             token.Datatype = Datatype.GetDatatype("string");
@@ -268,6 +270,8 @@ namespace GroundCompiler
             token.Lexeme = "\"\"";
             if (s.Length > 0)
             {
+                s = s.Replace("\\\r\n", "");    // continue on next line.
+                s = s.Replace("\\\n", "");      // continue on next line.
                 s = s.Replace("\\r", "\r").Replace("\\n", "\n");
                 token.Value = s;
                 token.Lexeme = $"\"{s}\"";
@@ -277,6 +281,7 @@ namespace GroundCompiler
 
         public void ReadGraveAccentString(Token token)
         {
+            //The strings will be quoted in: Step6_Compiler>>EmitQuotedAssemblyString
             string s = ReadMatching(IsNotGraveAccentStringEnd);
             token.Type = TokenType.Literal;
             token.Datatype = Datatype.GetDatatype("string");
@@ -284,6 +289,8 @@ namespace GroundCompiler
             token.Lexeme = "\"\"";
             if (s.Length > 0)
             {
+                s = s.Replace("\\\r\n", "");    // continue on next line.
+                s = s.Replace("\\\n", "");      // continue on next line.
                 s = s.Replace("\\r", "\r").Replace("\\n", "\n");
                 token.Value = s;
                 token.Lexeme = $"\"{s}\"";

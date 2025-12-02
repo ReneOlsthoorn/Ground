@@ -535,5 +535,9 @@ function IsBallUsable() : bool {
 assert(!IsBallUsable() == true);
 
 
+string scrollText = "A\8f\8fbcdef";
+byte scrollTextVar = scrollText[1];
+assert(scrollTextVar == 0x8f);
+assert(scrollText[0] == 65);
 
 println("SUCCESS: unittests were completed with SUCCESS.");

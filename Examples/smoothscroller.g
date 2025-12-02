@@ -36,7 +36,10 @@ int pitch = g.Graphics_ScreenLineSize;
 int xscrollNeedle = 0;
 int scrollTextNeedle = 0;
 int whichLineToScroll = 16;
-string scrollText = "Smoothscroller written in Ground!                            You are very " + chr$(0x8f) + chr$(0x8f)+ " old " + chr$(0x8f) + chr$(0x8f) + " if you recognize the font.                   ";
+string scrollText = `Smoothscroller written in Ground!                            \
+You are very \8f\8f old \8f\8f if you recognize the font.    \
+The used template is called "retrovm" and contains a character buffer and charcolor buffer, just like the C64.    \
+It also contains a Copper look-a-like function just like the Amiga.                      `;
 bool StatusRunning = true;
 bool thread1Busy = false;
 bool thread2Busy = false;
@@ -333,7 +336,6 @@ while (StatusRunning)
             screenArray[g.GC_Screen_TextColumns-1, whichLineToScroll] = scrollText[scrollTextNeedle++];
             if (scrollText[scrollTextNeedle] == 0) {
                 scrollTextNeedle = 0;
-				//println("The Retro VM actually draws\r\nthe entire screen every frame,\r\nlike the legendary VIC-2 Chip\r\nfrom the Commodore 64.\r\n\r\nThe Retro VM has a textbuffer\r\nthat is able to scroll,\r\nand also to smoothscroll.\r\nIt also has Copper look-a-like functionality,\r\ninspired by the Amiga 500.\r\n");
             }
         }
         if (g.[frameCount] % 3 == 0) {
@@ -415,14 +417,11 @@ sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_DestroyTexture(ballTexture);
 sdl3.SDL_Quit();
 
-/* strange error when releasing screentext1_p. Windows will release all process memory, so no need to free it. Only in retrovm, I've seen it.
 msvcrt.free(g.[font32_charcolor_p]);
 msvcrt.free(g.[screentext4_p]);
 msvcrt.free(g.[screentext1_p]);
 msvcrt.free(g.[font256_p]);
 msvcrt.free(g.[font32_p]);
-*/
-
 msvcrt.free(g.[plasma_p]);
 msvcrt.free(g.[bg_image_p]);
 SoundtrackerFree();

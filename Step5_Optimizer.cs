@@ -43,6 +43,7 @@ namespace GroundCompiler
 
             var assignedVarsDict = new Dictionary<string, int>();
 
+            // When the variable is assigned to, it cannot be replaced.
             var exprStatements = rootNode.AllNodes()
                 .OfType<ExpressionStatement>()
                 .Where(e => (e.ExpressionNode is Assignment assignExpr)
@@ -56,6 +57,7 @@ namespace GroundCompiler
                     assignedVarsDict[theVar] = 1;
             }
 
+            // When the variable is incremented, the variable cannot be replaced.
             var unaryStatements = rootNode.AllNodes()
                 .OfType<Unary>()
                 .Where(e => e.RightNode is Variable)
@@ -63,6 +65,18 @@ namespace GroundCompiler
             foreach (var unaryStmt in unaryStatements)
             {
                 var theVar = unaryStmt?.GetNameIncludingLocalScope();
+                if (theVar != null)
+                    assignedVarsDict[theVar] = 1;
+            }
+
+            // We cannot replace a string or integer if the value is accessed as an array. For instance scrollText[0] cannot be replaced with a Literal.
+            var arrayStatements = rootNode.AllNodes()
+                .OfType<ArrayAccess>()
+                .Where(e => e.MemberNode is Variable)
+                .Select(e => e.MemberNode as Variable).ToList();
+            foreach (var arrayStmt in arrayStatements)
+            {
+                var theVar = arrayStmt?.GetNameIncludingLocalScope();
                 if (theVar != null)
                     assignedVarsDict[theVar] = 1;
             }

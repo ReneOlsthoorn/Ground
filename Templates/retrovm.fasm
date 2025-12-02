@@ -98,6 +98,8 @@ start:
 
 
 ; *** Print the maximum memory used
+__varspace_indexspace_refspace_info = 0
+if __varspace_indexspace_refspace_info = 1
   lea	rax, [memchecker_message]
   call	PrintScreenString
   mov	rax, [variableSpaceNeedle]
@@ -147,6 +149,7 @@ start:
   lea	rax, [leak_message]
   call	PrintScreenString
 .endloop:
+end if
 
 assert_exitpoint:
   invoke kernel32_HeapFree, [processHeapHandle], 0, [referenceSpacePointer]

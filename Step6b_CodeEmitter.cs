@@ -95,6 +95,12 @@ namespace GroundCompiler
 
         public string EmitQuotedAssemblyString(string text)
         {
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\\([0-9A-Fa-f]{2})", m =>
+            {
+                string hex = m.Groups[1].Value;
+                int value = Convert.ToInt32(hex, 16);
+                return "',0x" + hex + ",'";
+            });
             text = text.Replace("\r", "',13,'").Replace("\n", "',10,'");
             return $"'{text}'".Replace(",''", "").Replace("'',", "");
         }
