@@ -66,6 +66,14 @@ namespace GroundCompiler
             }
         }
 
+        public void UpdateParentRecursive()
+        {
+            foreach (AstNode node in Nodes) {
+                node.Parent = this;
+                node.UpdateParentRecursive();
+            }
+        }
+
         public void UpdateParentInNodes()
         {
             foreach (AstNode node in Nodes)

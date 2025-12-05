@@ -164,18 +164,21 @@ function SpaceWrite(int frameTime, string skyWrite) {
 }
 
 function RenderTexts() {
-	//writeText(renderer, 10.0, 10.0, spaceCount);
-	SpaceWrite(433,  "         Flying through Space is a Bliss       ");
-	SpaceWrite(1380, "              You feel the Eternity            ");
-	SpaceWrite(2308, "         You feel the curved Space and Time    ");
-	SpaceWrite(3227, "          When you fly by Mass and Energy      ");
-	SpaceWrite(4606, "               Come Taste the Stars            ");
-	SpaceWrite(6450, "              Everywhere is your Home          ");
-	SpaceWrite(7371, "              Master Of The Universe           ");
-	SpaceWrite(8290, "       You go deeper and deeper in the Abyss   ");
-	SpaceWrite(10136," Who can defy you? You are Small but Powerful! ");
-	SpaceWrite(11746,"              The Stars are your Fuel          ");
-	SpaceWrite(13700,"                        Ai...                  ");
+	//if (spaceCount > 0)
+	//   writeText(renderer, 10.0, 10.0, spaceCount);
+	SpaceWrite(433,  "         Flying through Space is a Bliss        ");
+	SpaceWrite(1380, "              You feel the Eternity             ");
+	SpaceWrite(2308, "         You feel the pull from the Stars       ");
+	SpaceWrite(3227, "  Large Energy masses that curve Space and Time ");
+	SpaceWrite(4606, "        You feel like the fastest Mosquito      ");
+	SpaceWrite(5533, "               Come Taste the Stars             ");
+	SpaceWrite(6450, "              Anywhere is Your Home             ");
+	SpaceWrite(7371, "              Master Of The Universe            ");
+	SpaceWrite(8290, "       You go deeper and deeper in the Abyss    ");
+	SpaceWrite(10136," Who can defy you? You are Small but Powerful!  ");
+	SpaceWrite(11746,"          The very top of All Creation          ");
+	SpaceWrite(12667,"          You will Colonize and Multiply!       ");
+	SpaceWrite(13700,"                       Ai...                    ");
 
 	if (frameCount > 14200)
 		StatusRunning = false;

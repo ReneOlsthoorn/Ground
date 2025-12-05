@@ -540,4 +540,11 @@ byte scrollTextVar = scrollText[1];
 assert(scrollTextVar == 0x8f);
 assert(scrollText[0] == 65);
 
+
+#define NUMER_MULTIPLICATIONS 5
+j = 7;
+for (i in (NUMER_MULTIPLICATIONS-1) .. 1)
+	j = j * i;
+assert(j == 7*4*3*2*1);
+
 println("SUCCESS: unittests were completed with SUCCESS.");

@@ -162,7 +162,7 @@ namespace GroundCompiler
             // Replace a literal divide and multiple with a power of two literal with bitshifting.
             foreach (Binary binaryExpr in rootNode.FindAllNodes(typeof(Binary)).ToList())
             {
-                if ((binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Integer) || binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Pointer))  && binaryExpr.Operator.Lexeme == "/" && binaryExpr.RightNode is Literal divideliteralExpr) {
+                if ((binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Integer) || binaryExpr.LeftNode.ExprType.Contains(Datatype.TypeEnum.Pointer)) && binaryExpr.Operator.Lexeme == "/" && binaryExpr.RightNode is Literal divideliteralExpr) {
                     if (divideliteralExpr.ExprType.Contains(Datatype.TypeEnum.Integer))
                     {
                         Int64 theLiteralValue = (Int64)divideliteralExpr.Value!;
@@ -172,6 +172,7 @@ namespace GroundCompiler
                             binaryExpr.Operator.Lexeme = ">>";
                             binaryExpr.Operator.Types = new List<TokenType> { TokenType.Operator, TokenType.ShiftRight };
                             divideliteralExpr.Value = power;
+                            Console.WriteLine("Division by power of two simplified in bitshift.");
                         }
                     }
                 }
@@ -186,6 +187,7 @@ namespace GroundCompiler
                             binaryExpr.Operator.Lexeme = "<<";
                             binaryExpr.Operator.Types = new List<TokenType> { TokenType.Operator, TokenType.ShiftLeft };
                             multiplyLiteralExpr.Value = power;
+                            Console.WriteLine("Multiplication by power of two simplified in bitshift.");
                         }
                     }
                 }

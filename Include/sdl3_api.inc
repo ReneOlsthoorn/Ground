@@ -105,6 +105,8 @@ import sdl3,\
 	   sdl3_SDL_rand_bits_r, 'SDL_rand_bits_r',\
 	   sdl3_SDL_cos, 'SDL_cos',\
 	   sdl3_SDL_sin, 'SDL_sin',\
+	   sdl3_SDL_cosf, 'SDL_cosf',\
+	   sdl3_SDL_sinf, 'SDL_sinf',\
 	   sdl3_SDL_SetTextureAlphaMod, 'SDL_SetTextureAlphaMod',\
 	   sdl3_SDL_ConvertSurface, 'SDL_ConvertSurface',\
 	   sdl3_SDL_RenderLine, 'SDL_RenderLine',\

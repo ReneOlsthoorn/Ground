@@ -208,6 +208,54 @@ namespace GroundCompiler
             return new IfStatement(condition, thenBranch, elseBranch);
         }
 
+
+        public static void RemoveVerboseGrouping(Expression expr)
+        {
+            var list = expr.FindAllNodes(typeof(Grouping)).ToList();
+            if (expr is Grouping)
+                list.Add(expr);
+
+            foreach (Grouping groupingExpr in list)
+                if (groupingExpr.expression is Literal theLiteral)
+                    groupingExpr?.Parent?.ReplaceNode(groupingExpr, theLiteral.DeepCopy());
+        }
+
+
+        public static Literal? LiteralifyExpression(Expression expr)
+        {
+            var theGroup = new Grouping(expr);
+            theGroup.UpdateParentRecursive();
+            while (SimplifyExpression(theGroup));
+            Literal theLiteral = theGroup.expression as Literal;
+            return theLiteral;
+        }
+
+
+        public static bool SimplifyExpression(Expression? expr)
+        {
+            if (expr == null)
+                return false;
+
+            expr.UpdateParentInNodes();
+
+            bool onceTrue = false;
+            foreach (Binary binaryExpr in expr.FindAllNodes(typeof(Binary)).ToList())
+            {
+                if (binaryExpr.CanBothSidesBeCombined())
+                {
+                    var combinedLiteral = binaryExpr.CombineBothSideSameTypeLiterals();
+                    bool updated = binaryExpr?.Parent?.ReplaceNode(binaryExpr, combinedLiteral) ?? false;
+                    if (updated)
+                        onceTrue = true;
+                }
+            }
+            if (onceTrue)
+                RemoveVerboseGrouping(expr);
+
+            return onceTrue;
+        }
+
+
         private Statement ForStatement()
         {
             Consume(TokenType.OpenBracket, "ForStatement: Expected '(' after 'for'.");
@@ -225,15 +273,30 @@ namespace GroundCompiler
                 if (Match(TokenType.In))
                 {
                     var rangeDatatype = Datatype.GetDatatype("int");
-                    Binary rangeExpr = ParseExpression() as Binary;
+                    Binary? rangeExpr = ParseExpression() as Binary;
 
-                    Literal leftLiteral = rangeExpr.LeftNode as Literal;
-                    Literal rightLiteral = rangeExpr.RightNode as Literal;
+                    Literal? leftLiteral = rangeExpr?.LeftNode as Literal;
+                    Literal? rightLiteral = rangeExpr?.RightNode as Literal;
+
+                    // Is it beneath all the Grouping and Binary expressions just a Literal?
+                    if (leftLiteral == null && rangeExpr?.LeftNode != null)
+                    {
+                        leftLiteral = LiteralifyExpression(rangeExpr.LeftNode);
+                        if (leftLiteral != null)
+                            rangeExpr.LeftNode = leftLiteral;
+                    }
+
+                    if (rightLiteral == null && rangeExpr?.RightNode != null)
+                    {
+                        rightLiteral = LiteralifyExpression(rangeExpr.RightNode);
+                        if (rightLiteral != null)
+                            rangeExpr.RightNode = rightLiteral;
+                    }
 
                     bool ascending = true;
                     if (leftLiteral != null && rightLiteral != null)
                     {
-                        if ((long)(leftLiteral.Value) > (long)(rightLiteral.Value))
+                        if ((long)(leftLiteral.Value!) > (long)(rightLiteral.Value!))
                             ascending = false;
                     }
 

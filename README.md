@@ -446,8 +446,13 @@ A proper shootout at High Noon in Videopac G7000 retro style.</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="400" /><br/>
 Can you beat 7 levels of classic memory?</p>
 
+### Fireworks
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fireworks.jpg?raw=true" width="400" /><br/>
+How can a Firework show promote x86-64 assembly?</p>
+
 ### Ground Gallery
-You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 2.8mb zipfile</a> which contains most of the .exe files.
+You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 3mb zipfile</a> which contains most of the .exe files.
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
@@ -465,4 +470,5 @@ You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 
 2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
 2025.10.28: High Noon game added.  
 2025.11.09: Memory game added.  
-2025.11.29: GroundSideLibrary now build with MSYS2.
+2025.11.29: GroundSideLibrary now build with MSYS2.  
+2025.12.05: Fireworks demo added.

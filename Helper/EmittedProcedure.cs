@@ -102,9 +102,11 @@ namespace GroundCompiler
                 counter++;
             }
 
+            /* below, the lexparentframe handy was added, but it was never used...
             theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName());
             Emitter.Writeline($"{theName} equ G_PARAMETER_LEXPARENT");
             Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "lexparentframe", GetGroupOrClassName())} equ rbp+G_PARAMETER_LEXPARENT");
+            */
 
             theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName());
             Emitter.Writeline($"{theName} equ G_PARAMETER_THIS");

@@ -65,6 +65,8 @@ dll sdl3 function SDL_rand_bits_r(ptr state) : i32;
 
 dll sdl3 function SDL_cos(float value) : float;
 dll sdl3 function SDL_sin(float value) : float;
+dll sdl3 function SDL_cosf(f32 value) : f32;
+dll sdl3 function SDL_sinf(f32 value) : f32;
 
 dll sdl3 function SDL_RenderFillRect(ptr renderer, ptr rect);
 dll sdl3 function SDL_RenderReadPixels(ptr renderer, ptr rect) : ptr;  // result = SDL_Surface*
