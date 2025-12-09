@@ -453,7 +453,7 @@ How can a Firework show promote x86-64 assembly?</p>
 
 ### 3D
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="400" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="300" /><br/>
 Projection, View and Model matrix calculations done with CGLM.</p>
 
 ### Ground Gallery
