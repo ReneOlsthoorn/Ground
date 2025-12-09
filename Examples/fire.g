@@ -174,7 +174,7 @@ function writeBytePtrText(ptr renderer, float x, float y, byte* text) {
 }
 
 function PrintSongInfo() {
-	writeBytePtrText(renderer, 10.0, 10.0, stMod);
+	//writeBytePtrText(renderer, 10.0, 10.0, stMod);
 	return;
 	writeBytePtrText(renderer, 10.0, 10.0, *mikmodModule.songname);
 	writeText(renderer, 10.0, 20.0, "Pattern position: " + *mikmodModule.patpos);
