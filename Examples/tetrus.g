@@ -14,9 +14,10 @@
 
 #include graphics_defines960x560.g
 #include msvcrt.g
-#include sdl3.g
 #include kernel32.g
 #library user32 user32.dll
+#library sdl3 sdl3.dll
+#library sdl3_image sdl3_image.dll
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
 #library mikmod libmikmod-3.dll

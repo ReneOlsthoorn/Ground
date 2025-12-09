@@ -5,6 +5,8 @@
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
 #library mikmod libmikmod-3.dll
+#library sdl3 sdl3.dll
+#library sdl3_image sdl3_image.dll
 
 #define MAX_PLAYER_SPEED 18.0
 #define MAX_PLAYER_SPEED_ON_CLIP 2.0
@@ -19,7 +21,6 @@
 
 #include graphics_defines960x560.g
 #include msvcrt.g
-#include sdl3.g
 #include kernel32.g
 
 

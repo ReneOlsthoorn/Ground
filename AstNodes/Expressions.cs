@@ -307,7 +307,14 @@ namespace GroundCompiler.Expressions
                 GetScope()?.DefineString((string)Value!);
 
             if (ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                GetScope()?.DefineFloatingpoint(Convert.ToDouble(Value));
+            {
+                bool skipDefineFloatingPoint = false;
+                if (this.Parent is Expressions.List theList)
+                    skipDefineFloatingPoint = theList.Properties.ContainsKey("fixed");
+
+                if (!skipDefineFloatingPoint)
+                    GetScope()?.DefineFloatingpoint(Convert.ToDouble(Value));
+            }
         }
 
         public void ConvertToByteValue()

@@ -22,7 +22,17 @@ function msys_rand(int* seed) : u32
 }
 
 function DegreeToRadians(float angle_deg) : float {
-	return angle_deg * (3.141592653 / 180.0);
+	return angle_deg * MATH_PI / 180.0;
+}
+
+function ValidRadian_f32(f32 radian) : f32 {
+	f32 valid = radian;
+	while (valid >= MATH_2PI)
+		valid = valid - MATH_2PI;
+	f32 floorValue = 0.0;
+	while (valid < floorValue)
+		valid = valid + MATH_2PI;
+	return valid;
 }
 
 function IsPointInCircle(float px, float py, float cx, float cy, float radius) : bool {

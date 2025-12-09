@@ -5,6 +5,8 @@
 #library sidelib GroundSideLibrary.dll
 #library soloud soloud_x64.dll
 #library mikmod libmikmod-3.dll
+#library sdl3 sdl3.dll
+#library sdl3_image sdl3_image.dll
 
 #define BERTUS_WIDTH 24
 #define BERTUS_WIDTH_D2 12
@@ -19,7 +21,6 @@
 
 #include graphics_defines960x560.g
 #include msvcrt.g
-#include sdl3.g
 #include kernel32.g
 
 

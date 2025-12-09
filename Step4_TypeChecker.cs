@@ -38,6 +38,8 @@ namespace GroundCompiler
                         var gToken = new Token(TokenType.Identifier);
                         gToken.Lexeme = "g";
 
+                        Datatype baseType = varStatement.ResultType.Base;
+
                         Variable newVar = new Variable(gToken);
                         var propExpr = new PropertyExpression(newVar, labelNameToken);
                         newVar.Parent = varStatement;
@@ -47,7 +49,12 @@ namespace GroundCompiler
                         foreach (var expr in list.ElementsNodes)
                         {
                             if (expr is Literal literal)
-                                theValues.Add(Convert.ToString(literal.Value)!);
+                            {
+                                string toAdd = Convert.ToString(literal.Value, System.Globalization.CultureInfo.InvariantCulture)!;
+                                if (baseType.Contains(Datatype.TypeEnum.FloatingPoint) && (!toAdd.Contains('.')))
+                                    toAdd += ".0";
+                                theValues.Add(toAdd);
+                            }
                         }
 
                         string asmDataSize;
@@ -75,10 +82,14 @@ namespace GroundCompiler
 
                         if (list.ElementsNodes.Count == 0)
                         {
-                            UInt64 nrBytes = list.SizeInBytes();                           
-                            asmStr = $"align 8\r\n{theGeneratedLabel} db {nrBytes} dup(0)";
+                            UInt64 nrBytes = list.SizeInBytes();
+                            UInt64 nrElements = varStatement.ResultType.BaseElementCount();
+                            string dupValue = "0";
+                            if (baseType.Contains(Datatype.TypeEnum.FloatingPoint) && (!dupValue.Contains('.')))
+                                dupValue += ".0";
+                            asmStr = $"align 16\r\n{theGeneratedLabel} {asmDataSize} {nrElements} dup({dupValue})";
                         } else
-                            asmStr = $"align 8\r\n{theGeneratedLabel} {asmDataSize} {string.Join(",", theValues)}";
+                            asmStr = $"align 16\r\n{theGeneratedLabel} {asmDataSize} {string.Join(",", theValues)}";
 
                         asmStrToken.Value = asmStr;
                         asmStrToken.Properties["attributes"] = "data";

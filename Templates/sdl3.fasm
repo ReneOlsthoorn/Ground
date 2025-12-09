@@ -293,14 +293,11 @@ _f_SDL3_ClearScreenPixels:
 
 section '.idata' import data readable writeable
   library kernel32,'kernel32.dll', \
-		  sdl3, 'SDL3.dll', \
-		  sdl3_image, 'SDL3_image.dll', \
 ;GC_INSERTIONPOINT_LIBRARIES
           msvcrt, 'msvcrt.dll'
 
 
   include 'Include\kernel32_api.inc'
-  include 'Include\sdl3_api.inc'
   include 'Include\msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
 
@@ -354,7 +351,7 @@ carriage_return_bytes	db 13,10,0
 align 8
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
 
-align 8
+align 16
 
 ; *** GENERATED DATA ***
 ;GC_INSERTIONPOINT_DATA

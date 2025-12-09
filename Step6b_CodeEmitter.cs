@@ -287,9 +287,9 @@ namespace GroundCompiler
             Codeline($"mov   rax, 1");
 
             if (conversionDatatype.SizeInBytes == 4)
-                Codeline($"comiss xmm0, {floatReg}");
+                Codeline($"ucomiss xmm0, {floatReg}");
             else
-                Codeline($"comisd xmm0, {floatReg}");
+                Codeline($"ucomisd xmm0, {floatReg}");
 
             Codeline($"{trueJmpCondition}    {exitLabel}");
             Codeline($"mov   rax, 0");

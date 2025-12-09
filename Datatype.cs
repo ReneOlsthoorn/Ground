@@ -46,6 +46,16 @@ namespace GroundCompiler
 
         public bool hasArrayDefinition => (ArrayNrs != null) && (ArrayNrs.Count > 0);
 
+        public UInt64 BaseElementCount()
+        {
+            UInt64 result = 1;
+            if (!this.hasArrayDefinition)
+                return 0;
+            foreach (UInt64 value in this.ArrayNrs)
+                result *= value;
+            return result;
+        }
+
         public UInt64 BytesToAllocate()
         {
             UInt64 baseSizeInBytes = (UInt64)this.Base!.SizeInBytes;
@@ -131,9 +141,7 @@ namespace GroundCompiler
                 return true;
             if (type1.Contains(TypeEnum.FloatingPoint) && type2.Contains(TypeEnum.FloatingPoint) && (type1.SizeInBytes == type2.SizeInBytes))
                 return true;
-            if (type1.Name == "string" && type2.Name == "string")
-                return true;
-            return false;
+            return (type1.Name == type2.Name);
         }
 
         public static void AddClass(ClassStatement classStatement)
