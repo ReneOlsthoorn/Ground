@@ -454,7 +454,7 @@ How can a Firework show promote x86-64 assembly?</p>
 ### 3D
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="300" /><br/>
-Rotating 3D object. Projection, View and Model matrix calculations done with CGLM.</p>
+Rotating 3D object. Matrix calculations done with CGLM.</p>
 
 ### Ground Gallery
 You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 3mb zipfile</a> which contains most of the .exe files.
