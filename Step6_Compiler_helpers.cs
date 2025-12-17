@@ -276,6 +276,8 @@ namespace GroundCompiler
         public void ArrayAccess(ArrayAccess arrayExpr, Assignment? assignment = null, bool addressOf = false)
         {
             var currentScope = arrayExpr.GetScope();
+            //TODO: this.prop.prop2[2] must be possible. The member must be an expression, not a variable.
+
             var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!);
             var targetType = Datatype.Default;
 

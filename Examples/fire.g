@@ -146,21 +146,10 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); // "direct3d11" is s
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
+
 #include soundtracker.g
 SoundtrackerInit("sound/mod/monday - random voice.mod", 127);
 
-
-byte* stMod = null;
-int stFile = msvcrt.fopen("sound/mod/monday - random voice.mod", "rb");
-if (stFile != 0) {
-	msvcrt.fseek64(stFile, 0, g.msvcrt_SEEK_END);
-	int stSize = msvcrt.ftell(stFile);
-	stMod = msvcrt.calloc(1, stSize);
-	msvcrt.fseek64(stFile, 0, g.msvcrt_SEEK_SET);
-	msvcrt.fread(stMod, stSize, 1, stFile);
-	msvcrt.fclose(stFile);
-} else
-	return;
 
 function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
@@ -174,7 +163,6 @@ function writeBytePtrText(ptr renderer, float x, float y, byte* text) {
 }
 
 function PrintSongInfo() {
-	//writeBytePtrText(renderer, 10.0, 10.0, stMod);
 	return;
 	writeBytePtrText(renderer, 10.0, 10.0, *mikmodModule.songname);
 	writeText(renderer, 10.0, 20.0, "Pattern position: " + *mikmodModule.patpos);
@@ -274,7 +262,6 @@ sdl3.SDL_Quit();
 msvcrt.free(coolPixels);
 msvcrt.free(fireBufferOld);
 msvcrt.free(fireBufferNew);
-msvcrt.free(stMod);
 sidelib.FreeImage(g.[logo_p]);
 SoundtrackerFree();
 

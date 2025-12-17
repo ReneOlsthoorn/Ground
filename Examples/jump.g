@@ -275,7 +275,7 @@ while (StatusRunning)
 
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
-	SDL3_ClearScreenPixels(0xff000000);
+	GC_ClearScreenPixels(0xff000000);
 	StarField();
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);

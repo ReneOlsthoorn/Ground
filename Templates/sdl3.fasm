@@ -137,10 +137,6 @@ include 'Templates\part_utils.fasm'
 include 'Templates\part_hardcoded_library.fasm'
 
 
-PrintScreenString:
-  ret
-
-
 PlotSprite:
 ;rcx = source
 ;rdx = destination pixels
@@ -275,13 +271,13 @@ _f_PlotSheetSprite:
   retn  G_STACKSPACE_5_PARAM
 
 
-color@_f_SDL3_ClearScreenPixels equ rbp+G_PARAMETER1
-_f_SDL3_ClearScreenPixels:
+color@_f_GC_ClearScreenPixels equ rbp+G_PARAMETER1
+_f_GC_ClearScreenPixels:
   push  rbp
   mov   rbp, rsp
   mov	rcx, GC_SCREEN_WIDTH * GC_SCREEN_HEIGHT
   mov	rdx, [pixels_p]
-  mov	rax, qword [color@_f_SDL3_ClearScreenPixels]
+  mov	rax, qword [color@_f_GC_ClearScreenPixels]
   push	rdi
   mov	rdi, rdx
   rep	stosd

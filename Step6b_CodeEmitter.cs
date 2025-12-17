@@ -731,7 +731,12 @@ namespace GroundCompiler
 
         public string AssemblyVariableName(LocalVariableSymbol varSymbol, IScopeStatement? scopeStmt)
         {
-            return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, varSymbol.Name);
+            string? groupOrClassName = null;
+            if (scopeStmt is FunctionStatement funcStmt)
+                if (funcStmt.classStatement != null)
+                    groupOrClassName = funcStmt.classStatement.Name.Lexeme;
+
+            return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, varSymbol.Name, groupOrClassName);
         }
 
         public string AssemblyVariableName(FunctionParameterSymbol varSymbol)
@@ -741,7 +746,12 @@ namespace GroundCompiler
 
         public string AssemblyVariableName(string name, IScopeStatement? scopeStmt)
         {
-            return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, name);
+            string? groupOrClassName = null;
+            if (scopeStmt is FunctionStatement funcStmt)
+                if (funcStmt.classStatement != null)
+                    groupOrClassName = funcStmt.classStatement.Name.Lexeme;
+
+            return AssemblyVariableNameForFunctionParameter(scopeStmt!.GetScopeName().Lexeme, name, groupOrClassName);
         }
 
         public string AssemblyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)

@@ -247,7 +247,7 @@ function UpdatePositions() {
 
 
 function DrawScreen() {
-	//SDL3_ClearScreenPixels(0xff000000);
+	//GC_ClearScreenPixels(0xff000000);
 
 	for (y in 0 ..< heightOfRoad) {
 		float distance = space_y * scale_y / (y + horizon);

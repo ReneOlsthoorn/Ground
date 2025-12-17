@@ -34,7 +34,7 @@ namespace GroundCompiler.Statements
 
         public void AddHardcodedFunctions()
         {
-            // group msvcrt
+            /* group msvcrt */
             var nameToken = new Token(TokenType.Identifier);
             nameToken.Lexeme = "msvcrt";
 
@@ -48,7 +48,8 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("stream", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parent = group;
 
-            // group gc
+
+            /* group gc */
             nameToken = new Token(TokenType.Identifier);
             nameToken.Lexeme = "gc";
 
@@ -58,21 +59,51 @@ namespace GroundCompiler.Statements
             group.Parent = this;
             this.Scope.DefineGroup(group);
 
-            group.Scope.DefineHardcodedFunction("input_int");
-            group.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
+            fn = group.Scope.DefineHardcodedFunction("input_int");
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("input_string", Datatype.GetDatatype("string"));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("hex$", Datatype.GetDatatype("string"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("nibbles", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("bswap32", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("fill");
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("dest", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("rectfill");
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("dest", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("width", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("height", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("linesize", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
 
             fn = group.Scope.DefineHardcodedFunction("strlen", Datatype.GetDatatype("int"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+            fn.FunctionStmt.Parent = group;
 
             fn = group.Scope.DefineHardcodedFunction("cstr_len", Datatype.GetDatatype("int"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+            fn.FunctionStmt.Parent = group;
 
             fn = group.Scope.DefineHardcodedFunction("cstr_convert", Datatype.GetDatatype("string"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("ptr")));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("len", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
 
             fn = group.Scope.DefineHardcodedFunction("cstr_linelen", Datatype.GetDatatype("int"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
+            fn.FunctionStmt.Parent = group;
 
             fn = group.Scope.DefineHardcodedFunction("ReadAllText", Datatype.GetDatatype("string"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("filepath", Datatype.GetDatatype("string")));
@@ -83,6 +114,8 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("bitnr", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parent = group;
 
+
+            /* program scope */
             fn = this.Scope.DefineHardcodedFunction("print");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("string")));
 
@@ -112,18 +145,13 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("height", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("sheetwidth", Datatype.GetDatatype("int")));
 
-            fn = this.Scope.DefineHardcodedFunction("GC_Replace", Datatype.GetDatatype("string"));
-            fn.FunctionStmt.Parameters.Add(new FunctionParameter("source", Datatype.GetDatatype("string")));
-            fn.FunctionStmt.Parameters.Add(new FunctionParameter("search", Datatype.GetDatatype("string")));
-            fn.FunctionStmt.Parameters.Add(new FunctionParameter("replace", Datatype.GetDatatype("string")));
-
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
             this.Scope.DefineHardcodedFunction("countof", Datatype.GetDatatype("int"));
 
-            fn = this.Scope.DefineHardcodedFunction("SDL3_ClearScreenPixels");
+            fn = this.Scope.DefineHardcodedFunction("GC_ClearScreenPixels");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("color", Datatype.GetDatatype("int")));
 
             // Usage:   byte[61,36] screenArray = GC_ScreenText;

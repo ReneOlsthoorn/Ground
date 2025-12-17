@@ -457,7 +457,7 @@ while (StatusRunning)
 
 	if (gameStatus == "game running") { MovePiece(); }
 
-	SDL3_ClearScreenPixels(0xff000000);
+	GC_ClearScreenPixels(0xff000000);
 	DrawBoard();
 
 	sdl3.SDL_UnlockTexture(texture);

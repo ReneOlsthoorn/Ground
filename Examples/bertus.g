@@ -401,7 +401,7 @@ while (StatusRunning)
 	g.[pixels_p] = pixels;
 	loopStartTicks = sdl3.SDL_GetTicks();
 
-	SDL3_ClearScreenPixels(0xff000000);
+	GC_ClearScreenPixels(0xff000000);
 	Draw();
 	if (levelCompleteFramecount == 0 and gameOverFramecount == 0)
 		MoveElements();

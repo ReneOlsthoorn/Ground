@@ -129,10 +129,10 @@ version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 co
 
 ### Using ucrt or msvcrt
 When you compile a C program with Visual Studio 22, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
-of the VC runtime is active that week. It's a mess. Those DLL's are not by default available on Windows. So the users need to 
+of the VC runtime is active that week. It's a mess. Those DLL's are not available by default on a Windows system. So the users need to 
 install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
-use the OG `msvcrt.dll`.  
-MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
+use the OG `msvcrt.dll` or the new 'ucrtbase.dll'.  
+The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
 `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
 that will be the future.
 
@@ -202,37 +202,51 @@ is faster than a divide operand. However, this is not needed because the optimiz
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the unpacking of a `.PNG` file can be
 done with existing C libraries. The `GroundSideLibrary` is a .DLL which contains all that C code and creates an 
-interface for it.
+interface for it. It is compiled using MSYS2 MINGW64, which is a great and uses MSVCRT or UCRT by default.
 
 ### State of Ground : Alpha
 The Ground language is Alpha, so do not use the language if you look for a stable language.
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
 ### Looking for a high performance programming language with inline assembly. 
-Your PC only has ONE CPU, which can execute your code incredibly fast using a nice language called x86-64. Surely, all
-programming languages will allow you to insert x86-64... NOT!!  
-Let's look at some high performance languages. There are many to choose from these days. For instance the V language. 
-It has no garbage collection and transpiles to C. Unfortunately there is no focus on assembly in V.  
-The Beef language is also great. No garbage collector. C# look-a-like approach. The backend is LLVM, so unfortunately 
+Your Windows PC has a CPU which can execute code incredibly fast using a language called x86-64 assembly.  
+While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
+conversion like this:
+```
+var data = base.ReadBytes(4);
+Array.Reverse(data);
+return BitConverter.ToInt32(data, 0);
+```
+In x86-64, this functionality is done with one statement:
+```
+bswap eax
+```
+Surely, C# or Java will allow you to insert x86-64 assembly... NOT!!  
+In defense of C# and Java, they are both positioned as productivity languages. Inserting assembly is a high performance
+feature. So, let's look at high performance languages then. There are many to choose from these days. 
+For instance the V language. It has no garbage collection and transpiles to C. Unfortunately there is no focus on 
+assembly in V.  
+Second language: Beef. No garbage collector. C# look-a-like approach. The backend is LLVM, so unfortunately 
 no easy assembly.  
-Odin is great. But same as beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
+Third language: Odin. But same as Beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
 Well, for general purpose software I would recommend C# or Kotlin because they are fast enough (for instance, C# can do 
 parallel execution) and have the most libraries available for all kinds of tasks. Microsoft and Java are dominating. 
 Also in the job market.  
 Python is slower but that's no problem for a scripting language. It can connect to native compiled libraries with relative
 ease. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. It was very easy to make an application 
-with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because he did a great job creating 
-Python and there is also so much he can do.  
+with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because single threading has it's up
+sides in a scripting language.  
 By the way: a very interesting general purpose programming language is Pharo Smalltalk. Everything is an object in 
 Smalltalk and the code editor is available in the image. I used to be a Smalltalk programmer from 1997-2002 and I 
 still love the language and environment.  
 But, back to our search for a high performance language: Wren is a scriping language, Nim transpiles to C. Dart has a 
 garbage collector and is busy with flutter and has no focus on high performance. Go also has a garbage collector, but 
 a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
-support inline assembly. Go is a systems programming language and those languages want to abstract the CPU away. That
-way the system can run on every CPU.  
-Rust has a LLVM backend, so no easy assembly. The same for Zig.  
-So, now you understand why Ground is necessary :-)  There is only ONE CPU in your PC. Why lose control of it?
+support inline assembly. Go is a systems programming language and those languages want to abstract the CPU away.  
+Rust has a LLVM backend, so no easy assembly. The same for Zig. The same for Crystal. In Crystal, I coded a 
+"Hello, World!". It is 660k and uses VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
+you also must ship 2 extra DLL's to make your "Hello, World!" run on a modern PC. It's not convenient.  
+So, now you understand why Ground is necessary :-)  There is only one CPU in your PC. Get a grip on it and make it dance!
 
 ## Write your own Programming Language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
@@ -478,3 +492,8 @@ You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 
 2025.11.29: GroundSideLibrary now build with MSYS2.  
 2025.12.05: Fireworks demo added.  
 2025.12.09: 3D demo added.
+
+### Open bugs
+2025.12.13: A string as instance variable has bad reference counting.  
+2025.12.13: Returning a string also has bad reference counting.  
+2025.12.13: this.mod[10] doesn't work.

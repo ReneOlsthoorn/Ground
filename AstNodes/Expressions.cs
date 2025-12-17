@@ -566,14 +566,11 @@ namespace GroundCompiler.Expressions
 
         public Variable? GetMemberVariable()
         {
-            if (this.MemberNode is Variable)
-                return (Variable)this.MemberNode;
-
-            if (this.MemberNode is ArrayAccess)
-            {
-                var memberAccess = (ArrayAccess)this.MemberNode;
+            if (this.MemberNode is Variable memberVar)
+                return memberVar;
+            if (this.MemberNode is ArrayAccess memberAccess)
                 return memberAccess.GetMemberVariable();
-            }
+            //if (this.MemberNode is PropertyExpression propExpr)
             return null;
         }
 

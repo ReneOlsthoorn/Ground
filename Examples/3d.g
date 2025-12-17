@@ -50,12 +50,8 @@ sdl3.SDL_SetTextureScaleMode(ballTexture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_DestroySurface(ballSurface);
 
 
+#include screen.g
 
-function writeText(ptr renderer, float x, float y, string text) {
-	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, x, y, text);
-}
 
 // Following 2 functions are also in utils.g
 function DegreeToRadians(float angle_deg) : float {
@@ -98,6 +94,18 @@ f32[16] proj = [ ] asm;
 f32[16] mvp = [ ] asm;
 ptr[3] matrixArray = [ proj, view, model ];
 
+/*
+Local -> Model -> World
+World -> View  -> View/Eye
+View  -> Proj  -> Clip
+Clip  / w      -> NDC (Normalized Device Coordinates)
+NDC  -> Viewport -> Screencoordinates
+
+final_clip_pos   = proj x view x model x local_position;   ->  Clip Space
+final_ndc        = final_clip_pos / final_clip_pos.w;      ->  NDC
+final_screen_pos = viewport_transform(final_ndc);          ->  Screen Space
+*/
+
 
 // Model
 //glm.glmc_mat4_identity(model);
@@ -109,7 +117,7 @@ ptr[3] matrixArray = [ proj, view, model ];
 
 
 // View
-f32[3] vec3_eye = [ 0.0, 0.0, 5.0 ] asm;
+f32[3] vec3_eye = [ 0.0, 0.0, 4.0 ] asm;
 f32[3] vec3_center = [ 0.0, 0.0, 0.0 ] asm;
 f32[3] vec3_up = [ 0.0, 1.0, 0.0 ] asm;
 glm.glmc_mat4_identity(view);
@@ -121,13 +129,16 @@ glm.glmc_mat4_identity(proj);
 glm.glmc_perspective(DegreeToRadians(60.0), 1280.0 / 720.0, 0.1, 100.0, proj);
 
 
+// mvp matrix is the multiplication of the proj, view and model matrices.
 glm.glmc_mat4_mulN(matrixArray, 3, mvp);
 
 
+// Below is the Compare function for the qsort of the ndcCube.
 asm procedures {
-compare_thearray:
+ndcCube_Compare:
+; rcx = ptr to element 1 (element is vec3) , rdx = pointer to element 2
   xor	eax, eax
-  mov	eax, dword [rcx+8]
+  mov	eax, dword [rcx+8]	; retrieve the f32 Z in vec3
   sub	rsp, 8
   mov	[rsp], eax
   movss	xmm0, dword [rsp]
@@ -135,20 +146,16 @@ compare_thearray:
   mov	[rsp], eax
   movss	xmm1, dword [rsp]
   add	rsp, 8
-
-  ucomiss xmm0, xmm1
+  ucomiss xmm0, xmm1		; compare the two z f32's.
   jb    .exitLess
   ja    .exitGreater
-  jmp   .exitEqual
-
+  xor	eax, eax        ; eax = 0
+  ret
 .exitLess:
   mov	eax, -1
   ret
 .exitGreater:
   mov	eax, 1
-  ret
-.exitEqual:
-  xor	eax, eax        ; eax = 0
   ret
 }
 
@@ -182,7 +189,7 @@ function RenderCube() {
 		ndcCube[i*VEC3+2] = ndc_z;
 	}
 
-	sdl3.SDL_qsort(ndcCube, CUBE_SIZE, 3*sizeof(f32), g.compare_thearray);
+	sdl3.SDL_qsort(ndcCube, CUBE_SIZE, 3*sizeof(f32), g.ndcCube_Compare);
 
 	for (i in (CUBE_SIZE-1)..0) {
 		float screen_x = (ndcCube[i*VEC3] + 0.5) * 1280.0;
@@ -190,7 +197,7 @@ function RenderCube() {
 
 		float ballSize = (0.99 - ndcCube[i*VEC3+2]) * 1500.0;
 
-		ballDestRect[0] = screen_x;
+		ballDestRect[0] = screen_x - 32.0;
 		ballDestRect[1] = screen_y;
 		ballDestRect[2] = ballSize;
 		ballDestRect[3] = ballSize;
@@ -203,17 +210,96 @@ function RenderCube() {
 
 sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 g.[pixels_p] = pixels;
-SDL3_ClearScreenPixels(0xff808080);
+GC_ClearScreenPixels(0xff808080);
 sdl3.SDL_UnlockTexture(texture);
 sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
+string soundFile = "sound/mod/chinese dream.mod";
 #include soundtracker.g
-SoundtrackerInit("sound/mod/watchman-25.12.mod", 127);
+SoundtrackerInit(soundFile, 127);
+
+#include protracker.g
+ProtrackerMod ptMod;
+ptMod.Load(soundFile);
+ptMod.StartPlay();
+
+
+string[] NoteMapping = [ "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" ];
+string GetNoteResult;
+function GetNoteInfo(int note, int sample) {
+	if (note == 0) {
+		GetNoteResult = "      ";
+		return;
+	}
+	note = note - 1;
+	int octaaf = note / 12;
+	int noteWithin = note % 12;
+	GetNoteResult = NoteMapping[noteWithin] + (octaaf+1) + " " + gc.hex$(sample,2);   // returning strings does not work at this moment.
+}
+
+
+function PrintMusicInfo() {
+	gc.fill(g.[screentext_p], SCREEN_TEXTSIZE, ' ');
+	g.[screen_cursor] = SCREEN_TEXTCOLUMNS;
+
+	g.[screen_cursor] = g.[screen_cursor] + 21;
+	print("Title:" + ProtrackerMod_Title + "  NumSongPos:" + ptMod.numSongPos + "\n");
+	//print("  Pat.Table:");  for (i in 0 ..< ptMod.numSongPos) print(" " + *(ptMod.patternTable+i));
+
+	g.[screen_cursor] = g.[screen_cursor] + 21;
+	print("Active pattern:" + ptMod.ActivePatternNr() + "  songPos:" + ptMod.songPos +  "  speed:" + ptMod.speed + "\n");
+
+	g.[screen_cursor] = g.[screen_cursor] + 21;
+	print("Active rownr:" + ptMod.activeRowNr + "\n");
+
+	g.[screen_cursor] = g.[screen_cursor] + 21;
+	print("Mikmod patpos:" + *mikmodModule.patpos + "  sngpos:" + *mikmodModule.sngpos);
+
+	g.[screen_cursor] = SCREEN_TEXTCOLUMNS*6;
+	int currentPatternNr = ptMod.ActivePatternNr();
+
+	g.[screen_cursor] = 0;
+	for (i in 0..44) {
+		int thisRow = ptMod.activeRowNr - 22 + i;
+		if (thisRow < 0 or thisRow > 63) {
+			g.[screen_cursor] = g.[screen_cursor] + SCREEN_TEXTCOLUMNS;
+			continue;
+		}
+		u32* aRow = ptMod.patternData + (currentPatternNr * 256 * PROTRACKER_NUMCHANNELS) + (thisRow * 4 * PROTRACKER_NUMCHANNELS);
+		// u32 channelValue = gc.bswap32(*(aRow+4));  // gc.hex$(channelValue, 8)
+
+		for (v in 0..3) {
+			int note = ptMod.GetNote(*(aRow+(v*4)));
+			int sample = ptMod.GetSample(*(aRow+(v*4)));
+			GetNoteInfo(note, sample);
+
+			if (v == 0)
+				g.[screen_cursor] = g.[screen_cursor] + 2;
+			if (v == 1)
+				g.[screen_cursor] = g.[screen_cursor] + 3;
+			if (v == 2)
+				g.[screen_cursor] = g.[screen_cursor] + 46;
+			if (v == 3)
+				g.[screen_cursor] = g.[screen_cursor] + 3;
+			print(GetNoteResult);
+		}
+		print("\n");
+	}
+}
+
+
+int loopStartTicks = 0;
+int debugBestTicks = 0xffff;
+gc.fill(g.[screentext_p], SCREEN_TEXTSIZE, ' ');
+gc.fill(g.[screencolor_p], SCREEN_TEXTSIZE, 0xbf); //0xbf);
+gc.rectfill(g.[screencolor_p], 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
+gc.rectfill(g.[screencolor_p]+61, 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
+
+gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22, 19, 0xe6);
+gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22+61, 19, 0xe6);
 
 while (StatusRunning)
 {
-	SoundtrackerUpdate();
-
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -230,13 +316,24 @@ while (StatusRunning)
 	if (keyState[g.SDL_SCANCODE_RIGHT]) { }
 	if (keyState[g.SDL_SCANCODE_DOWN]) { }
 
+	loopStartTicks = sdl3.SDL_GetTicks();
+
+	SoundtrackerUpdate();
+	ptMod.Activate();
+
+	sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
+	g.[pixels_p] = pixels;
+	PrintMusicInfo();
+	ScreenDrawTextLines();
+
+	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 
 	RenderCube();
 
-	//sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
-	//sdl3.SDL_RenderLine(renderer, 20.0, 20.0, 40.0, 40.0);
-	//writeText(renderer, 60.0, 60.0, "SDL3 debug...");
+	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
+	if (currentTicks < debugBestTicks && currentTicks != 0)
+		debugBestTicks = currentTicks;
 
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
@@ -248,8 +345,12 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-
+FreeScreenBuffers();
+ptMod.Free();
 SoundtrackerFree();
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 kernel32.SetPriorityClass(processHandle, oldPriorityClass);
+
+//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+//user32.MessageBox(null, showStr, "Message", g.MB_OK);

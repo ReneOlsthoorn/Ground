@@ -71,7 +71,9 @@ PrintNumber:
   lea	rax, [rbp - 0x10]
   mov	[rax], r8b
   mov	byte [rax+1], 0		; zero-terminated
+if defined PrintScreenString
   call	PrintScreenString	; Display the remainder
+end if
   pop	r8 rdx
   mov	rsp, rbp
   pop	rbp

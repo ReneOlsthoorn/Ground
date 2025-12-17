@@ -55,14 +55,18 @@ namespace GroundCompiler
                 else
                 {
                     negativeOffset += 8; // Not varSymbol.DataType.SizeInBytes; // See explanation in CodeEmitterX64>>StoreFunctionVariable64
+                    string? classNameStr = this.FunctionStatement.classStatement?.Name?.Lexeme;
+                    string humanReadableProcNamePlusClass = ProcedureName;
+                    if (classNameStr != null)
+                        humanReadableProcNamePlusClass += $"@{classNameStr}";
 
-                    var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
+                    var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name, classNameStr);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
 
                     if (varSymbol.Properties.ContainsKey("asm array"))
-                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ {Step4_TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
+                        Emitter.Writeline($"{varSymbol.Name}@{humanReadableProcNamePlusClass} equ {Step4_TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
                     else
-                        Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+                        Emitter.Writeline($"{varSymbol.Name}@{humanReadableProcNamePlusClass} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }
             }
 

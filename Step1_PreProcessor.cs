@@ -87,7 +87,9 @@ namespace GroundCompiler
         public void IncludeFileAtIndex(int index, string fileName)
         {
 #if DEBUG
-            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Include\\{fileName}"));
+            if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
             if (!File.Exists(fullPath))

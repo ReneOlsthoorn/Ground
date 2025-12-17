@@ -7,7 +7,8 @@ namespace GroundCompiler
     {
         public Dictionary<string, string> reservedRegisters;
         public List<string> _tmpRegisters = new List<string>() { "r8", "r9", "r10", "r11", "rdx", "rcx" };      // RAX cannot be reserved, because it can always be used.
-        public List<string> _tmpFloatRegisters = new List<string>() { "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6" };     // XMM0 cannot be reserved, because it can always be used.
+        public List<string> _tmpFloatRegisters = new List<string>() { "xmm1", "xmm2", "xmm3", "xmm4", "xmm5" };     // XMM0 cannot be reserved, because it can always be used.
+        public List<string> _restoredFloatRegisters = new List<string>() { "xmm6", "xmm7", "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
         public List<string> _restoredRegisters = new List<string>() { "rbx", "rsi", "rdi", "r12", "r13", "r14", "r15" };    // rbp, rsp
 
         public CPU_X86_64()
@@ -53,6 +54,23 @@ namespace GroundCompiler
                     return reg;
                 }
             Step6_Compiler.Error("No free register in GetTmpFloatRegister.");
+            return "";
+        }
+
+        public string GetRestoredFloatRegister(Expression? exp = null)
+        {
+            foreach (var reg in _restoredFloatRegisters)
+                if (!reservedRegisters.ContainsKey(reg))
+                {
+                    reservedRegisters[reg] = "";
+                    if (exp != null)
+                    {
+                        var functionStat = exp.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                        functionStat?.AddUsedRegister(reg);
+                    }
+                    return reg;
+                }
+            Step6_Compiler.Error("No free register in GetRestoredFloatRegister.");
             return "";
         }
 

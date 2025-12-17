@@ -547,4 +547,24 @@ for (i in (NUMER_MULTIPLICATIONS-1) .. 1)
 	j = j * i;
 assert(j == 7*4*3*2*1);
 
+
+byte[6] hallo = [ 'H', 'a', 'l', 'l', 'o', 0 ] asm;
+string resultStr = "";
+
+function MakeResultStr() {
+	string tmpStr = gc.cstr_convert(hallo, gc.cstr_len(hallo));
+	resultStr = resultStr + tmpStr;
+}
+MakeResultStr();
+assert(resultStr == "Hallo");
+
+
+int hexValue1 = 0xfffe43fe;
+string hexResult1 = gc.hex$(hexValue1, 2);
+assert(hexResult1 == "fe");
+
+hexResult1 = gc.hex$(hexValue1, 8);
+assert(hexResult1 == "fffe43fe");
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

@@ -181,7 +181,7 @@ function GameOverInformation() {
 
 sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 g.[pixels_p] = pixels;
-SDL3_ClearScreenPixels(0xffffffff);
+GC_ClearScreenPixels(0xffffffff);
 sdl3.SDL_UnlockTexture(texture);
 
 
