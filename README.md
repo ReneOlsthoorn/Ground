@@ -91,9 +91,8 @@ The most easy way to run all the examples is using Visual Studio. Open and compi
 will get a folder called `<GroundProjectFolder>\bin\Debug` at your solution's location.  
 In that folder, you must unzip the `<GroundProjectFolder>\Resources\GroundResources.zip`
 The zipfile contains additional DLL's, sounds and images. The sourcecode for the included 
-[GroundSideLibrary.dll](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github. 
-The libchipmunk.dll is included because the default libchipmunk.dll from MSYS2 does not work. More info on that in 
-the remarks section.  
+[GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github. 
+The libchipmunk.dll is included because the default from MSYS2 does not work. More info on that in the remarks section.  
 After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug` folder and run the batchfile called 
 `load.bat` to download and automatically unzip SDL3, SDL3_image and other DLL's.  
 After this, you can change line 24 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
