@@ -6,8 +6,8 @@ of the CPU. Ground has constructs like classes and functions, statements like `w
 like `string` and `float` and arrays. See file `.\Examples\unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
-The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
+written in C# and generates x86-64 assembly which is assembled by the freely available FASM for Windows.  
+The generated code is poured into an assembly template which can be freely chosen. This will result in small .EXE 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a `sdl3` template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
 can create your own template.  
