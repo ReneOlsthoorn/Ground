@@ -2,9 +2,8 @@
 
 This is the compiler for the programming language Ground for Windows, which allows mixing high-level programming 
 constructs with x86-64. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
-of the CPU.  
-Ground has constructs like classes and functions, statements like `while`, `for` and `if`, datatypes like `string` and
-`float` and arrays.  
+of the CPU. Ground has constructs like classes and functions, statements like `while`, `for` and `if`, datatypes 
+like `string` and `float` and arrays.  
 See file `.\Examples\unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
@@ -211,7 +210,7 @@ The Ground language is Alpha, so do not use the language if you look for a stabl
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
 ### Looking for a high performance programming language with inline assembly. 
-Your Windows PC has a CPU which can execute code incredibly fast using a language called x86-64 assembly.  
+Your Windows PC has a CPU which can execute code incredibly fast using a language called `x86-64` assembly.  
 While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
 conversion like this:
 ```
@@ -223,32 +222,32 @@ In x86-64, this functionality is done with one statement:
 ```
 bswap eax
 ```
-Surely, C# or Java will allow you to insert x86-64 assembly... NOT!!  
+Surely, `C#` or `Java` will allow you to insert x86-64 assembly... NOT!!  
 In defense of C# and Java, they are both positioned as productivity languages. Inserting assembly is a high performance
-feature. So, let's look at high performance languages then. There are many to choose from these days. 
-For instance the V language. It has no garbage collection and transpiles to C. Unfortunately there is no focus on 
+feature. So, let's look at high performance languages then. There are many to choose from these days.  
+For instance the `V language`. It has no garbage collection and transpiles to C. Unfortunately there is no focus on 
 assembly in V.  
-Second language: Beef. No garbage collector. C# look-a-like approach. The backend is LLVM, so unfortunately 
+Second language: `Beef`. No garbage collector. C# look-a-like approach. The backend is `LLVM`, so unfortunately 
 no easy assembly.  
-Third language: Odin. But same as Beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
+Third language: `Odin`. But same as Beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
 Well, for general purpose software I would recommend C# or Kotlin because they are fast enough (for instance, C# can do 
 parallel execution) and have the most libraries available for all kinds of tasks. Microsoft and Java are dominating. 
 Also in the job market.  
-Python is slower but that's no problem for a scripting language. It can connect to native compiled libraries with relative
+`Python` is slower but that's no problem for a scripting language. It can connect to native compiled libraries with relative
 ease. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. It was very easy to make an application 
-with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because single threading has it's up
-sides in a scripting language.  
-By the way: a very interesting general purpose programming language is Pharo Smalltalk. Everything is an object in 
-Smalltalk and the code editor is available in the image. I used to be a Smalltalk programmer from 1997-2002 and I 
+with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because single threading natural in a 
+scripting language.  
+By the way: a very interesting general purpose programming language is `Pharo` Smalltalk. Everything is an object in 
+Smalltalk and the code editor is available in the image. I used to be a `Smalltalk` programmer from 1997-2002 and I 
 still love the language and environment.  
-But, back to our search for a high performance language: Wren is a scriping language, Nim transpiles to C. Dart has a 
-garbage collector and is busy with flutter and has no focus on high performance. Go also has a garbage collector, but 
+But, back to our search for a high performance language: `Wren` is a scriping language, `Nim` transpiles to C. `Dart` has a 
+garbage collector and is busy with flutter and has no focus on high performance. `Go` also has a garbage collector, but 
 a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
-support inline assembly. Go is a systems programming language and those languages want to abstract the CPU away.  
-Rust has a LLVM backend, so no easy assembly. The same for Zig. The same for Crystal. In Crystal, I coded a 
-"Hello, World!". It is 660k and uses VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
-you also must ship 2 extra DLL's to make your "Hello, World!" run on a modern PC. It's not convenient.  
-So, now you understand why Ground is necessary :-)  There is only one CPU in your PC. Get a grip on it and make it dance!
+support inline assembly. `Go` is a systems programming language and those languages want to abstract the CPU away.  
+`Rust` has a LLVM backend, so no easy assembly. The same for `Zig`. The same for `Crystal`. In Crystal, I coded a 
+"Hello, World!". It was 660k and used VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
+you also must ship 2 extra DLL's to make your "Hello, World!" run on a modern PC. That's not convenient.  
+So, now you understand why `Ground` is necessary :-)  There is only one CPU in your PC. Get a grip on it and make it dance!
 
 ## Write your own Programming Language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
