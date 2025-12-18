@@ -3,8 +3,7 @@
 This is the compiler for the programming language Ground for Windows, which allows mixing high-level programming 
 constructs with x86-64. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
 of the CPU. Ground has constructs like classes and functions, statements like `while`, `for` and `if`, datatypes 
-like `string` and `float` and arrays.  
-See file `.\Examples\unittests.g` for some syntax examples.  
+like `string` and `float` and arrays. See file `.\Examples\unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
 written in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
