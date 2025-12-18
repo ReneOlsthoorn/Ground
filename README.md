@@ -45,8 +45,9 @@ We can replace a statement with x86-64:
 ```
 
 The asm block is literally copied to the assembler. If you want, you can inspect the generated .asm file to see 
-every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime environment, the Portable Executable 
-format and the x64 calling convention.  
+every detail. Reading it will give you knowledge of the x86-64 `WIN32` runtime environment, 
+the [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format) and 
+the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-calling-convention).  
 
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
