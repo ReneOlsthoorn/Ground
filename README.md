@@ -1,12 +1,12 @@
 # Ground
 
 This is the compiler for the programming language `Ground` for Windows, which allows mixing high-level programming 
-constructs with `x86-64`. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
+constructs with x86-64. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
 of the CPU. Ground has constructs like `class` and `function`, statements like `while`, `for` and `if`, datatypes 
 like `string` and `float` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled by `FASM` for Windows.  
+written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/) for Windows.  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small `.EXE` 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
@@ -44,8 +44,8 @@ We can replace a statement with x86-64:
 			}
 ```
 
-The asm block is literally copied to the assembler. If you want, you can inspect the generated .asm file to see 
-every detail. Reading it will give you knowledge of the x86-64 `WIN32` runtime environment, 
+The `asm` block is literally copied to the assembler. If you want, you can inspect the generated .asm file to see 
+every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime environment, 
 the [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format) and 
 the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-calling-convention).  
 
