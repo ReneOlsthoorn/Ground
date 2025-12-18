@@ -46,7 +46,7 @@ namespace GroundCompiler
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=true };
+            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=false };
             compilation.Build();
         }
 
