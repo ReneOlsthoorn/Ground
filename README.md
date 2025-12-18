@@ -75,22 +75,16 @@ possible as can be seen in the sudoku.g example. See the Chess example on how to
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
 </p>
 
-### Installing FASM 1.73:
-Ground uses FASM to assemble the generated code. Download FASM at https://flatassembler.net/fasmw17332.zip.
-Set the INCLUDE environment variable to `<installation directory>\INCLUDE`.
-Add the `<installation directory>` to the System variables Path variable.
-
 ### Sourcecode visible while debugging in x64dbg:
-If you want to debug with x64dbg, assemble FASM's listing.asm into listing.exe and put it in the FASM installation 
-directory. Switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg folder is correct, because 
-Ground will generate a x64dbg database file there. After compilation, you can load your .EXE in x64dbg and you will see 
-the original generated assembly in the comment column of the debugger.
+If you want to debug with x64dbg, switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg 
+folder is correct, because Ground will generate a x64dbg database file there. After compilation, you can load your 
+.EXE in x64dbg and you will see the original generated assembly in the comment column of the debugger.
 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called `<GroundProjectFolder>\bin\Debug` at your solution's location.  
 In that folder, you must unzip the `<GroundProjectFolder>\Resources\GroundResources.zip`
-The zipfile contains additional DLL's, sounds and images. The sourcecode for the included 
+The zipfile contains additional DLL's, FASM, sounds and images. The sourcecode for the included 
 [GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github. 
 The libchipmunk.dll is included because the default from MSYS2 does not work. More info on that in the remarks section.  
 After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug` folder and run the batchfile called 

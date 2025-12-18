@@ -46,7 +46,7 @@ namespace GroundCompiler
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=false };
+            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=true };
             compilation.Build();
         }
 
@@ -101,7 +101,14 @@ namespace GroundCompiler
             if (generateDebugInfo)
                 assemblerParameters = $"{outputAsmFilename} -s {outputFasFilename}";
 
-            System.Diagnostics.ProcessStartInfo info = new System.Diagnostics.ProcessStartInfo("fasm.exe", assemblerParameters);
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "fasm\\fasm.exe",
+                Arguments = assemblerParameters,
+                WorkingDirectory = currentDir
+            };
+
+            System.Diagnostics.ProcessStartInfo info = startInfo;
             System.Diagnostics.Process p = new System.Diagnostics.Process();
             p.StartInfo = info;
             p.Start();
@@ -111,7 +118,7 @@ namespace GroundCompiler
             {
                 Console.WriteLine("*** Generating Debug information.");
 
-                info = new System.Diagnostics.ProcessStartInfo("listing.exe", $"{outputFasFilename} {outputLstFilename}");
+                info = new System.Diagnostics.ProcessStartInfo("fasm\\listing.exe", $"{outputFasFilename} {outputLstFilename}");
                 p = new System.Diagnostics.Process();
                 p.StartInfo = info;
                 p.Start();

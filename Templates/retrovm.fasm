@@ -2,7 +2,7 @@ format pe64 GUI 5.0
 entry start
 stack 80000h, 80000h
 
-include 'win64a.inc'
+include 'fasm\win64a.inc'
 include 'Include\sdl3.inc'
 include 'Templates\part_equates.fasm'
 include 'Templates\part_macros.fasm'
