@@ -203,10 +203,10 @@ is faster than a divide operand. However, this is not needed because the optimiz
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the unpacking of a `.PNG` file can be
 done with existing C libraries. The `GroundSideLibrary` is a .DLL which contains all that C code and creates an 
-interface for it. It is compiled using MSYS2 MINGW64, which is a great and uses MSVCRT or UCRT by default.
+interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default.
 
 ### State of Ground : Alpha
-The Ground language is Alpha, so do not use the language if you look for a stable language.
+The Ground language is `Alpha`, so do not use the language if you look for a stable language.
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
 ### Looking for a high performance programming language with inline assembly. 
@@ -385,9 +385,10 @@ We were truly blessed with this plaform and it's domination for the last 30 year
 At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
 it to the cloud or uses it for AI. Microsoft wants to make Windows a sensory device for an AI companion and forces users to give 
 up privacy. I strongly disagree with this route, because it should be made optional.  
-Use a third-party tool as such as `O&O ShutUp10++` to disable Copilot and Recall. However, with each new update, the settings 
-can be turned on again. The whole situation is a shame, because Windows has such a great history. Like many users, I don't want
-to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to the Windows platform.  
+Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot and Recall. However, 
+with each new update, the settings can be turned on again. The whole situation is a shame, because Windows has such a great history. 
+Like many users, I don't want to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to 
+the Windows platform.  
 
 ### Smoothscroller
 <p align="center">
