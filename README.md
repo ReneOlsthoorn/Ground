@@ -1,21 +1,23 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows. It allows mixing high-level programming 
-constructs with x86-64. The programmer stays in control of the CPU because assembly can be added anywhere.  
-Ground has constructs like classes (supporting instance variables and methods), functions, groups of functions, 
-compact for-loops, statements like `while` and `if`, arrays and datatypes like `string` and `float`, etc...  
-See file `.\Examples\unittests.g` on how to use the language.  
+This is the compiler for the programming language Ground for Windows, which allows mixing high-level programming 
+constructs with x86-64. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
+of the CPU.  
+Ground has constructs like classes and functions, statements like `while`, `for` and `if`, datatypes like `string` and
+`float` and arrays.  
+See file `.\Examples\unittests.g` for some syntax examples.  
   
-Ground variables can be referred to in x64 by using the generated symbolic constants. The compiler itself is 
+Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
 written in C# and generates x86-64 assembly which is assembled with the freely available FASM for Windows.  
 The generated code is poured into an assembly template which can be chosen. This will result in small .EXE 
-files when the template is chosen wisely. For instance, there is a `console` template, but also a `sdl3` 
-template which loads the `SDL3.dll` and `SDL3_image.dll`. Ofcourse you can create your own template.  
+files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
+also a `sdl3` template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
+can create your own template.  
   
 The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 6k.  
 Ground .EXE files will be small because most external code is loaded at load-time. The usage of the 
 known system DLL's, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
-Several game examples are included with Ground:
+Several game examples are included with Ground, like racer.g:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
 </p>
@@ -87,12 +89,12 @@ the original generated assembly in the comment column of the debugger.
 
 ### Running the examples
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
-will get a folder called `<GroundProjectFolder>\bin\Debug\net10.0` at your solution's location.  
+will get a folder called `<GroundProjectFolder>\bin\Debug` at your solution's location.  
 In that folder, you must unzip the `<GroundProjectFolder>\Resources\GroundResources.zip`
 The zipfile contains additional DLL's, sounds and images. The sourcecode for the included GroundSideLibrary.dll is 
 available on github at: https://github.com/ReneOlsthoorn/GroundSideLibrary. The libchipmunk.dll is included because
 the default libchipmunk.dll from MSYS2 does not work. More info on that in the remarks section.  
-After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug\net10.0` folder and run the batchfile called 
+After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug` folder and run the batchfile called 
 `load.bat` to download and automatically unzip SDL3, SDL3_image and other DLL's.  
 After this, you can change line 24 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
 example. The mode7.g is the unoptimized version. The innerloop needs 5ms (on my machine with a Ryzen 7 5700g) to 
