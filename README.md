@@ -1,15 +1,15 @@
 # Ground
 
-This is the compiler for the programming language Ground for Windows, which allows mixing high-level programming 
+This is the compiler for the programming language `Ground` for Windows, which allows mixing high-level programming 
 constructs with x86-64. The assembly can be added anywhere in the Ground code, so the programmer stays in control 
 of the CPU. Ground has constructs like classes and functions, statements like `while`, `for` and `if`, datatypes 
-like `string` and `float` and arrays. See file `.\Examples\unittests.g` for some syntax examples.  
+like `string` and `float` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled by FASM for Windows.  
-The generated code is poured into an assembly template which can be freely chosen. This will result in small .EXE 
+written in C# and generates x86-64 assembly which is assembled by `FASM` for Windows.  
+The generated code is poured into an assembly template which can be freely chosen. This will result in small `.EXE` 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
-also a `sdl3` template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
+also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
 can create your own template.  
   
 The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 6k.  
