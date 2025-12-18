@@ -6,7 +6,7 @@ of the CPU. Ground has constructs like `class` and `function`, statements like `
 like `string` and `float` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/) for Windows.  
+written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/).  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small `.EXE` 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
@@ -76,7 +76,7 @@ possible as can be seen in the sudoku.g example. See the Chess example on how to
 </p>
 
 ### Installing FASM 1.73:
-Ground uses FASM to assemble the generated code. Download Fasm at https://flatassembler.net/fasmw17332.zip.
+Ground uses FASM to assemble the generated code. Download FASM at https://flatassembler.net/fasmw17332.zip.
 Set the INCLUDE environment variable to `<installation directory>\INCLUDE`.
 Add the `<installation directory>` to the System variables Path variable.
 
@@ -90,9 +90,10 @@ the original generated assembly in the comment column of the debugger.
 The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
 will get a folder called `<GroundProjectFolder>\bin\Debug` at your solution's location.  
 In that folder, you must unzip the `<GroundProjectFolder>\Resources\GroundResources.zip`
-The zipfile contains additional DLL's, sounds and images. The sourcecode for the included GroundSideLibrary.dll is 
-available on github at: https://github.com/ReneOlsthoorn/GroundSideLibrary. The libchipmunk.dll is included because
-the default libchipmunk.dll from MSYS2 does not work. More info on that in the remarks section.  
+The zipfile contains additional DLL's, sounds and images. The sourcecode for the included 
+[GroundSideLibrary.dll](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github. 
+The libchipmunk.dll is included because the default libchipmunk.dll from MSYS2 does not work. More info on that in 
+the remarks section.  
 After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug` folder and run the batchfile called 
 `load.bat` to download and automatically unzip SDL3, SDL3_image and other DLL's.  
 After this, you can change line 24 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
@@ -129,10 +130,10 @@ which was released in 2009, the 64-bit version is pushed as the default. Nowaday
 version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
 
 ### Using ucrt or msvcrt
-When you compile a C program with Visual Studio 22, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
+When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
 of the VC runtime is active that week. It's a mess. Those DLL's are not available by default on a Windows system. So the users need to 
 install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
-use the OG `msvcrt.dll` or the new 'ucrtbase.dll'.  
+use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
 The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
 `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
 that will be the future.
