@@ -198,7 +198,7 @@ function RenderCube() {
 		float ballSize = (0.99 - ndcCube[i*VEC3+2]) * 1500.0;
 
 		ballDestRect[0] = screen_x - 32.0;
-		ballDestRect[1] = screen_y;
+		ballDestRect[1] = screen_y - 32.0;
 		ballDestRect[2] = ballSize;
 		ballDestRect[3] = ballSize;
 
@@ -240,6 +240,7 @@ function GetNoteInfo(int note, int sample) {
 
 function PrintMusicInfo() {
 	gc.fill(g.[screentext_p], SCREEN_TEXTSIZE, ' ');
+	/*
 	g.[screen_cursor] = SCREEN_TEXTCOLUMNS;
 
 	g.[screen_cursor] = g.[screen_cursor] + 21;
@@ -254,7 +255,7 @@ function PrintMusicInfo() {
 
 	g.[screen_cursor] = g.[screen_cursor] + 21;
 	print("Mikmod patpos:" + *mikmodModule.patpos + "  sngpos:" + *mikmodModule.sngpos);
-
+	*/
 	g.[screen_cursor] = SCREEN_TEXTCOLUMNS*6;
 	int currentPatternNr = ptMod.ActivePatternNr();
 
@@ -291,7 +292,7 @@ function PrintMusicInfo() {
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 gc.fill(g.[screentext_p], SCREEN_TEXTSIZE, ' ');
-gc.fill(g.[screencolor_p], SCREEN_TEXTSIZE, 0xbf); //0xbf);
+gc.fill(g.[screencolor_p], SCREEN_TEXTSIZE, 0xbf);
 gc.rectfill(g.[screencolor_p], 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
 gc.rectfill(g.[screencolor_p]+61, 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
 
