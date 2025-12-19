@@ -50,10 +50,10 @@ the [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format)
 the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-calling-convention).  
 
 ### How to run Ground
-In your `Ground` root folder you have a file `LoadResources.bat`. Run it.  
+In your `Ground` root folder you have a file named `LoadResources.bat`. Run it.  
 It will unzip `.\Resources\GroundResources.zip` and download the needed DLL's, like SDL3, from trusted repositories 
 like MSYS2 or Github. The zipfile also contains extra files that could not be downloaded from the internet, like manual 
-build DLL's, sounds and images. For all used DLL's, the sourcecode is available. The included 
+build DLL's, sounds and images. For all DLL's used, sourcecode is available. The included 
 [GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github.  
 After this is done, Run `Visual Studio 2026` and open `GroundCompiler.slnx`. Hit the Play button in Visual Studio and 
 the game Bertus should compile and run.
@@ -63,9 +63,9 @@ the game Bertus should compile and run.
 
 ### Running other examples
 When the resources are downloaded, you can change line 24 in Program.cs `fileName = "bertus.g";` to 
-`fileName = "mode7.g";` to run the Mode7 example. The mode7.g is the unoptimized version. The innerloop needs 5ms 
-(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is the optimized version and has 
-an innerloop of 1ms.
+`fileName = "mode7.g";` to run the Mode7 example. See the comment on line 24 for more filenames of examples. The mode7.g 
+is the unoptimized version. The innerloop needs 5ms (on my machine with a Ryzen 7 5700g) to complete each frame. 
+The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
 </p>
@@ -433,7 +433,7 @@ Solve 30 lines to complete.</p>
 ### Mode 7
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
-125 codelines that visually proves that depth is a division.
+125 codelines that visually prove that depth is a division.
 </p>
 
 ### Racer
