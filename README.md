@@ -49,6 +49,28 @@ every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime env
 the [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format) and 
 the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-calling-convention).  
 
+### How to run Ground
+In your `Ground` root folder you have a file `LoadResources.bat`. Run it.  
+It will unzip `.\Resources\GroundResources.zip` and download the needed DLL's, like SDL3, from trusted repositories 
+like MSYS2 or Github. The zipfile also contains extra files that could not be downloaded from the internet, like manual 
+build DLL's, sounds and images. For all used DLL's, the sourcecode is available. The included 
+[GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github.  
+After this is done, Run `Visual Studio 2026` and open `GroundCompiler.slnx`. Hit the Play button in Visual Studio and 
+the game Bertus should compile and run.
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" /><br/>
+</p>
+
+### Running other examples
+When the resources are downloaded, you can change line 24 in Program.cs `fileName = "bertus.g";` to 
+`fileName = "mode7.g";` to run the Mode7 example. The mode7.g is the unoptimized version. The innerloop needs 5ms 
+(on my machine with a Ryzen 7 5700g) to complete each frame. The mode7_optimized is the optimized version and has 
+an innerloop of 1ms.
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
+</p>
+
+### About the C language
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
 However, there are major annoyances:
@@ -75,33 +97,6 @@ possible as can be seen in the sudoku.g example. See the Chess example on how to
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
 </p>
 
-### Sourcecode visible while debugging in x64dbg:
-If you want to debug with x64dbg, switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg 
-folder is correct, because Ground will generate a x64dbg database file there. After compilation, you can load your 
-.EXE in x64dbg and you will see the original generated assembly in the comment column of the debugger.
-
-### Running the examples
-The most easy way to run all the examples is using Visual Studio. Open and compile the Ground.sln solution and you 
-will get a folder called `<GroundProjectFolder>\bin\Debug` at your solution's location.  
-In that folder, you must unzip the `<GroundProjectFolder>\Resources\GroundResources.zip`
-The zipfile contains additional DLL's, FASM, sounds and images. The sourcecode for the included 
-[GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github. 
-The libchipmunk.dll is included because the default from MSYS2 does not work. More info on that in the remarks section.  
-After unzipping, you must go to your `<GroundProjectFolder>\bin\Debug` folder and run the batchfile called 
-`load.bat` to download and automatically unzip SDL3, SDL3_image and other DLL's.  
-After this, you can change line 24 in Program.cs `fileName = "sudoku.g"` to `fileName = "mode7.g"` to run the Mode7 
-example. The mode7.g is the unoptimized version. The innerloop needs 5ms (on my machine with a Ryzen 7 5700g) to 
-complete each frame. The mode7_optimized is the optimized version and has an innerloop of 1ms.
-<p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" />
-</p>
-
-### Variables
-When creating an array, the memory layout will be as expected. For instance when you have `byte[40] array = [];`, 
-the address of the array (`&array`) will point to an array of 40 bytes. Defining a Class with variables will
-align the variables at their natural alignment. So an 64-bit int defined after a byte will skip 7 bytes. This can be
-prevented. Use `packed` after the Classes name for that.  
-
 ### Choosing a template
 With the special `#template` directive, the programmer can choose a generation template. The default is `console`. See the
 directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without a console window.
@@ -115,21 +110,6 @@ With the `#library` directive, you can include a library. For instance `#library
 
 ### include a file
 With the `#include` directive, you can insert a textfile into your sourcefile.
-
-### Only 64-bit
-The `AMD Opteron` in 2003 was the first x86 processor to get 64-bit extensions. Although `AMD` was much smaller than `Intel`,
-they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since `Windows 7`,
-which was released in 2009, the 64-bit version is pushed as the default. Nowadays, `Windows 11` only ships as 64-bit 
-version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
-
-### Using ucrt or msvcrt
-When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
-of the VC runtime is active that week. It's a mess. Those DLL's are not available by default on a Windows system. So the users need to 
-install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
-use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
-The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
-`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
-that will be the future.
 
 ### Mixing of ground code and assembly
 The danger of programming in higher level languages is that the control over the CPU is lost. Ground refuses that.
@@ -160,6 +140,27 @@ The first line allocated `SDL3_EVENT_SIZE`, that is 128, bytes. The second line 
 retrieves the value that variable eventType points to and compares it with `SDL_QUIT`.  
 In `smoothscroller.g`, you see a lot of examples of mixing ground and assembly.
 
+### Variables
+When creating an array, the memory layout will be as expected. For instance when you have `byte[40] array = [];`, 
+the address of the array (`&array`) will point to an array of 40 bytes. Defining a Class with variables will
+align the variables at their natural alignment. So an 64-bit int defined after a byte will skip 7 bytes. This can be
+prevented. Use `packed` after the Classes name for that.  
+
+### Only 64-bit
+The `AMD Opteron` in 2003 was the first x86 processor to get 64-bit extensions. Although `AMD` was much smaller than `Intel`,
+they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since `Windows 7`,
+which was released in 2009, the 64-bit version is pushed as the default. Nowadays, `Windows 11` only ships as 64-bit 
+version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
+
+### Using ucrt or msvcrt
+When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
+of the VC runtime is active that week. It's a mess. Those DLL's are not available by default on a Windows system. So the users need to 
+install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
+use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
+The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
+`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
+that will be the future.
+
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
@@ -169,6 +170,11 @@ These steps where done: I checked out the sourcecode and created a directory cal
 `cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON`  
 In the CMakeLists.txt, I included: `target_link_options(chipmunk PRIVATE -static)` as the last line, to prevent the libwinpthread loadtime 
 dependency. After that build the library with `cmake --build .` and the `libchipmunk.dll` is created in build\src.
+
+### Sourcecode visible while debugging in x64dbg:
+If you want to debug with x64dbg, switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg 
+folder is correct, because Ground will generate a x64dbg database file there. After compilation, you can load your 
+.EXE in x64dbg and you will see the original generated assembly in the comment column of the debugger.
 
 ### Optimizer
 Ground contains an optimizer (in `Optimizer.cs`), which will replace literals and removes unused variables. It will 
@@ -423,6 +429,12 @@ Watch the Game Of Life patterns blow up! The current version has 20 different pa
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Tetrus.jpg?raw=true" width="500" /><br/>
 Solve 30 lines to complete.</p>
+
+### Mode 7
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
+125 codelines that visually proves that depth is a division.
+</p>
 
 ### Racer
 <p align="center">
