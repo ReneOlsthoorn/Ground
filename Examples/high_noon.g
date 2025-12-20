@@ -137,7 +137,7 @@ f32 fontScale = 2.0;
 function writeText(ptr renderer, float x, float y, string text) {
 	sdl3.SDL_SetRenderScale(renderer, fontScale, fontScale);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, x+2.0, y, text);
+	sdl3.SDL_RenderDebugText(renderer, x+2.0, y+1.0, text);
 	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }

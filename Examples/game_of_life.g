@@ -239,7 +239,7 @@ function PrintInformation() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/musiklinjen.mod", 64);
+SoundtrackerInit("sound/mod/mlp jeremias days today.mod", 50);
 
 ShowNextFigure();
 while (StatusRunning)

@@ -207,7 +207,7 @@ function DrawBertus(int x, int y, ptr theUsedTexture, float rotation) {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/mlp jeremias days today.mod", 50);
+SoundtrackerInit("sound/mod/musiklinjen.mod", 64);
 
 RestartGame();
 gameStatus = "intro screen";

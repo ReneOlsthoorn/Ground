@@ -478,8 +478,9 @@ How can a Firework show promote x86-64 assembly?</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="400" /><br/>
 Rotating 3D object. Matrix calculations done with CGLM.</p>
 
-### Ground Gallery
-You can <a href="http://www.godzoeker.nl/_nietweg/groundgallery.zip">download a 3mb zipfile</a> which contains most of the .exe files.
+### Ground Release zipfile
+The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
+The executables are in the `bin\Release` directory of the zipfile.
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
