@@ -1,16 +1,21 @@
 
 #template sdl3
 
-#define START_LEVEL 1
-#define OPTION_NO_SOUND 0
-#define WAITTIME_COMBINATION 45
 
+// DEFINES
+
+#define START_LEVEL 1
+#define WAITTIME_COMBINATION 45
+#define WAITTIME_GAMEOVER 240
 #define TILE_WIDTH 150
 #define TILE_HEIGHT 150
 #define OUTLINE_WIDTH 180
 #define OUTLINE_HEIGHT 180
 #define SHEET_NRS_WIDTH 6
 #define MAX_ITEMS 28
+
+
+// GENERIC INCLUDES
 
 #include graphics_defines1280x720.g
 #include msvcrt.g
@@ -22,6 +27,8 @@
 #library soloud soloud_x64.dll
 
 
+// GENERIC GLOBAL VARIABLES
+
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 bool StatusRunning = true;
 int frameCount = 0;
@@ -29,21 +36,9 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int screenpitch = SCREEN_LINESIZE;
-int nrTilesX;
-int nrTilesY;
-int nrTiles;
-f32[4] sheetSrcRect = [5*TILE_WIDTH,0,TILE_WIDTH,TILE_HEIGHT];
-f32[4] itemDestRect = [50,50,TILE_WIDTH,TILE_HEIGHT];
-f32[4] closedOutlineSrcRect = [0,0,OUTLINE_WIDTH,OUTLINE_HEIGHT];
-f32[4] openedOutlineSrcRect = [0,OUTLINE_HEIGHT,OUTLINE_WIDTH,OUTLINE_HEIGHT];
-f32[4] outlineDestRect = [50,50,OUTLINE_WIDTH,OUTLINE_HEIGHT];
-MouseState mouseState;
-int turnWait = 0;
-int gameOverWait = 0;
-bool gameCompleted = false;
-int level = 1;
-int turnsLeft;
-string gameStatus = "next level";    // "game running", "next level", "game over"
+
+
+// CREATING A WINDOW
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Memory", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
@@ -52,6 +47,26 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetTextureScaleMode(texture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
+
+// SPECIFIC GLOBAL VARIABLES
+
+int level;
+int turnsRemaining;
+int nrTilesX;
+int nrTilesY;
+int nrTiles;
+int turnWaitCounter = 0;		// after a turn, the computer waits WAITTIME_COMBINATION frames.
+int gameOverWaitCounter = 0;	// after a game over, the computer waits WAITTIME_GAMEOVER frames.
+string gameStatus = "next level";    // "game running", "next level", "game over", "game completed"
+f32[4] sheetSrcRect = [5*TILE_WIDTH,0,TILE_WIDTH,TILE_HEIGHT];
+f32[4] itemDestRect = [0,0,TILE_WIDTH,TILE_HEIGHT];
+f32[4] closedOutlineSrcRect = [0,0,OUTLINE_WIDTH,OUTLINE_HEIGHT];
+f32[4] openedOutlineSrcRect = [0,OUTLINE_HEIGHT,OUTLINE_WIDTH,OUTLINE_HEIGHT];
+f32[4] outlineDestRect = [0,0,OUTLINE_WIDTH,OUTLINE_HEIGHT];
+MouseState mouseState;
+
+
+// LOADING RESOURCES
 
 ptr tmpSurface = sdl3_image.IMG_Load("image/memory_tiles.jpg");
 if (tmpSurface == null) { user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK); return; }
@@ -75,16 +90,56 @@ if (soloudResult != 0) return;
 ptr sfxr1 = soloud.Sfxr_create();
 int sfxrLoaded = soloud.Sfxr_loadParams(sfxr1, "sound/sfxr/select.sfs");
 if (sfxrLoaded != 0) return;
-soloud.Sfxr_setVolume(sfxr1, 0.3);
-function PlaySound1() { if not (OPTION_NO_SOUND) soloud.Soloud_play(soloudObject, sfxr1); }
+soloud.Sfxr_setVolume(sfxr1, 1.0);
+function PlaySound1() { soloud.Soloud_play(soloudObject, sfxr1); }
 
 ptr sfxr2 = soloud.Sfxr_create();
 sfxrLoaded = soloud.Sfxr_loadParams(sfxr2, "sound/sfxr/coin.sfs");
 if (sfxrLoaded != 0) return;
 soloud.Sfxr_setVolume(sfxr2, 1.0);
-function PlaySound2() { if not (OPTION_NO_SOUND) soloud.Soloud_play(soloudObject, sfxr2); }
+function PlaySound2() { soloud.Soloud_play(soloudObject, sfxr2); }
 
 
+// SCREEN MESSAGES
+
+f32 fontScale = 3.0;
+function writeText(ptr renderer, float x, float y, string text) {
+	sdl3.SDL_SetRenderScale(renderer, fontScale, fontScale);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, x+1.0, y+1.0, text);
+	sdl3.SDL_SetRenderDrawColor(renderer, 0x40, 0x40, 0x4f, 0xff);
+	sdl3.SDL_RenderDebugText(renderer, x, y, text);
+}
+
+function NextLevelInformation() {
+	if (level > 1)
+		writeText(renderer, 120.0, 30.0,  "       Good Job!   ");
+
+	writeText(renderer, 120.0, 60.0,  "        Level " + level);
+	writeText(renderer, 120.0, 90.0,  "Solve the memory puzzle");
+	writeText(renderer, 120.0, 110.0,  " consisting of " + nrTiles + " cards");
+	writeText(renderer, 120.0, 130.0, "    within " + turnsRemaining + " turns.");
+	writeText(renderer, 120.0, 160.0, " Press [space] to start.");
+}
+
+function ShowTurnsRemaining() {
+    fontScale = 2.0;
+	writeText(renderer, 10.0, 175.0,  "Turns left: " + turnsRemaining);
+    fontScale = 3.0;
+}
+
+function GameOverInformation() {
+	writeText(renderer, 120.0, 90.0,  "      Game over! ");
+}
+
+function GameCompletedInformation() {
+	writeText(renderer, 120.0, 60.0,  "       Good Job!   ");
+	writeText(renderer, 120.0, 80.0,  " You completed all levels!");
+	writeText(renderer, 120.0, 100.0,  "   Thanks for playing.");
+}
+
+
+// LOGIC
 
 class Item {
 	int	x;
@@ -143,48 +198,6 @@ class Item {
 Item[MAX_ITEMS] items = [];
 
 
-f32 fontScale = 3.0;
-function writeText(ptr renderer, float x, float y, string text) {
-	sdl3.SDL_SetRenderScale(renderer, fontScale, fontScale);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0x80, 0x80, 0x80, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, x+1.0, y+1.0, text);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0x40, 0x40, 0x4f, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, x, y, text);
-}
-
-function NextLevelInformation() {
-	if (level > 1) {
-	writeText(renderer, 120.0, 30.0,  "       Good Job!   ");
-	}
-	writeText(renderer, 120.0, 60.0,  "        Level " + level);
-	writeText(renderer, 120.0, 90.0,  "Solve the memory puzzle");
-	writeText(renderer, 120.0, 110.0,  " consisting of " + nrTiles + " cards");
-	writeText(renderer, 120.0, 130.0, "    within " + turnsLeft + " turns.");
-	writeText(renderer, 120.0, 160.0, " Press [space] to start.");
-}
-
-function ShowTurnsLeft() {
-    fontScale = 2.0;
-	writeText(renderer, 10.0, 175.0,  "Turns left: " + turnsLeft);
-    fontScale = 3.0;
-}
-
-function GameOverInformation() {
-	if (gameCompleted) {
-		writeText(renderer, 120.0, 60.0,  "       Good Job!   ");
-		writeText(renderer, 120.0, 80.0,  " You completed all levels!");
-		writeText(renderer, 120.0, 100.0,  "   Thanks for playing.");
-		return;
-	}
-	writeText(renderer, 120.0, 90.0,  "      Game over! ");
-}
-
-sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
-g.[pixels_p] = pixels;
-GC_ClearScreenPixels(0xffffffff);
-sdl3.SDL_UnlockTexture(texture);
-
-
 function AllCardsSolved() : bool {
 	for (i in 0..< nrTiles)
 		if (items[i].visible)
@@ -202,6 +215,7 @@ function TwoPicturesTurned() : bool {
 	return (nrTurned == 2);
 }
 
+
 function IsSamePicturesTurned() : bool {
 	int nrTurned = 0;
 	int firstItemIndex = 0;
@@ -217,15 +231,15 @@ function IsSamePicturesTurned() : bool {
 	return false;
 }
 
+
 function HandleSamePictureTurned() : bool {
 	int nrTurned = 0;
 	int firstItemIndex = 0;
 	for (i in 0..< nrTiles) {
 		if (items[i].visible and items[i].picVisible) {
 			nrTurned++;
-			if (nrTurned == 1) {
+			if (nrTurned == 1)
 				firstItemIndex = i;
-			}
 			if (nrTurned == 2) {
 				if (items[i].picIndex == items[firstItemIndex].picIndex) {
 					items[i].visible = false;
@@ -243,6 +257,7 @@ function HandleSamePictureTurned() : bool {
 	return false;
 }
 
+
 function HasPicIndex(int searchIndex) : bool {
 	for (i in 0..< nrTiles) {
 		if (items[i].picIndex == searchIndex)
@@ -256,8 +271,7 @@ function Game(int tilesX, int tilesY, int turns) {
 	nrTilesX = tilesX;
 	nrTilesY = tilesY;
 	nrTiles = tilesX * tilesY;
-	turnsLeft = turns;
-	gameCompleted = false;
+	turnsRemaining = turns;
 
 	for (i in 0..< nrTiles) {
 		items[i].Init();
@@ -301,7 +315,6 @@ function Game(int tilesX, int tilesY, int turns) {
 		}
 	}
 
-
 	int totalWidth = nrTilesX * OUTLINE_WIDTH;
 	int totalHeight = nrTilesY * OUTLINE_HEIGHT;
 	int leftOffset = (SCREEN_WIDTH - totalWidth) / 2;
@@ -316,6 +329,7 @@ function Game(int tilesX, int tilesY, int turns) {
 		}
 	}
 }
+
 
 function SetLevel(int theLevel) : bool {
 	level = theLevel;
@@ -338,9 +352,20 @@ function SetLevel(int theLevel) : bool {
 	return true;
 }
 
+
+// INIT
+
+// The initial white fill of the background texture using Lock & Unlock.
+sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
+g.[pixels_p] = pixels;
+GC_ClearScreenPixels(0xffffffff);
+sdl3.SDL_UnlockTexture(texture);
+
 SetLevel(START_LEVEL);
 gameStatus = "next level";
 
+
+// MAINLOOP
 
 while (StatusRunning)
 {
@@ -352,41 +377,35 @@ while (StatusRunning)
 			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
 				StatusRunning = false;
 			if (*eventScancode == g.SDL_SCANCODE_SPACE) { 
-				if (gameStatus != "game running") { 
+				if (gameStatus != "game running")
 					gameStatus = "game running";
-				}
 			}
 		}
 	}
 
-	u8* keyState = sdl3.SDL_GetKeyboardState(null);
-	if (keyState[g.SDL_SCANCODE_UP]) { }
-	if (keyState[g.SDL_SCANCODE_LEFT]) { }
-	if (keyState[g.SDL_SCANCODE_RIGHT]) { }
-	if (keyState[g.SDL_SCANCODE_DOWN]) { }
-
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
 	mouseState.GetMouseState();
-	if ((gameStatus != "game running") and mouseState.LeftWasClicked)
+	if ((gameStatus == "next level") and mouseState.LeftWasClicked)
 		gameStatus = "game running";
 
 	for (i in 0..< nrTiles) {
 		if not (items[i].visible)
 			continue;
 		bool oldPicVisible = items[i].picVisible;
-		if (turnWait == 0 and (gameStatus == "game running"))
+		if (turnWaitCounter == 0 and (gameStatus == "game running")) {
 			items[i].Handle(mouseState.x, mouseState.y, mouseState.LeftPressed);
-		if (turnWait == 0 and items[i].IsClicked()) {
-			if (!oldPicVisible and items[i].picVisible)
-				PlaySound1();
-			if (TwoPicturesTurned() and (turnWait == 0)) {
-				turnWait = WAITTIME_COMBINATION;
-				if not (IsSamePicturesTurned())
-					turnsLeft = turnsLeft - 1;
-					if (turnsLeft == 0) {
-						gameStatus = "game over";
-						gameOverWait = 240;
-					}
+			if (items[i].IsClicked()) {
+				if (!oldPicVisible and items[i].picVisible)
+					PlaySound1();
+				if (TwoPicturesTurned() and (turnWaitCounter == 0)) {
+					turnWaitCounter = WAITTIME_COMBINATION;
+					if not (IsSamePicturesTurned())
+						turnsRemaining = turnsRemaining - 1;
+						if (turnsRemaining == 0) {
+							gameStatus = "game over";
+							gameOverWaitCounter = WAITTIME_GAMEOVER;
+						}
+				}
 			}
 		}
 		items[i].Render();
@@ -396,31 +415,32 @@ while (StatusRunning)
 		NextLevelInformation();
 
 	if (gameStatus == "game running")
-		ShowTurnsLeft();
+		ShowTurnsRemaining();
 
 	if (gameStatus == "game over")
 		GameOverInformation();
 
+	if (gameStatus == "game completed")
+		GameCompletedInformation();
+
 	sdl3.SDL_RenderPresent(renderer);
 	frameCount++;
-	if (turnWait > 0) {
-		turnWait = turnWait - 1;
-		if (turnWait == 0) {
+	if (turnWaitCounter > 0) {
+		turnWaitCounter = turnWaitCounter - 1;
+		if (turnWaitCounter == 0) {
 			if (HandleSamePictureTurned()) {
 				if (AllCardsSolved()) {
 					level++;
 					gameStatus = "next level";
-					if not (SetLevel(level)) {
-						gameCompleted = true;
-						gameStatus = "game over";
-					}
+					if not (SetLevel(level))
+						gameStatus = "game completed";
 				}
 			}
 		}
 	}
-	if (gameOverWait > 0 and !gameCompleted) {
-		gameOverWait = gameOverWait - 1;
-		if (gameOverWait == 0) {
+	if (gameOverWaitCounter > 0) {
+		gameOverWaitCounter = gameOverWaitCounter - 1;
+		if (gameOverWaitCounter == 0) {
 			SetLevel(1);
 			gameStatus = "next level";
 		}
@@ -438,4 +458,3 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-
