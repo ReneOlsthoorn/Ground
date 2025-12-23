@@ -186,9 +186,10 @@ asm {
 			this.tickCounter = this.tickCounter - 1;
 			return;
 		}
+		this.tickCounter = this.tickCounter - 1;
 
 		// Correct when we go too fast.
-		if (*mikmodModule.sngpos == this.songPos) {
+		if (this.tickCounter == -1 and *mikmodModule.sngpos == this.songPos) {
 			if (*mikmodModule.patpos <= (this.activeRowNr + 3))
 				return;
 		}

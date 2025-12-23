@@ -400,10 +400,10 @@ Scrolling is always good. Bouncing objects done with the Chipmunk Physics engine
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.jpg?raw=true" width="500" /><br/>
 Jump on the platforms. 3D starfield background.</p>
 
-### The Plasma example with no colorcycling
+### Game Of Life
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
-Smoother than an Amiga 500 Copper plasma.</p>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_GameOfLife.jpg?raw=true" width="500" /><br/>
+Watch the Game Of Life patterns blow up! The current version has 20 different patterns.</p>
 
 ### The Fire example
 <p align="center">
@@ -420,10 +420,10 @@ Try to beat the 4 levels!</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Snake.jpg?raw=true" width="498" /><br/>
 Feed the snake 100 meals.</p>
 
-### Game Of Life
+### The Plasma example with no colorcycling
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_GameOfLife.jpg?raw=true" width="500" /><br/>
-Watch the Game Of Life patterns blow up! The current version has 20 different patterns.</p>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
+Smoother than an Amiga 500 Copper plasma.</p>
 
 ### Tetrus
 <p align="center">
