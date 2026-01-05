@@ -17,7 +17,7 @@ namespace GroundCompiler
             if (args.Length == 0)
             {
 #if DEBUG
-                fileName = "electronic_life.g";    //  electronic_life  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d
+                fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
                 if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
