@@ -80,7 +80,6 @@ namespace GroundCompiler
             this.Types = new List<TokenType>();
             this.Value = null;
             this.Lexeme = "";
-            this.LineNumber = 0;
             this.Datatype = null;
             this.Properties = new Dictionary<string, object?>();
         }
@@ -92,9 +91,12 @@ namespace GroundCompiler
         public List<TokenType> Types;
         public string Lexeme;
         public object? Value;
-        public int LineNumber;
         public Datatype? Datatype;
         public Dictionary<string, object?> Properties;
+
+        public CompilationSession? CompilationSession;
+        public int SourcecodePackIndex;                     // The index in the SourcecodePackHistory list
+        public int SourcecodeNeedle;
 
         public string StringValue
         {
@@ -121,17 +123,27 @@ namespace GroundCompiler
         public void AddType(TokenType type) => Types.Add(type);
         public bool Contains(TokenType tokenType) => Types.Contains(tokenType);
 
+        public SourcecodePack? SourcecodePack() => this.CompilationSession?.SourcecodePackHistory[SourcecodePackIndex];
+
+        public int LineNumber()
+        {
+            int linenr = this.SourcecodePack()?.LineCounter?.GetLineNumberForIndex(this.SourcecodeNeedle) ?? 0;
+            return linenr;
+        }
+
+        public string SourceFilename() => this.SourcecodePack()?.SourceFilename ?? "";
+
         public override string ToString()
         {
             string valueAsString = Value?.ToString() ?? "";
 
             if (this.Datatype?.Name == "string")
-                return $"{LineNumber}:{Types[0]} string \"{Utils.StringAsDebug(valueAsString)}\"";
+                return $"{SourcecodeNeedle}:{Types[0]} string \"{Utils.StringAsDebug(valueAsString)}\"";
 
             if (Types.Contains(TokenType.Literal))
-                return $"{LineNumber}:{Types[0]} {Utils.StringAsDebug(valueAsString)}";
+                return $"{SourcecodeNeedle}:{Types[0]} {Utils.StringAsDebug(valueAsString)}";
 
-            return $"{LineNumber}:{Types[0]} {Utils.StringAsDebug(Lexeme)} {valueAsString}";
+            return $"{SourcecodeNeedle}:{Types[0]} {Utils.StringAsDebug(Lexeme)} {valueAsString}";
         }
 
         public static Token GetDefaultIntegerToken()

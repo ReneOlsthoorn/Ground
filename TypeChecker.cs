@@ -3,7 +3,7 @@ using GroundCompiler.Expressions;
 
 namespace GroundCompiler
 {
-    public class Step4_TypeChecker
+    public class TypeChecker
     {
         public class NodeReplace
         {

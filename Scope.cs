@@ -240,7 +240,7 @@ namespace GroundCompiler
                 if (allowSameType && Symboltable[id] is LocalVariableSymbol localVariable)
                     return localVariable;
 
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
             }
 
             var newElement = new LocalVariableSymbol(name, datatype);
@@ -258,7 +258,7 @@ namespace GroundCompiler
         {
             string id = IdFor(name, datatype.Name);
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new HardcodedVariable(name, datatype);
             Symboltable[id] = newElement;
@@ -270,7 +270,7 @@ namespace GroundCompiler
             string name = functionStatement.Name.Lexeme;
             string id = IdFor(name, "function");
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new FunctionSymbol(name, functionStatement);
             Symboltable[name] = newElement;
@@ -282,7 +282,7 @@ namespace GroundCompiler
             string name = classStatement.Name.Lexeme;
             string id = IdFor(name, "class");
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new ClassSymbol(name, classStatement);
             Symboltable[name] = newElement;
@@ -294,7 +294,7 @@ namespace GroundCompiler
             string name = groupStatement.Name.Lexeme;
             string id = IdFor(name, "group");
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new GroupSymbol(name, groupStatement);
             Symboltable[name] = newElement;
@@ -306,7 +306,7 @@ namespace GroundCompiler
             string name = functionStatement.Name.Lexeme;
             string id = IdFor(name, "function");
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new DllFunctionSymbol(name, functionStatement, resultDatatype);
             Symboltable[name] = newElement;
@@ -317,7 +317,7 @@ namespace GroundCompiler
         {
             string id = IdFor(name, "function");
             if (Symboltable.ContainsKey(id))
-                Step6_Compiler.Error($"{name} already defined.");
+                Compiler.Error($"{name} already defined.");
 
             var newElement = new HardcodedFunctionSymbol(name, resultDatatype);
             Symboltable[name] = newElement;
@@ -330,7 +330,7 @@ namespace GroundCompiler
             foreach (var par in functionStatement.Parameters) {
                 string id = IdFor($"{classPrefix}_{par.Name}", "function par");
                 if (Symboltable.ContainsKey(id))
-                    Step6_Compiler.Error($"{par.Name} already defined.");
+                    Compiler.Error($"{par.Name} already defined.");
 
                 var newElement = new FunctionParameterSymbol(par.Name, par, functionStatement);
                 Symboltable[par.Name] = newElement;

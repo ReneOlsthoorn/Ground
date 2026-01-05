@@ -36,7 +36,7 @@ namespace GroundCompiler.Expressions
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Step6_Compiler.Error($"Symbol {name} does not exist.");
+                    Compiler.Error($"Symbol {name} does not exist.");
 
                 if (symbol is HardcodedVariable || symbol is HardcodedFunctionSymbol || symbol is FunctionSymbol || symbol is GroupSymbol || symbol is ClassSymbol)
                     return symbol;
@@ -58,7 +58,7 @@ namespace GroundCompiler.Expressions
                     ownerScope = needleScope.Owner;
                 }
                 if (ownerScope == null)
-                    Step6_Compiler.Error("Expression>>GetSymbol error.");
+                    Compiler.Error("Expression>>GetSymbol error.");
 
                 return scope.DefineParentScopeParameter(name, variableSymbol!.DataType, levelsDeep, ownerScope!, variableSymbol!);
             }
@@ -326,7 +326,7 @@ namespace GroundCompiler.Expressions
                 ExprType = Datatype.GetDatatype("byte");
             }
             else
-                Step6_Compiler.Error("Literal: ConvertToByteValue error");
+                Compiler.Error("Literal: ConvertToByteValue error");
         }
 
         public byte? GetByteValue()
@@ -343,7 +343,7 @@ namespace GroundCompiler.Expressions
                 }
                 catch (OverflowException oe)
                 {
-                    Step6_Compiler.Error(oe.Message);
+                    Compiler.Error(oe.Message);
                 }
                 return byteVal;
             }
@@ -485,7 +485,7 @@ namespace GroundCompiler.Expressions
                     if (elementType == null)
                         elementType = element.ExprType;
                     else if (!Datatype.IsCompatible(elementType, element.ExprType))
-                        Step6_Compiler.Error("All elements in a List must have the same type");
+                        Compiler.Error("All elements in a List must have the same type");
                     else
                         element.ExprType = elementType;
                 }

@@ -197,7 +197,7 @@ namespace GroundCompiler
             }
 
             if (!Cached.ContainsKey(theType))
-                Step6_Compiler.Error($"Datatype>>GetDatatype: Type {theType} does not exist.");
+                Compiler.Error($"Datatype>>GetDatatype: Type {theType} does not exist.");
 
             return Cached[theType];
         }

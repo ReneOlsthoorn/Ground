@@ -5,11 +5,7 @@ namespace GroundCompiler
 {
     public class Program
     {
-        required public string sourceFilename;      // Filename without extension
-        required public string sourceFullFilepath;  // Path including filename plus extension
-        required public bool runAfterCompilation;   // Should the executable be started. (handy for debug mode)
-        required public bool generateDebugInfo;
-        public string generatedCode = "";
+        required public CompilationSession sess;
         private string currentDir = System.IO.Directory.GetCurrentDirectory();
 
 
@@ -21,10 +17,9 @@ namespace GroundCompiler
             if (args.Length == 0)
             {
 #if DEBUG
-                fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d
+                fileName = "electronic_life.g";    //  electronic_life  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
-                if (!File.Exists(fullPath))
-                    fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}"));
+                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
                 runAfterCompilation = true;
 #else
@@ -36,52 +31,46 @@ namespace GroundCompiler
             {
                 fileName = args[0];
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode\\{fileName}"));
-                if (!File.Exists(fullPath))
-                    fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName));
-                if (!File.Exists(fullPath))
-                {
-                    Console.WriteLine($"GroundCompiler. Error: cannot find {fileName}");
-                    return;
-                }
+                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName)); }
+                if (!File.Exists(fullPath)) { Console.WriteLine($"GroundCompiler. Error: cannot find {fileName}"); return; }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            Program compilation = new() { sourceFilename = fileName, sourceFullFilepath = fullPath, runAfterCompilation=runAfterCompilation, generateDebugInfo=false };
+            CompilationSession newSession = new CompilationSession() { RunAfterCompilation = runAfterCompilation, GenerateDebugInformation = false };
+            newSession.PushSourcecodeFile(fileName, fullPath, File.ReadAllText(fullPath));
+            Program compilation = new() { sess = newSession };
             compilation.Build();
         }
 
 
         public void Build()
         {
-            string sourcecode = File.ReadAllText(sourceFullFilepath);
+            sess.PreProcessor = new PreProcessor(sess);
 
-            Console.WriteLine("*** Step 1: Preprocessor. Process compiler directives and collect defines.");
-            var preprocessor = new Step1_PreProcessor(sourcecode);
-            preprocessor.ProcessCompilerDirectives();
+            Console.WriteLine("*** Step 1: Lexer. Convert sourcecode to tokens.");
+            sess.Lexer = new Lexer(sess);
+            sess.Tokens = sess.Lexer.GetTokens().ToList();                            //WriteTokensDebugInfo(session.Tokens);
 
-            Console.WriteLine("*** Step 2: Lexer. Convert sourcecode to tokens.");
-            var lexer = new Step2_Lexer(preprocessor);
-            var tokens = lexer.GetTokens();
-            lexer.WriteDebugInfo(tokens);
+            Console.WriteLine("*** Step 2: Parser: Convert tokens into an Abstract Syntax Tree.");
+            sess.Parser = new Parser(sess.Tokens);
+            sess.AST = sess.Parser.GetAbstractSyntaxTree();                           //WriteASTDebugInfo(session.AST);
 
-            Console.WriteLine("*** Step 3: Parser: Convert tokens into an Abstract Syntax Tree.");
-            var parser = new Step3_Parser(tokens);
-            var ast = parser.GetAbstractSyntaxTree();
-            parser.WriteDebugInfo(ast);
+            Console.WriteLine("*** Step 3a: Type Checker. Initialize the Abstract Syntax Tree.");
+            TypeChecker.Initialize(sess.AST);
+            Console.WriteLine("*** Step 3b: Type Checker. Evaluate the Abstract Syntax Tree.");     
+            TypeChecker.Evaluate(sess.AST);
 
-            Console.WriteLine("*** Step 4a: Type Checker. Initialize the Abstract Syntax Tree.");
-            Step4_TypeChecker.Initialize(ast);
-            Console.WriteLine("*** Step 4b: Type Checker. Evaluate the Abstract Syntax Tree.");     
-            Step4_TypeChecker.Evaluate(ast);
+            Console.WriteLine("*** Step 4: Optimizer. Literal folding, Unused variable removal, etc...Optimize the AST.");
+            Optimizer.Optimize(sess.AST);
 
-            Console.WriteLine("*** Step 5: Optimizer. Literal folding, Unused variable removal, etc...Optimize the AST.");
-            Step5_Optimizer.Optimize(ast);
+            Console.WriteLine("*** Step 5: Compiler. Convert AST to x86-64 assembly.");
+            sess.Compiler = new Compiler(sess);
+            sess.GeneratedCode = sess.Compiler.GenerateAssembly(sess.AST);
 
-            Console.WriteLine("*** Step 6: Compiler. Convert AST to x86-64 assembly.");
-            Step6_Compiler compiler = new Step6_Compiler(preprocessor);
-            generatedCode = compiler.GenerateAssembly(ast);
-
+            Console.WriteLine("*** Step 6: Assemble with FASM.");
             Assemble();
+
+            Console.WriteLine("*** Step 7: Run the executable.");
             RunExecutable();
         }
 
@@ -90,15 +79,15 @@ namespace GroundCompiler
         {
             //Console.WriteLine("*** Write generated code to disk.");
 
-            string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.asm"));
-            string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.fas"));
-            string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.lst"));
+            string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.asm"));
+            string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.fas"));
+            string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.lst"));
 
-            File.WriteAllText(outputAsmFilename, generatedCode);
+            File.WriteAllText(outputAsmFilename, sess.GeneratedCode);
             Console.WriteLine("*** Start assembler.");
 
             string assemblerParameters = $"{outputAsmFilename}";
-            if (generateDebugInfo)
+            if (sess.GenerateDebugInformation)
                 assemblerParameters = $"{outputAsmFilename} -s {outputFasFilename}";
 
             var startInfo = new ProcessStartInfo
@@ -114,7 +103,7 @@ namespace GroundCompiler
             p.Start();
             p.WaitForExit();
 
-            if (generateDebugInfo)
+            if (sess.GenerateDebugInformation)
             {
                 Console.WriteLine("*** Generating Debug information.");
 
@@ -180,7 +169,7 @@ namespace GroundCompiler
                 if (commentPart != "") { commentPart += ",\n"; }
 
                 string commentLittlePart = "  {\n";
-                commentLittlePart += "   \"module\": \"" + sourceFilename + ".exe\",\n";
+                commentLittlePart += "   \"module\": \"" + sess.SourceFilename + ".exe\",\n";
                 commentLittlePart += $"   \"address\": \"{outputAddress}\",\n";
                 commentLittlePart += $"   \"manual\": true,\n";
                 commentLittlePart += $"   \"text\": \"{ text }\"\n";
@@ -194,19 +183,34 @@ namespace GroundCompiler
             dd64 += commentPart;
             dd64 += "\n ]\n}";
 
-            string dd64Filename = $"{ x64dbgDbFolder }\\{sourceFilename}.exe.dd64";
+            string dd64Filename = $"{ x64dbgDbFolder }\\{sess.SourceFilename}.exe.dd64";
             File.WriteAllText(dd64Filename, dd64);
         }
 
 
         public void RunExecutable()
         {
-            if (!runAfterCompilation)
+            if (!sess.RunAfterCompilation)
                 return;
 
-            Console.WriteLine($"*** Starting {sourceFilename}.exe\r\n");
-            string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sourceFilename}.exe"));
+            Console.WriteLine($"*** Starting {sess.SourceFilename}.exe\r\n");
+            string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.exe"));
             Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
+        }
+
+
+        public void WriteASTDebugInfo(Statements.ProgramNode node)
+        {
+            return; // remove if you want debug info
+
+            var astPrinter = new AstPrinter();
+            foreach (AstNode statement in node.BodyNode.AllNodes())
+                Console.WriteLine(astPrinter.Print(statement));
+        }
+
+
+        public void WriteTokensDebugInfo(IEnumerable<Token> tokens)
+        {
         }
 
     }

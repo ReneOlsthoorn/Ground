@@ -5,25 +5,25 @@ using GroundCompiler.Statements;
 
 namespace GroundCompiler
 {
-    public partial class Step6_Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
+    public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
         public CPU_X86_64 cpu;
-        Step6b_CodeEmitter emitter;
+        CodeEmitter emitter;
         AstPrinter AstPrint = new AstPrinter();
         readonly string CodeTemplateName;
-        Step1_PreProcessor preprocessor;
+        CompilationSession session;
 
-        public Step6_Compiler(Step1_PreProcessor preprocessor) {
-            this.preprocessor = preprocessor;
-            CodeTemplateName = preprocessor.usedTemplate;
+        public Compiler(CompilationSession session) {
+            this.session = session;
+            CodeTemplateName = session.PreProcessor.Template;
             cpu = new CPU_X86_64();
-            emitter = new Step6b_CodeEmitter(cpu, preprocessor.defines);
+            emitter = new CodeEmitter(cpu, session.PreProcessor.Defines);
         }
 
         public string LibrariesToInclude()
         {
             StringBuilder result = new StringBuilder();
-            foreach (var (libraryName, dllFilename) in preprocessor.libraries)
+            foreach (var (libraryName, dllFilename) in session.PreProcessor.Libraries)
                 result.AppendLine($"          {libraryName}, '{dllFilename}', \\");
             return result.ToString();
         }
@@ -31,7 +31,7 @@ namespace GroundCompiler
         public string LibraryApiIncludes()
         {
             StringBuilder result = new StringBuilder();
-            foreach (var (libraryName, dllFilename) in preprocessor.libraries)
+            foreach (var (libraryName, dllFilename) in session.PreProcessor.Libraries)
                 result.AppendLine($"  include 'Include\\{libraryName}_api.inc'");
             return result.ToString();
         }
@@ -664,7 +664,7 @@ namespace GroundCompiler
             {
                 theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
-                    Step6_Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
+                    Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
 
                 string name = functionNameVariable.Name.Lexeme;
                 var needleScope = scope;
@@ -1018,7 +1018,7 @@ namespace GroundCompiler
                 else if (expr.RightNode is PropertyExpression propExpr)
                     PropertyExpressionAddressOf(propExpr);
                 else
-                    Step6_Compiler.Error("AddressOf can only be done on a variable.");
+                    Compiler.Error("AddressOf can only be done on a variable.");
                 return null;
             }
 
@@ -1050,7 +1050,7 @@ namespace GroundCompiler
                     emitter.Pop();
                 }
                 else
-                    Step6_Compiler.Error("a++ or a-- can only be done on a variable.");
+                    Compiler.Error("a++ or a-- can only be done on a variable.");
                 return null;
             }
 

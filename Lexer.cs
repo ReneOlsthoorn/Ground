@@ -1,30 +1,29 @@
 ﻿using GroundCompiler.Statements;
 using System.Globalization;
+using System.Text;
 
 namespace GroundCompiler
 {
-    public class Step2_Lexer
+    public class Lexer
     {
         public string sourcecode;
         public int needle;          // position of the lexer in the sourcecode
-        public int lineCounter;     // linecounter of sourcecode
-        public Dictionary<string, Token>? defines = null;
+        public CompilationSession session;
 
-        public Step2_Lexer(Step1_PreProcessor preprocessor)
+        public Lexer(CompilationSession session)
         {
-            this.sourcecode = preprocessor.sourcecode + "\n";
-            defines = preprocessor.defines;
+            this.sourcecode = session.SourceCode;
+            this.session = session;
         }
-
-        public Step2_Lexer(string sourcecode)
+        public Lexer(string sourcecode)
         {
-            this.sourcecode = sourcecode + "\n";
+            this.sourcecode = sourcecode;
+            this.session = new CompilationSession();
         }
 
         public IEnumerable<Token> GetTokens()
         {
             needle = 0;
-            lineCounter = 1;
             while (true)
             {
                 var token = ReadToken();
@@ -36,108 +35,119 @@ namespace GroundCompiler
 
         public Token ReadToken()
         {
-            try
+            Token token = new Token();
+            token.CompilationSession = session;
+
+            while (token.Type == TokenType.Unknown)
             {
-                Token token = new Token();
-                while (token.Type == TokenType.Unknown)
+                char c = GetFirstNonSpaceChar();
+                if (IsBeyondEndOfFile())
                 {
-                    char c = GetFirstNonSpaceChar();
-                    if (SkipIfMatch("//")) {  // single line comment
-                        SkipUntil("\n");
-                        continue;
-                    }
-                    if (SkipIfMatch("/*")) { // multiline comment
-                        SkipUntil("*/");
-                        SkipIfMatch("*/");
-                        continue;
-                    }
-                    if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
-                    if (IsDigit(c))           { ReadNumber(token);                     break; }
+                    if (session.IsRoot())
+                        return new Token(TokenType.EndOfFile);
 
-                    if (SkipIfMatch("==", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.IsEqual)) break;
-                    if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.NotIsEqual)) break;
-                    if (SkipIfMatch("+=", token, TokenType.Operator, TokenType.AddAssign)) break;
-                    if (SkipIfMatch("++", token, TokenType.Operator, TokenType.PlusPlus)) break;
-                    if (SkipIfMatch("-=", token, TokenType.Operator, TokenType.SubtractAssign)) break;
-                    if (SkipIfMatch("--", token, TokenType.Operator, TokenType.MinusMinus)) break;
-                    if (SkipIfMatch(">=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.GreaterEqual)) break;
-                    if (SkipIfMatch("<=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LessEqual)) break;
-                    if (SkipIfMatch(">>", token, TokenType.Operator, TokenType.ShiftRight)) break;
-                    if (SkipIfMatch("<<", token, TokenType.Operator, TokenType.ShiftLeft)) break;
-                    if (SkipIfMatch("&&", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalAnd)) break;
-                    if (SkipIfMatch("||", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalOr)) break;
-
-                    if (SkipIfMatch("..<", token, TokenType.Operator, TokenType.RangeUntil)) break;
-                    if (SkipIfMatch("..", token, TokenType.Operator, TokenType.RangeTo)) break;
-
-                    if (SkipIfMatch("=",  token, TokenType.Operator, TokenType.Assign)) break;
-                    if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Not)) break;
-                    if (SkipIfMatch("+",  token, TokenType.Operator, TokenType.Plus)) break;
-                    if (SkipIfMatch("-",  token, TokenType.Operator, TokenType.Minus)) break;
-                    if (SkipIfMatch(">",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Greater)) break;
-                    if (SkipIfMatch("<",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Less)) break;
-                    if (SkipIfMatch("&",  token, TokenType.Operator, TokenType.Ampersand)) break;
-                    if (SkipIfMatch("|",  token, TokenType.Operator, TokenType.ArithmeticOr)) break;
-                    if (SkipIfMatch("*",  token, TokenType.Operator, TokenType.Asterisk)) break;
-                    if (SkipIfMatch("/",  token, TokenType.Operator, TokenType.Slash)) break;
-                    if (SkipIfMatch("%",  token, TokenType.Operator, TokenType.Percentage, TokenType.Modulo)) break;
-
-                    if (SkipIfMatch(";",  token, TokenType.Separator, TokenType.SemiColon)) break;
-                    if (SkipIfMatch(":",  token, TokenType.Separator, TokenType.Colon)) break;
-                    if (SkipIfMatch(",",  token, TokenType.Separator, TokenType.Comma)) break;
-                    if (SkipIfMatch(".",  token, TokenType.Separator, TokenType.Dot)) break;
-                    if (SkipIfMatch("?",  token, TokenType.Separator, TokenType.QuestionMark)) break;
-                    if (SkipIfMatch("(",  token, TokenType.Separator, TokenType.OpenBracket)) break;
-                    if (SkipIfMatch(")",  token, TokenType.Separator, TokenType.CloseBracket)) break;
-                    if (SkipIfMatch("{",  token, TokenType.Separator, TokenType.LeftBrace)) break;
-                    if (SkipIfMatch("}",  token, TokenType.Separator, TokenType.RightBrace)) break;
-                    if (SkipIfMatch("[",  token, TokenType.Separator, TokenType.LeftSquareBracket)) break;
-                    if (SkipIfMatch("]",  token, TokenType.Separator, TokenType.RightSquareBracket)) break;
-
-                    if (SkipIfMatch("\"")) { ReadString(token); break; }
-                    if (SkipIfMatch("`"))  { ReadGraveAccentString(token); break; }
-                    if (SkipIfMatch("'"))  { ReadCharValue(token); break; }
-
-                    if (token.Type == TokenType.Unknown)
-                    {
-                        string[] sourcecodeLines = sourcecode.Split('\n');
-                        Step6_Compiler.Error($"Unknown token: \'{c}\' at line {lineCounter}: {sourcecodeLines[lineCounter-1]}");
-                    }
-                }
-                token.LineNumber = lineCounter;
-
-                if (token.Contains(TokenType.Assembly))
-                {
-                    int oldNeedle = needle;
-                    var firstNonSpace = GetFirstNonSpaceChar();
-                    if (firstNonSpace != ';')
-                    {
-                        needle = oldNeedle;
-                        int needleBegin = needle;
-                        SkipUntil("{");
-                        int needleEnd = needle;
-                        string attributes = sourcecode.Substring(needleBegin, needleEnd - needleBegin).Trim();
-                        if (attributes.Length > 0)
-                            token.Properties["attributes"] = attributes;
-                        NextChar();
-                        string s = ReadMatching(IsNotRightBrace);
-                        token.Value = s;
-                        NextChar();
-                    }
+                    session.Pop();
+                    continue;
                 }
 
-                if (defines != null)
-                {
-                    if (token.Contains(TokenType.Identifier) && defines.ContainsKey(token.Lexeme))
-                        token = defines[token.Lexeme];
+                token.SourcecodeNeedle = needle;
+                token.SourcecodePackIndex = session.CurrentIndex;
+
+                if (SkipIfMatch("//")) {            // Single line comment
+                    SkipUntil("\n");
+                    continue;
+                }
+                if (SkipIfMatch("/*")) {            // Multiline comment
+                    SkipUntil("*/");
+                    SkipIfMatch("*/");
+                    continue;
+                }
+                if (IsDirective(c)) {               // A Directive is an immediately executed command, not a token.
+                    string line = ReadUntil("\n");
+                    session.PreProcessor.HandleDirective(line);
+                    continue;
                 }
 
-                return token;
+                if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
+                if (IsDigit(c))           { ReadNumber(token);                     break; }
+
+                if (SkipIfMatch("==", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.IsEqual)) break;
+                if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.NotIsEqual)) break;
+                if (SkipIfMatch("+=", token, TokenType.Operator, TokenType.AddAssign)) break;
+                if (SkipIfMatch("++", token, TokenType.Operator, TokenType.PlusPlus)) break;
+                if (SkipIfMatch("-=", token, TokenType.Operator, TokenType.SubtractAssign)) break;
+                if (SkipIfMatch("--", token, TokenType.Operator, TokenType.MinusMinus)) break;
+                if (SkipIfMatch(">=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.GreaterEqual)) break;
+                if (SkipIfMatch("<=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LessEqual)) break;
+                if (SkipIfMatch(">>", token, TokenType.Operator, TokenType.ShiftRight)) break;
+                if (SkipIfMatch("<<", token, TokenType.Operator, TokenType.ShiftLeft)) break;
+                if (SkipIfMatch("&&", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalAnd)) break;
+                if (SkipIfMatch("||", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.LogicalOr)) break;
+
+                if (SkipIfMatch("..<", token, TokenType.Operator, TokenType.RangeUntil)) break;
+                if (SkipIfMatch("..", token, TokenType.Operator, TokenType.RangeTo)) break;
+
+                if (SkipIfMatch("=",  token, TokenType.Operator, TokenType.Assign)) break;
+                if (SkipIfMatch("!",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Not)) break;
+                if (SkipIfMatch("+",  token, TokenType.Operator, TokenType.Plus)) break;
+                if (SkipIfMatch("-",  token, TokenType.Operator, TokenType.Minus)) break;
+                if (SkipIfMatch(">",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Greater)) break;
+                if (SkipIfMatch("<",  token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.Less)) break;
+                if (SkipIfMatch("&",  token, TokenType.Operator, TokenType.Ampersand)) break;
+                if (SkipIfMatch("|",  token, TokenType.Operator, TokenType.ArithmeticOr)) break;
+                if (SkipIfMatch("*",  token, TokenType.Operator, TokenType.Asterisk)) break;
+                if (SkipIfMatch("/",  token, TokenType.Operator, TokenType.Slash)) break;
+                if (SkipIfMatch("%",  token, TokenType.Operator, TokenType.Percentage, TokenType.Modulo)) break;
+
+                if (SkipIfMatch(";",  token, TokenType.Separator, TokenType.SemiColon)) break;
+                if (SkipIfMatch(":",  token, TokenType.Separator, TokenType.Colon)) break;
+                if (SkipIfMatch(",",  token, TokenType.Separator, TokenType.Comma)) break;
+                if (SkipIfMatch(".",  token, TokenType.Separator, TokenType.Dot)) break;
+                if (SkipIfMatch("?",  token, TokenType.Separator, TokenType.QuestionMark)) break;
+                if (SkipIfMatch("(",  token, TokenType.Separator, TokenType.OpenBracket)) break;
+                if (SkipIfMatch(")",  token, TokenType.Separator, TokenType.CloseBracket)) break;
+                if (SkipIfMatch("{",  token, TokenType.Separator, TokenType.LeftBrace)) break;
+                if (SkipIfMatch("}",  token, TokenType.Separator, TokenType.RightBrace)) break;
+                if (SkipIfMatch("[",  token, TokenType.Separator, TokenType.LeftSquareBracket)) break;
+                if (SkipIfMatch("]",  token, TokenType.Separator, TokenType.RightSquareBracket)) break;
+
+                if (SkipIfMatch("\"")) { ReadString(token); break; }
+                if (SkipIfMatch("`"))  { ReadGraveAccentString(token); break; }
+                if (SkipIfMatch("'"))  { ReadCharValue(token); break; }
+
+                if (token.Type == TokenType.Unknown)
+                {
+                    Compiler.Error($"Unknown token: \'{c}\' at line {token.LineNumber()} in {token.SourceFilename()}");
+                }
             }
-            catch (EndOfFileException)
+
+            if (token.Contains(TokenType.Assembly))
             {
-                return new Token(TokenType.EndOfFile);
+                int oldNeedle = needle;
+                var firstNonSpace = GetFirstNonSpaceChar();
+                if (firstNonSpace != ';')
+                {
+                    needle = oldNeedle;
+                    int needleBegin = needle;
+                    SkipUntil("{");
+                    int needleEnd = needle;
+                    string attributes = sourcecode.Substring(needleBegin, needleEnd - needleBegin).Trim();
+                    if (attributes.Length > 0)
+                        token.Properties["attributes"] = attributes;
+                    NextChar();
+                    string s = ReadMatching(IsNotRightBrace);
+                    token.Value = s;
+                    NextChar();
+                }
             }
+
+            if (session.PreProcessor != null && session.PreProcessor.Defines != null)
+            {
+                if (token.Contains(TokenType.Identifier) && session.PreProcessor.Defines.ContainsKey(token.Lexeme))
+                    token = session.PreProcessor.Defines[token.Lexeme];
+            }
+
+            return token;
         }
 
 
@@ -316,7 +326,11 @@ namespace GroundCompiler
 
         public void SkipUntil(string text)
         {
-            while (!Match(text)) { NextChar(); }
+            while (!Match(text)) {
+                if (IsBeyondEndOfFile())
+                    break;
+                NextChar();
+            }
         }
 
         public void SkipUntilAfter(string text)
@@ -355,6 +369,8 @@ namespace GroundCompiler
             return (sourceText == text);
         }
 
+        public bool IsBeyondEndOfFile() => (needle >= sourcecode.Length);
+
         public char NextChar()
         {
             needle += 1;
@@ -368,19 +384,29 @@ namespace GroundCompiler
         public char FollowingChar()
         {
             if ((needle + 1) >= sourcecode.Length)
-                return ' ';
+                return '\n';
             return sourcecode[needle+1];
         }
-
+        public string ReadUntil(string text)
+        {
+            StringBuilder sb = new StringBuilder();
+            while (!Match(text)) {
+                if (IsBeyondEndOfFile())
+                    break;
+                sb.Append(CurrentChar());
+                NextChar();
+            }
+            return sb.ToString();
+        }
 
         public char CurrentChar()
         {
             if (needle >= sourcecode.Length)
-                throw new EndOfFileException();
-
+                return '\n';
             return sourcecode[needle];
         }
 
+        public bool IsDirective(char c) { return (c == '#'); }
         public bool IsDigit(char c, char followingChar = ' ') { return (c >= '0' && c <= '9'); }
         public bool IsDigitOrPoint(char c, char followingChar = ' ') { return (c >= '0' && c <= '9') || (c == '.' && followingChar != '.'); }
         public bool IsAlphabetical(char c, char followingChar = ' ') { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }
@@ -417,31 +443,13 @@ namespace GroundCompiler
             while (true)
             {
                 char c = CurrentChar();
-
-                if (c == '\n') { lineCounter++; }
-                if (!IsSpace(c)) { return c; }
-
+                if (IsBeyondEndOfFile())
+                    return c;
+                if (!IsSpace(c))
+                    return c;
                 NextChar();
             }
         }
-
-
-        public void WriteDebugInfo(IEnumerable<Token> tokens)
-        {
-            return; // remove if you want debug info
-
-            string[] sourcecodeLines = sourcecode.Split('\n');
-            int lastSourcecodeLineShown = 0;
-            foreach (var token in tokens) {
-                if (token.LineNumber > lastSourcecodeLineShown)
-                {
-                    Console.WriteLine($"\r\n                        { sourcecodeLines[token.LineNumber - 1].Trim() }");
-                    lastSourcecodeLineShown = token.LineNumber;
-                }
-                Console.WriteLine(token);
-            }
-        }
-
 
     }
 }

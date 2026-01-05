@@ -4,7 +4,7 @@ using GroundCompiler.Statements;
 
 namespace GroundCompiler
 {
-    public class Step6b_CodeEmitter
+    public class CodeEmitter
     {
         public CPU_X86_64 cpu;
         public List<string> GeneratedCode_Equates;
@@ -18,7 +18,7 @@ namespace GroundCompiler
         public long StackPos = -8;  // position of the stack for align16 purposes. Resetted in EmitProcedure>>EmitCreateStackframe()
         long labelCounter = 0;
 
-        public Step6b_CodeEmitter(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null)
+        public CodeEmitter(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null)
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
@@ -357,7 +357,7 @@ namespace GroundCompiler
         public void PopMul(Expression expr, Datatype conversionDatatype)
         {
             if (!conversionDatatype.Contains(Datatype.TypeEnum.Number))
-                Step6_Compiler.Error("CodeEmitterX64>>PopMul: Cannot multiply expressions that are not numbers.");
+                Compiler.Error("CodeEmitterX64>>PopMul: Cannot multiply expressions that are not numbers.");
 
             if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
@@ -536,7 +536,7 @@ namespace GroundCompiler
         {
             cpu.ReserveRegister("rcx");
             if (levelDeep < 1)
-                Step6_Compiler.Error("Parent not found.");
+                Compiler.Error("Parent not found.");
 
             int loopNr = levelDeep - 1;
             Codeline("mov   rcx, [rbp+G_PARAMETER_LEXPARENT]");
@@ -806,7 +806,7 @@ namespace GroundCompiler
             Codeline("call  AddReference");
             var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
             if (blockType == null)
-                Step6_Compiler.Error("AddReference: no blockType found.");
+                Compiler.Error("AddReference: no blockType found.");
 
             blockType!.shouldCleanDereferenced = true;
         }
@@ -817,7 +817,7 @@ namespace GroundCompiler
             Codeline("call  AddTmpReference");
             var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
             if (blockType == null)
-                Step6_Compiler.Error("AddTmpReference: no blockType found.");
+                Compiler.Error("AddTmpReference: no blockType found.");
 
             blockType!.shouldCleanTmpDereferenced = true;
         }

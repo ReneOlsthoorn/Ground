@@ -4,11 +4,14 @@ using GroundCompiler.Expressions;
 
 namespace GroundCompiler
 {
-    public class Step3_Parser
+    public class Parser
     {
         private TokenDispenser tokenDispenser;
+        public Parser(IEnumerable<Token> tokens)
+        {
+            tokenDispenser = new TokenDispenser(tokens);
+        }
 
-        public Step3_Parser(IEnumerable<Token> tokens) { tokenDispenser = new TokenDispenser(tokens); }
         public Token Peek() { return tokenDispenser.PeekNextToken(); }
         public Token PeekPlus2() { return tokenDispenser.PeekNextToken2(); }
         public Token NextToken() { return tokenDispenser.GetNextToken(); }
@@ -76,7 +79,7 @@ namespace GroundCompiler
 
         public static void Error(Token token, String message)
         {
-            Step6_Compiler.Error(message, token);
+            Compiler.Error(message, token);
         }
 
         public ProgramNode GetAbstractSyntaxTree()
@@ -115,7 +118,7 @@ namespace GroundCompiler
                     }
                 } while (Match(TokenType.Comma));
                 if (!Match(TokenType.RightSquareBracket))
-                    Step6_Compiler.Error("Unknown token at array: " + Peek().Lexeme);
+                    Compiler.Error("Unknown token at array: " + Peek().Lexeme);
 
                 datatypeStr += "[]";
             }
@@ -163,7 +166,7 @@ namespace GroundCompiler
                     // sizeType is already set correctly
                     break;
                 default:
-                    Step6_Compiler.Error("PokeStatement: Size not recognized.");
+                    Compiler.Error("PokeStatement: Size not recognized.");
                     break;
             }
             Token nameToken = NextToken();
@@ -788,22 +791,6 @@ namespace GroundCompiler
             return new Expressions.List(elements);
         }
 
-
-        public void WriteDebugInfo(ProgramNode node)
-        {
-            return; // remove if you want debug info
-
-            var astPrinter = new AstPrinter();
-            foreach (AstNode statement in node.BodyNode.AllNodes())
-                Console.WriteLine(astPrinter.Print(statement));
-        }
-
-
-        public class ParseError : Exception
-        {
-            public ParseError() : base() { }
-            public ParseError(string  message) : base(message) { }
-        }
 
     }
 }

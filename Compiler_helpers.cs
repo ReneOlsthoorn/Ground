@@ -3,7 +3,7 @@ using GroundCompiler.Statements;
 
 namespace GroundCompiler
 {
-    public partial class Step6_Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
+    public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
         public Symbol? GetSymbol(string name, Scope scope)
         {
@@ -12,7 +12,7 @@ namespace GroundCompiler
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Step6_Compiler.Error($"Symbol {name} does not exist.");
+                    Compiler.Error($"Symbol {name} does not exist.");
             }
             return symbol;
         }
@@ -20,7 +20,7 @@ namespace GroundCompiler
         public static void Error(String message, Token? token = null)
         {
             Console.WriteLine("ERROR: " + message);
-            if (token != null) Console.WriteLine("LineNumber: " + token.LineNumber);
+            if (token != null) { Console.WriteLine("LineNumber: " + token.LineNumber()); }
             Environment.Exit(0);
         }
 
@@ -105,7 +105,7 @@ namespace GroundCompiler
                     emitter.LoadAssemblyVariable("currentExeDir");
             }
             else if (symbol is GroupSymbol groupSymbol)
-                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
@@ -121,11 +121,11 @@ namespace GroundCompiler
             else if (symbol is ParentScopeVariable parentSymbol)
                 emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
             else if (symbol is FunctionSymbol funcSymbol)
-                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
             else if (symbol is HardcodedVariable hardcodedSymbol)
-                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
             else if (symbol is GroupSymbol groupSymbol)
-                Step6_Compiler.Error("VariableAccessWrite >> Not implemented yet.");
+                Compiler.Error("VariableAccessWrite >> Not implemented yet.");
         }
 
 
@@ -172,11 +172,11 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
             else if (symbol is FunctionSymbol funcSymbol)
-                Step6_Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
+                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
             else if (symbol is HardcodedVariable hardcodedSymbol)
                 EmitExpression(assignment.RightOfEqualSignNode);
             else if (symbol is GroupSymbol groupSymbol)
-                Step6_Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
+                Compiler.Error("Not implemented yet. See VariableAccessAssignment.");
         }
 
 
@@ -222,11 +222,11 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
             }
             else if (symbol is FunctionSymbol funcSymbol)
-                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
             else if (symbol is HardcodedVariable hardcodedSymbol)
-                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
             else if (symbol is GroupSymbol groupSymbol)
-                Step6_Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
+                Compiler.Error("Not implemented yet. See Compiler_helper.cs>>VariableAccessAddressOf");
         }
 
 
@@ -268,7 +268,7 @@ namespace GroundCompiler
                 else if (exprDatatype.Contains(Datatype.TypeEnum.Integer) && expr.Operator.Contains(TokenType.Asterisk))
                     emitter.StorePointingTo(exprDatatype);
             } else
-                Step6_Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
+                Compiler.Error("UnaryAssignment must pop the assignment-value of the stack.");
         }
 
 
