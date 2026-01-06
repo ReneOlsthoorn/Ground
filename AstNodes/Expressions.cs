@@ -26,7 +26,7 @@ namespace GroundCompiler.Expressions
 
         public string getScopeName() => ((IScopeStatement)(this.GetScope()?.Owner))?.GetScopeName()?.Lexeme ?? "";
 
-        public Symbol? GetSymbol(string name, Scope scope)
+        public Symbol? GetSymbol(string name, Scope scope, Token? symbolToken = null)
         {
             if (name == "g")
                 return new GroupSymbol("g");
@@ -36,7 +36,7 @@ namespace GroundCompiler.Expressions
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Compiler.Error($"Symbol {name} does not exist.");
+                    Compiler.Error($"Symbol \"{name}\" does not exist.", symbolToken);
 
                 if (symbol is HardcodedVariable || symbol is HardcodedFunctionSymbol || symbol is FunctionSymbol || symbol is GroupSymbol || symbol is ClassSymbol)
                     return symbol;
@@ -433,7 +433,7 @@ namespace GroundCompiler.Expressions
         public override void Initialize()
         {
             var scope = GetScope();
-            var symbol = GetSymbol(Name.Lexeme, scope!);
+            var symbol = GetSymbol(Name.Lexeme, scope!, Name);
             if (symbol is ParentScopeVariable)
                 ExprType = (symbol as ParentScopeVariable)!.DataType;
             else if (symbol is LocalVariableSymbol)
@@ -631,7 +631,7 @@ namespace GroundCompiler.Expressions
         public override void Initialize()
         {
             if (LeftOfEqualSignNode is Variable variableExpr)
-                GetSymbol(variableExpr.Name.Lexeme, GetScope()!);  // Define pass-through parameters
+                GetSymbol(variableExpr.Name.Lexeme, GetScope()!, variableExpr.Name);  // Define pass-through parameters
 
             base.Initialize();
         }
@@ -848,6 +848,7 @@ namespace GroundCompiler.Expressions
         public override void Initialize()
         {
             string functionName = "";
+            Token? functionNameToken = null;
 
             foreach (var arg in ArgumentNodes)
             {
@@ -858,7 +859,10 @@ namespace GroundCompiler.Expressions
             // normally, the scope of the functioncall is used.
             var scope = GetScope();
             if (FunctionNameNode is Variable functionNameVariable)
+            {
                 functionName = functionNameVariable.Name.Lexeme;
+                functionNameToken = functionNameVariable.Name;
+            }
 
             // When we have an methodcall, we use the scope from the class
             if (FunctionNameNode is PropertyExpression functionNameGet)
@@ -868,6 +872,7 @@ namespace GroundCompiler.Expressions
                 functionNameGet.Parent = this;
                 functionNameGet.Initialize();
                 functionName = functionNameGet.Name.Lexeme;
+                functionNameToken = functionNameGet.Name;
 
                 if (functionNameGet.ObjectNode is Variable functionNameVar)
                 {
@@ -891,7 +896,7 @@ namespace GroundCompiler.Expressions
                 }
             }
 
-            var symbol = GetSymbol(functionName, scope!);
+            var symbol = GetSymbol(functionName, scope!, functionNameToken);
 
             if (symbol is ClassSymbol classConstructorFunction)
             {

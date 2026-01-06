@@ -650,7 +650,7 @@ namespace GroundCompiler
             if (Match(TokenType.LeftSquareBracket))
                 return ParseList();
 
-            Error(Peek(), "Primary: Expected expression.");
+            Error(Peek(), $"Expected expression, got \"{Peek().Lexeme}\"");
             return null!;
         }
 

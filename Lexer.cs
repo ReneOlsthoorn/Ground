@@ -363,7 +363,7 @@ namespace GroundCompiler
 
         public bool Match(string text)
         {
-            if (sourcecode.Length <= needle + text.Length)
+            if (sourcecode.Length < needle + text.Length)
                 return false;
             string sourceText = sourcecode.Substring(needle, text.Length);
             return (sourceText == text);

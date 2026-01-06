@@ -34,7 +34,7 @@ namespace GroundCompiler
                         return i;
                 }
             }
-            return 1;
+            return lineStarts.Count;
         }
 
     }

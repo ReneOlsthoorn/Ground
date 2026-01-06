@@ -131,6 +131,13 @@ namespace GroundCompiler
             return linenr;
         }
 
+        public string LineLocation()
+        {
+            if (this.SourcecodePack() == null)
+                return "";
+            return $"line {this.LineNumber()} in {this.SourcecodePack()?.SourceFilename}"; 
+        }
+
         public string SourceFilename() => this.SourcecodePack()?.SourceFilename ?? "";
 
         public override string ToString()
@@ -138,12 +145,12 @@ namespace GroundCompiler
             string valueAsString = Value?.ToString() ?? "";
 
             if (this.Datatype?.Name == "string")
-                return $"{SourcecodeNeedle}:{Types[0]} string \"{Utils.StringAsDebug(valueAsString)}\"";
+                return $"{Types[0]} \"{Utils.StringAsDebug(valueAsString)}\" : {this.LineLocation()}";
 
             if (Types.Contains(TokenType.Literal))
-                return $"{SourcecodeNeedle}:{Types[0]} {Utils.StringAsDebug(valueAsString)}";
+                return $"{Types[0]} {Utils.StringAsDebug(valueAsString)} : {this.LineLocation()}";
 
-            return $"{SourcecodeNeedle}:{Types[0]} {Utils.StringAsDebug(Lexeme)} {valueAsString}";
+            return $"{Types[0]} {Utils.StringAsDebug(Lexeme)} {valueAsString} : {this.LineLocation()}";
         }
 
         public static Token GetDefaultIntegerToken()

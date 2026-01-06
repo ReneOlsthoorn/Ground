@@ -5,22 +5,22 @@ namespace GroundCompiler
 {
     public partial class Compiler : Statement.IVisitor<object?>, Expression.IVisitor<object?>
     {
-        public Symbol? GetSymbol(string name, Scope scope)
+        public Symbol? GetSymbol(string name, Scope scope, Token? symbolToken = null)
         {
             var symbol = scope.GetVariable(name);
             if (symbol == null)
             {
                 symbol = scope.GetVariableAnywhere(name);
                 if (symbol == null)
-                    Compiler.Error($"Symbol {name} does not exist.");
+                    Compiler.Error($"Symbol \"{name}\" does not exist.", symbolToken);
             }
             return symbol;
         }
 
         public static void Error(String message, Token? token = null)
         {
-            Console.WriteLine("ERROR: " + message);
-            if (token != null) { Console.WriteLine("LineNumber: " + token.LineNumber()); }
+            Console.WriteLine("ERROR:\r\n" + message);
+            if (token != null) { Console.WriteLine(token.LineLocation()); }
             Environment.Exit(0);
         }
 
@@ -69,7 +69,7 @@ namespace GroundCompiler
         public void VariableRead(Variable variableExpr)
         {
             var currentScope = variableExpr.GetScope();
-            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!, variableExpr.Name);
             string reg;
 
             if (symbol is LocalVariableSymbol localVarSymbol)
@@ -112,7 +112,7 @@ namespace GroundCompiler
         public void VariableWrite(Variable variableExpr)
         {
             var currentScope = variableExpr.GetScope();
-            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!, variableExpr.Name);
 
             if (symbol is LocalVariableSymbol localVarSymbol)
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
@@ -132,7 +132,7 @@ namespace GroundCompiler
         public void VariableAssignment(Variable variableExpr, Assignment assignment)
         {
             var currentScope = variableExpr.GetScope();
-            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!, variableExpr.Name);
             string reg;
 
             if (symbol is LocalVariableSymbol localVarSymbol)
@@ -208,7 +208,7 @@ namespace GroundCompiler
             }
 
             var currentScope = variableExpr.GetScope();
-            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!);
+            var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!, variableExpr.Name);
             string reg;
 
             if (symbol is LocalVariableSymbol localVarSymbol)
@@ -278,7 +278,7 @@ namespace GroundCompiler
             var currentScope = arrayExpr.GetScope();
             //TODO: this.prop.prop2[2] must be possible. The member must be an expression, not a variable.
 
-            var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!);
+            var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!, arrayExpr.GetMemberVariable()!.Name);
             var targetType = Datatype.Default;
 
             if (arrayExpr.IndexNodes != null)

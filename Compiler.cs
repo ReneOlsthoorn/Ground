@@ -113,7 +113,7 @@ namespace GroundCompiler
 
             var name = stmt.Name.Lexeme;
             var currentScope = stmt.GetScope();
-            var symbol = GetSymbol(name, currentScope!);
+            var symbol = GetSymbol(name, currentScope!, stmt.Name);
 
             // all declared variables are local to something, so we only know LocalVariableSymbols
             if (symbol is LocalVariableSymbol  localVarSymbol)
@@ -640,7 +640,7 @@ namespace GroundCompiler
                 cpu.FreeRegister(reg);
 
                 var funcNameVar = expr.FunctionNameNode as Variable;
-                var symbol = GetSymbol(funcNameVar!.Name.Lexeme, scope!);
+                var symbol = GetSymbol(funcNameVar!.Name.Lexeme, scope!, funcNameVar!.Name);
                 var theClassSymbol = symbol as ClassSymbol;
 
                 //GetVariableAnywhere
@@ -782,7 +782,7 @@ namespace GroundCompiler
                         scope = classStatement.GetScope();
                 }
                 string functionName = propertyGet.Name.Lexeme;
-                theFunction = GetSymbol(functionName, scope!) as FunctionSymbol;
+                theFunction = GetSymbol(functionName, scope!, propertyGet.Name) as FunctionSymbol;
             }
             var dllFunctionSymbol = theFunction as DllFunctionSymbol;
 
