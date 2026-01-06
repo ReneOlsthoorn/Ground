@@ -67,10 +67,10 @@ namespace GroundCompiler
             sess.Compiler = new Compiler(sess);
             sess.GeneratedCode = sess.Compiler.GenerateAssembly(sess.AST);
 
-            Console.WriteLine("*** Step 6: Assemble with FASM.");
+            Console.WriteLine("*** Assemble with FASM.");
             Assemble();
 
-            Console.WriteLine("*** Step 7: Run the executable.");
+            Console.WriteLine("*** Run the executable.");
             RunExecutable();
         }
 
