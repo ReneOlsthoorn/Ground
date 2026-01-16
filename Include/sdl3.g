@@ -1,4 +1,8 @@
 
+
+//int tmp = sdl3.SDL_rand_r(&RandomSeed, 100);
+
+
 #define SDL3_EVENT_SIZE 128
 #define SDL3_EVENT_TYPE_OFFSET 0
 #define SDL3_EVENT_SCANCODE_OFFSET 24
@@ -14,6 +18,15 @@
 #define SDL3_KEYBOARDEVENT_RAW_U16 34
 #define SDL3_KEYBOARDEVENT_DOWN_U8 36
 #define SDL3_KEYBOARDEVENT_REPEAT_U8 37
+
+#define SDL_BLENDMODE_NONE 0x00000000
+#define SDL_BLENDMODE_BLEND 0x00000001
+#define SDL_BLENDMODE_BLEND_PREMULTIPLIED 0x00000010
+#define SDL_BLENDMODE_ADD 0x00000002
+#define SDL_BLENDMODE_ADD_PREMULTIPLIED 0x00000020
+#define SDL_BLENDMODE_MOD 0x00000004
+#define SDL_BLENDMODE_MUL 0x00000008
+#define SDL_BLENDMODE_INVALID 0x7FFFFFFF
 
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
@@ -73,6 +86,10 @@ dll sdl3 function SDL_RenderReadPixels(ptr renderer, ptr rect) : ptr;  // result
 dll sdl3 function SDL_RenderLine(ptr renderer, f32 x1, f32 y1, f32 x2, f32 y2) : bool;
 
 dll sdl3 function SDL_qsort(ptr base, int nrElements, int sizeElement, ptr compareCallback);
+dll sdl3 function SDL_LoadPNG(string filename) : ptr;  // result = SDL_Surface*
+
+dll sdl3 function SDL_SetRenderTarget(ptr renderer, ptr texture);
+dll sdl3 function SDL_SetTextureBlendMode(ptr texture, u32 blendmode);
 
 class SDL_Surface {     //sizeof: 48 bytes
     u32 flags;

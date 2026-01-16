@@ -403,3 +403,31 @@ _f_bswap32@gc:
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_1_PARAM
+
+
+_f_copy@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rsi rdi rdx rcx
+  mov	rsi, [rbp+G_PARAMETER1]
+  mov	rdi, [rbp+G_PARAMETER2]
+  mov	rcx, [rbp+G_PARAMETER3]
+  rep movsb
+  pop	rcx rdx rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM
+
+
+_f_fill32@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdi rcx
+  mov   rdi, [rbp+G_PARAMETER1]
+  mov   rcx, [rbp+G_PARAMETER2]
+  mov   eax, [rbp+G_PARAMETER3]
+  rep stosd	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+  pop	rcx rdi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM

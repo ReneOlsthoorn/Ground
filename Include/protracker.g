@@ -25,9 +25,20 @@ Class ProtrackerMod {
 	int activeRowNr;
 	int songPos;
 	int tickCounter;
+	bool isNowActive;
 
 	int voice1Note;
 	int voice1Sample;
+	int voice1Effect;
+	int voice2Note;
+	int voice2Sample;
+	int voice2Effect;
+	int voice3Note;
+	int voice3Sample;
+	int voice3Effect;
+	int voice4Note;
+	int voice4Sample;
+	int voice4Effect;
 
 	int nextRowNr;				// when a new activeRowNr is requested, this is the next activeRowNr.
 	int nextSongPos;			// when a new activeRowNr is requested, this is the next songPos.
@@ -83,6 +94,24 @@ asm {
   pop	rdx rsi rcx
 }
 		return sample;
+	}
+
+
+	function GetEffect(int voiceData) : int {
+		int effect;
+asm {
+  push	rcx rsi rdx
+  mov	rax, [voiceData@GetEffect@ProtrackerMod]
+  bswap eax		; bigendian reshuffle
+
+  mov	ecx, eax
+  mov	rsi, 0x00000fff
+  and	rcx, rsi
+  mov	[effect@GetEffect@ProtrackerMod], rcx
+
+  pop	rdx rsi rcx
+}
+		return effect;
 	}
 
 
@@ -179,9 +208,20 @@ asm {
 		}
 		this.voice1Note = this.GetNote(aRow[0]);
 		this.voice1Sample = this.GetSample(aRow[0]);
+		this.voice1Effect = this.GetEffect(aRow[0]);
+		this.voice2Note = this.GetNote(aRow[1]);
+		this.voice2Sample = this.GetSample(aRow[1]);
+		this.voice2Effect = this.GetEffect(aRow[1]);
+		this.voice3Note = this.GetNote(aRow[2]);
+		this.voice3Sample = this.GetSample(aRow[2]);
+		this.voice3Effect = this.GetEffect(aRow[2]);
+		this.voice4Note = this.GetNote(aRow[3]);
+		this.voice4Sample = this.GetSample(aRow[3]);
+		this.voice4Effect = this.GetEffect(aRow[3]);
 	}
 
 	function Activate() {
+		this.isNowActive = false;
 		if (this.tickCounter > 0) {
 			this.tickCounter = this.tickCounter - 1;
 			return;
@@ -217,6 +257,7 @@ asm {
 		}
 		this.CalculateActiveRow();
 		this.AnalyseActiveMusicRow();
+		this.isNowActive = true;
 	}
 
 

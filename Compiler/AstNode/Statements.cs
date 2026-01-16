@@ -74,7 +74,19 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parent = group;
 
+            fn = group.Scope.DefineHardcodedFunction("copy");
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("src", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("dest", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
             fn = group.Scope.DefineHardcodedFunction("fill");
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("dest", Datatype.GetDatatype("ptr")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("fill32");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("dest", Datatype.GetDatatype("ptr")));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("size", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
@@ -147,6 +159,7 @@ namespace GroundCompiler.Statements
 
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
+            this.Scope.DefineHardcodedVariable("GC_Float_Infinity", Datatype.GetDatatype("float"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));
             this.Scope.DefineHardcodedFunction("countof", Datatype.GetDatatype("int"));

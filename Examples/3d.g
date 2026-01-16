@@ -49,7 +49,7 @@ if (ballTexture == null) return;
 sdl3.SDL_SetTextureScaleMode(ballTexture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_DestroySurface(ballSurface);
 
-
+#define SCREENFONT256FILEPATH "image/charset_protracker_16x16.png"
 #include screen.g
 
 
@@ -226,15 +226,23 @@ ptMod.StartPlay();
 
 string[] NoteMapping = [ "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" ];
 string GetNoteResult;
-function GetNoteInfo(int note, int sample) {
-	if (note == 0) {
-		GetNoteResult = "      ";
+function GetNoteInfo(int note, int sample, int effect) {
+	if (note == 0 and sample == 0 and effect == 0) {
+		GetNoteResult = "        "; //"--- 0000";
 		return;
 	}
-	note = note - 1;
-	int octaaf = note / 12;
-	int noteWithin = note % 12;
-	GetNoteResult = NoteMapping[noteWithin] + (octaaf+1) + " " + gc.hex$(sample,2);   // returning strings does not work at this moment.
+	if (note != 0) {
+		note = note - 1;
+		int octaaf = note / 12;
+		int noteWithin = note % 12;
+		GetNoteResult = NoteMapping[noteWithin] + (octaaf+1) + " ";
+	} else {
+		GetNoteResult = "--- ";
+	}
+	if (sample != 0 or effect != 0) {
+		GetNoteResult = GetNoteResult + gc.hex$(sample,1) + gc.hex$(effect,3);
+	} else
+		GetNoteResult = "0000";
 }
 
 
@@ -272,14 +280,15 @@ function PrintMusicInfo() {
 		for (v in 0..3) {
 			int note = ptMod.GetNote(*(aRow+(v*4)));
 			int sample = ptMod.GetSample(*(aRow+(v*4)));
-			GetNoteInfo(note, sample);
+			int effect = ptMod.GetEffect(*(aRow+(v*4)));
+			GetNoteInfo(note, sample, effect);
 
 			if (v == 0)
-				g.[screen_cursor] = g.[screen_cursor] + 2;
+				g.[screen_cursor] = g.[screen_cursor] + 1;
 			if (v == 1)
 				g.[screen_cursor] = g.[screen_cursor] + 3;
 			if (v == 2)
-				g.[screen_cursor] = g.[screen_cursor] + 46;
+				g.[screen_cursor] = g.[screen_cursor] + 40;
 			if (v == 3)
 				g.[screen_cursor] = g.[screen_cursor] + 3;
 			print(GetNoteResult);
@@ -288,16 +297,18 @@ function PrintMusicInfo() {
 	}
 }
 
+//u32* screenColorPalette = g.ScreenColorPalette;
+//screenColorPalette[11] = 0xff888888;
 
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 gc.fill(g.[screentext_p], SCREEN_TEXTSIZE, ' ');
 gc.fill(g.[screencolor_p], SCREEN_TEXTSIZE, 0xbf);
-gc.rectfill(g.[screencolor_p], 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
-gc.rectfill(g.[screencolor_p]+61, 19, 45, SCREEN_TEXTCOLUMNS, 0x6e);
+gc.rectfill(g.[screencolor_p], 21, 45, SCREEN_TEXTCOLUMNS, 0x6e);
+gc.rectfill(g.[screencolor_p]+59, 21, 45, SCREEN_TEXTCOLUMNS, 0x6e);
 
-gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22, 19, 0xe6);
-gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22+61, 19, 0xe6);
+gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22, 21, 0xe6);
+gc.fill(g.[screencolor_p]+SCREEN_TEXTCOLUMNS*22+59, 21, 0xe6);
 
 while (StatusRunning)
 {
@@ -324,6 +335,7 @@ while (StatusRunning)
 
 	sdl3.SDL_LockTexture(texture, null, &pixels, &screenpitch);
 	g.[pixels_p] = pixels;
+	g.[pixels_screen_p] = pixels;
 	PrintMusicInfo();
 	ScreenDrawTextLines();
 

@@ -242,14 +242,18 @@ scripting language.
 By the way: a very interesting general purpose programming language is `Pharo` Smalltalk. Everything is an object in 
 Smalltalk and the code editor is available in the image. I used to be a `Smalltalk` programmer from 1997-2002 and I 
 still love the language and environment.  
-But, back to our search for a high performance language: `Wren` is a scriping language, `Nim` transpiles to C. `Dart` has a 
-garbage collector and is busy with flutter and has no focus on high performance. `Go` also has a garbage collector, but 
-a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
+But, back to our search for a high performance language: 
+`BlitzBasic` supports inline assembly. But wait... it is 32 bit. 
+`BlitzMax` has an LLVM backend that does not support easy assembly language. 
+`Wren` is a scriping language, 
+`Nim` transpiles to C. 
+`Dart` has a garbage collector and is busy with flutter and has no focus on high performance. 
+`Go` also has a garbage collector, but a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
 support inline assembly. `Go` is a systems programming language and those languages want to abstract the CPU away.  
 `Rust` has a LLVM backend, so no easy assembly. The same for `Zig`. The same for `Crystal`. In Crystal, I coded a 
 "Hello, World!". It was 660k and used VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
 you also must ship 2 extra DLL's to make your "Hello, World!" run on a modern PC. That's not convenient.  
-So, now you understand why `Ground` is necessary :-)  There is only one CPU in your PC. Get a grip on it and make it dance!
+So, now you understand why `Ground` is necessary :-)  There is only one CPU in your PC. Get a grip on it and let it dance!
 
 ## Write your own Programming Language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
@@ -384,9 +388,9 @@ In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory
 PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
   
-At this moment in 2025, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
-it to the cloud or uses it for AI. Microsoft wants to make Windows a sensory device for an AI companion and forces users to give 
-up privacy. I strongly disagree with this route, because it should be made optional.  
+At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
+it to the cloud or uses it for AI. Microsoft wants to make Windows an agentic AI OS and forces users to give up privacy. 
+I strongly disagree with this route, because it should be made optional.  
 Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot and Recall. However, 
 with each new update, the settings can be turned on again. The whole situation is a shame, because Windows has such a great history. 
 Like many users, I don't want to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to 
@@ -480,6 +484,11 @@ How can a Firework show promote x86-64 assembly?</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="500" /><br/>
 Rotating 3D object. Matrix calculations done with CGLM.</p>
 
+### Electronic Life 2026
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Electronic_Life.jpg?raw=true" width="500" /><br/>
+Electronic Life is back after 36 years!</p>
+
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
 The executables are in the `bin\Release` directory of the zipfile.
@@ -503,6 +512,7 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.11.29: GroundSideLibrary now build with MSYS2.  
 2025.12.05: Fireworks demo added.  
 2025.12.09: 3D demo added.
+2026.01.16: First version of Electronic Life 2026 added.
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  

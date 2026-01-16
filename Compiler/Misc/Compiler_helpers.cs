@@ -103,6 +103,10 @@ namespace GroundCompiler
 
                 if (symbol.Name == "GC_CurrentExeDir")
                     emitter.LoadAssemblyVariable("currentExeDir");
+
+                if (symbol.Name == "GC_Float_Infinity") {
+                    emitter.LoadInfinityFloat64();
+                }
             }
             else if (symbol is GroupSymbol groupSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");

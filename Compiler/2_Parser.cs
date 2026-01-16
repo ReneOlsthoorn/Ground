@@ -299,7 +299,7 @@ namespace GroundCompiler
                     bool ascending = true;
                     if (leftLiteral != null && rightLiteral != null)
                     {
-                        if ((long)(leftLiteral.Value!) > (long)(rightLiteral.Value!))
+                        if (Convert.ToInt64(leftLiteral.Value!) > Convert.ToInt64(rightLiteral.Value!))
                             ascending = false;
                     }
 

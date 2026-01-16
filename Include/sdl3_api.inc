@@ -1,8 +1,10 @@
   import  sdl3,\
+          sdl3_JNI_OnLoad,'JNI_OnLoad',\
           sdl3_SDL_AcquireCameraFrame,'SDL_AcquireCameraFrame',\
           sdl3_SDL_AcquireGPUCommandBuffer,'SDL_AcquireGPUCommandBuffer',\
           sdl3_SDL_AcquireGPUSwapchainTexture,'SDL_AcquireGPUSwapchainTexture',\
           sdl3_SDL_AddAtomicInt,'SDL_AddAtomicInt',\
+          sdl3_SDL_AddAtomicU32,'SDL_AddAtomicU32',\
           sdl3_SDL_AddEventWatch,'SDL_AddEventWatch',\
           sdl3_SDL_AddGamepadMapping,'SDL_AddGamepadMapping',\
           sdl3_SDL_AddGamepadMappingsFromFile,'SDL_AddGamepadMappingsFromFile',\
@@ -79,6 +81,7 @@
           sdl3_SDL_CopyGPUTextureToTexture,'SDL_CopyGPUTextureToTexture',\
           sdl3_SDL_CopyProperties,'SDL_CopyProperties',\
           sdl3_SDL_CopyStorageFile,'SDL_CopyStorageFile',\
+          sdl3_SDL_CreateAnimatedCursor,'SDL_CreateAnimatedCursor',\
           sdl3_SDL_CreateAsyncIOQueue,'SDL_CreateAsyncIOQueue',\
           sdl3_SDL_CreateAudioStream,'SDL_CreateAudioStream',\
           sdl3_SDL_CreateColorCursor,'SDL_CreateColorCursor',\
@@ -91,6 +94,8 @@
           sdl3_SDL_CreateGPUDevice,'SDL_CreateGPUDevice',\
           sdl3_SDL_CreateGPUDeviceWithProperties,'SDL_CreateGPUDeviceWithProperties',\
           sdl3_SDL_CreateGPUGraphicsPipeline,'SDL_CreateGPUGraphicsPipeline',\
+          sdl3_SDL_CreateGPURenderState,'SDL_CreateGPURenderState',\
+          sdl3_SDL_CreateGPURenderer,'SDL_CreateGPURenderer',\
           sdl3_SDL_CreateGPUSampler,'SDL_CreateGPUSampler',\
           sdl3_SDL_CreateGPUShader,'SDL_CreateGPUShader',\
           sdl3_SDL_CreateGPUTexture,'SDL_CreateGPUTexture',\
@@ -135,6 +140,7 @@
           sdl3_SDL_DestroyCursor,'SDL_DestroyCursor',\
           sdl3_SDL_DestroyEnvironment,'SDL_DestroyEnvironment',\
           sdl3_SDL_DestroyGPUDevice,'SDL_DestroyGPUDevice',\
+          sdl3_SDL_DestroyGPURenderState,'SDL_DestroyGPURenderState',\
           sdl3_SDL_DestroyHapticEffect,'SDL_DestroyHapticEffect',\
           sdl3_SDL_DestroyMutex,'SDL_DestroyMutex',\
           sdl3_SDL_DestroyPalette,'SDL_DestroyPalette',\
@@ -184,7 +190,9 @@
           sdl3_SDL_FlushEvents,'SDL_FlushEvents',\
           sdl3_SDL_FlushIO,'SDL_FlushIO',\
           sdl3_SDL_FlushRenderer,'SDL_FlushRenderer',\
+          sdl3_SDL_GDKResumeGPU,'SDL_GDKResumeGPU',\
           sdl3_SDL_GDKSuspendComplete,'SDL_GDKSuspendComplete',\
+          sdl3_SDL_GDKSuspendGPU,'SDL_GDKSuspendGPU',\
           sdl3_SDL_GL_CreateContext,'SDL_GL_CreateContext',\
           sdl3_SDL_GL_DestroyContext,'SDL_GL_DestroyContext',\
           sdl3_SDL_GL_ExtensionSupported,'SDL_GL_ExtensionSupported',\
@@ -213,6 +221,13 @@
           sdl3_SDL_GamepadHasSensor,'SDL_GamepadHasSensor',\
           sdl3_SDL_GamepadSensorEnabled,'SDL_GamepadSensorEnabled',\
           sdl3_SDL_GenerateMipmapsForGPUTexture,'SDL_GenerateMipmapsForGPUTexture',\
+          sdl3_SDL_GetAndroidActivity,'SDL_GetAndroidActivity',\
+          sdl3_SDL_GetAndroidCachePath,'SDL_GetAndroidCachePath',\
+          sdl3_SDL_GetAndroidExternalStoragePath,'SDL_GetAndroidExternalStoragePath',\
+          sdl3_SDL_GetAndroidExternalStorageState,'SDL_GetAndroidExternalStorageState',\
+          sdl3_SDL_GetAndroidInternalStoragePath,'SDL_GetAndroidInternalStoragePath',\
+          sdl3_SDL_GetAndroidJNIEnv,'SDL_GetAndroidJNIEnv',\
+          sdl3_SDL_GetAndroidSDKVersion,'SDL_GetAndroidSDKVersion',\
           sdl3_SDL_GetAppMetadataProperty,'SDL_GetAppMetadataProperty',\
           sdl3_SDL_GetAssertionHandler,'SDL_GetAssertionHandler',\
           sdl3_SDL_GetAssertionReport,'SDL_GetAssertionReport',\
@@ -273,6 +288,7 @@
           sdl3_SDL_GetDefaultAssertionHandler,'SDL_GetDefaultAssertionHandler',\
           sdl3_SDL_GetDefaultCursor,'SDL_GetDefaultCursor',\
           sdl3_SDL_GetDefaultLogOutputFunction,'SDL_GetDefaultLogOutputFunction',\
+          sdl3_SDL_GetDefaultTextureScaleMode,'SDL_GetDefaultTextureScaleMode',\
           sdl3_SDL_GetDesktopDisplayMode,'SDL_GetDesktopDisplayMode',\
           sdl3_SDL_GetDirect3D9AdapterIndex,'SDL_GetDirect3D9AdapterIndex',\
           sdl3_SDL_GetDisplayBounds,'SDL_GetDisplayBounds',\
@@ -288,13 +304,19 @@
           sdl3_SDL_GetEnvironmentVariable,'SDL_GetEnvironmentVariable',\
           sdl3_SDL_GetEnvironmentVariables,'SDL_GetEnvironmentVariables',\
           sdl3_SDL_GetError,'SDL_GetError',\
+          sdl3_SDL_GetEventDescription,'SDL_GetEventDescription',\
           sdl3_SDL_GetEventFilter,'SDL_GetEventFilter',\
           sdl3_SDL_GetFloatProperty,'SDL_GetFloatProperty',\
           sdl3_SDL_GetFullscreenDisplayModes,'SDL_GetFullscreenDisplayModes',\
+          sdl3_SDL_GetGDKDefaultUser,'SDL_GetGDKDefaultUser',\
+          sdl3_SDL_GetGDKTaskQueue,'SDL_GetGDKTaskQueue',\
           sdl3_SDL_GetGPUDeviceDriver,'SDL_GetGPUDeviceDriver',\
+          sdl3_SDL_GetGPUDeviceProperties,'SDL_GetGPUDeviceProperties',\
           sdl3_SDL_GetGPUDriver,'SDL_GetGPUDriver',\
+          sdl3_SDL_GetGPURendererDevice,'SDL_GetGPURendererDevice',\
           sdl3_SDL_GetGPUShaderFormats,'SDL_GetGPUShaderFormats',\
           sdl3_SDL_GetGPUSwapchainTextureFormat,'SDL_GetGPUSwapchainTextureFormat',\
+          sdl3_SDL_GetGPUTextureFormatFromPixelFormat,'SDL_GetGPUTextureFormatFromPixelFormat',\
           sdl3_SDL_GetGamepadAppleSFSymbolsNameForAxis,'SDL_GetGamepadAppleSFSymbolsNameForAxis',\
           sdl3_SDL_GetGamepadAppleSFSymbolsNameForButton,'SDL_GetGamepadAppleSFSymbolsNameForButton',\
           sdl3_SDL_GetGamepadAxis,'SDL_GetGamepadAxis',\
@@ -423,10 +445,12 @@
           sdl3_SDL_GetNumberProperty,'SDL_GetNumberProperty',\
           sdl3_SDL_GetOriginalMemoryFunctions,'SDL_GetOriginalMemoryFunctions',\
           sdl3_SDL_GetPathInfo,'SDL_GetPathInfo',\
+          sdl3_SDL_GetPenDeviceType,'SDL_GetPenDeviceType',\
           sdl3_SDL_GetPerformanceCounter,'SDL_GetPerformanceCounter',\
           sdl3_SDL_GetPerformanceFrequency,'SDL_GetPerformanceFrequency',\
           sdl3_SDL_GetPixelFormatDetails,'SDL_GetPixelFormatDetails',\
           sdl3_SDL_GetPixelFormatForMasks,'SDL_GetPixelFormatForMasks',\
+          sdl3_SDL_GetPixelFormatFromGPUTextureFormat,'SDL_GetPixelFormatFromGPUTextureFormat',\
           sdl3_SDL_GetPixelFormatName,'SDL_GetPixelFormatName',\
           sdl3_SDL_GetPlatform,'SDL_GetPlatform',\
           sdl3_SDL_GetPointerProperty,'SDL_GetPointerProperty',\
@@ -466,6 +490,7 @@
           sdl3_SDL_GetRenderSafeArea,'SDL_GetRenderSafeArea',\
           sdl3_SDL_GetRenderScale,'SDL_GetRenderScale',\
           sdl3_SDL_GetRenderTarget,'SDL_GetRenderTarget',\
+          sdl3_SDL_GetRenderTextureAddressMode,'SDL_GetRenderTextureAddressMode',\
           sdl3_SDL_GetRenderVSync,'SDL_GetRenderVSync',\
           sdl3_SDL_GetRenderViewport,'SDL_GetRenderViewport',\
           sdl3_SDL_GetRenderWindow,'SDL_GetRenderWindow',\
@@ -505,6 +530,7 @@
           sdl3_SDL_GetSurfaceImages,'SDL_GetSurfaceImages',\
           sdl3_SDL_GetSurfacePalette,'SDL_GetSurfacePalette',\
           sdl3_SDL_GetSurfaceProperties,'SDL_GetSurfaceProperties',\
+          sdl3_SDL_GetSystemPageSize,'SDL_GetSystemPageSize',\
           sdl3_SDL_GetSystemRAM,'SDL_GetSystemRAM',\
           sdl3_SDL_GetSystemTheme,'SDL_GetSystemTheme',\
           sdl3_SDL_GetTLS,'SDL_GetTLS',\
@@ -514,6 +540,7 @@
           sdl3_SDL_GetTextureBlendMode,'SDL_GetTextureBlendMode',\
           sdl3_SDL_GetTextureColorMod,'SDL_GetTextureColorMod',\
           sdl3_SDL_GetTextureColorModFloat,'SDL_GetTextureColorModFloat',\
+          sdl3_SDL_GetTexturePalette,'SDL_GetTexturePalette',\
           sdl3_SDL_GetTextureProperties,'SDL_GetTextureProperties',\
           sdl3_SDL_GetTextureScaleMode,'SDL_GetTextureScaleMode',\
           sdl3_SDL_GetTextureSize,'SDL_GetTextureSize',\
@@ -557,6 +584,8 @@
           sdl3_SDL_GetWindowPixelDensity,'SDL_GetWindowPixelDensity',\
           sdl3_SDL_GetWindowPixelFormat,'SDL_GetWindowPixelFormat',\
           sdl3_SDL_GetWindowPosition,'SDL_GetWindowPosition',\
+          sdl3_SDL_GetWindowProgressState,'SDL_GetWindowProgressState',\
+          sdl3_SDL_GetWindowProgressValue,'SDL_GetWindowProgressValue',\
           sdl3_SDL_GetWindowProperties,'SDL_GetWindowProperties',\
           sdl3_SDL_GetWindowRelativeMouseMode,'SDL_GetWindowRelativeMouseMode',\
           sdl3_SDL_GetWindowSafeArea,'SDL_GetWindowSafeArea',\
@@ -612,6 +641,8 @@
           sdl3_SDL_InsertTrayEntryAt,'SDL_InsertTrayEntryAt',\
           sdl3_SDL_IsAudioDevicePhysical,'SDL_IsAudioDevicePhysical',\
           sdl3_SDL_IsAudioDevicePlayback,'SDL_IsAudioDevicePlayback',\
+          sdl3_SDL_IsChromebook,'SDL_IsChromebook',\
+          sdl3_SDL_IsDeXMode,'SDL_IsDeXMode',\
           sdl3_SDL_IsGamepad,'SDL_IsGamepad',\
           sdl3_SDL_IsJoystickHaptic,'SDL_IsJoystickHaptic',\
           sdl3_SDL_IsJoystickVirtual,'SDL_IsJoystickVirtual',\
@@ -629,6 +660,10 @@
           sdl3_SDL_LoadFile_IO,'SDL_LoadFile_IO',\
           sdl3_SDL_LoadFunction,'SDL_LoadFunction',\
           sdl3_SDL_LoadObject,'SDL_LoadObject',\
+          sdl3_SDL_LoadPNG,'SDL_LoadPNG',\
+          sdl3_SDL_LoadPNG_IO,'SDL_LoadPNG_IO',\
+          sdl3_SDL_LoadSurface,'SDL_LoadSurface',\
+          sdl3_SDL_LoadSurface_IO,'SDL_LoadSurface_IO',\
           sdl3_SDL_LoadWAV,'SDL_LoadWAV',\
           sdl3_SDL_LoadWAV_IO,'SDL_LoadWAV_IO',\
           sdl3_SDL_LockAudioStream,'SDL_LockAudioStream',\
@@ -664,6 +699,7 @@
           sdl3_SDL_Metal_GetLayer,'SDL_Metal_GetLayer',\
           sdl3_SDL_MinimizeWindow,'SDL_MinimizeWindow',\
           sdl3_SDL_MixAudio,'SDL_MixAudio',\
+          sdl3_SDL_OnApplicationDidChangeStatusBarOrientation,'SDL_OnApplicationDidChangeStatusBarOrientation',\
           sdl3_SDL_OnApplicationDidEnterBackground,'SDL_OnApplicationDidEnterBackground',\
           sdl3_SDL_OnApplicationDidEnterForeground,'SDL_OnApplicationDidEnterForeground',\
           sdl3_SDL_OnApplicationDidReceiveMemoryWarning,'SDL_OnApplicationDidReceiveMemoryWarning',\
@@ -702,6 +738,8 @@
           sdl3_SDL_PushGPUFragmentUniformData,'SDL_PushGPUFragmentUniformData',\
           sdl3_SDL_PushGPUVertexUniformData,'SDL_PushGPUVertexUniformData',\
           sdl3_SDL_PutAudioStreamData,'SDL_PutAudioStreamData',\
+          sdl3_SDL_PutAudioStreamDataNoCopy,'SDL_PutAudioStreamDataNoCopy',\
+          sdl3_SDL_PutAudioStreamPlanarData,'SDL_PutAudioStreamPlanarData',\
           sdl3_SDL_QueryGPUFence,'SDL_QueryGPUFence',\
           sdl3_SDL_Quit,'SDL_Quit',\
           sdl3_SDL_QuitSubSystem,'SDL_QuitSubSystem',\
@@ -768,11 +806,13 @@
           sdl3_SDL_RenderRects,'SDL_RenderRects',\
           sdl3_SDL_RenderTexture,'SDL_RenderTexture',\
           sdl3_SDL_RenderTexture9Grid,'SDL_RenderTexture9Grid',\
+          sdl3_SDL_RenderTexture9GridTiled,'SDL_RenderTexture9GridTiled',\
           sdl3_SDL_RenderTextureAffine,'SDL_RenderTextureAffine',\
           sdl3_SDL_RenderTextureRotated,'SDL_RenderTextureRotated',\
           sdl3_SDL_RenderTextureTiled,'SDL_RenderTextureTiled',\
           sdl3_SDL_RenderViewportSet,'SDL_RenderViewportSet',\
           sdl3_SDL_ReportAssertion,'SDL_ReportAssertion',\
+          sdl3_SDL_RequestAndroidPermission,'SDL_RequestAndroidPermission',\
           sdl3_SDL_ResetAssertionReport,'SDL_ResetAssertionReport',\
           sdl3_SDL_ResetHint,'SDL_ResetHint',\
           sdl3_SDL_ResetHints,'SDL_ResetHints',\
@@ -782,6 +822,7 @@
           sdl3_SDL_ResumeAudioDevice,'SDL_ResumeAudioDevice',\
           sdl3_SDL_ResumeAudioStreamDevice,'SDL_ResumeAudioStreamDevice',\
           sdl3_SDL_ResumeHaptic,'SDL_ResumeHaptic',\
+          sdl3_SDL_RotateSurface,'SDL_RotateSurface',\
           sdl3_SDL_RumbleGamepad,'SDL_RumbleGamepad',\
           sdl3_SDL_RumbleGamepadTriggers,'SDL_RumbleGamepadTriggers',\
           sdl3_SDL_RumbleJoystick,'SDL_RumbleJoystick',\
@@ -793,10 +834,14 @@
           sdl3_SDL_SaveBMP_IO,'SDL_SaveBMP_IO',\
           sdl3_SDL_SaveFile,'SDL_SaveFile',\
           sdl3_SDL_SaveFile_IO,'SDL_SaveFile_IO',\
+          sdl3_SDL_SavePNG,'SDL_SavePNG',\
+          sdl3_SDL_SavePNG_IO,'SDL_SavePNG_IO',\
           sdl3_SDL_ScaleSurface,'SDL_ScaleSurface',\
           sdl3_SDL_ScreenKeyboardShown,'SDL_ScreenKeyboardShown',\
           sdl3_SDL_ScreenSaverEnabled,'SDL_ScreenSaverEnabled',\
           sdl3_SDL_SeekIO,'SDL_SeekIO',\
+          sdl3_SDL_SendAndroidBackButton,'SDL_SendAndroidBackButton',\
+          sdl3_SDL_SendAndroidMessage,'SDL_SendAndroidMessage',\
           sdl3_SDL_SendGamepadEffect,'SDL_SendGamepadEffect',\
           sdl3_SDL_SendJoystickEffect,'SDL_SendJoystickEffect',\
           sdl3_SDL_SendJoystickVirtualSensorData,'SDL_SendJoystickVirtualSensorData',\
@@ -820,6 +865,7 @@
           sdl3_SDL_SetClipboardText,'SDL_SetClipboardText',\
           sdl3_SDL_SetCurrentThreadPriority,'SDL_SetCurrentThreadPriority',\
           sdl3_SDL_SetCursor,'SDL_SetCursor',\
+          sdl3_SDL_SetDefaultTextureScaleMode,'SDL_SetDefaultTextureScaleMode',\
           sdl3_SDL_SetEnvironmentVariable,'SDL_SetEnvironmentVariable',\
           sdl3_SDL_SetError,'SDL_SetError',\
           sdl3_SDL_SetErrorV,'SDL_SetErrorV',\
@@ -829,6 +875,8 @@
           sdl3_SDL_SetGPUAllowedFramesInFlight,'SDL_SetGPUAllowedFramesInFlight',\
           sdl3_SDL_SetGPUBlendConstants,'SDL_SetGPUBlendConstants',\
           sdl3_SDL_SetGPUBufferName,'SDL_SetGPUBufferName',\
+          sdl3_SDL_SetGPURenderState,'SDL_SetGPURenderState',\
+          sdl3_SDL_SetGPURenderStateFragmentUniforms,'SDL_SetGPURenderStateFragmentUniforms',\
           sdl3_SDL_SetGPUScissor,'SDL_SetGPUScissor',\
           sdl3_SDL_SetGPUStencilReference,'SDL_SetGPUStencilReference',\
           sdl3_SDL_SetGPUSwapchainParameters,'SDL_SetGPUSwapchainParameters',\
@@ -852,6 +900,8 @@
           sdl3_SDL_SetJoystickVirtualButton,'SDL_SetJoystickVirtualButton',\
           sdl3_SDL_SetJoystickVirtualHat,'SDL_SetJoystickVirtualHat',\
           sdl3_SDL_SetJoystickVirtualTouchpad,'SDL_SetJoystickVirtualTouchpad',\
+          sdl3_SDL_SetLinuxThreadPriority,'SDL_SetLinuxThreadPriority',\
+          sdl3_SDL_SetLinuxThreadPriorityAndPolicy,'SDL_SetLinuxThreadPriorityAndPolicy',\
           sdl3_SDL_SetLogOutputFunction,'SDL_SetLogOutputFunction',\
           sdl3_SDL_SetLogPriorities,'SDL_SetLogPriorities',\
           sdl3_SDL_SetLogPriority,'SDL_SetLogPriority',\
@@ -864,6 +914,7 @@
           sdl3_SDL_SetPointerProperty,'SDL_SetPointerProperty',\
           sdl3_SDL_SetPointerPropertyWithCleanup,'SDL_SetPointerPropertyWithCleanup',\
           sdl3_SDL_SetPrimarySelectionText,'SDL_SetPrimarySelectionText',\
+          sdl3_SDL_SetRelativeMouseTransform,'SDL_SetRelativeMouseTransform',\
           sdl3_SDL_SetRenderClipRect,'SDL_SetRenderClipRect',\
           sdl3_SDL_SetRenderColorScale,'SDL_SetRenderColorScale',\
           sdl3_SDL_SetRenderDrawBlendMode,'SDL_SetRenderDrawBlendMode',\
@@ -872,6 +923,7 @@
           sdl3_SDL_SetRenderLogicalPresentation,'SDL_SetRenderLogicalPresentation',\
           sdl3_SDL_SetRenderScale,'SDL_SetRenderScale',\
           sdl3_SDL_SetRenderTarget,'SDL_SetRenderTarget',\
+          sdl3_SDL_SetRenderTextureAddressMode,'SDL_SetRenderTextureAddressMode',\
           sdl3_SDL_SetRenderVSync,'SDL_SetRenderVSync',\
           sdl3_SDL_SetRenderViewport,'SDL_SetRenderViewport',\
           sdl3_SDL_SetScancodeName,'SDL_SetScancodeName',\
@@ -891,6 +943,7 @@
           sdl3_SDL_SetTextureBlendMode,'SDL_SetTextureBlendMode',\
           sdl3_SDL_SetTextureColorMod,'SDL_SetTextureColorMod',\
           sdl3_SDL_SetTextureColorModFloat,'SDL_SetTextureColorModFloat',\
+          sdl3_SDL_SetTexturePalette,'SDL_SetTexturePalette',\
           sdl3_SDL_SetTextureScaleMode,'SDL_SetTextureScaleMode',\
           sdl3_SDL_SetTrayEntryCallback,'SDL_SetTrayEntryCallback',\
           sdl3_SDL_SetTrayEntryChecked,'SDL_SetTrayEntryChecked',\
@@ -901,6 +954,7 @@
           sdl3_SDL_SetWindowAlwaysOnTop,'SDL_SetWindowAlwaysOnTop',\
           sdl3_SDL_SetWindowAspectRatio,'SDL_SetWindowAspectRatio',\
           sdl3_SDL_SetWindowBordered,'SDL_SetWindowBordered',\
+          sdl3_SDL_SetWindowFillDocument,'SDL_SetWindowFillDocument',\
           sdl3_SDL_SetWindowFocusable,'SDL_SetWindowFocusable',\
           sdl3_SDL_SetWindowFullscreen,'SDL_SetWindowFullscreen',\
           sdl3_SDL_SetWindowFullscreenMode,'SDL_SetWindowFullscreenMode',\
@@ -915,6 +969,8 @@
           sdl3_SDL_SetWindowOpacity,'SDL_SetWindowOpacity',\
           sdl3_SDL_SetWindowParent,'SDL_SetWindowParent',\
           sdl3_SDL_SetWindowPosition,'SDL_SetWindowPosition',\
+          sdl3_SDL_SetWindowProgressState,'SDL_SetWindowProgressState',\
+          sdl3_SDL_SetWindowProgressValue,'SDL_SetWindowProgressValue',\
           sdl3_SDL_SetWindowRelativeMouseMode,'SDL_SetWindowRelativeMouseMode',\
           sdl3_SDL_SetWindowResizable,'SDL_SetWindowResizable',\
           sdl3_SDL_SetWindowShape,'SDL_SetWindowShape',\
@@ -923,8 +979,11 @@
           sdl3_SDL_SetWindowTitle,'SDL_SetWindowTitle',\
           sdl3_SDL_SetWindowsMessageHook,'SDL_SetWindowsMessageHook',\
           sdl3_SDL_SetX11EventHook,'SDL_SetX11EventHook',\
+          sdl3_SDL_SetiOSAnimationCallback,'SDL_SetiOSAnimationCallback',\
+          sdl3_SDL_SetiOSEventPump,'SDL_SetiOSEventPump',\
           sdl3_SDL_ShouldInit,'SDL_ShouldInit',\
           sdl3_SDL_ShouldQuit,'SDL_ShouldQuit',\
+          sdl3_SDL_ShowAndroidToast,'SDL_ShowAndroidToast',\
           sdl3_SDL_ShowCursor,'SDL_ShowCursor',\
           sdl3_SDL_ShowFileDialogWithProperties,'SDL_ShowFileDialogWithProperties',\
           sdl3_SDL_ShowMessageBox,'SDL_ShowMessageBox',\
@@ -1084,6 +1143,7 @@
           sdl3_SDL_hid_get_input_report,'SDL_hid_get_input_report',\
           sdl3_SDL_hid_get_manufacturer_string,'SDL_hid_get_manufacturer_string',\
           sdl3_SDL_hid_get_product_string,'SDL_hid_get_product_string',\
+          sdl3_SDL_hid_get_properties,'SDL_hid_get_properties',\
           sdl3_SDL_hid_get_report_descriptor,'SDL_hid_get_report_descriptor',\
           sdl3_SDL_hid_get_serial_number_string,'SDL_hid_get_serial_number_string',\
           sdl3_SDL_hid_init,'SDL_hid_init',\

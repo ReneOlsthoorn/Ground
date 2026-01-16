@@ -5,6 +5,8 @@ if not exist bin\Debug (
 )
 
 tar -xf Resources\GroundResources.zip -C bin\Debug
+copy Resources\load.bat bin\Debug\load.bat /Y
+copy Resources\makerelease.bat bin\Debug\makerelease.bat /Y
 
 pushd bin\Debug
 call load.bat

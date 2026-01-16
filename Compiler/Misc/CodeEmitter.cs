@@ -95,13 +95,14 @@ namespace GroundCompiler
 
         public string EmitQuotedAssemblyString(string text)
         {
+            text = text.Replace("'", "\\27").Replace("\r", "\\0d").Replace("\n", "\\0a");
+            //text = text.Replace("\r", "',13,'").Replace("\n", "',10,'");
             text = System.Text.RegularExpressions.Regex.Replace(text, @"\\([0-9A-Fa-f]{2})", m =>
             {
                 string hex = m.Groups[1].Value;
                 int value = Convert.ToInt32(hex, 16);
                 return "',0x" + hex + ",'";
             });
-            text = text.Replace("\r", "',13,'").Replace("\n", "',10,'");
             return $"'{text}'".Replace(",''", "").Replace("'',", "");
         }
 
@@ -177,6 +178,11 @@ namespace GroundCompiler
         public void LoadBoolean(bool value)
         {
             Codeline($"mov   rax, {(value ? 1 : 0)}");
+        }
+        public void LoadInfinityFloat64()
+        {
+            Codeline($"mov   rax, 0x7FF0000000000000");
+            Codeline($"movq  xmm0, rax");
         }
 
         public void LoadConstantFloat64(string name)
@@ -948,7 +954,12 @@ namespace GroundCompiler
                 return;
 
             foreach (var key in preprocessorDefines.Keys)
+            {
+                if (preprocessorDefines[key]?.Datatype?.Contains(Datatype.TypeEnum.String) ?? false)
+                    continue;
+
                 GeneratedCode_Equates.Add($"GC_{key}={preprocessorDefines[key].Lexeme}\r\n");
+            }
         }
     }
 }

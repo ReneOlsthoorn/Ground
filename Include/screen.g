@@ -14,6 +14,7 @@ screentext_p  dq 0
 screentext_old_p  dq 0
 screencolor_p dq 0
 screen_cursor dq 0
+pixels_screen_p dq 0
 
 ScreenColorPalette:
     dd 0xff000000	; #000000  First 16 colors are C-64 colors.   ;0xffe0e0e0, 0xff808080
@@ -43,8 +44,9 @@ g.[screentext_p] = msvcrt.calloc(1, SCREEN_TEXTSIZE);
 g.[screentext_old_p] = msvcrt.calloc(1, SCREEN_TEXTSIZE);
 g.[screencolor_p] = msvcrt.calloc(1, SCREEN_TEXTSIZE);
 
-
-byte[] font256OnDisk = sidelib.LoadImage("image/charset16x16.png");
+//When using this include, you must define SCREENFONT256FILEPATH like this:
+//#define SCREENFONT256FILEPATH "image/charset16x16.png"
+byte[] font256OnDisk = sidelib.LoadImage(SCREENFONT256FILEPATH);
 if (font256OnDisk == null) { user32.MessageBox(null, "The font charset16x16.png cannot be found!", "Message", g.MB_OK); return; }
 sidelib.ConvertFonts(font256OnDisk, g.[font256_p], g.[font32_p]);
 sidelib.FreeImage(font256OnDisk);
@@ -156,7 +158,7 @@ function DrawTextLine(int lineNr) asm {
 
   mov	rax, rcx
   imul	rax, GC_FONT_HEIGHT * GC_SCREEN_LINESIZE
-  mov	rdi, [pixels_p]
+  mov	rdi, [pixels_screen_p]
   add	rdi, rax
 
   mov	rcx, 0
