@@ -511,8 +511,8 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.11.09: Memory game added.  
 2025.11.29: GroundSideLibrary now build with MSYS2.  
 2025.12.05: Fireworks demo added.  
-2025.12.09: 3D demo added.
-2026.01.16: First version of Electronic Life 2026 added.
+2025.12.09: 3D demo added.  
+2026.01.16: First version of Electronic Life 2026 added.  
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  
