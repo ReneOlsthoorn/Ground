@@ -35,6 +35,7 @@ call :compileExample star_taste
 call :compileExample sudoku
 call :compileExample tetrus
 call :compileExample win32_screengrab
+call :compileExample electronic_life
 
 del /Q /F GroundCompiler.pdb
 del /Q /F GroundCompiler.deps.json

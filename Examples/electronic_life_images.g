@@ -1,7 +1,7 @@
 
 
-f32[4] waterSrcRect = [0,0, 482, 95];
-f32[4] waterDestRect = [0,460, 482, 95];
+f32[4] waterSrcRect = [0,0, 476, 95];
+f32[4] waterDestRect = [0,460, 476, 95];
 ptr waterSurface = sdl3.SDL_LoadPNG("image/water.png");
 if (waterSurface == null) return;
 ptr waterTexture = sdl3.SDL_CreateTextureFromSurface(renderer, waterSurface);

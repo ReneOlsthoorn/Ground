@@ -27,10 +27,11 @@ float smileyXRadians = 0.0;
 int[ANALYZER_NUM] analyzerLevels = [ ] asm;	// 0 - 108
 
 string scrollText = `Electronic life is back!        The previous version was created in 1990, that is 36 years ago!        That version was created on the Amiga computer. Developed with an Amiga 500.        \
-It didn't use a physics engine back then.        Perhaps the 68000 CPU was strong enough to do the calculations, but there was no opensource community offering those kind of libraries.        \
+The logo on the top is the unaltered original from the Amiga, so pressing left mousebutton will not do anything now.        \
+The demo didn't use a physics engine back then.        Perhaps the 68000 CPU was strong enough to do the calculations, but there was no opensource community offering those kind of libraries.        \
 Calculating physics is also not easy. In those times 3D was just taking off.        Transparency was also hard back then. Now it is easy in SDL3.        \
-The textscreen drawing is pretty fast asm code. The CPU has no problem drawing the entire screen. But I did it the right way: only the used lines in the spectrum analyzer are drawn.        \
-Notice that the top screen will evolve in time. The logo will be painted life. So stay tuned, because that will be added.                `;
+In this version, the textscreen drawing is pretty fast asm code. The CPU has no problem drawing the entire screen. But I did it the right way: only the used lines in the spectrum analyzer are drawn.        \
+Notice that the top logo will evolve in time. The logo will be painted life, like in the original version. So stay tuned, because that will be added.                `;
 
 
 /*   TMP VARIABLES   */
