@@ -489,6 +489,10 @@ Rotating 3D object. Matrix calculations done with CGLM.</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Electronic_Life.jpg?raw=true" width="500" /><br/>
 Electronic Life is back after 36 years!</p>
 
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Amiga_Electronic_Life.jpg?raw=true" width="500" /><br/>
+This was the original "Electronic Life" from 1990</p>
+
+
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
 The executables are in the `bin\Release` directory of the zipfile.
