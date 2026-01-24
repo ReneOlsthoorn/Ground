@@ -1,8 +1,8 @@
 # Ground
 
-This is the compiler for the programming language `Ground` for Windows, which is an effort to return to high
-performance computing. It allows mixing high-level programming constructs with x86-64. The assembly can be added 
-anywhere in the Ground code, so the programmer stays in control of the CPU.  
+This is the compiler for the programming language `Ground` for Windows that promotes high performance computing. 
+It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
+Ground code, so the programmer stays in control of the CPU.  
   
 Ground has constructs like `class` and `function`, statements like `while`, `for` and `if`, datatypes 
 like `string` and `float` and arrays. See file `unittests.g` for some syntax examples.  
@@ -16,7 +16,7 @@ can create your own template.
   
 The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 6k.  
 Ground .EXE files will be small because most external code is loaded at load-time. The usage of the known system 
-DLL's, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
+DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
@@ -53,9 +53,9 @@ the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-cal
 
 ### How to run Ground
 In your `Ground` root folder you have a file named `LoadResources.bat`. Run it.  
-It will unzip `.\Resources\GroundResources.zip` and download the needed DLL's, like SDL3, from trusted repositories 
+It will unzip `.\Resources\GroundResources.zip` and download the needed DLLs, like SDL3, from trusted repositories 
 like MSYS2 or Github. The zipfile also contains extra files that could not be downloaded from the internet, like manual 
-build DLL's, sounds and images. For all DLL's used, sourcecode is available. The included 
+build DLLs, sounds and images. For all DLLs used, sourcecode is available. The included 
 [GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github.  
 After this is done, Run `Visual Studio 2026` and open `GroundCompiler.slnx`. Hit the Play button in Visual Studio and 
 the game Bertus should compile and run.
@@ -71,6 +71,28 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
 </p>
+
+### The neglected native Windows DLL system
+The DLL system that Microsoft introduced in Windows 1.0 in 1985 and later perfected in the Portable Executable format 
+in 1993 works great. During loadtime, the OS loads all the dependencies of the executable. DLLs offer a clear API 
+separation between different modules and code bases. It was the building block that made Windows the most dominant 
+OS ever, reaching 92% market share in the early 2000's.  
+The versioning problem called "DLL Hell" is not specific to native DLLs because in DotNet the same problems exists, 
+and is generally solved by shipping the DLLs in the Program Folder. That can also be done for native compiled DLLs.  
+In 1992, Microsoft released COM. After that DCOM and COM+. In 2001 the focus went to the managed code of DotNet. 
+Microsoft did a research project to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
+That project failed because it was too slow. However, Microsoft never attempted to go the other direction by creating 
+a great library of high performance native Windows DLLs that can be easily used by programmers.  
+You want to load a JSON easy? Too bad, there is no native Microsoft Windows DLL available for that.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, that will be not easy. You can use OleLoadPicture, which is
+a COM+ component or use GDI+ in which you first need to startup GDI+, lock a resource and later shutdown GDI+. The third 
+option is to use the complex Windows Imaging Component API, which is a framework for vendors to insert their own image 
+formats in Windows.  
+So, no easy peasy way to load a JPG. At this moment, I use an SDL3_image.dll to load a JPG. 
+It's a SHAME that Microsoft is not offering a nice set of native Windows DLLs to do common tasks. It really is a reason
+to migrate to Linux (standard libs like libjpeg and libpng exist there).  
+So, for common tasks, Ground is forced to use native DLLs that are offered by the community. Only MSVCRT.DLL is used 
+from Windows.
 
 ### About the C language
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
@@ -156,7 +178,7 @@ version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 co
 
 ### Using ucrt or msvcrt
 When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
-of the VC runtime is active that week. It's a mess. Those DLL's are not available by default on a Windows system. So the users need to 
+of the VC runtime is active that week. It's a mess. Those DLLs are not available by default on a Windows system. So the users need to 
 install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
 use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
 The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
@@ -247,12 +269,13 @@ But, back to our search for a high performance language:
 `BlitzMax` has an LLVM backend that does not support easy assembly language. 
 `Wren` is a scriping language, 
 `Nim` transpiles to C. 
+`Zen C` offers inline assemby blocks, so that looks good. Is there a Windows version yet? 
 `Dart` has a garbage collector and is busy with flutter and has no focus on high performance. 
 `Go` also has a garbage collector, but a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
 support inline assembly. `Go` is a systems programming language and those languages want to abstract the CPU away.  
 `Rust` has a LLVM backend, so no easy assembly. The same for `Zig`. The same for `Crystal`. In Crystal, I coded a 
 "Hello, World!". It was 660k and used VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
-you also must ship 2 extra DLL's to make your "Hello, World!" run on a modern PC. That's not convenient.  
+you also must ship two extra DLLs to make your "Hello, World!" run on a modern PC. That's not convenient.  
 So, now you understand why `Ground` is necessary :-)  There is only one CPU in your PC. Get a grip on it and let it dance!
 
 ## Write your own Programming Language!
@@ -517,7 +540,7 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.11.29: GroundSideLibrary now build with MSYS2.  
 2025.12.05: Fireworks demo added.  
 2025.12.09: 3D demo added.  
-2026.01.16: First version of Electronic Life 2026 added.  
+2026.01.16: Electronic Life 2026 added.  
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  
