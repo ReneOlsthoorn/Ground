@@ -439,6 +439,15 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
+        public void PopBitwiseXor()
+        {
+            var reg = cpu.GetTmpRegister();
+            Codeline($"pop   {reg}");
+            StackPop();
+            Codeline($"xor  rax, {reg}");
+            cpu.FreeRegister(reg);
+        }
+
         public void PopCCToBoolean(string condition)
         {
             var reg = cpu.GetTmpRegister();

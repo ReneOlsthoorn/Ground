@@ -169,6 +169,9 @@ _f_assert:
   mov   rax, qword [rbp+G_PARAMETER1]
   cmp	rax, 0
   jnz	.assert_correct
+  mov   rax, qword [rbp+G_PARAMETER2]
+  mov	rcx, 10
+  call	PrintNumber
   lea	rax, [assert_errormessage]
 if defined PrintScreenString
   call	PrintScreenString
@@ -179,7 +182,7 @@ end if
 .assert_correct:
   mov   rsp, rbp
   pop   rbp
-  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+  ret   G_STACKSPACE_2_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
 
 
 intvalue@_f_chr$ equ rbp+G_PARAMETER1

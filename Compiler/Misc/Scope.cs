@@ -270,7 +270,13 @@ namespace GroundCompiler
             string name = functionStatement.Name.Lexeme;
             string id = IdFor(name, "function");
             if (Symboltable.ContainsKey(id))
-                Compiler.Error($"{name} already defined.");
+            {
+                var alreadyExistingFunction = Symboltable[name] as FunctionSymbol;
+                if (alreadyExistingFunction!.FunctionStmt.BodyNode == null)
+                    Symboltable.Remove(name);
+                else
+                    Compiler.Error($"{name} already defined.");
+            }
 
             var newElement = new FunctionSymbol(name, functionStatement);
             Symboltable[name] = newElement;

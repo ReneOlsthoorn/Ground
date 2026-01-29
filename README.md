@@ -544,5 +544,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  
-2025.12.13: Returning a string also has bad reference counting.  
-2025.12.13: this.mod[10] doesn't work.
+2025.12.13: Returning a string from a function has bad reference counting.  

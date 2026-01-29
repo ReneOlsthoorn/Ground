@@ -50,7 +50,8 @@ namespace GroundCompiler
         RangeTo,      // ..
         RangeUntil,   // ..<
         Asterisk,     // *
-        Slash,        // / 
+        Slash,        // /
+        Caret,        // ^  (xor)
         Percentage,   // %
         Modulo,       // %
         While,        // while

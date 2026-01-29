@@ -103,7 +103,7 @@ function Init() {
 	isWaitingForUser = false;
 	stepNeedle = null;
 	gameTitle = "Chess";
-	sdl3.SDL_SetWindowTitle(window, &gameTitle);
+	sdl3.SDL_SetWindowTitle(window, gameTitle);
 }
 
 function RestartGame() {

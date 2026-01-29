@@ -88,6 +88,11 @@ int[] array = [ 1, 2, 4, 8, 16, 0x10000ffff ];
 assert(array[4] == 16);
 
 
+int[10,10] intArray10x10 = [ ];
+array[1+(0.1*0.0),1+(0.1*0.0)] = 12;
+assert(array[1,1] == 12);
+
+
 // asm data will be inserted in the template near the end, at GC_INSERTIONPOINT_DATA
 asm data {
 unittest_extradata dq 0x2ffff

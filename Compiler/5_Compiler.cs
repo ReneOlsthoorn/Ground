@@ -372,12 +372,16 @@ namespace GroundCompiler
                 if (Datatype.IsPointerType(expr.ObjectNode.ExprType))
                 {
                     classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
-                    instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                    instVar = classStatement!.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                    if (instVar == null)
+                        Compiler.Error($"Instance variable {expr.Name.Lexeme} not found.", expr.Name);
                 }
                 else
                 {
                     classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                    instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                    instVar = classStatement!.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                    if (instVar == null)
+                        Compiler.Error($"Instance variable {expr.Name.Lexeme} not found.", expr.Name);
 
                     VariableRead(objectNodeAsVariable);
                     emitter.GetMemoryPointerFromIndex();
@@ -550,6 +554,9 @@ namespace GroundCompiler
                 case TokenType.ArithmeticOr:
                     emitter.PopBitwiseOr();
                     break;
+                case TokenType.Caret:
+                    emitter.PopBitwiseXor();
+                    break;
                 case TokenType.Greater:
                     if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))
                         emitter.PopCompareFloat("ja", conversionDatatype);
@@ -666,6 +673,9 @@ namespace GroundCompiler
                 if (theFunction == null)
                     Compiler.Error($"VisitorFunctionCallExpr: {functionNameVariable!.Name.Lexeme} not found!");
 
+                if (theFunction!.FunctionStmt.BodyNode == null)
+                    return null;    // we are not calling an empty body function.
+
                 string name = functionNameVariable.Name.Lexeme;
                 var needleScope = scope;
                 IScopeStatement? ownerScope = needleScope.Owner;
@@ -680,6 +690,10 @@ namespace GroundCompiler
 
                     ownerScope = needleScope.Owner;
                 }
+
+                if (functionNameVariable.Name.Lexeme == "assert")
+                    if (expr.ArgumentNodes.Count < 2)
+                        expr.ArgumentNodes.Add(new Literal(functionNameVariable.Name.LineNumber()));
 
                 if (functionNameVariable.Name.Lexeme == "GC_CreateThread")
                 {

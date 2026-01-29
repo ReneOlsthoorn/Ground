@@ -42,6 +42,9 @@ namespace GroundCompiler
         {
             foreach (var funcStatement in usedFunctions)
             {
+                if (funcStatement.BodyNode == null)
+                    continue;
+
                 var emittedProcedure = new EmittedProcedure(functionStatement: funcStatement, classStatement: null, emitter);
                 emittedProcedure.MainCallback = () =>
                 {
@@ -280,14 +283,11 @@ namespace GroundCompiler
         public void ArrayAccess(ArrayAccess arrayExpr, Assignment? assignment = null, bool addressOf = false)
         {
             var currentScope = arrayExpr.GetScope();
-            //TODO: this.prop.prop2[2] must be possible. The member must be an expression, not a variable.
-
-            var symbol = GetSymbol(arrayExpr.GetMemberVariable()!.Name.Lexeme, currentScope!, arrayExpr.GetMemberVariable()!.Name);
-            var targetType = Datatype.Default;
-
             if (arrayExpr.IndexNodes != null)
             {
-                var varSymbol = symbol as VariableSymbol;
+                var memberDatatype = arrayExpr.MemberNode.ExprType;
+                List<ulong>? theArrayNrs = arrayExpr.MemberNode.ExprType.ArrayNrs;
+
                 string indexReg = cpu.GetRestoredRegister(arrayExpr);
                 for (int i = 0; i < arrayExpr.IndexNodes.Count; i++)
                 {
@@ -296,11 +296,12 @@ namespace GroundCompiler
 
                     var expr = arrayExpr.IndexNodes[i];
                     EmitExpression(expr);
+                    EmitConversionCompatibleType(expr, Datatype.Default);
                     UInt64 multiplier = 1;
 
                     if (i > 0)
-                        for (int j = i - 1; j < (varSymbol!.DataType.ArrayNrs!.Count - 1); j++)
-                            multiplier *= varSymbol.DataType.ArrayNrs[j];
+                        for (int j = i - 1; j < (theArrayNrs!.Count - 1); j++)
+                            multiplier *= theArrayNrs[j];
 
                     if (multiplier > 1)
                     {
@@ -315,28 +316,12 @@ namespace GroundCompiler
                 emitter.MoveCurrentToRegister(indexReg);
                 int elementSizeInBytes = 0;
 
-                if (symbol is LocalVariableSymbol localVarSymbol)
-                {
-                    targetType = localVarSymbol!.DataType.Base;
-                    elementSizeInBytes = localVarSymbol!.DataType.Base!.SizeInBytes;
-                    emitter.LoadFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner));
-                }
-                else if (symbol is ParentScopeVariable parentSymbol)
-                {
-                    targetType = parentSymbol!.DataType.Base;
-                    elementSizeInBytes = parentSymbol!.DataType.Base!.SizeInBytes;
-                    var reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                    emitter.LoadParentFunctionVariable64(emitter.AssemblyVariableName(symbol.Name, parentSymbol.TheScopeStatement), parentSymbol.DataType);
-                    cpu.FreeRegister(reg);
-                }
-                else if (symbol is FunctionParameterSymbol funcParSymbol)
-                {
-                    targetType = funcParSymbol!.DataType.Base;
-                    elementSizeInBytes = funcParSymbol!.DataType.Base!.SizeInBytes;
-                    emitter.LoadFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol));
-                }
+                EmitExpression(arrayExpr.MemberNode);   // the expression is emitted.
 
-                if (varSymbol!.DataType.IsReferenceType)
+                var targetType = arrayExpr.MemberNode.ExprType.Base;
+                elementSizeInBytes = targetType!.SizeInBytes;
+
+                if (memberDatatype.IsReferenceType)
                     emitter.GetMemoryPointerFromIndex();
 
                 string baseReg = cpu.GetRestoredRegister(arrayExpr);

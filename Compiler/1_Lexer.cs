@@ -97,6 +97,7 @@ namespace GroundCompiler
                 if (SkipIfMatch("|",  token, TokenType.Operator, TokenType.ArithmeticOr)) break;
                 if (SkipIfMatch("*",  token, TokenType.Operator, TokenType.Asterisk)) break;
                 if (SkipIfMatch("/",  token, TokenType.Operator, TokenType.Slash)) break;
+                if (SkipIfMatch("^",  token, TokenType.Operator, TokenType.Caret)) break;  // xor
                 if (SkipIfMatch("%",  token, TokenType.Operator, TokenType.Percentage, TokenType.Modulo)) break;
 
                 if (SkipIfMatch(";",  token, TokenType.Separator, TokenType.SemiColon)) break;

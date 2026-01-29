@@ -485,7 +485,8 @@ namespace GroundCompiler
         private Expression Shifting() => ParseLeftAssociativeBinaryOperation(Addition, TokenType.ShiftLeft, TokenType.ShiftRight);
         private Expression Addition() => ParseLeftAssociativeBinaryOperation(BitwiseOr, TokenType.Minus, TokenType.Plus);
         private Expression BitwiseOr() => ParseLeftAssociativeBinaryOperation(BitwiseAnd, TokenType.ArithmeticOr);
-        private Expression BitwiseAnd() => ParseLeftAssociativeBinaryOperation(Multiplication, TokenType.Ampersand);
+        private Expression BitwiseAnd() => ParseLeftAssociativeBinaryOperation(BitwiseXor, TokenType.Ampersand);
+        private Expression BitwiseXor() => ParseLeftAssociativeBinaryOperation(Multiplication, TokenType.Caret);
         private Expression Multiplication() => ParseLeftAssociativeBinaryOperation(Unary, TokenType.Slash, TokenType.Asterisk, TokenType.Modulo);
 
         private Expression ParseLeftAssociativeBinaryOperation(Func<Expression> higherPrecedence, params TokenType[] tokenTypes)

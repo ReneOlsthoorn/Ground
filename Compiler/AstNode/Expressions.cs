@@ -564,16 +564,6 @@ namespace GroundCompiler.Expressions
             this.ExprType = MemberNode?.ExprType.Base ?? Datatype.Default;
         }
 
-        public Variable? GetMemberVariable()
-        {
-            if (this.MemberNode is Variable memberVar)
-                return memberVar;
-            if (this.MemberNode is ArrayAccess memberAccess)
-                return memberAccess.GetMemberVariable();
-            //if (this.MemberNode is PropertyExpression propExpr)
-            return null;
-        }
-
         public override IEnumerable<AstNode> Nodes
         {
             get

@@ -116,12 +116,11 @@ asm {
 
 
 	function GetModuleTitle() {
-		byte* behindTitle = this.mod + 20;
-		byte backup = *behindTitle;			// this.mod[20] does not work, because it is a crap compiler
-		*behindTitle = 0;
-		// another bug: we cannot set the string in the own class, because the reference counting doesn't work correct for it.
+		byte backup = this.mod[20];  // this.mod[20] is the first byte AFTER the module name, so we have to restore it.
+		this.mod[20] = 0;
+		// bug: we cannot set the string in the own class, because the reference counting doesn't work correct for it.
 		ProtrackerMod_Title = gc.cstr_convert(this.mod, gc.cstr_len(this.mod));
-		*behindTitle = backup;
+		this.mod[20] = backup;
 	}
 
 	function GetSignature() {

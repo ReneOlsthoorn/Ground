@@ -28,6 +28,8 @@
 #define SDL_BLENDMODE_MUL 0x00000008
 #define SDL_BLENDMODE_INVALID 0x7FFFFFFF
 
+#define SDL_EVENT_WINDOW_SHOWN 0x202
+
 dll sdl3 function SDL_Init(int flags);
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
 dll sdl3 function SDL_CreateRenderer(ptr window, string name);

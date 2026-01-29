@@ -140,6 +140,7 @@ namespace GroundCompiler.Statements
 
             fn = this.Scope.DefineHardcodedFunction("assert");
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("input", Datatype.GetDatatype("bool")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("linenr", Datatype.GetDatatype("int")));
 
             fn = this.Scope.DefineHardcodedFunction("chr$", Datatype.GetDatatype("string"));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("intvalue", Datatype.GetDatatype("int")));
