@@ -72,27 +72,31 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
 </p>
 
-### The neglected native Windows DLL system
+### The neglected native Windows DLLs
 The DLL system that Microsoft introduced in Windows 1.0 in 1985 and later perfected in the Portable Executable format 
-in 1993 works great. During loadtime, the OS loads all the dependencies of the executable. DLLs offer a clear API 
-separation between different modules and code bases. It was the building block that made Windows the most dominant 
-OS ever, reaching 92% market share in the early 2000's.  
-The versioning problem called "DLL Hell" is not specific to native DLLs because in DotNet the same problems exists, 
+in 1993 works great. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone
+can use. During loadtime, the OS loads all the dependencies of the executable. It was a building block that helped to 
+make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
+  
+The versioning problem called "DLL Hell" is not specific to native DLLs; in DotNet the same problems exists, 
 and is generally solved by shipping the DLLs in the Program Folder. That can also be done for native compiled DLLs.  
+  
 In 1992, Microsoft released COM. After that DCOM and COM+. In 2001 the focus went to the managed code of DotNet. 
-Microsoft did a research project to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
-That project failed because it was too slow. However, Microsoft never attempted to go the other direction by creating 
-a great library of high performance native Windows DLLs that can be easily used by programmers.  
-You want to load a JSON easy? Too bad, there is no native Microsoft Windows DLL available for that.  
-You want to load a JPG with a native Microsoft Windows DLL? Well, that will be not easy. You can use OleLoadPicture, which is
-a COM+ component or use GDI+ in which you first need to startup GDI+, lock a resource and later shutdown GDI+. The third 
-option is to use the complex Windows Imaging Component API, which is a framework for vendors to insert their own image 
-formats in Windows.  
-So, no easy peasy way to load a JPG. At this moment, I use an SDL3_image.dll to load a JPG. 
-It's a SHAME that Microsoft is not offering a nice set of native Windows DLLs to do common tasks. It really is a reason
-to migrate to Linux (standard libs like libjpeg and libpng exist there).  
-So, for common tasks, Ground is forced to use native DLLs that are offered by the community. Only MSVCRT.DLL is used 
-from Windows.
+Microsoft even did a research project to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
+That project failed because it was too slow.  
+  
+After the introduction of Win32 in 1993, it was logical that Microsoft would try to build a great library of high performance 
+native Windows DLLs for common programming tasks. However, they did not do it, and the consequences are still felt today.
+
+### Neglectance became failing
+You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, that will also be not easy.  
+This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows. Linux
+is much more friendly in this respect, standard libs like libjpeg and libpng exist there.  
+  
+This has also consequences for `Ground`. Most of the DLLs that offer functionality, like SDL3 and libmikmod must be downloaded.
+So, Microsoft is a billion dollar company with 30 years of the most dominant OS, but for loading a JPG, I use the downloaded
+SDL3_image.dll. Windows is pretty much an empty shell.
 
 ### About the C language
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
@@ -227,7 +231,8 @@ is faster than a divide operand. However, this is not needed because the optimiz
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the unpacking of a `.PNG` file can be
 done with existing C libraries. The `GroundSideLibrary` is a .DLL which contains all that C code and creates an 
-interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default.
+interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default. So, some
+opensource programmers managed to make a better C environment than Microsoft.
 
 ### State of Ground : Alpha
 The Ground language is `Alpha`, so do not use the language if you look for a stable language.
@@ -417,7 +422,7 @@ I strongly disagree with this route, because it should be made optional.
 Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot and Recall. However, 
 with each new update, the settings can be turned on again. The whole situation is a shame, because Windows has such a great history. 
 Like many users, I don't want to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to 
-the Windows platform.  
+the Windows platform. I will stay on Windows 10.  
 
 ### Smoothscroller
 <p align="center">
