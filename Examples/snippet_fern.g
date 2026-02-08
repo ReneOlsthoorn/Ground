@@ -1,4 +1,6 @@
 
+// Inspiration: https://www.bbcbasic.co.uk/bbcsdl/index.html
+
 string pixelWindowTitle = "BBC basic inspired Fern";
 #include pixelwindow.g
 

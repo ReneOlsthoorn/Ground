@@ -126,6 +126,24 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("bitnr", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parent = group;
 
+            fn = group.Scope.DefineHardcodedFunction("abs", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("max", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("val1", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("val2", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("min", Datatype.GetDatatype("int"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("val1", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("val2", Datatype.GetDatatype("int")));
+            fn.FunctionStmt.Parent = group;
+
+            fn = group.Scope.DefineHardcodedFunction("sqrt", Datatype.GetDatatype("float"));
+            fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("float")));
+            fn.FunctionStmt.Parent = group;
+
 
             /* program scope */
             fn = this.Scope.DefineHardcodedFunction("print");

@@ -73,32 +73,36 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 </p>
 
 ### The neglected native Windows DLLs
-The DLL system that Microsoft introduced in Windows 1.0 in 1985 and later perfected in the Portable Executable format 
-in 1993 works great. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone
-can use. During loadtime, the OS loads all the dependencies of the executable. It was a building block that helped to 
-make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
+The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
+know it today. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone can use. 
+During loadtime, the OS loads all the dependencies of the executable.  
+The Win32 api was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
   
-The versioning problem called "DLL Hell" is not specific to native DLLs; in DotNet the same problems exists, 
-and is generally solved by shipping the DLLs in the Program Folder. That can also be done for native compiled DLLs.  
+In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved in Windows 98 with WinSxS and manifests. 
+Unfortunately version numbering was not integrated in the PE format.  
   
-In 1992, Microsoft released COM. After that DCOM and COM+. In 2001 the focus went to the managed code of DotNet. 
+In 1992, Microsoft released COM. After that DCOM and COM+. The focus went away from Native DLLs. In 1996 Microsoft worked on Visual J++.
+After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code of DotNet.  
 Microsoft even did a research project to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
 That project failed because it was too slow.  
   
-After the introduction of Win32 in 1993, it was logical that Microsoft would try to build a great library of high performance 
-native Windows DLLs for common programming tasks. However, they did not do it, and the consequences are still felt today.
+After WIN32 in 1993, it would be logical that Microsoft tried to build a great library of high performance 
+native Windows DLLs for common programming tasks. However, they did not do that and the negative consequences are still felt today.
 
 ### Neglectance became failing
 You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
 You want to load a JPG with a native Microsoft Windows DLL? Well, that will also be not easy.  
-This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows. Linux
-is much more friendly in this respect, standard libs like libjpeg and libpng exist there.  
+You want to rotate 3D coordinates? No native Microsoft Windows DLL for that.  
   
-This has also consequences for `Ground`. Most of the DLLs that offer functionality, like SDL3 and libmikmod must be downloaded.
-So, Microsoft is a billion dollar company with 30 years of the most dominant OS, but for loading a JPG, I use the downloaded
-SDL3_image.dll. Windows is pretty much an empty shell.
+This is not coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, although they had all the resources 
+to do so. Nowadays, intiatives like MSYS2 put Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
+If you want an OS for programmers, you better move to Linux with standard libs like libjpeg and libpng are available there.  
+  
+The fact that so little functionality is offered by Windows DLLs has consequences for `Ground`. Most of the DLLs must be downloaded, SDL3 and libmikmod.
+So, Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called 
+SDL3_image.dll. Microsoft failed. Windows is pretty much an empty shell.
 
-### About the C language
+### About the Visual Studio C language
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
 However, there are major annoyances:
@@ -416,13 +420,18 @@ In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory
 PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
 We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
   
-At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects too much personal data and sends 
+At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects personal data and sends 
 it to the cloud or uses it for AI. Microsoft wants to make Windows an agentic AI OS and forces users to give up privacy. 
 I strongly disagree with this route, because it should be made optional.  
 Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot and Recall. However, 
 with each new update, the settings can be turned on again. The whole situation is a shame, because Windows has such a great history. 
 Like many users, I don't want to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to 
 the Windows platform. I will stay on Windows 10.  
+Microsoft is hard pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge browser which transfers data to Microsoft and Ads in
+the start menu. It is irritating. Doesn't Microsoft know that Google became popular for not having ads in the startpage?  
+Microsoft also has keys to unlock your bitlocker. [They gave them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/) 
+A lot of people are baffled by this and are starting to turn away from Microsoft. At this moment, Microsoft still has time to fix
+their issues and make Windows a nice OS for users and programmers. If not, what will be the future OS of the world? Steam OS? Could be!
 
 ### Smoothscroller
 <p align="center">
@@ -521,6 +530,16 @@ Electronic Life is back after 36 years!</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Amiga_Electronic_Life.jpg?raw=true" width="350" /><br/>
 This was the original "Electronic Life" from 1990</p>
 
+### Circles
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.jpg?raw=true" width="500" /><br/>
+Circles demo effect</p>
+
+### Spiral
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Spiral.jpg?raw=true" width="500" /><br/>
+Spiral demo effect</p>
+
 
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
@@ -546,6 +565,7 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.12.05: Fireworks demo added.  
 2025.12.09: 3D demo added.  
 2026.01.16: Electronic Life 2026 added.  
+2026.02.08: Circles and Spiral added.  
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  

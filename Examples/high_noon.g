@@ -99,6 +99,8 @@ function NewDuel() {
 
 	if (humanPlayerWon or computerWon) {
 		gameStatus = "game over";
+		player[0].died = false;
+		player[1].died = false;
 		return;
 	}
 	player[0].died = false;

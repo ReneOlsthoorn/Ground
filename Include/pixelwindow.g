@@ -25,6 +25,7 @@ sdl3.SDL_SetRenderVSync(renderer, 1);
 
 function Update();
 function Init();
+function DeInit();
 
 sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 g.[pixels_p] = pixels;
@@ -55,6 +56,7 @@ while (StatusRunning)
 	frameCount++;
 }
 
+DeInit();
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);

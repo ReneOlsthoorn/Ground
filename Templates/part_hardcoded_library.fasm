@@ -434,3 +434,68 @@ _f_fill32@gc:
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_3_PARAM
+
+
+_f_abs@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, [rbp+G_PARAMETER1]
+  test	rax, rax
+  js	.isNeg
+  jmp	.exitAbs
+.isNeg:
+  neg	rax
+.exitAbs:
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_max@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdx
+  mov   rax, [rbp+G_PARAMETER1]
+  mov   rdx,  [rbp+G_PARAMETER2]
+  cmp	rax, rdx
+  jge	.exitMax
+  mov	rax, rdx
+.exitMax:
+  pop	rdx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_min@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdx
+  mov   rax, [rbp+G_PARAMETER1]
+  mov   rdx,  [rbp+G_PARAMETER2]
+  cmp	rax, rdx
+  jle	.exitMin
+  mov	rax, rdx
+.exitMin:
+  pop	rdx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_sqrt@gc:
+  push  rbp
+  mov   rbp, rsp
+
+  sub   rsp, 8
+  movq  qword [rsp], xmm1
+
+  movq  xmm1, qword [rbp+G_PARAMETER1]
+  sqrtsd xmm0, xmm1
+
+  movq  xmm1, qword [rsp]
+
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
