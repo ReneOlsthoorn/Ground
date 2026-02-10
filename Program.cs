@@ -118,7 +118,7 @@ namespace GroundCompiler
         }
 
 
-        public string x64dbgDbFolder = "c:\\prg\\xdbg\\x64\\db";
+        public string x64dbgDbFolder = "c:\\prg\\x64dbg2025\\x64\\db";
 
         public void Generate_x64dbg_EXE(string outputLstFilename)
         {

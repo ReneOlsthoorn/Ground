@@ -745,6 +745,7 @@ namespace GroundCompiler
                         emitter.Codeline($"mov   rdi, rax");
                         emitter.Codeline($"mov   rcx, {sizeToClean}");
                         emitter.Codeline($"xor   eax, eax");
+                        emitter.Codeline($"cld");
                         emitter.Codeline($"rep stosb");
                         emitter.Codeline($"pop   rdi rcx");
                         return null;

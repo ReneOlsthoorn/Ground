@@ -107,6 +107,7 @@ _f_cstr_convert@gc:
   mov   r9, rcx
   mov	rdi, rax
   mov	rcx, r8
+  cld
   rep	movsb			; copy string 1
   mov	byte [rdi], 0
   mov   rax, r9
@@ -357,6 +358,7 @@ _f_fill@gc:
   mov   rdi, qword [dest@_f_fill@gc]
   mov   rcx, qword [size@_f_fill@gc]
   mov   rax, qword [value@_f_fill@gc]
+  cld
   rep stosb	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
 
   pop	rcx rdi
@@ -374,6 +376,7 @@ _f_rectfill@gc:
   push  rbp
   mov   rbp, rsp
   push	r8 r9 r10 rdi rcx rdx
+  cld
 
   mov	r8, qword [height@_f_rectfill@gc]
   mov	r9, qword [linesize@_f_rectfill@gc]
@@ -415,6 +418,7 @@ _f_copy@gc:
   mov	rsi, [rbp+G_PARAMETER1]
   mov	rdi, [rbp+G_PARAMETER2]
   mov	rcx, [rbp+G_PARAMETER3]
+  cld
   rep movsb
   pop	rcx rdx rdi rsi
   mov   rsp, rbp
@@ -429,6 +433,7 @@ _f_fill32@gc:
   mov   rdi, [rbp+G_PARAMETER1]
   mov   rcx, [rbp+G_PARAMETER2]
   mov   eax, [rbp+G_PARAMETER3]
+  cld
   rep stosd	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
   pop	rcx rdi
   mov   rsp, rbp

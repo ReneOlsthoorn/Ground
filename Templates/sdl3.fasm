@@ -280,6 +280,7 @@ _f_GC_ClearScreenPixels:
   mov	rax, qword [color@_f_GC_ClearScreenPixels]
   push	rdi
   mov	rdi, rdx
+  cld
   rep	stosd
   pop   rdi
   mov   rsp, rbp

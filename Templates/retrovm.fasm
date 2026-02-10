@@ -265,11 +265,13 @@ CalculateNextCursorPosition:
   mov	rsi, rdi
   add	rsi, GC_Screen_TextColumns
   mov	ecx, GC_Screen_TextSize - GC_Screen_TextColumns
+  cld
   rep	movsb
   mov	al, ' '
   mov	rdi, [screentext1_p]
   add	rdi, GC_Screen_TextSize - GC_Screen_TextColumns
   mov	rcx, GC_Screen_TextColumns
+  cld
   rep	stosb
   pop	rcx rdi rsi
   dec	edx

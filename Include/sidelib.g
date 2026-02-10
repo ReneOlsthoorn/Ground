@@ -6,3 +6,4 @@ dll sidelib function LoadImage(ptr fullPathToImage);
 dll sidelib function LoadAndExpandImage(ptr fullPathToImage, int expandNr);
 dll sidelib function FreeImage(ptr image);
 dll sidelib function FlipRedAndGreenInImage(ptr image, int SizeX, int SizeY);
+dll sidelib function SinusApprox(f32 val): f32;

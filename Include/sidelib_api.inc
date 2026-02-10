@@ -6,4 +6,5 @@
           sidelib_LoadImage,'sidelib_LoadImage', \
           sidelib_LoadAndExpandImage,'sidelib_LoadAndExpandImage', \
           sidelib_FlipRedAndGreenInImage, 'sidelib_FlipRedAndGreenInImage', \
+          sidelib_SinusApprox, 'sidelib_SinusApprox', \
           sidelib_FreeImage,'sidelib_FreeImage'

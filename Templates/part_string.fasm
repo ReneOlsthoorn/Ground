@@ -12,6 +12,7 @@ Insert_CString:
   mov   r9, rcx
   mov	rdi, rax
   mov	rcx, r8
+  cld
   rep	movsb			; copy string 1
   mov   rax, r9
   pop   r9 r8 rcx rdi rsi
@@ -46,6 +47,7 @@ AddCombinedStrings:
   mov	rdi, rax
   mov	rsi, r8
   mov	rcx, r10
+  cld
   rep	movsb			; copy string 1
   mov	rsi, r9
   mov	rcx, r11
@@ -84,6 +86,7 @@ IntegerToString:
 ; rax = int value to convert
 ; result INDEXSPACE rownr in rax
   push	rbx r14 r15     ; win32 stack 16-byte alignment
+  cld
   test	rax, rax
   js	.negative
   xor	r15, r15
@@ -144,6 +147,7 @@ FloatToString:
   mov   r8, rcx         ; r8 = indexspace rownr
   mov	rdi, rax
   mov	rcx, r9
+  cld
   rep	movsb			; copy string
   mov   rax, r8
   pop   r10 rdi rsi r9 r8

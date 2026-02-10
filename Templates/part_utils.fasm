@@ -14,6 +14,7 @@ StoreBytes:
 ; al = value to set
   push	rdi
   mov	rdi, rdx
+  cld
   rep	stosb		; Notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
   pop   rdi
   ret
@@ -45,6 +46,7 @@ Utils_SetArray:
     push rdi
 	mov rdi, rdx
 	mov rax, r8
+	cld
 	rep stosb
 	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
 	pop rdi
@@ -59,6 +61,7 @@ Utils_CopyArray:
 	push rdi
 	mov rsi, rdx;
 	mov rdi, r8;
+	cld
 	rep movsb
 	; please notice: a rep movsb is as fast as rep movsq since Haswell (4770). Rep movsb uses 256-bit operations internally.
 	pop rdi

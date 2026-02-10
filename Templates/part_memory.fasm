@@ -287,13 +287,13 @@ DecrementReferenceCount:
 
 
 RemoveDereferenced:
-  WaitLock  G_LOCKOBJECT_INDEXSPACE
 ; rcx bevat de base van de stack adres van de functie.
   push	rsi
   mov	rsi, [indexSpacePointer]
   mov	rdx, [rcx-G_FIRST_REFCOUNT_PTR]
   cmp	rdx, 0
   je	.exitRemoveDereference
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
 .loop:
   mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
   shl	r8, 5
@@ -334,20 +334,20 @@ RemoveDereferenced:
 .endLoop:
   mov	qword [rcx-G_FIRST_REFCOUNT_PTR], 0
   mov	qword [rcx-G_LAST_REFCOUNT_PTR], 0
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
 .exitRemoveDereference:
   pop	rsi
-  FreeLock  G_LOCKOBJECT_INDEXSPACE
   ret
 
 
 RemoveTmpDereferenced:
-  WaitLock  G_LOCKOBJECT_INDEXSPACE
 ; rcx bevat de base van de stack adres van de functie.
   push	rsi
   mov	rsi, [indexSpacePointer]
   mov	rdx, [rcx-G_FIRST_TMPREFCOUNT_PTR]
   cmp	rdx, 0
   je	.exitRemoveDereference
+  WaitLock  G_LOCKOBJECT_INDEXSPACE
 .loop:
   mov	r8, [rdx]					; INDEX in r8, referenceSpace pointer in rdx
   shl	r8, 5
@@ -388,9 +388,9 @@ RemoveTmpDereferenced:
 .endLoop:
   mov	qword [rcx-G_FIRST_TMPREFCOUNT_PTR], 0
   mov	qword [rcx-G_LAST_TMPREFCOUNT_PTR], 0
+  FreeLock  G_LOCKOBJECT_INDEXSPACE
 .exitRemoveDereference:
   pop	rsi
-  FreeLock  G_LOCKOBJECT_INDEXSPACE
   ret
 
 

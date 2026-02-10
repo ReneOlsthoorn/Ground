@@ -18,7 +18,7 @@
 
 ptr processHandle = kernel32.GetCurrentProcess();
 int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
-kernel32.SetPriorityClass(processHandle, 0x80); //HIGH_PRIORITY_CLASS
+kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
@@ -125,6 +125,7 @@ function MoveScreenline(int lineNr) asm {
   inc	rsi
   mov	rdi, r8
   mov	rcx, GC_Screen_TextColumns-1
+  cld
   rep movsb
   pop   rdi rsi r15
 }
