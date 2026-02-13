@@ -17,10 +17,12 @@ call :compileExample 3d
 call :compileExample bertus
 call :compileExample bugs
 call :compileExample chess
+call :compileExample electronic_life
 call :compileExample fire
 call :compileExample fireworks
 call :compileExample game_of_life
 call :compileExample hello_world
+call :compileExample hexacubes
 call :compileExample high_noon
 call :compileExample jump
 call :compileExample memory
@@ -31,11 +33,12 @@ call :compileExample plasma_non_colorcycling
 call :compileExample racer
 call :compileExample smoothscroller
 call :compileExample snake
+call :compileExample snippet_circles
+call :compileExample snippet_spiral
 call :compileExample star_taste
 call :compileExample sudoku
 call :compileExample tetrus
 call :compileExample win32_screengrab
-call :compileExample electronic_life
 
 del /Q /F GroundCompiler.pdb
 del /Q /F GroundCompiler.deps.json
