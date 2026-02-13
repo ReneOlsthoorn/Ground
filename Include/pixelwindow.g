@@ -40,6 +40,7 @@ ptr window = sdl3.SDL_CreateWindow(pixelWindowTitle, SCREEN_WIDTH, SCREEN_HEIGHT
 ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
+sdl3.SDL_HideCursor();
 
 function Update();
 function Init();
@@ -84,6 +85,7 @@ while (StatusRunning)
 }
 
 DeInit();
+sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);

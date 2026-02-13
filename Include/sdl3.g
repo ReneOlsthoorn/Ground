@@ -93,6 +93,8 @@ dll sdl3 function SDL_LoadPNG(string filename) : ptr;  // result = SDL_Surface*
 
 dll sdl3 function SDL_SetRenderTarget(ptr renderer, ptr texture);
 dll sdl3 function SDL_SetTextureBlendMode(ptr texture, u32 blendmode);
+dll sdl3 function SDL_RenderGeometry(ptr renderer, ptr texture, ptr vertices, int num_vertices, ptr indices, int num_indices);
+
 
 class SDL_Surface {     //sizeof: 48 bytes
     u32 flags;
@@ -103,6 +105,18 @@ class SDL_Surface {     //sizeof: 48 bytes
 	ptr pixels;
 	i32 refcount;
 	u64 reserved;
+}
+
+
+class SDL_Vertex {		//sizeof: 8*4=32 bytes
+	f32 posX;
+	f32 posY;
+	f32 red;
+	f32 green;
+	f32 blue;
+	f32 alpha;
+	f32 texX;
+	f32 texY;
 }
 
 

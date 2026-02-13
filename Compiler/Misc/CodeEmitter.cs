@@ -596,16 +596,25 @@ namespace GroundCompiler
         public void LoadFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  xmm0, qword [rbp-{variableName}]");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  xmm0, dword [rbp-{variableName}]");
+            }
             else
                 Codeline($"mov   rax, qword [rbp-{variableName}]");
         }
-        public void LoadFunctionVariableFloat64(string variableName) => Codeline($"movq  xmm0, qword [rbp-{variableName}]");
         public void LeaParentFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rcx-{variableName}]");
         public void LoadParentFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  xmm0, qword [rcx-{variableName}]");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  xmm0, qword [rcx-{variableName}]");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  xmm0, dword [rcx-{variableName}]");
+            }
             else
                 Codeline($"mov   rax, qword [rcx-{variableName}]");
         }
@@ -613,8 +622,12 @@ namespace GroundCompiler
         public void LoadFunctionParameter64(string variableName) => Codeline($"mov   rax, qword [rbp+{variableName}]");
         public void LoadFunctionParameter64(string variableName, Datatype datatype)
         {
-            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  xmm0, qword [rbp+{variableName}]");
+            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint)) {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  xmm0, qword [rbp+{variableName}]");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  xmm0, dword [rbp+{variableName}]");
+            }
             else
                 Codeline($"mov   rax, qword [rbp+{variableName}]");
         }
@@ -627,7 +640,12 @@ namespace GroundCompiler
         public void StoreFunctionParameter64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  qword [rbp+{variableName}], xmm0");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  qword [rbp+{variableName}], xmm0");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  dword [rbp+{variableName}], xmm0");
+            }
             else
                 Codeline($"mov   qword [rbp+{variableName}], rax");
         }
@@ -635,7 +653,12 @@ namespace GroundCompiler
         public void StoreFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  qword [rbp-{variableName}], xmm0");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  qword [rbp-{variableName}], xmm0");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  dword [rbp-{variableName}], xmm0");
+            }
             else
             {
                 // You might ask why only rax is used and not eax, ax, al based on the datatype. Like this:
@@ -650,18 +673,25 @@ namespace GroundCompiler
         public void StoreParentFunctionParameter64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  qword [rcx-{variableName}], xmm0");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  qword [rcx-{variableName}], xmm0");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  dword [rcx-{variableName}], xmm0");
+            }
             else
                 Codeline($"mov   [rcx-{variableName}], rax");
         }
 
-        public void StoreInstanceVar(string instVar, string reg, Datatype datatype)
+        public void StoreInstanceVar(string instVar, string reg, Datatype targetType)
         {
-            if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  qword [{reg}+{instVar}], xmm0");
-            else
-            {
-                var nrBytes = datatype.SizeInBytes;
+            if (targetType.Contains(Datatype.TypeEnum.FloatingPoint)) {
+                if (targetType.SizeInBytes == 8)
+                    Codeline($"movq  qword [{reg}+{instVar}], xmm0");
+                if (targetType.SizeInBytes == 4)
+                    Codeline($"movd  dword [{reg}+{instVar}], xmm0");
+            } else {
+                var nrBytes = targetType.SizeInBytes;
                 Codeline($"mov   {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}], {cpu.RAX_Register_Sized(nrBytes)}");
             }
         }
@@ -669,7 +699,12 @@ namespace GroundCompiler
         public void LoadInstanceVar(string instVar, string reg, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  xmm0, qword [{reg}+{instVar}]");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq  xmm0, qword [{reg}+{instVar}]");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd  xmm0, dword [{reg}+{instVar}]");
+            }
             else
             {
                 var nrBytes = datatype.SizeInBytes;

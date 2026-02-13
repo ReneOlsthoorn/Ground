@@ -242,8 +242,9 @@ opensource programmers managed to make a better C environment than Microsoft.
 The Ground language is `Alpha`, so do not use the language if you look for a stable language.
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
-### Looking for a high performance programming language with inline assembly. 
+### Looking for a high performance programming language with inline assembly.
 Your Windows PC has a CPU which can execute code incredibly fast using a language called `x86-64` assembly.  
+It has approx. 1500 different instructions. For instance "sqrtsd", which does a floating point square root calculation.  
 While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
 conversion like this:
 ```
@@ -540,6 +541,10 @@ Circles demo effect</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Spiral.jpg?raw=true" width="500" /><br/>
 Spiral demo effect</p>
 
+### Hexacubes
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Hexacubes.jpg?raw=true" width="500" /><br/>
+Hexacubes effect</p>
 
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
@@ -566,6 +571,7 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.12.09: 3D demo added.  
 2026.01.16: Electronic Life 2026 added.  
 2026.02.08: Circles and Spiral added.  
+2026.02.13: Hexacubes added.  
 
 ### Open bugs
 2025.12.13: A string as instance variable has bad reference counting.  
