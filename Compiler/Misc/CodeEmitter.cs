@@ -191,7 +191,6 @@ namespace GroundCompiler
         }
 
         public void LoadAssemblyVariable(string name) => Codeline($"mov   rax, [{name}]");
-        public void LoadAssemblyConstant(string name) => Codeline($"mov   rax, {name}");
 
         public void LoadSystemVarsVariable(string name)
         {
@@ -524,7 +523,10 @@ namespace GroundCompiler
         {
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
-                Codeline($"xorps   xmm0, xword [Negation_XMM]");
+                if (expr.ExprType.SizeInBytes == 8)
+                    Codeline($"xorps   xmm0, xword [Negation_XMM]");
+                if (expr.ExprType.SizeInBytes == 4)
+                    Codeline($"xorps   xmm0, xword [Negation_XMM32]");
             }
             else 
                 Codeline($"neg   rax");
@@ -574,7 +576,12 @@ namespace GroundCompiler
             Codeline($"mov   {reg}, rax");
             Codeline($"xor   eax, eax");
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq   xmm0, [{reg}]");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq   xmm0, [{reg}]");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd   xmm0, [{reg}]");
+            }
             else
                 Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{reg}]");
             cpu.FreeRegister(reg);
@@ -586,13 +593,17 @@ namespace GroundCompiler
             Codeline($"mov   {reg}, rax");
             Pop();
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq   [{reg}], xmm0");
+            {
+                if (datatype.SizeInBytes == 8)
+                    Codeline($"movq   [{reg}], xmm0");
+                if (datatype.SizeInBytes == 4)
+                    Codeline($"movd   [{reg}], xmm0");
+            }
             else
                 Codeline($"mov   [{reg}], {cpu.RAX_Register_Sized(nrBytes)}");
             cpu.FreeRegister(reg);
         }
         public void LeaFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rbp-{variableName}]");
-        public void LoadFunctionVariable64(string variableName) => Codeline($"mov   rax, qword [rbp-{variableName}]");
         public void LoadFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -912,7 +923,12 @@ namespace GroundCompiler
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index, Datatype targetType)
         {
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
-                Codeline($"movq  rax, xmm0");  // below, the basereg+index cannot be done with xmm0
+            {
+                if (targetType.SizeInBytes == 8)
+                    Codeline($"movq  rax, xmm0");  // below, the basereg+index cannot be done with xmm0
+                if (targetType.SizeInBytes == 4)
+                    Codeline($"movd  eax, xmm0");  // below, the basereg+index cannot be done with xmm0
+            }
             Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
         }
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)

@@ -552,13 +552,11 @@ The executables are in the `bin\Release` directory of the zipfile.
 
 ### Changelog
 2025.01.29: Added kotlin for-loops.  
-2025.03.27: SDL3 support and added win32-screengrab.g example.  
 2025.04.15: Bertus game added.  
-2025.06.06: Asm arrays added (see snake.g)  
+2025.06.06: Snake game added.  
 2025.06.10: Game Of Life added.  
-2025.06.20: Optimizer extended. It will replace literals now and remove unused variables.  
-2025.07.14: Added Tetrus game.  
-2025.08.23: Added Racer game.  
+2025.07.14: Tetrus game.  
+2025.08.23: Racer game.  
 2025.09.04: Jump game added containing Sfxr sounds.  
 2025.09.10: Bugs game added.  
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  

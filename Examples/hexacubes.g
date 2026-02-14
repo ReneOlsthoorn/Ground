@@ -32,6 +32,7 @@ ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); //null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, 120, 100);
 sdl3.SDL_SetTextureScaleMode(texture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_SetRenderVSync(renderer, 1);
+sdl3.SDL_HideCursor();
 
 #define NR_VERTICES 18
 SDL_Vertex[NR_VERTICES] verts = [ ];
@@ -213,6 +214,7 @@ while (StatusRunning)
 	frameCount++;
 }
 
+sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
