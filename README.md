@@ -446,12 +446,12 @@ Jump on the platforms. 3D starfield background.</p>
 
 ### Game Of Life
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_GameOfLife.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_GameOfLife.gif?raw=true" width="500" /><br/>
 Watch the Game Of Life patterns blow up! The current version has 20 different patterns.</p>
 
 ### The Fire example
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fire.gif?raw=true" width="500" /><br/>
 The retro PC demo effect.</p>
 
 ### The Bertus game
@@ -461,17 +461,17 @@ Try to beat the 4 levels!</p>
 
 ### Classic Snake game
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Snake.jpg?raw=true" width="498" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Snake.gif?raw=true" width="498" /><br/>
 Feed the snake 100 meals.</p>
 
 ### The Plasma example with no colorcycling
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_plasma_non_colorcycling.gif?raw=true" width="500" /><br/>
 Smoother than an Amiga 500 Copper plasma.</p>
 
 ### Tetrus
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Tetrus.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Tetrus.gif?raw=true" width="500" /><br/>
 Solve 30 lines to complete.</p>
 
 ### Mode 7
@@ -487,7 +487,7 @@ Motor racing game. Avoid the other motor racers.</p>
 
 ### Bugs
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bugs.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bugs.gif?raw=true" width="500" /><br/>
 Let the bugs eat eachother and don't let any escape!</p>
 
 ### Join the Hype! Play Connect Four against your local LLM Ai
@@ -504,27 +504,27 @@ Set it to ELO 1 in the sourcecode or prepare to be beaten.</p>
 
 ### High Noon shootout
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_High_Noon.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_High_Noon.gif?raw=true" width="500" /><br/>
 A proper shootout at High Noon in Videopac G7000 retro style.</p>
 
 ### Memory
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.jpg?raw=true" width="400" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Memory.gif?raw=true" width="400" /><br/>
 Can you beat 7 levels of classic memory?</p>
 
 ### Fireworks
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fireworks.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Fireworks.gif?raw=true" width="500" /><br/>
 How can a Firework show promote x86-64 assembly?</p>
 
 ### 3D
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_3D.gif?raw=true" width="500" /><br/>
 Rotating 3D object. Matrix calculations done with CGLM.</p>
 
 ### Electronic Life 2026
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Electronic_Life.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Electronic_Life.gif?raw=true" width="500" /><br/>
 Electronic Life is back after 36 years!</p>
 
 <p align="center">
