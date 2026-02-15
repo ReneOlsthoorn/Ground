@@ -126,7 +126,7 @@ Ground has a reference count system, so there is no garbage collector. Reference
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.gif?raw=true" width="500" /><br/>
 </p>
 
 ### Choosing a template
@@ -498,7 +498,7 @@ Read the instructions in the connect4.g sourcecode.</p>
 
 ### Play Chess against StockFish
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.gif?raw=true" width="500" /><br/>
 Play Chess locally against StockFish!<br/>
 Set it to ELO 1 in the sourcecode or prepare to be beaten.</p>
 
