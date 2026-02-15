@@ -38,6 +38,7 @@ u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int pitch = SCREEN_LINESIZE;
 int figureShow = 0;
 int generations = 0;
+MouseState mouseState;
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
@@ -262,16 +263,17 @@ while (StatusRunning)
 	g.[pixels_p] = pixels;
 
 	DoGeneration();
+
+	mouseState.GetMouseState();
+	int gridPosX = mouseState.x / GRID_ELEMENT_PIXELS;
+	int gridPosY = mouseState.y / GRID_ELEMENT_PIXELS;
+	if (mouseState.LeftPressed)
+		board[gridPosX, gridPosY] = 1;
+
 	DrawBoard();
 
 	sdl3.SDL_UnlockTexture(texture);
 	sdl3.SDL_RenderTexture(renderer, texture, null, null);
-
-	f32 mouseX;
-	f32 mouseY;
-	sdl3.SDL_GetMouseState(&mouseX, &mouseY);
-	int gridPosX = mouseX / GRID_ELEMENT_PIXELS;
-	int gridPosY = mouseY / GRID_ELEMENT_PIXELS;
 	PrintInformation();
 
 	sdl3.SDL_RenderPresent(renderer);
