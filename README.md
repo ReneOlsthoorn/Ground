@@ -19,7 +19,7 @@ Ground .EXE files will be small because most external code is loaded at load-tim
 DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" />
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.gif?raw=true" width="500" />
 </p>
 
 It's easy in Ground to replace a statement with x86-64. For example, we have the following code in mode7.g:
