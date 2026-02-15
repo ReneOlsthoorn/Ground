@@ -532,7 +532,7 @@ Electronic Life is back after 36 years!</p>
 This was the original "Electronic Life" from 1990 on the Amiga</p>
 
 ### Circles
-[Circles demo effect](Resources/Ground_Circles.gif)
+![Circles demo effect](Resources/Ground_Circles.gif)
 
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
