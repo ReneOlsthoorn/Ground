@@ -60,7 +60,7 @@ build DLLs, sounds and images. For all DLLs used, sourcecode is available. The i
 After this is done, Run `Visual Studio 2026` and open `GroundCompiler.slnx`. Hit the Play button in Visual Studio and 
 the game Bertus should compile and run.
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.gif?raw=true" width="500" /><br/>
 </p>
 
 ### Running other examples
@@ -441,7 +441,7 @@ Scrolling is always good. Bouncing objects done with the Chipmunk Physics engine
 
 ### Jump
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Jump.gif?raw=true" width="500" /><br/>
 Jump on the platforms. 3D starfield background.</p>
 
 ### Game Of Life
@@ -456,7 +456,7 @@ The retro PC demo effect.</p>
 
 ### The Bertus game
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.jpg?raw=true" width="491" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.gif?raw=true" width="491" /><br/>
 Try to beat the 4 levels!</p>
 
 ### Classic Snake game
@@ -482,7 +482,7 @@ Solve 30 lines to complete.</p>
 
 ### Racer
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.gif?raw=true" width="500" /><br/>
 Motor racing game. Avoid the other motor racers.</p>
 
 ### Bugs
@@ -538,12 +538,12 @@ Circles demo effect</p>
 
 ### Spiral
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Spiral.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Spiral.gif?raw=true" width="500" /><br/>
 Spiral demo effect</p>
 
 ### Hexacubes
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Hexacubes.jpg?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Hexacubes.gif?raw=true" width="500" /><br/>
 Hexacubes effect</p>
 
 ### Ground Release zipfile
