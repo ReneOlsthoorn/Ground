@@ -76,31 +76,32 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
 know it today. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone can use. 
 During loadtime, the OS loads all the dependencies of the executable.  
-The Win32 api was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
+The WIN32 API was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
   
 In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved in Windows 98 with WinSxS and manifests. 
-Unfortunately version numbering was not integrated in the PE format.  
+Unfortunately version numbering was never integrated in the PE format.  
   
 In 1992, Microsoft released COM. After that DCOM and COM+. The focus went away from Native DLLs. In 1996 Microsoft worked on Visual J++.
-After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code of DotNet.  
-Microsoft even did a research project to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
+After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code of DotNet. Microsoft even did a research project 
+to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
 That project failed because it was too slow.  
-  
-After WIN32 in 1993, it would be logical that Microsoft tried to build a great library of high performance 
+
+After realising that managed code is too slow, you'd think that Microsoft would put effort into making a great library of high performance 
 native Windows DLLs for common programming tasks. However, they did not do that and the negative consequences are still felt today.
 
 ### Neglectance became failing
 You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
-You want to load a JPG with a native Microsoft Windows DLL? Well, that will also be not easy.  
-You want to rotate 3D coordinates? No native Microsoft Windows DLL for that.  
+You want to rotate 3D coordinates or play a music module? No native Microsoft Windows DLL for that.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, that will not be easy.  
   
-This is not coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, although they had all the resources 
-to do so. Nowadays, intiatives like MSYS2 put Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
-If you want an OS for programmers, you better move to Linux with standard libs like libjpeg and libpng are available there.  
+This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, although they had all the resources 
+to do so. It might be a conscious decision, because Microsoft sells software themselves and a great library in Windows would undermine their advantage.  
+Nowadays, intiatives like MSYS2 puts Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
+If you want an OS for programmers, you'd better move to Linux or BSD that contain standard libraries like libjpeg and libpng.  
   
-The fact that so little functionality is offered by Windows DLLs has consequences for `Ground`. Most of the DLLs must be downloaded, SDL3 and libmikmod.
-So, Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called 
-SDL3_image.dll. Microsoft failed. Windows is pretty much an empty shell.
+The fact that so little functionality is offered by Windows DLLs has also consequences for `Ground`. Most of the DLLs must be downloaded, like SDL3 and libmikmod.
+Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll. 
+Windows is pretty much an empty shell.
 
 ### About the Visual Studio C language
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
