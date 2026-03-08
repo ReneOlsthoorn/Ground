@@ -529,7 +529,7 @@ Rotating 3D object. Matrix calculations done with CGLM.</p>
 Electronic Life is back after 36 years!</p>
 
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Amiga_Electronic_Life.jpg?raw=true" width="350" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Amiga_Electronic_Life.gif?raw=true" width="350" /><br/>
 This was the original "Electronic Life" from 1990 on the Amiga</p>
 
 ### Circles
