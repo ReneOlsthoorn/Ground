@@ -31,6 +31,7 @@ class STARTUPINFOA {  //sizeof: 104 bytes
     u64 hStdError;
 }
 STARTUPINFOA si;
+zero(si);
 si.cb = sizeof(si);
 si.dwFlags = g.kernel32_STARTF_USESHOWWINDOW;
 si.wShowWindow = g.kernel32_SW_HIDE;
@@ -44,6 +45,7 @@ class PROCESS_INFORMATION {     //sizeof: 24 bytes
     u32 dwThreadId;
 }
 PROCESS_INFORMATION pi;
+zero(pi);
 assert(sizeof(pi)==24);
 
 
@@ -54,6 +56,7 @@ class SECURITY_ATTRIBUTES {   //sizeof: 24 bytes
     u32 _filler;
 }
 SECURITY_ATTRIBUTES sa;
+zero(sa);
 sa.nLength = sizeof(sa);
 sa.lpSecurityDescriptor = null;
 sa.bInheritHandle = true;
@@ -223,9 +226,9 @@ function PrintMoves() {
 
 	float blackOffset = 80.0;
 	string movesTxt = "White";
-	writeBytePtrText(renderer, 4.0, 20.0, &movesTxt);
+	writeBytePtrText(renderer, 4.0, 20.0, movesTxt);
 	movesTxt = "Black";
-	writeBytePtrText(renderer, 4.0 + blackOffset, 20.0, &movesTxt);
+	writeBytePtrText(renderer, 4.0 + blackOffset, 20.0, movesTxt);
 
 	if (stepNeedle != null)
 		writeBytePtrTextColor = 0;
@@ -309,7 +312,7 @@ ptr loadFileBuffer = msvcrt.calloc(1, LOADFILEBUFFERSIZE);
 OPENFILENAMEA ofn;
 byte[MAX_PATH] szFile = [ ] asm;
 asm data {
-align 8
+align 16
 lpstrFilter db 'All Files',0,'*.*',0
 }
 
@@ -369,7 +372,7 @@ function LoadTmpGameFile() {
 
 
 function AddValueToGameTitle(string keyStr) {
-	byte* result = msvcrt.strstr(loadFileBuffer, &keyStr);
+	byte* result = msvcrt.strstr(loadFileBuffer, keyStr);
 
 	if (result != 0) {
 		result = result + gc.strlen(keyStr);

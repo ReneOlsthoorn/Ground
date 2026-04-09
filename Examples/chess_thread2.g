@@ -37,7 +37,7 @@ asm {
 
 function AddComputerMove() : bool {
 	string bestMoveStr = "bestmove ";
-	byte* result = msvcrt.strstr(textInBuffer, &bestMoveStr);
+	byte* result = msvcrt.strstr(textInBuffer, bestMoveStr);
 	if (result == 0)
 		return false;
 	result = result + 9;  //length of "bestmove "
@@ -95,8 +95,8 @@ function WriteToStockFish(byte* cmd) : bool {
     return WriteToProcess(hStdInWrite, cmd, &bytesWritten);
 }
 function WriteToStockFishString(string cmd) : bool {
-	AppendToLog(&cmd);
-    return WriteToProcess(hStdInWrite, &cmd, &bytesWritten);
+	AppendToLog(cmd);
+    return WriteToProcess(hStdInWrite, cmd, &bytesWritten);
 }
 
 
@@ -190,7 +190,7 @@ function Thread2StockFish() {
 	string terminateSuccessStr = "terminate success";
 	int tm = kernel32.TerminateProcess(pi.hProcess, 0);
 	if (tm != 0)
-		AppendToLog(&terminateSuccessStr);
+		AppendToLog(terminateSuccessStr);
 
     kernel32.CloseHandle(pi.hProcess);
     kernel32.CloseHandle(pi.hThread);

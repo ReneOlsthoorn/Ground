@@ -37,7 +37,7 @@ int pitch = g.Graphics_ScreenLineSize;
 int xscrollNeedle = 0;
 int scrollTextNeedle = 0;
 int whichLineToScroll = 16;
-string scrollText = `Smoothscroller written in Ground!                            \
+byte* scrollText = `Smoothscroller written in Ground!                            \
 You are very \8f\8f old \8f\8f if you recognize the font.    \
 The used template is called "retrovm" and contains a character buffer and charcolor buffer, just like the C64.    \
 It also contains a Copper look-a-like function just like the Amiga.                      `;
@@ -291,11 +291,11 @@ ptr ballSrc = &ballSrcRectKogel;
 for (i in 0 ..< NR_BALLS)
 {
 	if (i % 3 == 0)
-		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectVoetbal);
+		chipmunk.cpBodySetUserData(ballBodies[i], ballSrcRectVoetbal);
 	if (i % 3 == 1)
-		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectTennisbal);
+		chipmunk.cpBodySetUserData(ballBodies[i], ballSrcRectTennisbal);
 	if (i % 3 == 2)
-		chipmunk.cpBodySetUserData(ballBodies[i], &ballSrcRectKogel);
+		chipmunk.cpBodySetUserData(ballBodies[i], ballSrcRectKogel);
 }
 
 #include soundtracker.g
@@ -401,7 +401,7 @@ while (StatusRunning)
 		ballDestRect[1] = SCREEN_HEIGHT - cpvectPos.y;
 		float theAngle = angle * (180.0 / MATH_PI);
 		ballSrc = chipmunk.cpBodyGetUserData(ballBody);
-		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrc, &ballDestRect, -theAngle, null, g.SDL_FLIP_NONE);
+		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrc, ballDestRect, -theAngle, null, g.SDL_FLIP_NONE);
 	}
 
 	sdl3.SDL_RenderPresent(renderer);

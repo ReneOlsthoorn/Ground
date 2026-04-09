@@ -1,60 +1,38 @@
 
-Insert_CString:
-  push  rsi rdi rcx r8 r9
-;INPUT:  rax contains the string
-  mov   rsi, rax
-  mov   rcx, rax
-  call  StringLength
-  add   rax, 1
-  mov   rcx, rax
-  mov   r8, rax
-  call  GC_Allocate    ;INPUT:  rcx contains the requested size   ;OUTPUT: rcx = INDEXSPACE rownr, rax = memptr
-  mov   r9, rcx
-  mov	rdi, rax
-  mov	rcx, r8
-  cld
-  rep	movsb			; copy string 1
-  mov   rax, r9
-  pop   r9 r8 rcx rdi rsi
-  ret
-
 
 AddCombinedStrings:
-;INPUT: rcx = ptr to first string indexspace rownr
-;       rdx = ptr to second string indexspace rownr
-;OUTPUT:rax = INDEXSPACE rownr
-  push	r12 rsi rdi		; fastcall 16-byte stack alignment
-  shl	rcx, 5
-  add	rcx, [indexSpacePointer]
-  mov	rcx, [rcx]		; memptr first string in rcx
-  shl	rdx, 5
-  add	rdx, [indexSpacePointer]
-  mov	rdx, [rdx]		; memptr second string in rdx
-  mov	r8, rcx			; memptr first string in r8
-  mov	r9, rdx			; memptr second string in r9
-  call	StringLength
-  mov	r10, rax		; size first string in r10
-  mov	rcx, r9
-  call	StringLength
-  mov	r11, rax		; size second string in r11
-  add	rax, r10
-  mov	rcx, rax		; total size in rcx
-  inc	rcx				; zero-terminated
-  call	GC_Allocate
-; rax contains the memory ptr
-; rcx bevat INDEXSPACE rownr
-  mov	r12, rcx		; prepare for copy
-  mov	rdi, rax
-  mov	rsi, r8
-  mov	rcx, r10
-  cld
-  rep	movsb			; copy string 1
-  mov	rsi, r9
-  mov	rcx, r11
-  rep	movsb			; copy string 2
-  mov	byte [rdi], 0	; zero-terminated
-  mov	rax, r12
-  pop	rdi rsi r12
+;INPUT: rcx = ptr to first string
+;       rdx = ptr to second string
+;       rax = ptr to result string being max. 256 bytes. That is 255 chars and 1 ending zero.
+;OUTPUT:rax = ptr to result string
+  push	r8 r9 rax
+  mov	r8, rax 
+  xor	r9, r9
+.loopFirst:
+  mov	al, [rcx]
+  mov	[r8+r9], al
+  cmp	al, 0
+  je	.loopSecond
+  inc	rcx
+  inc	r9
+  cmp	r9, 255
+  jne	.loopFirst
+  xor	eax, eax
+  mov	[r8+r9], al
+  jmp	.exit
+.loopSecond:
+  mov	al, [rdx]
+  mov	[r8+r9], al
+  cmp	al, 0
+  je	.exit
+  inc	rdx
+  inc	r9
+  cmp	r9, 255
+  jne	.loopSecond
+  xor	eax, eax
+  mov	[r8+r9], al
+.exit:
+  pop	rax r9 r8
   ret
 
 
@@ -84,8 +62,10 @@ end if
 
 IntegerToString:
 ; rax = int value to convert
-; result INDEXSPACE rownr in rax
-  push	rbx r14 r15     ; win32 stack 16-byte alignment
+; rcx = the buffer to store the result
+;RESULT: rcx buffer is filled
+  push	rcx rdi rbx r14 r15     ; win32 stack 16-byte alignment
+  mov	rdi, rcx
   cld
   test	rax, rax
   js	.negative
@@ -111,8 +91,6 @@ IntegerToString:
   jz	.niet_negatief
   add	rcx, 1			; "-" sign
 .niet_negatief:
-  call	GC_Allocate		; result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
-  mov	rdi, rax
   test	r15, r15
   jz	.no_extra_sign
   mov	al, '-'
@@ -121,46 +99,43 @@ IntegerToString:
   mov	r8, rcx
 .pop_chars:
   pop	rax             ; pop result from stack into eax
-  stosb                 ; store contents of eax in at the address of num which is in EDI
+  stosb                 ; al -> rdi, rdi++
   dec	rbx             ; decrement my stack push counter
   cmp	rbx, 0          ; check if stack push counter is 0
   jg	.pop_chars      ; not 0 repeat
   xor	eax, eax		; store the string terminating zero byte
   stosb
   mov	rax, r8
-  pop	r15 r14 rbx
+  pop	r15 r14 rbx rdi rcx
   ret
 
 
 ;the %f only prints 64-bit floats, so convert f32 to f64 before using this function.
+;rcx = the buffer to store the result
+;RESULT: rcx buffer is filled
 FloatToString:
-  push  r8 r9 rsi rdi r10
+  push  rcx rsi rdi
+  mov	rdi, rcx
   movq  rax, xmm0
   invoke msvcrt_sprintf,tmpCharSpace,sprintf_float_template,rax
   lea   rcx, [tmpCharSpace]
   mov   rsi, rcx
   call  StringLength
   inc   rax
-  mov   r9, rax         ; r9 = string length
-  mov   rcx, rax
-  call  GC_Allocate		; rcx = requested size. result: rax contains the memory ptr, rcx bevat INDEXSPACE rownr
-  mov   r8, rcx         ; r8 = indexspace rownr
-  mov	rdi, rax
-  mov	rcx, r9
+  mov	rcx, rax
   cld
   rep	movsb			; copy string
-  mov   rax, r8
-  pop   r10 rdi rsi r9 r8
+  pop   rdi rsi rcx
   ret
 
 
 BooleanToString:
   cmp   al, 0
   je   .notFalse
-  mov   rax, 1
+  lea   rax, [bool_true_tostring]
   jmp   .exitBooleanToString
 .notFalse:
-  mov   rax, 2
+  lea   rax, [bool_false_tostring]
 .exitBooleanToString:
   ret
 
@@ -174,6 +149,30 @@ StringLength:
 .loop:
   inc	eax
   cmp	byte [rcx+rax], 0
+  je	.exit
+  cmp	eax, 255
   jne	.loop
 .exit:
   ret
+
+
+CopyString:
+; rax = source
+; rcx = destination
+  push	rsi rdi
+  mov	rsi, rax
+  mov	rdi, rcx
+  mov	rcx, 255
+.loop:
+  lodsb			; al = [rsi], rsi++
+  stosb			; [rdi] = al, rdi++
+  test	al, al
+  jz	.done
+  dec	rcx
+  jnz	.loop
+  mov	al,0
+  stosb
+.done:
+  pop	rdi rsi
+  ret
+

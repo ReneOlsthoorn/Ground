@@ -1,6 +1,6 @@
-﻿using System.Globalization;
-using GroundCompiler.Expressions;
+﻿using GroundCompiler.Expressions;
 using GroundCompiler.Statements;
+using System.Globalization;
 
 namespace GroundCompiler
 {
@@ -12,6 +12,7 @@ namespace GroundCompiler
         public List<string> GeneratedCode_Procedures;
         public List<string> GeneratedCode_Data;
         public List<string> generatedCode;
+        public int FramePosition;
 
         // When entering a function, the stack is always unaligned, because the returnaddress is on the stack.
         // So StackPos is always -8 when starting a procedure.
@@ -58,7 +59,9 @@ namespace GroundCompiler
 
         public void EmitLiteralFloats(List<FloatConstantSymbol> globalLiteralFloats)
         {
-            Writeline($"align 8");
+            if (globalLiteralFloats.Count > 0)
+                Writeline($"align 16");
+
             foreach (var variable in globalLiteralFloats)
             {
                 string quoted = ((double)variable.Value).ToString("0.0000000000", CultureInfo.InvariantCulture);
@@ -70,27 +73,13 @@ namespace GroundCompiler
         {
             foreach (var variable in globalStrings)
             {
-                Writeline($"align 8");
+                Writeline($"align 16");
                 string quoted = EmitQuotedAssemblyString((string)variable.Value);
                 if (quoted == "''")
                     Writeline($"{variable.SymbolRefId} db 0");
                 else
                     Writeline($"{variable.SymbolRefId} db {quoted},0");
             }
-        }
-
-        public void EmitFixedStringIndexSpaceEntries(List<StringConstantSymbol> globalStrings)
-        {
-            int indexspaceRownr = 3;
-            cpu.ReserveRegister("rcx");
-            foreach (var variable in globalStrings)
-            {
-                Codeline($"lea   rcx, [{variable.SymbolRefId}]");
-                Codeline($"call  AddFixedString");
-                variable.IndexspaceRownr = indexspaceRownr;
-                indexspaceRownr++;
-            }
-            cpu.FreeRegister("rcx");
         }
 
         public string EmitQuotedAssemblyString(string text)
@@ -113,12 +102,21 @@ namespace GroundCompiler
             Codeline($"mov   rbp, rsp");
         }
 
-        public void ReserveStackspace(int stackSpaceNeeded, bool insertRefCountBlock = true)
+        public void ReserveStackspace(int stackSpaceNeeded)
         {
+            if (stackSpaceNeeded % 16 > 0)
+                Compiler.Error("Stack is not aligned on 16 byte boundary");
+
             Codeline($"sub   rsp, {stackSpaceNeeded}");
             StackSub(stackSpaceNeeded);
-            if (insertRefCountBlock)
-                Codeline($"call  ClearRefCountPtrs");
+/* The code below can be used to clear the allocated stack space. It would be better if the user called zero() on the array.
+            Codeline($"lea   rax, [rsp]");
+            Codeline($"push  rdi rcx");
+            Codeline($"mov   rdi, rax");
+            Codeline($"xor   eax, eax");
+            Codeline($"mov   rcx, { stackSpaceNeeded / 8 }");
+            Codeline($"rep   stosq");
+            Codeline($"pop   rcx rdi");  */
         }
 
         public void EndFunction(int returnPop = 0, bool noFrameRestoration = false)
@@ -139,35 +137,19 @@ namespace GroundCompiler
 
         public void CallFunction(FunctionSymbol f, Expression expr)
         {
-            bool needsTmpReference = f.FunctionStmt.ResultDatatype?.IsReferenceType ?? false;
-            if (needsTmpReference)
-                cpu.ReserveRegister("rcx");
-
             string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStmt.Name.Lexeme, f.FunctionStmt.GetGroupOrClassName());
             Codeline($"call  {assemblyFunctionname}");
-
-            if (needsTmpReference)
-            {
-                Codeline("mov   rcx, rbp");
-                AddTmpReference(expr);
-                cpu.FreeRegister("rcx");
-            }
         }
 
-        public void LoadConstantString(int indexSpaceRownr)
+        public void LoadConstantString(StringConstantSymbol strSymbol)
         {
-            Codeline($"mov   rax, {indexSpaceRownr}");
+            Codeline($"lea   rax, [{strSymbol.SymbolRefId}]");
         }
 
         public void RegisterMove(string reg1, string reg2) => Codeline($"mov   {reg2}, {reg1}");
         public void LoadHardcodedGroupVariable(string name) => Codeline($"mov   rax, {name}");
         public void StoreCurrent(string name) => Codeline($"mov   {name}, rax");
-
-
-        public void LoadNull()
-        {
-            Codeline($"xor   eax, eax");
-        }
+        public void LoadNull() => Codeline($"xor   eax, eax");
 
 
         public void LoadConstant64(Int64 value)
@@ -190,7 +172,7 @@ namespace GroundCompiler
             Codeline($"movq  xmm0, qword [{name}]");
         }
 
-        public void LoadAssemblyVariable(string name) => Codeline($"mov   rax, [{name}]");
+        public void LoadAssemblyVariableString(string name) => Codeline($"lea   rax, [{name}]");
 
         public void LoadSystemVarsVariable(string name)
         {
@@ -238,14 +220,15 @@ namespace GroundCompiler
 
         public void PopAddStrings(Expression? expr = null)
         {
+            // rax will contain the ptr to the new stack string.
             cpu.ReserveRegister("rcx");
             cpu.ReserveRegister("rdx");
             Codeline("mov   rcx, rax");
             Codeline("pop   rdx");
             StackPop();
+            FramePosition += 256;
+            Codeline($"lea   rax, [rbp-{FramePosition}]");
             Codeline("call  AddCombinedStrings");       // rcx wijst naar eerste string, rdx wijst naar tweede string
-            Codeline("mov   rcx, rbp");
-            AddTmpReference(expr!);
             cpu.FreeRegister("rdx");
             cpu.FreeRegister("rcx");
         }
@@ -254,11 +237,6 @@ namespace GroundCompiler
         {
             if (conversionDatatype.Contains(Datatype.TypeEnum.String))
             {
-                // We do string concatenation, this allocates memory. Clean the references so memory won't get drained when we are in a loop. 
-                var blockType = expr.FindParentType(typeof(BlockStatement)) as BlockStatement;
-                if (blockType != null)
-                    blockType!.shouldCleanDereferenced = true;
-
                 PopAddStrings(expr);
                 return;
             }
@@ -322,13 +300,11 @@ namespace GroundCompiler
                 Codeline($"sub    rax, rcx");
                 Codeline($"jmp    {nullExitLabel}");
                 InsertLabel(strCmpLabel);
-                Codeline($"call   GetMemoryPointerFromIndex");
                 Codeline($"mov    rcx, rax");
                 Codeline($"pop    rax");
                 //StackPop(); // deze tweede pop doen we niet, omdat normaal gesproken er maar 1 tijdens executie wordt uitgevoerd.
                 Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
                 Codeline($"je     {secondArgNull}");
-                Codeline($"call   GetMemoryPointerFromIndex");
                 Codeline($"mov    rdx, rax");
                 Codeline($"sub    rsp, 20h");
                 Codeline($"call   [msvcrt_strcmp]");
@@ -613,6 +589,8 @@ namespace GroundCompiler
                 if (datatype.SizeInBytes == 4)
                     Codeline($"movd  xmm0, dword [rbp-{variableName}]");
             }
+            else if (datatype.Contains(Datatype.TypeEnum.String))
+                Codeline($"lea   rax, qword [rbp-{variableName}]");
             else
                 Codeline($"mov   rax, qword [rbp-{variableName}]");
         }
@@ -626,6 +604,8 @@ namespace GroundCompiler
                 if (datatype.SizeInBytes == 4)
                     Codeline($"movd  xmm0, dword [rcx-{variableName}]");
             }
+            else if (datatype.Contains(Datatype.TypeEnum.String))
+                LeaParentFunctionVariable64(variableName);
             else
                 Codeline($"mov   rax, qword [rcx-{variableName}]");
         }
@@ -670,6 +650,14 @@ namespace GroundCompiler
                 if (datatype.SizeInBytes == 4)
                     Codeline($"movd  dword [rbp-{variableName}], xmm0");
             }
+            else if (datatype.Contains(Datatype.TypeEnum.String))
+            {
+                //copy the string pointed in rax, to the [rbp-{variableName}]
+                Codeline($"push  rax rcx");
+                Codeline($"lea   rcx, qword [rbp-{variableName}]");
+                Codeline($"call  CopyString");
+                Codeline($"pop   rcx rax");
+            }
             else
             {
                 // You might ask why only rax is used and not eax, ax, al based on the datatype. Like this:
@@ -690,6 +678,14 @@ namespace GroundCompiler
                 if (datatype.SizeInBytes == 4)
                     Codeline($"movd  dword [rcx-{variableName}], xmm0");
             }
+            else if (datatype.Contains(Datatype.TypeEnum.String))
+            {
+                //copy the string pointed in rax, to the [rbp-{variableName}]
+                Codeline($"push  rax rcx");
+                Codeline($"lea   rcx, qword [rcx-{variableName}]");
+                Codeline($"call  CopyString");
+                Codeline($"pop   rcx rax");
+            }
             else
                 Codeline($"mov   [rcx-{variableName}], rax");
         }
@@ -701,7 +697,17 @@ namespace GroundCompiler
                     Codeline($"movq  qword [{reg}+{instVar}], xmm0");
                 if (targetType.SizeInBytes == 4)
                     Codeline($"movd  dword [{reg}+{instVar}], xmm0");
-            } else {
+            }
+            else if (targetType.Contains(Datatype.TypeEnum.String))
+            {
+                //copy the string pointed in rax, to the [rbp-{variableName}]
+                Codeline($"push  rax rcx");
+                Codeline($"lea   rcx, qword [{reg}+{instVar}]");
+                Codeline($"call  CopyString");
+                Codeline($"pop   rcx rax");
+            }
+            else
+            {
                 var nrBytes = targetType.SizeInBytes;
                 Codeline($"mov   {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}], {cpu.RAX_Register_Sized(nrBytes)}");
             }
@@ -715,6 +721,10 @@ namespace GroundCompiler
                     Codeline($"movq  xmm0, qword [{reg}+{instVar}]");
                 if (datatype.SizeInBytes == 4)
                     Codeline($"movd  xmm0, dword [{reg}+{instVar}]");
+            }
+            else if (datatype.Contains(Datatype.TypeEnum.String))
+            {
+                Codeline($"lea   rax, qword [{reg}+{instVar}]");
             }
             else
             {
@@ -741,26 +751,34 @@ namespace GroundCompiler
             Codeline($"dec   rax");
         }
 
-        public void GetMemoryPointerFromIndex()
+        public void ReserveOnStack(int space, string register = "rax")
         {
-            Codeline("call  GetMemoryPointerFromIndex");
+            int toReserve = space;
+            int onder15 = (space & 0xf);
+            if (onder15 > 0)
+                toReserve = space - onder15 + 16;
+
+            FramePosition += toReserve;
+            Codeline($"lea   {register}, [rbp-{FramePosition}]");
         }
 
         public void IntegerToString(Expression expr)
         {
             cpu.ReserveRegister("rcx");
+            FramePosition += 256;
+            Codeline($"lea   rcx, [rbp-{FramePosition}]");
             Codeline("call  IntegerToString");
-            Codeline("mov   rcx, rbp");
-            AddTmpReference(expr);
+            Codeline($"mov   rax, rcx");
             cpu.FreeRegister("rcx");
         }
 
         public void FloatToString(Expression expr)
         {
             cpu.ReserveRegister("rcx");
+            FramePosition += 256;
+            Codeline($"lea   rcx, [rbp-{FramePosition}]");
             Codeline($"call  FloatToString");
-            Codeline("mov   rcx, rbp");
-            AddTmpReference(expr);
+            Codeline($"mov   rax, rcx");
             cpu.FreeRegister("rcx");
         }
 
@@ -821,6 +839,7 @@ namespace GroundCompiler
             string part2 = parName;
             return $"{part2}@{part1}" + ((groupName != null) ? $"@{groupName}" : "");
         }
+
         public string UserfriendlyVariableNameForFunctionParameter(string functionName, string parName, string? groupName = null)
         {
             string part1 = functionName;
@@ -828,80 +847,7 @@ namespace GroundCompiler
             return $"{part2}@{part1}" + ((groupName != null) ? $"@{groupName}" : "");
         }
 
-        public string AssemblyVariableNameForHardcodedGroupVariable(string group, string variableName)
-        {
-            return $"{group}_{variableName}";
-        }
-
-        public void CleanDereferenced()
-        {
-            cpu.ReserveRegister("rcx");
-            Codeline("mov   rcx, rbp");               // rcx must contain the base of the stack of the function
-            Codeline("call  RemoveDereferenced");
-            cpu.FreeRegister("rcx");
-        }
-
-        public void CleanTmpDereferenced()
-        {
-            cpu.ReserveRegister("rcx");
-            Codeline("mov   rcx, rbp");               // rcx must contain the base of the stack of the function
-            Codeline("call  RemoveTmpDereferenced");
-            cpu.FreeRegister("rcx");
-        }
-
-        public void LoadClassInstance(string varName)
-        {
-            cpu.ReserveRegister("rdi");
-            Codeline($"mov   rdi, [rbp-{varName}]");
-            cpu.FreeRegister("rdi");
-        }
-
-        public void RemoveReference()
-        {
-            Codeline("call  RemoveReference");
-        }
-
-        public void AddReference(AstNode node)
-        {
-            // rcx must contain the base of the stack of the function
-            Codeline("call  AddReference");
-            var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
-            if (blockType == null)
-                Compiler.Error("AddReference: no blockType found.");
-
-            blockType!.shouldCleanDereferenced = true;
-        }
-
-        public void AddTmpReference(AstNode node)
-        {
-            // rcx must contain the base of the stack of the function
-            Codeline("call  AddTmpReference");
-            var blockType = node.FindParentType(typeof(BlockStatement)) as BlockStatement;
-            if (blockType == null)
-                Compiler.Error("AddTmpReference: no blockType found.");
-
-            blockType!.shouldCleanTmpDereferenced = true;
-        }
-
-
-        public void Allocate(UInt64 nrBytes)
-        {
-            cpu.ReserveRegister("rcx");
-            Codeline($"mov   rcx, {nrBytes}");
-            Codeline($"call  GC_Allocate");   //; INPUT: rcx contains the requested size     ; RESULT: rcx = INDEXSPACE rownr, rax = memptr
-            cpu.FreeRegister("rcx");
-        }
-
-        public void Make_IndexSpaceNr_Current()
-        {
-            Codeline("mov   rax, rcx");
-        }
-
-        public void PushAllocateIndexElement()
-        {
-            Codeline("push  rcx");
-            StackPush();
-        }
+        public string AssemblyVariableNameForHardcodedGroupVariable(string group, string variableName) => $"{group}_{variableName}";
 
         public void Pop(Expression? expr = null, string? register = null)
         {
@@ -913,15 +859,20 @@ namespace GroundCompiler
                 StackPop();
             }
         }
-        public void PopAllocateIndexElement() {
-            Codeline("pop   rax");
-            StackPop();
-        }
 
         public void MoveCurrentToRegister(string reg) => Codeline($"mov   {reg}, rax");
 
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index, Datatype targetType)
         {
+            if (targetType.Contains(Datatype.TypeEnum.String))
+            {
+                // rax = source   rcx = destination
+                Codeline($"push  rax rcx");
+                Codeline($"lea   rcx, qword [{baseReg}+{index}*{nrBytes}]");
+                Codeline($"call  CopyString");
+                Codeline($"pop   rcx rax");
+                return;
+            }
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 if (targetType.SizeInBytes == 8)
@@ -931,6 +882,7 @@ namespace GroundCompiler
             }
             Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
         }
+
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -942,25 +894,54 @@ namespace GroundCompiler
             }
             Codeline($"mov   [{baseReg}+({indexReg}*{nrBytes})], {cpu.RAX_Register_Sized(nrBytes)}");
         }
+
         public void SignExtend(Datatype theType)
         {
             if (theType.IsValueType && theType.Contains(Datatype.TypeEnum.Signed) && theType.Contains(Datatype.TypeEnum.Integer) && theType.SizeInBytes < 8)
                 Codeline($"movsx rax, {cpu.RAX_Register_Sized(theType.SizeInBytes)}");
         }
+
         public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
-            Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+            if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
+            {
+                string reg = cpu.GetTmpRegister();
+                Codeline($"mov   {reg}, {indexReg}");
+                Codeline($"shl   {reg}, 8");
+                Codeline($"mov   rax, [{baseReg}+{reg}]");
+                cpu.FreeRegister(reg);
+            }
+            else
+                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 8))
                 Codeline($"movq   xmm0, rax");
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 4))
                 Codeline($"movd   xmm0, eax");
         }
+
+        public void LeaBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
+        {
+            Codeline($"xor   eax, eax");
+            if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
+            {
+                string reg = cpu.GetTmpRegister();
+                Codeline($"mov   {reg}, {indexReg}");
+                Codeline($"shl   {reg}, 8");
+                Codeline($"lea   rax, [{baseReg}+{reg}]");
+                cpu.FreeRegister(reg);
+            }
+            else if (nrBytes != 1 && nrBytes != 2 && nrBytes != 4 && nrBytes != 8)
+                Codeline($"lea   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+            else
+                Compiler.Error($"LeaBasedIndexToCurrent: Index of {nrBytes} is not supported.");
+        }
+
         public void LeaBasedIndex(int nrBytes, string baseReg, string indexReg)
         {
             if (nrBytes != 1 && nrBytes != 2 && nrBytes != 4 && nrBytes != 8)
             {
-                //var reg = cpu.GetTmpRegister();
                 cpu.ReserveRegister("rdx");
                 Codeline($"mov   rax, {nrBytes}");
                 Codeline($"mov   rdx, {indexReg}");
@@ -1000,13 +981,11 @@ namespace GroundCompiler
                 Codeline($"mov   eax, eax");
         }
 
-        public bool IsAlign16() => IsAlign16(this.StackPos);
         public bool IsAlign16(long stackposition) => (((-stackposition) % 16) == 0);
         public void StackAdd(int size = 8) => StackPos += size;
         public void StackSub(int size = 8) => StackPos -= size;
         public void StackPush(int size = 8) => StackSub(size);
         public void StackPop(int size = 8) => StackAdd(size);
-
 
         void InsertPreprocessorDefines(Dictionary<string, Token>? preprocessorDefines = null)
         {

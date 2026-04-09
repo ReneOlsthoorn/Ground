@@ -26,7 +26,7 @@ float smileyXRadians = 0.0;
 #define ANALYZER_NUM 23
 int[ANALYZER_NUM] analyzerLevels = [ ] asm;	// 0 - 108
 
-string scrollText = `Electronic life is back!        The previous version was created in 1990, that is 36 years ago!        That version was created on the Amiga computer. Developed with an Amiga 500.        \
+byte* scrollText = `Electronic life is back!        The previous version was created in 1990, that is 36 years ago!        That version was created on the Amiga computer. Developed with an Amiga 500.        \
 The logo on the top is the unaltered original from the Amiga, so pressing left mousebutton will not do anything now.        \
 The demo didn't use a physics engine back then.        Perhaps the 68000 CPU was strong enough to do the calculations, but there was no opensource community offering those kind of libraries.        \
 Calculating physics is also not easy. In those times 3D was just taking off.        Transparency was also hard back then. Now it is easy in SDL3.        \
@@ -87,24 +87,24 @@ ptMod.Load(soundFile);
 ptMod.StartPlay();
 
 string[] NoteMapping = [ "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" ];
-string GetNoteResult;
-function GetNoteInfo(int note, int sample, int effect) {
+function GetNoteInfo(int note, int sample, int effect) : string {
 	if (note == 0 and sample == 0 and effect == 0) {
-		GetNoteResult = "--- 0000"; //"        ";
-		return;
+		return "--- 0000"; //"        ";
 	}
+	string result;
 	if (note != 0) {
 		note = note - 1;
 		int octaaf = note / 12;
 		int noteWithin = note % 12;
-		GetNoteResult = NoteMapping[noteWithin] + (octaaf+1) + " ";
+		result = NoteMapping[noteWithin] + (octaaf+1) + " ";
 	} else {
-		GetNoteResult = "--- ";
+		result = "--- ";
 	}
 	if (sample != 0 or effect != 0) {
-		GetNoteResult = GetNoteResult + gc.hex$(sample,1) + gc.hex$(effect,3);
+		result = result + gc.hex$(sample,1) + gc.hex$(effect,3);
 	} else
-		GetNoteResult = "0000";
+		result = "0000";
+	return result;
 }
 
 function PrintMusicInfo() {
@@ -125,7 +125,7 @@ function PrintMusicInfo() {
 			int note = ptMod.GetNote(aRow[v]);
 			int sample = ptMod.GetSample(aRow[v]);
 			int effect = ptMod.GetEffect(aRow[v]);
-			GetNoteInfo(note, sample, effect);
+			string noteResult = GetNoteInfo(note, sample, effect);
 
 			if (v == 0)
 				g.[screen_cursor] = g.[screen_cursor] + 4;
@@ -135,7 +135,8 @@ function PrintMusicInfo() {
 				g.[screen_cursor] = g.[screen_cursor] + 38;
 			if (v == 3)
 				g.[screen_cursor] = g.[screen_cursor] + 1;
-			print(GetNoteResult);
+
+			print(noteResult);
 		}
 		print("\n");
 	}
@@ -349,7 +350,7 @@ while (StatusRunning)
 		levelDestRect[0] = 367+(i*24);
 		levelDestRect[1] = 600 + analyzerPos;
 		levelDestRect[3] = analyzerLevels[i];
-		sdl3.SDL_RenderTexture(renderer, levelTexture, &levelSrcRect, &levelDestRect);
+		sdl3.SDL_RenderTexture(renderer, levelTexture, levelSrcRect, levelDestRect);
 
 		analyzerLevels[i] = analyzerLevels[i] - 2;
 	}
@@ -440,7 +441,7 @@ while (StatusRunning)
 	smileyXRadians = smileyXRadians + 0.03;
 	if (smileyXRadians > MATH_2PI)
 		smileyXRadians = smileyXRadians - MATH_2PI;
-	sdl3.SDL_RenderTexture(renderer, smileyTexture, null, &smileyDestRect);
+	sdl3.SDL_RenderTexture(renderer, smileyTexture, null, smileyDestRect);
 
 
 	/*   DRAW FONT BALLS ON SCREEN   */
@@ -462,7 +463,7 @@ while (StatusRunning)
 
 		fontSrcRect[0] = fontXOffsets[theChar];
 		fontSrcRect[1] = fontYOffsets[theChar];
-		sdl3.SDL_RenderTextureRotated(renderer, ballFontTexture, &fontSrcRect, &fontDestRect, -theAngle, null, g.SDL_FLIP_NONE);
+		sdl3.SDL_RenderTextureRotated(renderer, ballFontTexture, fontSrcRect, fontDestRect, -theAngle, null, g.SDL_FLIP_NONE);
 	}
 
 
@@ -473,13 +474,13 @@ while (StatusRunning)
 		chipmunk.cpBodyGetPosition(cpvectPos, cubePointBody);
 		ballDestRect[0] = cpvectPos.x;
 		ballDestRect[1] = SCREEN_HEIGHT - cpvectPos.y;
-		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, &ballSrcRect, &ballDestRect, 0.0, null, g.SDL_FLIP_NONE);
+		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrcRect, ballDestRect, 0.0, null, g.SDL_FLIP_NONE);
 	}
 
 
 	/*   DRAW THE MOVING WATER   */
 	waterSrcRect[0] = waterEffectOffset;
-	sdl3.SDL_RenderTexture(renderer, waterTexture, &waterSrcRect, &waterDestRect);
+	sdl3.SDL_RenderTexture(renderer, waterTexture, waterSrcRect, waterDestRect);
 	waterEffectOffset = waterEffectOffset + 2;
 	if (waterEffectOffset == 504)
 		waterEffectOffset = 0;

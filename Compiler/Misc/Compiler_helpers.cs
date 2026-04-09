@@ -105,7 +105,7 @@ namespace GroundCompiler
                     emitter.LoadSystemVarsVariable("font256_p");
 
                 if (symbol.Name == "GC_CurrentExeDir")
-                    emitter.LoadAssemblyVariable("currentExeDir");
+                    emitter.LoadAssemblyVariableString("currentExeDirChars");
 
                 if (symbol.Name == "GC_Float_Infinity") {
                     emitter.LoadInfinityFloat64();
@@ -146,12 +146,6 @@ namespace GroundCompiler
             {
                 EmitExpression(assignment.RightOfEqualSignNode);
                 EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
-                if (localVarSymbol!.DataType.IsReferenceType)
-                {
-                    reg = emitter.Gather_CurrentStackframe();
-                    emitter.AddReference(assignment.RightOfEqualSignNode);
-                    cpu.FreeRegister(reg);
-                }
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
             }
             else if (symbol is FunctionParameterSymbol funcParSymbol)
@@ -166,15 +160,11 @@ namespace GroundCompiler
                 {
                     reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                     emitter.LoadParentFunctionVariable64(assemblyVarName, parentSymbol.DataType);
-                    emitter.RemoveReference();
                     cpu.FreeRegister(reg);
                 }
                 EmitExpression(assignment.RightOfEqualSignNode);
                 EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
                 reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
-                if (parentSymbol.DataType.IsReferenceType)
-                    emitter.AddReference(assignment.RightOfEqualSignNode);
-
                 emitter.StoreParentFunctionParameter64(assemblyVarName, parentSymbol.DataType);
                 cpu.FreeRegister(reg);
             }
@@ -210,7 +200,6 @@ namespace GroundCompiler
             if (variableExpr.ExprType.IsReferenceType)
             {
                 VariableRead(variableExpr);
-                emitter.GetMemoryPointerFromIndex();
                 return;
             }
 
@@ -321,9 +310,6 @@ namespace GroundCompiler
                 var targetType = arrayExpr.MemberNode.ExprType.Base;
                 elementSizeInBytes = targetType!.SizeInBytes;
 
-                if (memberDatatype.IsReferenceType)
-                    emitter.GetMemoryPointerFromIndex();
-
                 string baseReg = cpu.GetRestoredRegister(arrayExpr);
                 emitter.MoveCurrentToRegister(baseReg);
                 if (assignment != null)
@@ -340,15 +326,19 @@ namespace GroundCompiler
                         if (targetType.IsReferenceType && (!targetType.isClass()))
                         {
                             emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
-                            emitter.GetMemoryPointerFromIndex();
                         }
                         else
                             emitter.LeaBasedIndex(elementSizeInBytes, baseReg, indexReg);
                     }
                     else
                     {
-                        emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
-                        emitter.SignExtend(targetType);
+                        if (targetType.Contains(Datatype.TypeEnum.String))
+                            emitter.LeaBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
+                        else
+                        {
+                            emitter.LoadBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
+                            emitter.SignExtend(targetType);
+                        }
                     }
                 }
                 cpu.FreeRegister(baseReg);

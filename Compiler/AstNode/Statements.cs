@@ -253,9 +253,6 @@ namespace GroundCompiler.Statements
 
     public class BlockStatement : Statement
     {
-        public bool shouldCleanTmpDereferenced = false;
-        public bool shouldCleanDereferenced = false;
-
         public BlockStatement()
         {
         }
@@ -962,7 +959,9 @@ namespace GroundCompiler.Statements
             if (this.Properties.ContainsKey("assembly only function"))
                 return false;
 
-            return true;
+            return false;
+            //return true;
+
             /*  je kunt een statement als print("a"+1) maken en je hebt al reference counting. Dus voorlopig doen we true. Later kunnen we doen:
             var varSymbols = this._functionStatement!.Body.GetScope()!.GetVariableSymbols();
             foreach (var varSymbol in varSymbols)

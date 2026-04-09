@@ -64,12 +64,13 @@ namespace GroundCompiler
             var mainProc = new EmittedProcedure(functionStatement: prog, classStatement: null, emitter, "main");
             mainProc.MainCallback = () =>
             {
-                emitter.EmitFixedStringIndexSpaceEntries(prog.Scope.GetRootScope().GetStringSymbols());
                 VisitorBlock(prog.BodyNode!);
                 emitter.CloseGeneratedCode_Main();
 
+                int oldFramePos = emitter.FramePosition;
                 EmitFunctions(prog.Scope.GetFunctionStatements());
                 EmitClasses(prog.Scope.GetClassSymbols());
+                emitter.FramePosition = oldFramePos;
                 emitter.CloseGeneratedCode_Procedures();
 
                 emitter.EmitLiteralFloats(prog.Scope.GetLiteralFloatSymbols());
@@ -96,21 +97,12 @@ namespace GroundCompiler
                     emitter.InsertLabel(returnLabel);
                 }
             }
-
-            if (stmt.shouldCleanTmpDereferenced)
-                emitter.CleanTmpDereferenced();
-
-            if (stmt.shouldCleanDereferenced && stmt.Parent is FunctionStatement)    // When CleanDereferenced() is done on normal loop blocks, the variables belonging to the same scope outside the loop will be freed. That is not wanted.
-                emitter.CleanDereferenced();
-
             return null;
         }
 
 
         public object? VisitorVariableDeclaration(VarStatement stmt)
         {
-            PrintAst(stmt);
-
             var name = stmt.Name.Lexeme;
             var currentScope = stmt.GetScope();
             var symbol = GetSymbol(name, currentScope!, stmt.Name);
@@ -120,18 +112,9 @@ namespace GroundCompiler
             {
                 if (localVarSymbol.DataType.Types.Contains(Datatype.TypeEnum.CustomClass))
                 {
-                    UInt64 nrBytesToAllocate = (UInt64)localVarSymbol.DataType.SizeInBytes;
-                    emitter.Allocate(nrBytesToAllocate);
-                    emitter.Make_IndexSpaceNr_Current();
+                    int nrBytesToAllocate = localVarSymbol.DataType.SizeInBytes;
+                    emitter.ReserveOnStack(nrBytesToAllocate);
                     emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
-
-                    var reg = emitter.Gather_CurrentStackframe();
-                    emitter.AddTmpReference(stmt);
-                    cpu.FreeRegister(reg);
-
-                    reg = emitter.Gather_CurrentStackframe();
-                    emitter.AddReference(stmt);
-                    cpu.FreeRegister(reg);
                 }
 
                 if (stmt.InitializerNode != null)
@@ -142,15 +125,6 @@ namespace GroundCompiler
 
                     EmitExpression(stmt.InitializerNode);
                     EmitConversionCompatibleType(stmt.InitializerNode!, localVarSymbol.DataType);
-
-                    if (stmt.InitializerNode!.ExprType.IsReferenceType)
-                    {
-                        if (!IsUnaryAddressOf(stmt.InitializerNode!)) {
-                            var reg = emitter.Gather_CurrentStackframe();
-                            emitter.AddReference(stmt.InitializerNode);
-                            cpu.FreeRegister(reg);
-                        }
-                    }
 
                     var assemblyVarName = emitter.AssemblyVariableName(localVarSymbol, stmt.GetScope()?.Owner);
                     emitter.StoreFunctionVariable64(assemblyVarName, localVarSymbol.DataType);
@@ -163,16 +137,17 @@ namespace GroundCompiler
         public object? VisitorReturn(ReturnStatement stmt)
         {
             if (stmt.ReturnValueNode is ThisExpression thisExpr)
-            {
                 emitter.Codeline("mov   rax, [rbp+G_PARAMETER_THIS]");
-            } else
+            else
                 EmitExpression(stmt.ReturnValueNode);
 
             if (stmt.FindParentType(typeof(FunctionStatement)) is FunctionStatement  fStmt)
             {
                 string returnLabel;
                 if (fStmt.Properties.ContainsKey("returnLabel"))
+                {
                     returnLabel = (string)fStmt.Properties["returnLabel"]!;
+                }
                 else
                 {
                     returnLabel = emitter.NewLabel();
@@ -226,7 +201,6 @@ namespace GroundCompiler
 
         public object? VisitorIf(IfStatement stmt)
         {
-            PrintAst(stmt);
             EmitExpression(stmt.ConditionNode);
             string elseLabel = emitter.NewLabel();
             string doneLabel = emitter.NewLabel();
@@ -296,28 +270,29 @@ namespace GroundCompiler
 
             int sizeEachElement = list.ExprType.Base!.SizeInBytes;
             UInt64 nrBytesToAllocate = list.SizeInBytes();
-            emitter.Allocate(nrBytesToAllocate);
-            emitter.PushAllocateIndexElement();
-            string baseReg = cpu.GetRestoredRegister(list);
-            emitter.MoveCurrentToRegister(baseReg);
-            for (int i = 0; i < list.ElementsNodes.Count; i++)
+
+            emitter.ReserveOnStack((int)nrBytesToAllocate);
+            if (list.ElementsNodes.Count > 0)
             {
-                Expression expr = list.ElementsNodes[i];
-                if (list.ExprType.Contains(Datatype.TypeEnum.Array))
+                emitter.Push();
+                string baseReg = cpu.GetRestoredRegister(list);
+                emitter.MoveCurrentToRegister(baseReg);
+                for (int i = 0; i < list.ElementsNodes.Count; i++)
                 {
-                    expr.Properties["old ExprType"] = expr.ExprType;
-                    expr.ExprType = list.ExprType.Base;
+                    Expression expr = list.ElementsNodes[i];
+                    if (list.ExprType.Contains(Datatype.TypeEnum.Array))
+                    {
+                        expr.Properties["old ExprType"] = expr.ExprType;
+                        expr.ExprType = list.ExprType.Base;
+                    }
+
+                    EmitExpression(expr);
+                    emitter.StoreCurrentInBasedIndex(sizeEachElement, baseReg, i, expr.ExprType);
                 }
-
-                EmitExpression(expr);
-                emitter.StoreCurrentInBasedIndex(sizeEachElement, baseReg, i, expr.ExprType);
+                cpu.FreeRegister(baseReg);
+                emitter.Pop();
             }
-            cpu.FreeRegister(baseReg);
-            emitter.PopAllocateIndexElement();  // Now we have the INDEXSPACE rownr of the list in RAX
-            var reg = emitter.Gather_CurrentStackframe();
-            emitter.AddTmpReference(list);
-            cpu.FreeRegister(reg);
-
+            
             return null;
         }
 
@@ -384,7 +359,6 @@ namespace GroundCompiler
                         Compiler.Error($"Instance variable {expr.Name.Lexeme} not found.", expr.Name);
 
                     VariableRead(objectNodeAsVariable);
-                    emitter.GetMemoryPointerFromIndex();
                 }
             }
 
@@ -460,21 +434,9 @@ namespace GroundCompiler
             }
 
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
-            
-            string reg;
-            if (instVar!.ResultType.IsReferenceType)
-            {
-                reg = emitter.Gather_CurrentStackframe();
-                emitter.AddReference(expr.ValueNode);
-                cpu.FreeRegister(reg);
-            }
 
             if (objectNodeAsVariable != null)
-            {
                 VariableRead(objectNodeAsVariable);
-                if (!Datatype.IsPointerType(expr.ObjectNode.ExprType))
-                    emitter.GetMemoryPointerFromIndex();
-            }
 
             if (objectNodeAsThis != null)
             {
@@ -503,8 +465,6 @@ namespace GroundCompiler
         // Variable. Direction: Write.
         public object? VisitorAssignment(Assignment assignment)
         {
-            PrintAst(assignment);
-
             if (assignment.LeftOfEqualSignNode is Variable variableExpr)
                 VariableAssignment(variableExpr, assignment);
             else if (assignment.LeftOfEqualSignNode is ArrayAccess arrayExpr)
@@ -519,8 +479,6 @@ namespace GroundCompiler
         // 1+1. Direction: Read.
         public object? VisitorBinary(Binary expr)
         {
-            PrintAst(expr);
-
             var conversionDatatype = expr.DetermineConversionDatatype();
 
             EmitExpression(expr.RightNode);
@@ -633,24 +591,16 @@ namespace GroundCompiler
             if (expr.ExprType.Contains(Datatype.TypeEnum.CustomClass))
             {
                 // It is a constructor for a class. Allocate memory for this new temporary class instance.
-                UInt64 nrBytesToAllocate = (UInt64)expr.ExprType.SizeInBytes;
-                emitter.Allocate(nrBytesToAllocate);
-                string indexSpaceRegister = cpu.GetRestoredRegister(expr);
-                emitter.RegisterMove("rcx", indexSpaceRegister);
+                int nrBytesToAllocate = expr.ExprType.SizeInBytes;
+                emitter.ReserveOnStack(nrBytesToAllocate);
                 string memPtrRegister = cpu.GetRestoredRegister(expr);
                 emitter.RegisterMove("rax", memPtrRegister);
-                emitter.Make_IndexSpaceNr_Current();
-                emitter.Push();  // push the indexspacenr of the allocated memory
-
-                var reg = emitter.Gather_CurrentStackframe();
-                emitter.AddTmpReference(expr);
-                cpu.FreeRegister(reg);
+                emitter.Push();  // push the memPtr of the allocated memory
 
                 var funcNameVar = expr.FunctionNameNode as Variable;
                 var symbol = GetSymbol(funcNameVar!.Name.Lexeme, scope!, funcNameVar!.Name);
                 var theClassSymbol = symbol as ClassSymbol;
 
-                //GetVariableAnywhere
                 int nrFunctionArg = expr.ArgumentNodes.Count;
                 int nrClassInstVars = theClassSymbol!.ClassStatement.InstanceVariableNodes.Count;
                 for (int argNr = 0; argNr < nrClassInstVars; argNr++)
@@ -663,7 +613,6 @@ namespace GroundCompiler
                 }
                 emitter.Pop();  // pop the indexspacenr of the allocated memory
                 cpu.FreeRegister(memPtrRegister);
-                cpu.FreeRegister(indexSpaceRegister);
                 return null;
             }
 
@@ -738,8 +687,6 @@ namespace GroundCompiler
                             Error("Invalid number of arguments in zero function. Only 1 or 2 allowed.");
 
                         EmitExpression(arg);
-                        if (arg.ExprType.IsReferenceType)
-                            emitter.GetMemoryPointerFromIndex();
 
                         emitter.Codeline($"push  rcx rdi");  // rcx = nr of bytes, rdi = destination pointer
                         emitter.Codeline($"mov   rdi, rax");
@@ -817,10 +764,6 @@ namespace GroundCompiler
                 var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
 
-                // In een DLL aanroep willen we altijd de memory-location meegeven in plaats van de memory-index.
-                if (dllFunctionSymbol != null && arg.ExprType.IsReferenceType && (!IsUnaryAddressOf(arg)))
-                    emitter.GetMemoryPointerFromIndex();
-
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
                 emitter.Push(arg.ExprType);
@@ -871,7 +814,6 @@ namespace GroundCompiler
                 else if (instVarName != null && instVarName != "this" && instVar != null)
                 {
                     VariableRead(instVar);
-                    emitter.GetMemoryPointerFromIndex();
                 }
                 else if (propertyGetArrayAccess != null)
                     ArrayAccess(propertyGetArrayAccess, addressOf: true);
@@ -990,7 +932,7 @@ namespace GroundCompiler
             {
                 var strConstant = expr.GetRootScope()?.GetString((string)expr.Value);
                 if (strConstant != null)
-                    emitter.LoadConstantString(strConstant.IndexspaceRownr);
+                    emitter.LoadConstantString(strConstant);
             }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.Integer))
                 emitter.LoadConstant64(Convert.ToInt64(expr.Value));

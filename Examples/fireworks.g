@@ -51,6 +51,9 @@ class Particle {
 	int dead;
 }
 Particle[NUMBER_OF_PARTICLES] particles = [];
+for (i in 0 ..< NUMBER_OF_PARTICLES) {
+	particles[i].dead = 1;
+}
 
 u16* fire = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u16));
 
@@ -126,7 +129,7 @@ function Graphics_Update() {
 
 	u8* AsmPar_fire = fire;
 	u32* AsmPar_pixels = pixels;
-	ptr AsmPar_colors = &colors;
+	ptr AsmPar_colors = colors;
 
 	for (i in 0 ..< NUMBER_OF_PARTICLES)
 	{

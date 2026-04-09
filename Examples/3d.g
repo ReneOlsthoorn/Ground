@@ -23,8 +23,8 @@ f32[4] ballSrcRectVoetbal = [0,0,32,32];
 f32[4] ballSrcRectTennisbal = [0,32,32,32];
 f32[4] ballSrcRectKogel = [0,64,32,32];
 f32[4] ballDestRect = [0,0,32,32];
-//ptr ballSrc = &ballSrcRectVoetbal;
-ptr ballSrc = &ballSrcRectKogel;
+//ptr ballSrc = ballSrcRectVoetbal;
+ptr ballSrc = ballSrcRectKogel;
 
 
 ptr processHandle = kernel32.GetCurrentProcess();
@@ -203,7 +203,7 @@ function RenderCube() {
 		ballDestRect[3] = ballSize;
 
 		sdl3.SDL_SetRenderScale(renderer, 1.0, 1.0);
-		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrc, &ballDestRect, 0.0, null, g.SDL_FLIP_NONE);
+		sdl3.SDL_RenderTextureRotated(renderer, ballTexture, ballSrc, ballDestRect, 0.0, null, g.SDL_FLIP_NONE);
 	}
 }
 

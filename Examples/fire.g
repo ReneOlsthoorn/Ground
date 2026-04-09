@@ -285,10 +285,6 @@ ASM_Fire:
 	sub r8d, ecx
 
 	mov r9, [palette@main]
-	mov	rax, r9
-	call  GetMemoryPointerFromIndex
-	mov r9, rax
-
 	mov r11, 0
 	mov r12, 0
 	mov r10, [fireBufferNew@main]

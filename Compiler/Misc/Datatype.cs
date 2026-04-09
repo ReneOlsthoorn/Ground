@@ -132,7 +132,7 @@ namespace GroundCompiler
             { "double",  Datatype.FromData("double",  [ TypeEnum.Number, TypeEnum.FloatingPoint ], isValueType:true, nrBytes:8) },
             { "f64",    Datatype.FromData("f64",    [ TypeEnum.Number, TypeEnum.FloatingPoint ], isValueType:true, nrBytes:8) },
             { "bool",   Datatype.FromData("bool",   [ TypeEnum.Boolean ], isValueType:true, nrBytes:8) },
-            { "string", Datatype.FromData("string", [ TypeEnum.String, TypeEnum.Array, TypeEnum.Allocated ], isValueType:false, nrBytes:8) }
+            { "string", Datatype.FromData("string", [ TypeEnum.String ], isValueType:true, nrBytes:256) }
         };
 
         public static bool IsCompatible(Datatype type1, Datatype type2)
@@ -180,7 +180,7 @@ namespace GroundCompiler
 
             if (theType.EndsWith("[]"))
             {
-                Datatype arrayDatatype = Datatype.FromData(theType, new List<TypeEnum> { TypeEnum.Array, TypeEnum.Allocated }, isValueType: false, nrBytes: 8);
+                Datatype arrayDatatype = Datatype.FromData(theType, new List<TypeEnum> { TypeEnum.Array }, isValueType: true, nrBytes: 8);
                 var baseTypeStr = theType.Substring(0, theType.IndexOf('['));
                 Datatype baseType = GetDatatype(baseTypeStr);
                 arrayDatatype.Base = baseType;

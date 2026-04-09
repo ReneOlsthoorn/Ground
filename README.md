@@ -4,8 +4,8 @@ This is the compiler for the programming language `Ground` for Windows that prom
 It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
 Ground code, so the programmer stays in control of the CPU.  
   
-Ground has constructs like `class` and `function`, statements like `while`, `for` and `if`, datatypes 
-like `string` and `float` and arrays. See file `unittests.g` for some syntax examples.  
+Ground has constructs like `class` and `function`, statements like `if`, `for` and `while`, datatypes 
+like `int`, `float`, `byte`, `string` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
 written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/).  
@@ -14,7 +14,7 @@ files when the template is chosen wisely. For instance, there is a `console` tem
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
 can create your own template.  
   
-The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 6k.  
+The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k.  
 Ground .EXE files will be small because most external code is loaded at load-time. The usage of the known system 
 DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
@@ -76,10 +76,11 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
 know it today. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone can use. 
 During loadtime, the OS loads all the dependencies of the executable.  
-The WIN32 API was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 92% market share in the early 2000's.  
+The WIN32 API was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 
+92% market share in the early 2000's.  
   
-In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved in Windows 98 with WinSxS and manifests. 
-Unfortunately version numbering was never integrated in the PE format.  
+In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved 
+in Windows 98 with WinSxS and manifests. Unfortunately version numbering was never integrated in the PE format.  
   
 In 1992, Microsoft released COM. After that DCOM and COM+. The focus went away from Native DLLs. In 1996 Microsoft worked on Visual J++.
 After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code of DotNet. Microsoft even did a research project 
@@ -87,26 +88,26 @@ to create an OS using managed code, See project [Singularity](https://en.wikiped
 That project failed because it was too slow.  
 
 After realising that managed code is too slow, you'd think that Microsoft would put effort into making a great library of high performance 
-native Windows DLLs for common programming tasks. However, they did not do that and the negative consequences are still felt today.
+native Windows DLLs for common programming tasks. However, they didn't do that and the consequences are still felt today.
 
 ### Neglectance became failing
 You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
 You want to rotate 3D coordinates or play a music module? No native Microsoft Windows DLL for that.  
-You want to load a JPG with a native Microsoft Windows DLL? Well, that will not be easy.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, also that will not be easy.  
   
 This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, although they had all the resources 
 to do so. It might be a conscious decision, because Microsoft sells software themselves and a great library in Windows would undermine their advantage.  
-Nowadays, intiatives like MSYS2 puts Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
+Nowadays, intiatives like MSYS2 put Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
 If you want an OS for programmers, you'd better move to Linux or BSD that contain standard libraries like libjpeg and libpng.  
   
 The fact that so little functionality is offered by Windows DLLs has also consequences for `Ground`. Most of the DLLs must be downloaded, like SDL3 and libmikmod.
 Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll. 
 Windows is pretty much an empty shell.
 
-### About the Visual Studio C language
+### The demise of Visual Studio C
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
-The quality of the generated code by Visual Studio C is good and the sourcecode can be reused for other processors. 
-However, there are major annoyances:
+The quality of the generated code is good and the sourcecode can be reused for other processors. 
+However if you have chosen Visual Studio C, there are major annoyances:
 1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has `/GS`, `SDL checks` and runtime checks.
 1. A massive runtime library is included when you create a `HelloWorld.exe`. Before you know it, you need to 
 ship `vc_redist.x64.exe` with your little 4k demo.
@@ -117,13 +118,17 @@ inserted assembly makes optimization too hard for the compiler.
 1. Highlevel constructs like classes are not available and moving to C++ is a mistake. Good luck with C++'s 
 `reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the copy-constructor is not 
 called when the compiler is doing `Return value optimization`.
-1. The Visual Studio C datatypes `int` and `float` are wrong for a 64 bit system. They are 4 bytes, but need to be 8.
 
-Ground tries to leave all these Visual C/C++ problems behind and close the gap between compact highlevel 
-constructs and assembly. Typical usage of x86-64 is in innerloops. See `.\Examples\mode7_optimized.g` for 
-an example of innerloop optimization.
+These annoyances make programmers look for alternatives. Many programmers nowadays use MSYS2, which is Unix look-a-like toolchain that 
+offers C compilers like CLANG and GCC.  
 
-Ground has a reference count system, so there is no garbage collector. Reference counting makes string concatenation easier.
+C shows its age. On x86, `int` and `float` are 2 bytes. On x86-32, they are 4 bytes. However, on x86-64 they still 
+remain 4 bytes! That's confusing and not consistent.  
+Ground tries to leave C behind and close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is 
+in innerloops. See `.\Examples\mode7_optimized.g` for an example of innerloop optimization.  
+
+Ground has no garbage collector or reference count system. Objects are placed on the stack and released when the scope is ended. For large allocations, you
+should manually allocate memory. Strings are maximum 256 bytes.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
@@ -196,7 +201,6 @@ that will be the future.
 
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
-* Don't do string concatenation in your main-loop because memory-cleanup runs when the scope is left. In your mainloop, you don't leave a scope, so it will result in a memory exhaustion.
 * Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
 * The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
 These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I created the make files like this: 
@@ -294,39 +298,6 @@ The choices made in Ground might not be to your liking. Perhaps you want to use 
 don't want a reference count system but a garbage collector. Why not write your own language? Use the lexer from this 
 compiler or borrow some code generation constructs. It might be less work than you think.  
 
-### Technical details on the memory model in Ground.
-The `stack` is 512k and is defined at the top of the generated assembly file.  
-Ground has got it's own managed memory for reference types like arrays, classes and strings, because doing malloc and 
-free on every object creation will not perform. When doing string concatenation, something must provide the needed
-memory. So, you automatically will go to a managed memory situation. Now that the objects are allocated, you
-want to be able to assign them to other variables in distant scopes, without copying the memory. So, that will naturally
-lead to reference counting. Ground does that. Reference counts are added and subtracted, and when nothing references 
-the object anymore, it is freed within it's own managed memory. There is no garbage collector. The fast processing 
-is done at the end of a function.  
-
-There are three memory spaces:
-1. Variable space. (4mb by default)
-This contains the actual data. It is just a continuous block of memory. The default allocation is 4mb at this moment.
-
-2. Index space. (1000 elements by default)
-We divide the variable space up in blocks. Each block is referenced by a row in the index space. Each row contains 
-a pointer, the size of the block and the number of references to this block. At this moment, the rowsize is 32 bytes. 
-When Ground generates code, a value-type variable will just contain the value in either RAX of XMM0. For reference-type
-variables however, the value will be the index. This index will be used to lookup the pointer to the used memory block.
-
-3. Reference space. (2000 elements by default)
-In a reference counting system, each owner must manage their referenced objects. Functions are owners. The references 
-in this case are indexes in the index space. When a function exits, the referenced objects must be looped and the 
-reference count for each referenced object must be decremented. The reference space contains all lists of references 
-for all functions. Such a list cannot be kept on the stack, because there can be nesting of functions and when a 
-variable is assigned to a variable in a different scope/function it would mess up the stack.  
-The reference space is used by two linked lists in a function: the RefCount list and the TmpRefCount list. Why 2 lists?
-The function must keep track of the temporary memory that is allocated in the expressions, so it can be freed with ease.
-The RefCount list exists for values that are assigned to variables. Perhaps the lists can be merged, but then an extra 
-property must be added which tells the code that the variable is temporary. My choice was to create separate lists.
-The reference counting system has an overhead during runtime. So, I agree with the creator of the `Beef` language that 
-it's more ideal to have no Garbage Collection or Reference Counting, which Beef facilitates with the `Scope` keyword.
-
 ### Details about the compiler
 There are several steps done before the generated .EXE file is executed:
 
@@ -359,33 +330,9 @@ of a variable from another scope. So, the ParentScopeVariable knows how many lev
 the code generation process this is important.
 
 ### Stack- and Heap allocation:
+The `stack` is 512k and is defined at the top of the generated assembly file.
 Normal variables and function parameters are allocated on the stack. This is also necessary because in multicore 
 programming each process gets its own stack.  
-Reference types like Arrays are allocated on the heap. A string is an array. Strings are fixed and allocated in the 
-root Scope, so all functions can reuse them. Dynamic string cannot be reused and are allocated with Grounds own 
-memorymanager.
-
-### More Indexspace details:
-Indexspace row format has 32 bytes and only 20 bytes are used:
-```
-  memoryPtr(8) -> pointer to the allocated piece
-  sizePtr(8)   -> size of the allocated space
-  nrRefs(4)    -> how many variables point to this block
-```
-The elements of the Indexspace table are not moved.  
-When a memoryblock is freed, the memoryPtr stays but the nrRefs goes to 0.  
-When freeing the element, the previous element is inspected and if that one is also free the sizes are combined. The
-absorbed index will become 0 completely.
-When the memory_ptr is filled, but the size = 0, then it's a reference to a static string.<br/>
-<br/>
-Samples:
-```
-0x3100530331005303, 200,  0  -> free memory block of 200 bytes at location 0x3100530331005303
-0x3100530331005303, 200,  1  -> allocated block of 200 bytes at location 0x3100530331005303
-0x3100530331005303,   0,  1  -> pointer to a fixed zero-terminated string defined in the .data section
-0,0,0                        -> free index row
-0x3100530331005303, 300,  2  -> occupied memoryblock of 300 bytes with 2 references
-```
 
 ### Emitting x86-64 code:
 Code generation/emitting happens in the CodeEmitterX64 class. For different types, different codepaths are emitted. 
@@ -562,7 +509,6 @@ The executables are in the `bin\Release` directory of the zipfile.
 2025.09.10: Bugs game added.  
 2025.09.18: ConnectFour (Vier-op-een-rij) added.  
 2025.09.29: Chess added using StockFish.  
-2025.10.17: "Come Taste The Stars" (star_taste.g) experience added.  
 2025.10.28: High Noon game added.  
 2025.11.09: Memory game added.  
 2025.11.29: GroundSideLibrary now build with MSYS2.  
@@ -571,7 +517,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.01.16: Electronic Life 2026 added.  
 2026.02.08: Circles and Spiral added.  
 2026.02.13: Hexacubes added.  
-
-### Open bugs
-2025.12.13: A string as instance variable has bad reference counting.  
-2025.12.13: Returning a string from a function has bad reference counting.  
+2026.04.09: Major refactoring done by removing the reference counting memorymanager. Great improvement.

@@ -168,16 +168,16 @@ sdl3.SDL_UnlockTexture(texture);
 
 function RenderObjectLine(int startX, int startY) {
 	SetVertexPosition(startX, startY);
-    sdl3.SDL_RenderGeometry(renderer, texture, &verts, NR_VERTICES, null, 0);
+    sdl3.SDL_RenderGeometry(renderer, texture, verts, NR_VERTICES, null, 0);
 
 	SetVertexPosition(startX+400, startY);
-	sdl3.SDL_RenderGeometry(renderer, texture, &verts, NR_VERTICES, null, 0);
+	sdl3.SDL_RenderGeometry(renderer, texture, verts, NR_VERTICES, null, 0);
 
 	SetVertexPosition(startX+800, startY);
-	sdl3.SDL_RenderGeometry(renderer, texture, &verts, NR_VERTICES, null, 0);
+	sdl3.SDL_RenderGeometry(renderer, texture, verts, NR_VERTICES, null, 0);
 
 	SetVertexPosition(startX+1200, startY);
-	sdl3.SDL_RenderGeometry(renderer, texture, &verts, NR_VERTICES, null, 0);
+	sdl3.SDL_RenderGeometry(renderer, texture, verts, NR_VERTICES, null, 0);
 }
 
 while (StatusRunning)

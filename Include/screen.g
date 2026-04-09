@@ -7,7 +7,7 @@
 #define FONT_WIDTH_BYTES 2
 
 asm data {
-align 8
+align 16
 font32_p  dq 0
 font256_p  dq 0
 screentext_p  dq 0

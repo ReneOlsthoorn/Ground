@@ -376,7 +376,7 @@ byte[15,15] board = [ ] asm;
 function copyLine(ptr dest, string src) {
 	ptr src_p = &src;
 asm {
-  mov	rdx, [src_p@copyLine]
+  mov	rdx, [src@copyLine]
   mov	r8, [dest@copyLine]
 .loop:
   mov	al, [rdx]
@@ -404,6 +404,7 @@ function PlaceAchimsp16(int x, int y) {
 
 PlaceAchimsp16(1,2);
 assert(board[5,3] == 1);
+
 
 
 function fun(f32* x) {
@@ -499,6 +500,8 @@ assert(justAByte == 65);
 #define TEST_SECOND	TEST_DEFINE * 2
 assert(TEST_SECOND == 32);
 
+
+
 i = 10;
 for (i in 1..5)
 	i = i + 20;
@@ -540,10 +543,12 @@ function IsBallUsable() : bool {
 assert(!IsBallUsable() == true);
 
 
+
 string scrollText = "A\8f\8fbcdef";
 byte scrollTextVar = scrollText[1];
 assert(scrollTextVar == 0x8f);
 assert(scrollText[0] == 65);
+
 
 
 #define NUMER_MULTIPLICATIONS 5
@@ -551,6 +556,7 @@ j = 7;
 for (i in (NUMER_MULTIPLICATIONS-1) .. 1)
 	j = j * i;
 assert(j == 7*4*3*2*1);
+
 
 
 byte[6] hallo = [ 'H', 'a', 'l', 'l', 'o', 0 ] asm;
@@ -562,6 +568,7 @@ function MakeResultStr() {
 }
 MakeResultStr();
 assert(resultStr == "Hallo");
+
 
 
 int hexValue1 = 0xfffe43fe;

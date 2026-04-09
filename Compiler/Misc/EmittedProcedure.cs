@@ -19,14 +19,6 @@ namespace GroundCompiler
             ProcedureName = (name != null) ? name : this.FunctionStatement.Name.Lexeme;
         }
 
-        public bool NeedsRefCount() => FunctionStatement.NeedsRefcountStructure();
-
-        public int ReferenceCountPointersAllocationSize()
-        {
-            // The first 32 bytes are for G_FIRST_REFCOUNT_PTR, G_LAST_REFCOUNT_PTR, G_FIRST_TMPREFCOUNT_PTR and G_LAST_TMPREFCOUNT_PTR
-            return 32;
-        }
-
         public int AmountStackSpaceToReserve()
         {
             if (StackSpaceToReserve == null)
@@ -40,7 +32,7 @@ namespace GroundCompiler
         {
             List<LocalVariableSymbol> theVariables = this.FunctionStatement.BodyNode.GetScope()!.GetVariableSymbols();
 
-            int negativeOffset = (NeedsRefCount() ? ReferenceCountPointersAllocationSize() : 0);
+            int negativeOffset = Emitter.FramePosition;
             foreach (var varSymbol in theVariables)
             {
                 if (varSymbol.DataType.Types.Contains(Datatype.TypeEnum.CustomClass))
@@ -51,6 +43,12 @@ namespace GroundCompiler
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
                     Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+                }
+                else if (varSymbol.DataType.Types.Contains(Datatype.TypeEnum.String))
+                {
+                    negativeOffset += varSymbol.DataType.SizeInBytes;
+                    var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
+                    Emitter.Writeline($"{theName} equ {negativeOffset}");
                 }
                 else
                 {
@@ -77,7 +75,8 @@ namespace GroundCompiler
                 Emitter.Writeline($"_register_{theName} equ rbp-{negativeOffset}");
             }
 
-            StackSpaceToReserve = (negativeOffset & 0xfff0) + 16;  // take care of a 16 byte stack alignment;
+            bool notAligned = (negativeOffset & 0xf) > 0;
+            StackSpaceToReserve = (negativeOffset & 0xffffff0) + (notAligned ? 16 : 0);  // take care of a 16 byte stack alignment;
         }
 
 
@@ -140,7 +139,7 @@ namespace GroundCompiler
 
             int spaceToReserve = AmountStackSpaceToReserve();
             if (spaceToReserve > 0)
-                Emitter.ReserveStackspace(spaceToReserve, NeedsRefCount());
+                Emitter.ReserveStackspace(spaceToReserve);
         }
 
         public void EmitStoreUsedRegisterValues()
@@ -164,15 +163,19 @@ namespace GroundCompiler
 
         public void EmitMain()
         {
-            Emit_Equ_LocalVariables();
-            EmitCreateStackframe();
-
-            this.FunctionStatement.BodyNode.shouldCleanDereferenced = NeedsRefCount();
+            Emitter.StackPos = 0;
 
             if (MainCallback != null)
                 MainCallback();
-        }
 
+            Emit_Equ_LocalVariables();
+            EmitCreateStackframe();
+
+            var generatedCode = Emitter.CloseGeneratedCode();
+            Emitter.GeneratedCode_Main.InsertRange(0, generatedCode);
+            //if (Emitter.FramePosition > 0)
+            //    Emitter.GeneratedCode_Main.Insert(0, $"  sub   rsp, {Emitter.FramePosition}\r\n");
+        }
 
         public void Emit()
         {
@@ -185,8 +188,8 @@ namespace GroundCompiler
              * We solve the align 16 problems by setting the StackPos to zero.
              */
             Emitter.StackPos = 0;  // when generating the code, assume an even stack.
+            Emitter.FramePosition = 0;
 
-            this.FunctionStatement.BodyNode.shouldCleanDereferenced = NeedsRefCount();
             this.FunctionStatement.Properties["in EmittedProcedure"] = true;  // this allows a registration of used registers within a function
 
             // Generate the code before the entrycode is even generated... This is risky, but works.

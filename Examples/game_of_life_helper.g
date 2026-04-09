@@ -88,9 +88,9 @@ function DrawBoard() {
 
 
 function copyLine(ptr dest, string src) {
-	ptr src_p = &src;
+	ptr src_p = src;
 asm {
-  mov	rdx, [src_p@copyLine]
+  mov	rdx, [src@copyLine]
   mov	r8, [dest@copyLine]
 .loop:
   mov	al, [rdx]
@@ -113,9 +113,9 @@ asm {
 
 
 function copyLineR(ptr dest, string src) {
-	ptr src_p = &src;
+	ptr src_p = src;
 asm {
-  mov	rdx, [src_p@copyLineR]
+  mov	rdx, [src@copyLineR]
   mov	r8, [dest@copyLineR]
 .loop:
   mov	al, [rdx]

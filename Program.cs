@@ -49,7 +49,7 @@ namespace GroundCompiler
 
             Console.WriteLine("*** Step 1: Lexer. Convert sourcecode to tokens.");
             sess.Lexer = new Lexer(sess);
-            sess.Tokens = sess.Lexer.GetTokens().ToList();                            //WriteTokensDebugInfo(session.Tokens);
+            sess.Tokens = sess.Lexer.GetTokens().ToList();
 
             Console.WriteLine("*** Step 2: Parser: Convert tokens into an Abstract Syntax Tree.");
             sess.Parser = new Parser(sess.Tokens);
@@ -201,17 +201,9 @@ namespace GroundCompiler
 
         public void WriteASTDebugInfo(Statements.ProgramNode node)
         {
-            return; // remove if you want debug info
-
             var astPrinter = new AstPrinter();
             foreach (AstNode statement in node.BodyNode.AllNodes())
                 Console.WriteLine(astPrinter.Print(statement));
         }
-
-
-        public void WriteTokensDebugInfo(IEnumerable<Token> tokens)
-        {
-        }
-
     }
 }
