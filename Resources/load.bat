@@ -29,11 +29,11 @@ if exist %THEFILE% (
   echo File %THEFILE% already exists. Skipping download.
 ) else (
   echo Downloading %THEFILE%...
-  curl -L -o %THEFILE% "https://curl.se/windows/dl-8.16.0_2/curl-8.16.0_2-win64-mingw.zip"
+  curl -L -o %THEFILE% "https://curl.se/windows/dl-8.19.0_6/curl-8.19.0_6-win64-mingw.zip"
 )
 tar -xf %THEFILE%
-move curl-8.16.0_2-win64-mingw\bin\libcurl-x64.dll .
-rmdir /s /q curl-8.16.0_2-win64-mingw
+move curl-8.19.0_6-win64-mingw\bin\libcurl-x64.dll .
+rmdir /s /q curl-8.19.0_6-win64-mingw
 
 
 rem  *** zstd.exe decompresser ***  Needed to decompress mikmod and other MSYS2 packages

@@ -159,11 +159,10 @@ So `g.SDL_WINDOWPOS_UNDEFINED` will resolve to the `SDL_WINDOWPOS_UNDEFINED` equ
 
 A powerful mixing is this:
 ```
-byte[61,36] screenArray = g.[screentext1_p];
+byte[61,36] screenArray = g.[screentext_p];
 ```
-The content of the screentext1_p variable will be used by the array screenArray. That is special because normally an array will refer to
-memory that is managed by Ground. This case overrides that and it will use a freely defined pointer to be the base. The coder can make 
-statements like:
+The content of the screentext_p assembly variable will be used by the array screenArray. You can also define an array `[]` at the right side of 
+the equation and that will create a 61*36 sized array on the stack for you. After this initialization, the code can make statements like:
 ```
 screenArray[30,10] = 'A';
 ```
@@ -179,8 +178,8 @@ retrieves the value that variable eventType points to and compares it with `SDL_
 In `smoothscroller.g`, you see a lot of examples of mixing ground and assembly.
 
 ### Variables
-When creating an array, the memory layout will be as expected. For instance when you have `byte[40] array = [];`, 
-the address of the array (`&array`) will point to an array of 40 bytes. Defining a Class with variables will
+When creating an array, the memory will be reserved on the stack. For instance when you have `byte[40] array = [];`, array
+refers to the address of the array which will point to an array of 40 bytes. Defining a Class with variables will
 align the variables at their natural alignment. So an 64-bit int defined after a byte will skip 7 bytes. This can be
 prevented. Use `packed` after the Classes name for that.  
 

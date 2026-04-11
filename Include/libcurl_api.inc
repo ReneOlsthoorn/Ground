@@ -57,6 +57,8 @@
           libcurl_curl_multi_get_offt,'curl_multi_get_offt',\
           libcurl_curl_multi_info_read,'curl_multi_info_read',\
           libcurl_curl_multi_init,'curl_multi_init',\
+          libcurl_curl_multi_notify_disable,'curl_multi_notify_disable',\
+          libcurl_curl_multi_notify_enable,'curl_multi_notify_enable',\
           libcurl_curl_multi_perform,'curl_multi_perform',\
           libcurl_curl_multi_poll,'curl_multi_poll',\
           libcurl_curl_multi_remove_handle,'curl_multi_remove_handle',\
