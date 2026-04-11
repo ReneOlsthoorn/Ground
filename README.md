@@ -104,7 +104,7 @@ The fact that so little functionality is offered by Windows DLLs has also conseq
 Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll. 
 Windows is pretty much an empty shell.
 
-### The annoyances of Visual Studio C/C++
+### The annoyances of Visual Studio C
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code is good and the sourcecode can be reused for other processors. 
 However if you have chosen Visual Studio C, there are major annoyances:
