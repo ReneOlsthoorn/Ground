@@ -104,7 +104,7 @@ The fact that so little functionality is offered by Windows DLLs has also conseq
 Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll. 
 Windows is pretty much an empty shell.
 
-### The demise of Visual Studio C
+### The annoyances of Visual Studio C/C++
 On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
 The quality of the generated code is good and the sourcecode can be reused for other processors. 
 However if you have chosen Visual Studio C, there are major annoyances:
@@ -115,9 +115,6 @@ ship `vc_redist.x64.exe` with your little 4k demo.
 and `_fltused`. The default stacksize is 4k on a system with more than 8 Gb memory!
 1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
 inserted assembly makes optimization too hard for the compiler.
-1. Highlevel constructs like classes are not available and moving to C++ is a mistake. Good luck with C++'s 
-`reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the copy-constructor is not 
-called when the compiler is doing `Return value optimization`.
 
 These annoyances make programmers look for alternatives. Many programmers nowadays use MSYS2, which is Unix look-a-like toolchain that 
 offers C compilers like CLANG and GCC.  
@@ -127,8 +124,27 @@ remain 4 bytes! That's confusing and not consistent.
 Ground tries to leave C behind and close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is 
 in innerloops. See `.\Examples\mode7_optimized.g` for an example of innerloop optimization.  
 
-Ground has no garbage collector or reference count system. Objects are placed on the stack and released when the scope is ended. For large allocations, you
-should manually allocate memory. Strings are maximum 256 bytes.
+### The C++ mess
+C++ is often used as a high-performance language. I also used it a lot, but it always resulted in unreadable code. Good luck with C++'s 
+`reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the copy-constructor is not 
+called when the compiler is doing `Return value optimization` on one compiler, but does get called on an other compiler.  
+A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_Geometry2D.h, you see:
+```
+	// closest(l,p)
+	// Returns closest point on line to point
+	template<typename T1, typename T2>
+	inline olc::v_2d<T1> closest(const line<T1>& l, const olc::v_2d<T2>& p)
+	{		
+		auto d = l.vector();
+		double u = std::clamp(double(d.dot(p - l.start)) / d.mag2(), 0.0, 1.0);
+		return l.start + u * d;
+	}
+```
+I will not conform with this kind of code. This function is only 4 lines and already a mess!  
+
+### No memory manager
+Ground has no garbage collector or reference count system. Objects are placed on the stack and released when 
+the scope is ended. For large allocations, you should manually allocate memory. Strings are maximum 256 bytes.
 The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
 possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
