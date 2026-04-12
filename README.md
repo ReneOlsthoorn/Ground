@@ -158,13 +158,13 @@ the libwinpthread loadtime dependency. After that build the library with `cmake 
 is created in build\src.
 
 ### Debugging Ground code in x64dbg:
-In Program>>Generate_x64dbg_EXE you see that the Ground compiler can generate a comments database for your .exe 
+In `Program>>Generate_x64dbg_EXE` you see that the Ground compiler can generate a comments database for your .EXE 
 file in x64dbg. Set `GenerateDebugInformation = true` in the CompilationSession and check if the 
-Program>>x64dbgDbFolder is set correct for your system.  
-In x64dbg check if the "Disable Database Compression" is active in Options / Preferences.  
-When it is all done, the original generated code is seen as comments in x64dbg when you load the .exe file.  
+`Program>>x64dbgDbFolder` is set correct for your system.  
+In x64dbg check if the `Disable Database Compression` is active in `Options / Preferences`.  
+When it is all done, the original generated code is seen as comments in x64dbg when you load the .EXE file.  
 To easily reach a certain code location, you can use `asm{  nop}` to generate a nop instruction. In x64dbg, you 
-go to "View / Comments". In the window, search for "nop" and double click the instruction to go to the location. 
+go to `View / Comments`. In the window, search for "nop" and double click the instruction to go to the location. 
 Set the breakpoint there.
 
 ### Optimizer
