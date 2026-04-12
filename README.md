@@ -72,81 +72,12 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
 </p>
 
-### The neglected native Windows DLLs
-The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
-know it today. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone can use. 
-During loadtime, the OS loads all the dependencies of the executable.  
-The WIN32 API was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 
-92% market share in the early 2000's.  
-  
-In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved 
-in Windows 98 with WinSxS and manifests. Unfortunately version numbering was never integrated in the PE format.  
-  
-In 1992, Microsoft released COM. After that DCOM and COM+. The focus went away from Native DLLs. In 1996 Microsoft worked on Visual J++.
-After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code of DotNet. Microsoft even did a research project 
-to create an OS using managed code, See project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
-That project failed because it was too slow.  
-
-After realising that managed code is too slow, you'd think that Microsoft would put effort into making a great library of high performance 
-native Windows DLLs for common programming tasks. However, they didn't do that and the consequences are still felt today.
-
-### Neglectance became failing
-You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
-You want to rotate 3D coordinates or play a music module? No native Microsoft Windows DLL for that.  
-You want to load a JPG with a native Microsoft Windows DLL? Well, also that will not be easy.  
-  
-This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, although they had all the resources 
-to do so. It might be a conscious decision, because Microsoft sells software themselves and a great library in Windows would undermine their advantage.  
-Nowadays, intiatives like MSYS2 put Microsoft to shame by providing a list of precompiled packages that have links to documentation and sourcecode.  
-If you want an OS for programmers, you'd better move to Linux or BSD that contain standard libraries like libjpeg and libpng.  
-  
-The fact that so little functionality is offered by Windows DLLs has also consequences for `Ground`. Most of the DLLs must be downloaded, like SDL3 and libmikmod.
-Microsoft is a trillion dollar company with the most dominant OS for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll. 
-Windows is pretty much an empty shell.
-
-### The annoyances of Visual Studio C
-On Windows, many programmers use the 50-years old language C as their low-level programming language. Understandably so. 
-The quality of the generated code is good and the sourcecode can be reused for other processors. 
-However if you have chosen Visual Studio C, there are major annoyances:
-1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has `/GS`, `SDL checks` and runtime checks.
-1. A massive runtime library is included when you create a `HelloWorld.exe`. Before you know it, you need to 
-ship `vc_redist.x64.exe` with your little 4k demo.
-1. Strange workarounds are needed when your try to "ignore all default libraries", such as `#define _NO_CRT_STDIO_INLINE` 
-and `_fltused`. The default stacksize is 4k on a system with more than 8 Gb memory!
-1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
-inserted assembly makes optimization too hard for the compiler.
-
-These annoyances make programmers look for alternatives. Many programmers nowadays use MSYS2, which is Unix look-a-like toolchain that 
-offers C compilers like CLANG and GCC.  
-
-C shows its age. On x86, `int` and `float` are 2 bytes. On x86-32, they are 4 bytes. However, on x86-64 they still 
-remain 4 bytes! That's confusing and not consistent.  
-Ground tries to leave C behind and close the gap between compact highlevel constructs and assembly. Typical usage of x86-64 is 
-in innerloops. See `.\Examples\mode7_optimized.g` for an example of innerloop optimization.  
-
-### The C++ mess
-C++ is often used as a high-performance language. I also used it a lot, but it always resulted in unreadable code. Good luck with C++'s 
-`reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the copy-constructor is not 
-called when the compiler is doing `Return value optimization` on one compiler, but does get called on an other compiler.  
-A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_Geometry2D.h, you see:
-```
-	// closest(l,p)
-	// Returns closest point on line to point
-	template<typename T1, typename T2>
-	inline olc::v_2d<T1> closest(const line<T1>& l, const olc::v_2d<T2>& p)
-	{		
-		auto d = l.vector();
-		double u = std::clamp(double(d.dot(p - l.start)) / d.mag2(), 0.0, 1.0);
-		return l.start + u * d;
-	}
-```
-I will not conform with this kind of code. This function is only 4 lines and already a mess!  
-
-### No memory manager
-Ground has no garbage collector or reference count system. Objects are placed on the stack and released when 
-the scope is ended. For large allocations, you should manually allocate memory. Strings are maximum 256 bytes.
-The generated code is reentrant, so multiple threads can run the same code if you use local variables. Recursion is also
-possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
+### Ground has no memory manager
+Ground has no garbage collector or reference count system. Objects are allocated on the stack and released when the 
+scope is ended. For this reason, normal strings have a maximum of 255 characters. Larger literal strings can be assigned
+to a `byte*` variable.
+The code generated by Ground is reentrant, so multiple threads can run the same code if you use local variables. Recursion 
+is also possible as can be seen in the sudoku.g example. See the Chess example on how to use additional threads.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.gif?raw=true" width="500" /><br/>
 </p>
@@ -167,9 +98,9 @@ With the `#include` directive, you can insert a textfile into your sourcefile.
 
 ### Mixing of ground code and assembly
 The danger of programming in higher level languages is that the control over the CPU is lost. Ground refuses that.
-So, there are ways to mix the two. First of all, you can use the `asm { }` everywhere. The assembly code between the brackets 
-will literally be used. Second, there is a special group, called g, which directly refers to an assembly variable. The advantage 
-is that you stay in the ground language context.
+So, there are ways to mix the two. First of all, you can use the `asm { }` everywhere. The assembly code between the 
+brackets will literally be used. Second, there is a special group, called g, which directly refers to an assembly 
+variable. The advantage is that you stay in the ground language context.
 So `g.SDL_WINDOWPOS_UNDEFINED` will resolve to the `SDL_WINDOWPOS_UNDEFINED` equate.
 `g.[pixels_p]` will return the content of the `pixels_p` assembly variable.
 
@@ -177,8 +108,9 @@ A powerful mixing is this:
 ```
 byte[61,36] screenArray = g.[screentext_p];
 ```
-The content of the screentext_p assembly variable will be used by the array screenArray. You can also define an array `[]` at the right side of 
-the equation and that will create a 61*36 sized array on the stack for you. After this initialization, the code can make statements like:
+The content of the screentext_p assembly variable will be used by the array screenArray. You can also define an 
+array `[]` at the right side of the equation and that will create a 61*36 sized array on the stack for you. 
+After this initialization, the code can make statements like:
 ```
 screenArray[30,10] = 'A';
 ```
@@ -189,44 +121,51 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
 if (*eventType == g.SDL_QUIT) { running = false; }
 ```
-The first line allocated `SDL3_EVENT_SIZE`, that is 128, bytes. The second line creates a pointer of a u32 to an element. The third line
-retrieves the value that variable eventType points to and compares it with `SDL_QUIT`.  
+The first line allocated `SDL3_EVENT_SIZE`, that is 128, bytes. The second line creates a pointer of a u32 to an element. 
+The third line retrieves the value that variable eventType points to and compares it with `SDL_QUIT`.  
 In `smoothscroller.g`, you see a lot of examples of mixing ground and assembly.
 
 ### Variables
-When creating an array, the memory will be reserved on the stack. For instance when you have `byte[40] array = [];`, array
-refers to the address of the array which will point to an array of 40 bytes. Defining a Class with variables will
+When creating an array, the memory will be reserved on the stack. For instance when you have `byte[40] array = [];`, 
+array refers to the address of the array which will point to an array of 40 bytes. Defining a Class with variables will
 align the variables at their natural alignment. So an 64-bit int defined after a byte will skip 7 bytes. This can be
 prevented. Use `packed` after the Classes name for that.  
 
 ### Only 64-bit
-The `AMD Opteron` in 2003 was the first x86 processor to get 64-bit extensions. Although `AMD` was much smaller than `Intel`,
-they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since `Windows 7`,
-which was released in 2009, the 64-bit version is pushed as the default. Nowadays, `Windows 11` only ships as 64-bit 
-version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
+The `AMD Opteron` in 2003 was the first x86 processor to get 64-bit extensions. Although `AMD` was much smaller than 
+`Intel`, they created the x86-64 standard. We are now 20+ years later and everybody has a 64 bit processor. Since 
+`Windows 7`, which was released in 2009, the 64-bit version is pushed as the default. Nowadays, `Windows 11` only 
+ships as 64-bit version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
 
 ### Using ucrt or msvcrt
-When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever version
-of the VC runtime is active that week. It's a mess. Those DLLs are not available by default on a Windows system. So the users need to 
-install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: don't use the new VC runtimes, 
-use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
+When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever 
+version of the VC runtime is active that week. It's a mess. Those DLLs are not available by default on a Windows system. 
+So the users need to install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: 
+don't use the new VC runtimes, use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
 The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
-`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, so 
-that will be the future.
+`Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, 
+so that will be the future.
 
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
 * The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
-These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I created the make files like this: 
+These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I 
+created the make files like this: 
 `cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON`  
-In the CMakeLists.txt, I included: `target_link_options(chipmunk PRIVATE -static)` as the last line, to prevent the libwinpthread loadtime 
-dependency. After that build the library with `cmake --build .` and the `libchipmunk.dll` is created in build\src.
+In the CMakeLists.txt, I included: `target_link_options(chipmunk PRIVATE -static)` as the last line, to prevent 
+the libwinpthread loadtime dependency. After that build the library with `cmake --build .` and the `libchipmunk.dll` 
+is created in build\src.
 
-### Sourcecode visible while debugging in x64dbg:
-If you want to debug with x64dbg, switch on the `generateDebugInfo` boolean in Program.cs and check if the used x64dbg 
-folder is correct, because Ground will generate a x64dbg database file there. After compilation, you can load your 
-.EXE in x64dbg and you will see the original generated assembly in the comment column of the debugger.
+### Debugging Ground code in x64dbg:
+In Program>>Generate_x64dbg_EXE you see that the Ground compiler can generate a comments database for your .exe 
+file in x64dbg. Set `GenerateDebugInformation = true` in the CompilationSession and check if the 
+Program>>x64dbgDbFolder is set correct for your system.  
+In x64dbg check if the "Disable Database Compression" is active in Options / Preferences.  
+When it is all done, the original generated code is seen as comments in x64dbg when you load the .exe file.  
+To easily reach a certain code location, you can use `asm{  nop}` to generate a nop instruction. In x64dbg, you 
+go to "View / Comments". In the window, search for "nop" and double click the instruction to go to the location. 
+Set the breakpoint there.
 
 ### Optimizer
 Ground contains an optimizer (in `Optimizer.cs`), which will replace literals and removes unused variables. It will 
@@ -257,61 +196,6 @@ Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the
 done with existing C libraries. The `GroundSideLibrary` is a .DLL which contains all that C code and creates an 
 interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default. So, some
 opensource programmers managed to make a better C environment than Microsoft.
-
-### State of Ground : Alpha
-The Ground language is `Alpha`, so do not use the language if you look for a stable language.
-Ground is created to facilitate high performance code. Ground will always be Alpha!
-
-### Looking for a high performance programming language with inline assembly.
-Your Windows PC has a CPU which can execute code incredibly fast using a language called `x86-64` assembly.  
-It has approx. 1500 different instructions. For instance "sqrtsd", which does a floating point square root calculation.  
-While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
-conversion like this:
-```
-var data = base.ReadBytes(4);
-Array.Reverse(data);
-return BitConverter.ToInt32(data, 0);
-```
-In x86-64, this functionality is done with one statement:
-```
-bswap eax
-```
-Surely, `C#` or `Java` will allow you to insert x86-64 assembly... NOT!!  
-In defense of C# and Java, they are both positioned as productivity languages. Inserting assembly is a high performance
-feature. So, let's look at high performance languages then. There are many to choose from these days.  
-For instance the `V language`. It has no garbage collection and transpiles to C. Unfortunately there is no focus on 
-assembly in V.  
-Second language: `Beef`. No garbage collector. C# look-a-like approach. The backend is `LLVM`, so unfortunately 
-no easy assembly.  
-Third language: `Odin`. But same as Beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
-Well, for general purpose software I would recommend C# or Kotlin because they are fast enough (for instance, C# can do 
-parallel execution) and have the most libraries available for all kinds of tasks. Microsoft and Java are dominating. 
-Also in the job market.  
-`Python` is slower but that's no problem for a scripting language. It can connect to native compiled libraries with relative
-ease. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. It was very easy to make an application 
-with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because single threading natural in a 
-scripting language.  
-By the way: a very interesting general purpose programming language is `Pharo` Smalltalk. Everything is an object in 
-Smalltalk and the code editor is available in the image. I used to be a `Smalltalk` programmer from 1997-2002 and I 
-still love the language and environment.  
-But, back to our search for a high performance language: 
-`BlitzBasic` supports inline assembly. But wait... it is 32 bit. 
-`BlitzMax` has an LLVM backend that does not support easy assembly language. 
-`Wren` is a scriping language, 
-`Nim` transpiles to C. 
-`Zen C` offers inline assemby blocks, so that looks good. Is there a Windows version yet? 
-`Dart` has a garbage collector and is busy with flutter and has no focus on high performance. 
-`Go` also has a garbage collector, but a small one. A high performance garbage collector can be faster than reference counting. Unfortunately Go does not 
-support inline assembly. `Go` is a systems programming language and those languages want to abstract the CPU away.  
-`Rust` has a LLVM backend, so no easy assembly. The same for `Zig`. The same for `Crystal`. In Crystal, I coded a 
-"Hello, World!". It was 660k and used VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the VC-redistributable, 
-you also must ship two extra DLLs to make your "Hello, World!" run on a modern PC. That's not convenient.  
-So, now you understand why `Ground` is necessary :-)  There is only one CPU in your PC. Get a grip on it and let it dance!
-
-## Write your own Programming Language!
-The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
-don't want a reference count system but a garbage collector. Why not write your own language? Use the lexer from this 
-compiler or borrow some code generation constructs. It might be less work than you think.  
 
 ### Details about the compiler
 There are several steps done before the generated .EXE file is executed:
@@ -361,6 +245,148 @@ however, this substraction is skipped and a byte-for-byte string comparison is d
 Most functions start with `push rbp` followed by `mov rbp, rsp`. This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at `[rbp]`.
 
+### Cause of Ground
+Your Windows PC has a treasure inside it: a CPU which can execute code incredibly fast using a language called `x86-64` 
+assembly. It has approx. 1500 different instructions. Are you familiar with them?  
+For instance "sqrtsd", which does a floating point square root calculation. Did you ever use it?  
+While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
+conversion like this:
+```
+var data = base.ReadBytes(4);
+Array.Reverse(data);
+return BitConverter.ToInt32(data, 0);
+```
+In x86-64, this functionality is done with one statement:
+```
+bswap eax
+```
+Surely, `Kotlin`, `Java` or `C#` will allow you to insert x86-64 assembly... NOT!!  
+Surely, `C/C++` will allow you to use `bswap` easily... NOT!!  
+The modern software industry has turned it's back on high performance computing. Native assembly is much too dangerous!
+According to them...  
+In modernity, security is prevalent above performance. "Write once, run anywhere" is the mantra. It cripples, however. 
+Your PC is specific. Use the specifics to get the maximum performance!
+
+### The C++ problem
+C++ is often used as a high-performance language. In the past, I used it often, but it always resulted in unreadable code. 
+Good luck with C++'s `reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the 
+copy-constructor is not called when the compiler is doing `Return value optimization`. You cannot rely on that behaviour 
+however, because some compilers will.  
+A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_Geometry2D.h, you see:
+```
+	// closest(l,p)
+	// Returns closest point on line to point
+	template<typename T1, typename T2>
+	inline olc::v_2d<T1> closest(const line<T1>& l, const olc::v_2d<T2>& p)
+	{		
+		auto d = l.vector();
+		double u = std::clamp(double(d.dot(p - l.start)) / d.mag2(), 0.0, 1.0);
+		return l.start + u * d;
+	}
+```
+I will not conform with this kind of code. This function is only 4 lines and already unreadable.  
+
+### The annoyances of Visual Studio C
+On Windows, many programmers use the 50 year old language C as their low-level programming language. Understandably so. 
+The quality of the generated code is good and the sourcecode can be reused for other processors. 
+However if you have chosen Visual Studio C, there are major annoyances:
+1. The Visual Studio C compiler forces "secure" code onto you. Microsoft has `/GS`, `SDL checks` and runtime checks.
+1. A massive runtime library is included when you create a `HelloWorld.exe`. Before you know it, you need to 
+ship `vc_redist.x64.exe` with your little 4k demo.
+1. Strange workarounds are needed when your try to "ignore all default libraries", such as `#define _NO_CRT_STDIO_INLINE` 
+and `_fltused`. The default stacksize is 4k on a system with more than 8 Gb memory!
+1. Visual Studio does not allow the mixing of C and assembly in the same function. The reason seems clear: manual 
+inserted assembly makes optimization too hard for the compiler.
+
+These annoyances make programmers look for alternatives. Many programmers nowadays use MSYS2, which is Unix look-a-like 
+toolchain that offers C compilers like CLANG and GCC.  
+
+C also shows its age. On x86, `int` and `float` are 2 bytes. On x86-32, they are 4 bytes. However, on x86-64 they still 
+remain 4 bytes! That's confusing and not consistent.  
+Ground tries to leave C behind and close the gap between compact highlevel constructs and assembly. Typical usage of 
+x86-64 is in innerloops. See `.\Examples\mode7_optimized.g` for an example of innerloop optimization.  
+
+### The neglected native Windows DLLs
+The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
+know it today. DLLs offer a separation between different modules and code bases. DLLs have a clear API that anyone can use. 
+During loadtime, the OS loads all the dependencies of the executable.  
+The WIN32 API was implemented. It was a building block that helped to make Windows the most dominant OS ever, reaching 
+92% market share in the early 2000's.  
+  
+In hindsight, Microsoft forgot to add version numbers when loading DLLs. That let to the "DLL Hell", which Microsoft solved 
+in Windows 98 with WinSxS and manifests. Unfortunately version numbering was never integrated in the PE format.  
+  
+In 1992, Microsoft released COM. After that DCOM and COM+. The focus went away from Native DLLs. In 1996 Microsoft worked 
+on Visual J++. After the lawsuit with Sun Microsystems, Microsoft started the programming language C# and the managed code 
+of DotNet. Microsoft even did a research project to create an OS using managed code, See 
+project [Singularity](https://en.wikipedia.org/wiki/Singularity_%28operating_system%29).  
+That project failed because it was too slow.  
+
+After realising that managed code is too slow, you'd think that Microsoft would put effort into making a great library of 
+high performance native Windows DLLs for common programming tasks. However, they didn't do that and the consequences are 
+still felt today.
+
+### Neglectance became failing
+You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
+You want to rotate 3D coordinates or play a music module? No native Microsoft Windows DLL for that.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, also that will not be easy.  
+  
+This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, 
+although they had all the resources to do so. It might be a conscious decision, because Microsoft sells software 
+themselves and a great library in Windows would undermine their advantage.  
+Nowadays, intiatives like MSYS2 puts Microsoft to shame by providing a list of precompiled packages that have links 
+to documentation and sourcecode.  
+If you want an open OS for programmers, it might be better to move to Linux or BSD that contain standard libraries 
+like libjpeg and libpng.  
+  
+The fact that so little functionality is offered by Windows DLLs has also consequences for `Ground`. Most of the 
+DLLs must be downloaded, like SDL3 and libmikmod. Microsoft is a trillion dollar company with the most dominant OS 
+for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll... Windows is pretty much an empty shell.
+
+### Looking for a high performance programming language with inline assembly.
+Inserting assembly is a high performance feature. So, let's look at high performance languages then. There are many 
+to choose from these days. C# and Java can be skipped because they are both positioned as productivity languages.  
+Let's start with the `V language`. It has no garbage collection and transpiles to C. Unfortunately there is no focus on 
+assembly in V.  
+Second language: `Beef`. No garbage collector. C# look-a-like approach with it's own IDE. The backend is `LLVM`, so 
+unfortunately no easy assembly.  
+Third language: `Odin`. But same as Beef, it uses the LLVM backend. Odin positions itself as a general purpose language. 
+Well, for general purpose software I would recommend C# or Kotlin because they are fast enough (for instance, C# can do 
+parallel execution) and have the most libraries available for all kinds of tasks. Microsoft and Java are dominating. 
+Also in the job market.  
+`Python` is slower but that's no problem for a scripting language. It can connect to native compiled libraries with 
+relative ease. I used to do python in 2003-2004 with Python 2.2 and 2.3 and I loved it. It was very easy to make an 
+application with wxWindows. But the GIL always felt problematic. No blame to Guido for that, because single threading 
+is natural in a scripting language.  
+By the way: a very interesting general purpose programming language is `Pharo` Smalltalk. Everything is an object in 
+Smalltalk and the code editor is available in the image. I used to be a `Smalltalk` programmer from 1997-2002 and I 
+still love the language and environment.  
+But, back to our search for a high performance language: 
+`BlitzBasic` supports inline assembly. But wait... it is 32 bit and the author is dead. 
+`BlitzMax` has an LLVM backend that does not support easy assembly language. 
+`Wren` is a scriping language, 
+`Nim` transpiles to C. 
+`Zen C` offers inline assemby blocks, so that looks good. Is there a Windows version yet? 
+`Dart` has a garbage collector and is busy with flutter and has no focus on high performance. 
+`Go` also has a garbage collector, but a small one. A high performance garbage collector can be faster than 
+reference counting. Unfortunately Go does not support inline assembly. `Go` is a systems programming language and 
+those languages want to abstract the CPU away.  
+`Rust` has a LLVM backend, so no easy assembly. The same for `Zig`. The same for `Crystal`. In Crystal, I coded a 
+"Hello, World!". It was 660k and used VCRUNTIME140.dll, gc.dll and iconv-2.dll. So, apart from the 
+VC-redistributable, you also must ship two extra DLLs to make your "Hello, World!" run on a modern PC. That's 
+not convenient to say it nice.  
+So, now you understand why `Ground` is necessary :-)  
+There is only one CPU in your PC. Get a grip on it and let it dance!
+
+### State of Ground : Alpha
+The Ground language is `Alpha`, so do not use the language if you look for a stable language.
+Ground is created to facilitate high performance code. Ground will always be Alpha!
+
+## Write your own Programming Language!
+The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
+support an other OS. Why not write your own language? Use the lexer from this compiler or borrow some code 
+generation constructs. It might be less work than you think.  
+
 ## Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
@@ -370,32 +396,35 @@ The Amiga was released in 1985, but the next model for the masses was the `Amiga
 That was more than 7 years later. I really felt let down by Commodore in 1990.  
   
 Later it became clear that Commodore had no focus on the Amiga in the years 1988-1990. They were busy with the PC-line, 
-like releasing the `PC-60-III`, the `CDTV` project and the `C-65` project. The C-65 had the new `CSG-4510` processor running 
-at 3.5 Mhz, two `SID` chips, 128k of RAM, a `DMA` controller with `blitter` and new `VIC-III` chip displaying 320x200 pixels 
-and 256 colors.  
+like releasing the `PC-60-III`, the `CDTV` project and the `C-65` project. The C-65 had the new `CSG-4510` processor 
+running at 3.5 Mhz, two `SID` chips, 128k of RAM, a `DMA` controller with `blitter` and new `VIC-III` chip displaying 
+320x200 pixels and 256 colors.  
 Meanwhile, Commodore totally neglected the `Amiga Ranger` prototypes created by Jay Miner in 1988.  
   
 As a programmer, you invest a lot of time and effort in a platform and when it becomes inactive you feel lost. 
-Fortunately, a clear winner was arising: The `Microsoft DOS/Windows` platform. `Microsoft Office 4.2` containing `MS-Word 6.0`, 
-`MS-Excel 5.0` and `MS-Powerpoint 4.0` on 25 `1.44"` disks was a tremendous hit. Everyone wanted it.  
+Fortunately, a clear winner was arising: The `Microsoft DOS/Windows` platform. `Microsoft Office 4.2` containing 
+`MS-Word 6.0`, `MS-Excel 5.0` and `MS-Powerpoint 4.0` on 25 `1.44"` disks was a tremendous hit. Everyone wanted it.  
 At the same time `DOOM 2` released, a tremendous hit for gamers. Again, everyone wanted it.  
 The PC platform had cheap hardware, so everybody joined. This resulted in total MARKET DOMINATION.  
-In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and numerous 
-PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment to upgrade. 
-We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
+In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and 
+numerous PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment 
+to upgrade. We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
   
-At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects personal data and sends 
-it to the cloud or uses it for AI. Microsoft wants to make Windows an agentic AI OS and forces users to give up privacy. 
-I strongly disagree with this route, because it should be made optional.  
-Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot and Recall. However, 
-with each new update, the settings can be turned on again. The whole situation is a shame, because Windows has such a great history. 
-Like many users, I don't want to battle my OS. For the moment, I will not yet migrate to Linux because I owe so much to 
-the Windows platform. I will stay on Windows 10.  
-Microsoft is hard pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge browser which transfers data to Microsoft and Ads in
-the start menu. It is irritating. Doesn't Microsoft know that Google became popular for not having ads in the startpage?  
-Microsoft also has keys to unlock your bitlocker. [They gave them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/) 
-A lot of people are baffled by this and are starting to turn away from Microsoft. At this moment, Microsoft still has time to fix
-their issues and make Windows a nice OS for users and programmers. If not, what will be the future OS of the world? Steam OS? Could be!
+At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects personal data and 
+sends it to the cloud or uses it for AI. Microsoft wants to make Windows an agentic AI OS and forces users to give 
+up privacy. I strongly disagree with this course, because AI should be made optional.  
+Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
+and Recall. However, with each new update, the settings can be turned on again. The whole situation is a shame, 
+because Windows has such a great history. Like many users, I don't want to fight my OS. For the moment, I will not 
+yet migrate to Linux because I owe so much to the Windows platform. I will stay on Windows 10.  
+Microsoft is hard pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
+browser which transfers data to Microsoft and Ads in the start menu. It is irritating. Doesn't Microsoft know that 
+Google became popular for not having ads in the startpage?  
+Microsoft also has keys to unlock your bitlocker. 
+[They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/) 
+A lot of people are baffled by this and are starting to turn away from Microsoft. At this moment, Microsoft still 
+has time to fix their issues and make Windows a nice OS for users and programmers. If not, what will be the 
+future OS of the world? Steam OS? Could be!
 
 ### Smoothscroller
 <p align="center">
