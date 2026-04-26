@@ -541,7 +541,12 @@ Hexacubes effect</p>
 ### Cassis Slush Zoom
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Raylib_Zoom.gif?raw=true" width="500" /><br/>
-Shadertoy example executed using raylib</p>
+Shadertoy example executed using raylib in Ground</p>
+
+### Seascape
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Raylib_Seascape.gif?raw=true" width="500" /><br/>
+Seascape Shadertoy example</p>
 
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
@@ -567,4 +572,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.02.08: Circles and Spiral added.  
 2026.02.13: Hexacubes added.  
 2026.04.09: Major refactoring done by removing the reference counting memorymanager. Great improvement.  
-2026.04.26: Raylib 6.0 template added. Cassis Slush Zoom added.
+2026.04.26: Raylib 6.0 template added. Cassis Slush Zoom added. Seascape added.

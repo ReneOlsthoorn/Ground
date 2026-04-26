@@ -1,11 +1,11 @@
 @echo off
 
-del /Q /F gallery.bat
 del /Q /F curl-win64-mingw.zip
 del /Q /F libcurl-x64.dll
 del /Q /F libmikmod.tar.zst
 del /Q /F libcglm.tar.zst
 del /Q /F load.bat
+del /Q /F raylib-6.0.zip
 del /Q /F SDL3_image-win32-x64.zip
 del /Q /F SDL3-win32-x64.zip
 del /Q /F soloud.zip
@@ -31,6 +31,7 @@ call :compileExample mode7_optimized
 call :compileExample plasma
 call :compileExample plasma_non_colorcycling
 call :compileExample racer
+call :compileExample raylib_seascape
 call :compileExample raylib_zoom
 call :compileExample smoothscroller
 call :compileExample snake
