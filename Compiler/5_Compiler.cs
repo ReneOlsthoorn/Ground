@@ -575,22 +575,41 @@ namespace GroundCompiler
         }
 
 
+        // The X64 ABI wants the 
+        private void EmitCompressedParameters(Expression? arg, Scope? scope)
+        {
+            if (arg is Variable argVariable && argVariable.ExprType.Contains(Datatype.TypeEnum.CustomClass) && arg.ExprType.SizeInBytes <= 8)
+            {
+                var classStatement = argVariable.ExprType.Properties["classStatement"] as ClassStatement;
+                if (classStatement != null && classStatement.CanBeCompressedToRegister())
+                {
+                    if (classStatement.IsF32F32())
+                    {
+                        emitter.Codeline("mov   rax, [rax]");
+                        //de variabele naar de class staat in rax.
+                        //uiteindelijk moet rax de compressed_one_register bevatten.
+                        //ieder element van de class gaat naar de stack
+                    }
+                }
+            }
+        }
+
+
         // This function needs refactoring. It does too much. We must push it over and create a class for it.
         public object? VisitorFunctionCall(FunctionCall expr)
         {
             ClassStatement? classStatement = null;
-
-            // normally, the scope of the functioncall is used.
-            var currentScope = expr.GetScope();
-            var scope = currentScope;
+            var scope = expr.GetScope();  // normally, the scope of the functioncall is used.
             FunctionSymbol? theFunction = null;
 
             string? instVarName = null;
             int levelsDeep = 0;
 
-            if (expr.ExprType.Contains(Datatype.TypeEnum.CustomClass))
+            Variable? functionNameVariable = expr.FunctionNameNode as Variable;
+
+            // It is NOT a function call, but a constructor! 
+            if (functionNameVariable != null && expr.ExprType.Contains(Datatype.TypeEnum.CustomClass))
             {
-                // It is a constructor for a class. Allocate memory for this new temporary class instance.
                 int nrBytesToAllocate = expr.ExprType.SizeInBytes;
                 emitter.ReserveOnStack(nrBytesToAllocate);
                 string memPtrRegister = cpu.GetRestoredRegister(expr);
@@ -616,7 +635,7 @@ namespace GroundCompiler
                 return null;
             }
 
-            if (expr.FunctionNameNode is Variable functionNameVariable)
+            if (functionNameVariable != null)
             {
                 theFunction = scope!.GetFunctionAnywhere(functionNameVariable.Name.Lexeme);
                 if (theFunction == null)
@@ -764,6 +783,9 @@ namespace GroundCompiler
                 var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
 
+                if (dllFunctionSymbol != null)
+                    EmitCompressedParameters(arg, scope);
+
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
                 emitter.Push(arg.ExprType);
@@ -825,18 +847,30 @@ namespace GroundCompiler
 
             if (dllFunctionSymbol != null)
             {
+                /* When the returntype is bigger than 8 bytes, when need to reserve space on the stack and put it in RCX */
+                int registerIndex = 0;
+                if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
+                {
+                    int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
+                    if (nrBytes > 8)
+                    {
+                        emitter.ReserveOnStack(nrBytes, "rcx");
+                        registerIndex += 1;
+                    }
+                }
+
                 nrArguments = expr.ArgumentNodes.Count;
                 if (nrArguments > 0)
                 {
-                    InsertFastCallArgument(0, expr.ArgumentNodes[0]);
+                    InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[0]);
                     if (nrArguments > 1)
-                        InsertFastCallArgument(1, expr.ArgumentNodes[1]);
+                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[1]);
                 }
                 if (nrArguments > 2)
                 {
-                    InsertFastCallArgument(2, expr.ArgumentNodes[2]);
+                    InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[2]);
                     if (nrArguments > 3)
-                        InsertFastCallArgument(3, expr.ArgumentNodes[3]);
+                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[3]);
                 }
                 int stackToReserve = 32;
                 if (!emitter.IsAlign16(emitter.StackPos - stackToReserve))
@@ -928,7 +962,7 @@ namespace GroundCompiler
                 return null;
             }
 
-            if (expr.ExprType.Name == "string")
+            if (expr.ExprType.Name == "string" || (expr.ExprType.Name == "byte*" && expr.Value.GetType().Name == "String"))
             {
                 var strConstant = expr.GetRootScope()?.GetString((string)expr.Value);
                 if (strConstant != null)

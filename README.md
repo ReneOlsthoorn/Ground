@@ -11,8 +11,8 @@ Ground variables can be referenced in assembly by using the generated symbolic c
 written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/).  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small `.EXE` 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
-also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. Ofcourse you 
-can create your own template.  
+also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
+template is the `raylib` template which you can use to execute GPU code. Ofcourse you can create your own template.  
   
 The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k.  
 Ground .EXE files will be small because most external code is loaded at load-time. The usage of the known system 
@@ -85,7 +85,7 @@ is also possible as can be seen in the sudoku.g example. See the Chess example o
 ### Choosing a template
 With the special `#template` directive, the programmer can choose a generation template. The default is `console`. See the
 directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without a console window.
-A lot of functions are shared between the console.fasm and sdl3.fasm templates.
+A lot of functions are shared between the console.fasm, sdl3.fasm and raylib.fasm templates.
 
 ### include a library
 With the `#library` directive, you can include a library. For instance `#library user32 user32.dll` does 3 things:
@@ -538,6 +538,11 @@ Spiral demo effect</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Hexacubes.gif?raw=true" width="500" /><br/>
 Hexacubes effect</p>
 
+### Cassis Slush Zoom
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Raylib_Zoom.gif?raw=true" width="500" /><br/>
+Shadertoy example executed using raylib</p>
+
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
 The executables are in the `bin\Release` directory of the zipfile.
@@ -561,4 +566,5 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.01.16: Electronic Life 2026 added.  
 2026.02.08: Circles and Spiral added.  
 2026.02.13: Hexacubes added.  
-2026.04.09: Major refactoring done by removing the reference counting memorymanager. Great improvement.
+2026.04.09: Major refactoring done by removing the reference counting memorymanager. Great improvement.  
+2026.04.26: Raylib 6.0 template added. Cassis Slush Zoom added.

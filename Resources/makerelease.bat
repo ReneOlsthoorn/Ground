@@ -31,6 +31,7 @@ call :compileExample mode7_optimized
 call :compileExample plasma
 call :compileExample plasma_non_colorcycling
 call :compileExample racer
+call :compileExample raylib_zoom
 call :compileExample smoothscroller
 call :compileExample snake
 call :compileExample snippet_circles

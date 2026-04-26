@@ -679,6 +679,27 @@ namespace GroundCompiler.Statements
             return result;
         }
 
+        public bool CanBeCompressedToRegister()
+        {
+            // the x64abi will compress a serie of elements if it fits in a single 64 bit register.
+            return (this.SizeInBytes() <= 8);
+        }
+
+        public bool IsF32F32()
+        {
+            if (this.InstanceVariableNodes.Count != 2)
+                return false;
+
+            bool result = true;
+            foreach (var inst in this.InstanceVariableNodes)
+            {
+                bool isF32 = inst.ResultType.Contains(Datatype.TypeEnum.FloatingPoint) && (inst.ResultType.SizeInBytes == 4);
+                if (!isF32)
+                    result = false;
+            }
+            return result;
+        }
+
         public void SetPacked() => this.Properties["alignment"] = "packed";
         public bool IsPacked() => (this.Properties.ContainsKey("alignment") && ((string)this.Properties["alignment"]!) == "packed");
 

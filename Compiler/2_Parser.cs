@@ -750,17 +750,19 @@ namespace GroundCompiler
                 return theAsmFunction;
             }
 
-            Token? resultType = null;
+            Datatype? resultType = null;
 
             if (Match(TokenType.Colon))
-                if (Check(TokenType.Type))
-                    resultType = NextToken();
+            {
+                var resultToken = NextToken();
+                resultType = Datatype.GetDatatype(resultToken.Lexeme);
+            }
 
             if (Match(TokenType.SemiColon))
             {
                 var result = new FunctionStatement(name, parameters);
                 if (resultType != null)
-                    result.ResultDatatype = resultType.Datatype;
+                    result.ResultDatatype = resultType;
                 return result;
             }
 
@@ -769,7 +771,7 @@ namespace GroundCompiler
             var body = new BlockStatement(Block());
             var theFunctionStatement = new FunctionStatement(name, parameters, body);
             if (resultType != null)
-                theFunctionStatement.ResultDatatype = resultType.Datatype;
+                theFunctionStatement.ResultDatatype = resultType;
             return theFunctionStatement;
         }
 

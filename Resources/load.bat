@@ -23,6 +23,19 @@ if exist %THEFILE% (
 tar -xf %THEFILE% SDL3_image.dll
 
 
+rem  *** raylib ***
+set THEFILE="raylib-6.0.zip"
+if exist %THEFILE% (
+  echo File %THEFILE% already exists. Skipping download.
+) else (
+  echo Downloading %THEFILE%...
+  curl -L -o %THEFILE% "https://github.com/raysan5/raylib/releases/download/6.0/raylib-6.0_win64_msvc16.zip"
+)
+tar -xf %THEFILE%
+move raylib-6.0_win64_msvc16\lib\raylib.dll .
+rmdir /s /q raylib-6.0_win64_msvc16
+
+
 rem  *** libcurl-x64.dll ***  Needed for the ConnectFour example
 set THEFILE="curl-win64-mingw.zip"
 if exist %THEFILE% (
@@ -105,3 +118,4 @@ if exist %THEFILE% (
 tar -xf %THEFILE%
 move stockfish\stockfish-windows-x86-64-avx2.exe .
 rmdir /s /q stockfish
+
