@@ -4,7 +4,7 @@
 
 #template raylib
 
-#include graphics_defines960x560.g
+#include graphics_defines1280x720.g
 #include msvcrt.g
 #include kernel32.g
 #library user32 user32.dll
@@ -26,6 +26,7 @@ void main()
 byte* fsCode = `#version 330
 uniform vec2 iResolution;
 uniform float iTime;
+uniform vec2 iMouse;
 in vec2 fragTexCoord;
 out vec4 fragColor;
 vec2 fragCoord = gl_FragCoord.xy;             //vec2 fragCoord = fragTexCoord * iResolution; (doesn't work...?)
@@ -34,7 +35,7 @@ const int NUM_STEPS = 32;
 const float PI	 	= 3.141592;
 const float EPSILON	= 1e-3;
 #define EPSILON_NRM (0.1 / iResolution.x)
-//#define AA
+#define AA
 
 const int ITER_GEOMETRY = 3;
 const int ITER_FRAGMENT = 5;
@@ -200,7 +201,7 @@ vec3 getPixel(in vec2 coord, float time) {
 }
 
 void main() {
-    float time = iTime * 0.3; // + iMouse.x*0.01;
+    float time = iTime * 0.3 + iMouse.x*0.01;
     vec3 color = getPixel(fragCoord, time);
 	fragColor = vec4(pow(color,vec3(0.65)), 1.0);
 }`;
@@ -216,6 +217,7 @@ if (glVersion < 3)
 ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
+int mouseLocation = raylib.GetShaderLocation(shader, "iMouse");
 bool isOK = raylib.IsShaderValid(shader);
 raylib.SetTargetFPS(60);
 
@@ -223,6 +225,8 @@ while (!raylib.WindowShouldClose() && isOK) {
     f32 t = raylib.GetTime();
     raylib.SetShaderValue(shader, timeLocation, &t, SHADER_UNIFORM_FLOAT);
     raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
+    ptr mouse = raylib.GetMousePosition();
+    raylib.SetShaderValue(shader, mouseLocation, &mouse, SHADER_UNIFORM_VEC2);
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_RAYWHITE);
     raylib.BeginShaderMode(shader);

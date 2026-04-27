@@ -49,7 +49,7 @@ dll raylib function GetFrameTime() : f32;   // Get time in seconds for last fram
 dll raylib function GetTime() : float;      // Get elapsed time in seconds since InitWindow()
 dll raylib function GetFPS() : int;         // Get current FPS
 
-dll raylib function LoadShaderFromMemory(string vsCode, string fsCode) : Shader;  // result = ptr to Shader
+dll raylib function LoadShaderFromMemory(string vsCode, string fsCode) : Shader;
 dll raylib function GetShaderLocation(ptr shader, string uniformName) : int;
 dll raylib function SetShaderValue(ptr shader, int locIndex, ptr value, int uniformType);
 dll raylib function BeginShaderMode(ptr shader);
@@ -62,4 +62,5 @@ dll raylib function rlGetVersion() : int;
 dll raylib function LoadTexture(string fileName) : Texture2D;
 dll raylib function UnloadTexture(ptr texture);
 dll raylib function DrawTexture(ptr texture, int posX, int posY, u32 tint);  
+dll raylib function GetMousePosition() : Vector2;
 

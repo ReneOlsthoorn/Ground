@@ -1,10 +1,10 @@
 
-// Cassis Slush Zoom
+// Quasi Infinite Zoom Voronoi
 // https://www.shadertoy.com/view/XlBXWw
 
 #template raylib
 
-#include graphics_defines960x560.g
+#include graphics_defines1280x720.g
 #include msvcrt.g
 #include kernel32.g
 #library user32 user32.dll
@@ -118,7 +118,7 @@ void main()
 
 f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
 
-raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Cassis Slush Zoom");
+raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Quasi Infinite Zoom Voronoi");
 int glVersion = raylib.rlGetVersion();   // Call this after InitWindow()
 if (glVersion < 3)
     return;
