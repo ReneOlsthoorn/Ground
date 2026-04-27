@@ -31,6 +31,9 @@ call :compileExample mode7_optimized
 call :compileExample plasma
 call :compileExample plasma_non_colorcycling
 call :compileExample racer
+call :compileExample raylib_fireball
+call :compileExample raylib_onderwater
+call :compileExample raylib_ringtwister
 call :compileExample raylib_seascape
 call :compileExample raylib_zoom
 call :compileExample smoothscroller
