@@ -1,4 +1,5 @@
 
+#define COLOR_BLACK 0xff000000
 #define COLOR_WHITE 0xffffffff
 #define COLOR_RAYWHITE 0xfff5f5f5
 #define COLOR_LIGHTGRAY 0xffc8c8c8
@@ -52,6 +53,7 @@ dll raylib function GetFPS() : int;         // Get current FPS
 dll raylib function LoadShaderFromMemory(string vsCode, string fsCode) : Shader;
 dll raylib function GetShaderLocation(ptr shader, string uniformName) : int;
 dll raylib function SetShaderValue(ptr shader, int locIndex, ptr value, int uniformType);
+dll raylib function SetShaderValueTexture(ptr shader, int locIndex, ptr texture);
 dll raylib function BeginShaderMode(ptr shader);
 dll raylib function EndShaderMode();
 dll raylib function DrawRectangle(int posX, int posY, int width, int height, u32 color);
@@ -61,6 +63,7 @@ dll raylib function IsShaderValid(ptr shader) : bool;
 dll raylib function rlGetVersion() : int;
 dll raylib function LoadTexture(string fileName) : Texture2D;
 dll raylib function UnloadTexture(ptr texture);
-dll raylib function DrawTexture(ptr texture, int posX, int posY, u32 tint);  
+dll raylib function DrawTexture(ptr texture, int posX, int posY, u32 tint);
+dll raylib function DrawTexturePro(ptr texture, ptr rectangleSrc, ptr rectangleDest, ptr vectorOrigin, float rotation, u32 tint);
 dll raylib function GetMousePosition() : Vector2;
 

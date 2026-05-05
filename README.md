@@ -140,7 +140,7 @@ ships as 64-bit version, so 64-bit is a safe bet. That's why Ground will only ge
 ### Using ucrt or msvcrt
 When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever 
 version of the VC runtime is active that week. It's a mess. Those DLLs are not available by default on a Windows system. 
-So the users need to install the VC Runtime Redistributable, which is a hassle. The way to avoid this mess is simple: 
+So the users need to install the VC Runtime Redistributable, which is a hassle. The way to avoid this is simple: 
 don't use the new VC runtimes, use the OG `msvcrt.dll` or the new `ucrtbase.dll`.  
 The MSVCRT is available on all Windows versions since Windows XP. It is also a KnownDLL. See the registry at:
 `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\KnownDLLs`. MSYS2 advices to use `ucrt`, 
@@ -161,7 +161,8 @@ is created in build\src.
 In `Program>>Generate_x64dbg_EXE` you see that the Ground compiler can generate a comments database for your .EXE 
 file in x64dbg. Set `GenerateDebugInformation = true` in the CompilationSession and check if the 
 `Program>>x64dbgDbFolder` is set correct for your system.  
-In x64dbg check if the `Disable Database Compression` is active in `Options / Preferences`.  
+In x64dbg check if the `Disable Database Compression` is active in `Options / Preferences`. In Events, consider making 
+only `Entry Breakpoint` active.  
 When it is all done, the original generated code is seen as comments in x64dbg when you load the .EXE file.  
 To easily reach a certain code location, you can use `asm{  nop}` to generate a nop instruction. In x64dbg, you 
 go to `View / Comments`. In the window, search for "nop" and double click the instruction to go to the location. 
@@ -329,19 +330,21 @@ still felt today.
 ### Neglectance became failing
 You want to load a JSON? Too bad, there is no native Microsoft Windows DLL available for that.  
 You want to rotate 3D coordinates or play a music module? No native Microsoft Windows DLL for that.  
-You want to load a JPG with a native Microsoft Windows DLL? Well, also that will not be easy.  
+You want to load a JPG with a native Microsoft Windows DLL? Well, that will not be easy.  
+You want to retrieve the contents of a webpage? There is ws2_32, but it takes a lot of code and is cumbersome. Better use
+the opensource libcurl, a project which started small in 1997, but evolved to be very useful.  
   
-This is not a coincidence. Like I said, Microsoft never tried to offer a great library of native DLLs in Windows, 
-although they had all the resources to do so. It might be a conscious decision, because Microsoft sells software 
-themselves and a great library in Windows would undermine their advantage.  
+This is not a coincidence. Like I said, Microsoft never tried to offer a great easy-to-use library of native DLLs in
+Windows, although they had all the resources to do so. It probably is a conscious decision, because Microsoft sells 
+software themselves and a great library in Windows would undermine their advantage.  
 Nowadays, intiatives like MSYS2 puts Microsoft to shame by providing a list of precompiled packages that have links 
 to documentation and sourcecode.  
-If you want an open OS for programmers, it might be better to move to Linux or BSD that contain standard libraries 
-like libjpeg and libpng.  
+If you want an open OS for programmers, it is better to move to Linux or BSD that contain standard libraries like 
+libjpeg and libpng.  
   
 The fact that so little functionality is offered by Windows DLLs has also consequences for `Ground`. Most of the 
 DLLs must be downloaded, like SDL3 and libmikmod. Microsoft is a trillion dollar company with the most dominant OS 
-for 30 years, but for loading a JPG, I use a downloaded DLL called SDL3_image.dll... Windows is pretty much an empty shell.
+for 30 years, but for loading a JPG I need a downloaded DLL... Windows is pretty much an empty shell.
 
 ### Looking for a high performance programming language with inline assembly.
 Inserting assembly is a high performance feature. So, let's look at high performance languages then. There are many 
