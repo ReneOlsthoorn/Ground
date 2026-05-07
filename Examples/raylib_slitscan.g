@@ -21,11 +21,11 @@ void main()
 
 
 byte* fsCode = `#version 330
+in vec2 fragTexCoord;
+out vec4 fragColor;
 uniform vec2 iResolution;
 uniform float iTime;
 uniform sampler2D iChannel0;
-in vec2 fragTexCoord;
-out vec4 fragColor;
 vec2 fragCoord = gl_FragCoord.xy;
 void main()
 {
@@ -34,6 +34,7 @@ void main()
     float rInv = 1.0 / length(pt);
     pt = pt * rInv - vec2(rInv + iTime, 0.5);
     fragColor = mix(texture(iChannel0, pt * 0.5) * rInv * 0.8, vec4(1.0, 1.0, 1.0, 1.0), smoothstep(4.5, 6.0, rInv));
+    fragColor.rgb = pow(fragColor.rgb, vec3(0.5));
 }`;
 
 
@@ -50,11 +51,9 @@ ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int iChannelLocation = raylib.GetShaderLocation(shader, "iChannel0");
-raylib.SetShaderValueTexture(shader, iChannelLocation, tex);
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
 bool isOK = raylib.IsShaderValid(shader);
 raylib.SetTargetFPS(60);
-
 
 f32[4] src = [0.0, 0.0, 1.0, 1.0];
 f32[4] dst = [0, 0, SCREEN_WIDTH, SCREEN_HEIGHT];

@@ -1,4 +1,6 @@
 
+// This is the CPU version of the circles demo effect.
+
 string pixelWindowTitle = "Circles";        // Inspiration: https://github.com/ivan-guerra/plasma
 #include pixelwindow.g
 
