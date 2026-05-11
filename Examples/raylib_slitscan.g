@@ -38,26 +38,26 @@ void main()
 }`;
 
 
-f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
-
-raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Slitscan");
-int glVersion = raylib.rlGetVersion();
-if (glVersion < 3)
-    return;
-
+raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
+raylib.InitWindow(0, 0, "-");
 ptr tex = raylib.LoadTexture(GC_CurrentExeDir + "image/slitscan.png");
+
+f32 screenWidth = raylib.GetScreenWidth();
+f32 screenHeight = raylib.GetScreenHeight();
 
 ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int iChannelLocation = raylib.GetShaderLocation(shader, "iChannel0");
+f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-bool isOK = raylib.IsShaderValid(shader);
 raylib.SetTargetFPS(60);
+raylib.HideCursor();
 
-f32[4] src = [0.0, 0.0, 1.0, 1.0];
-f32[4] dst = [0, 0, SCREEN_WIDTH, SCREEN_HEIGHT];
-f32[2] origin = [0.0, 0.0];
+f32[4] src = [0, 0, 1, 1];
+f32 zeroValue = 0;
+f32[4] dst = [zeroValue, zeroValue, screenWidth, screenHeight];
+f32[2] origin = [0, 0];
 
 while (!raylib.WindowShouldClose()) {
     f32 t = raylib.GetTime();
@@ -72,3 +72,4 @@ while (!raylib.WindowShouldClose()) {
 }
 raylib.UnloadShader(shader);
 raylib.CloseWindow();
+

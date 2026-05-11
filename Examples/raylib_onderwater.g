@@ -57,27 +57,25 @@ void main()
 }`;
 
 
-f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
-
-raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Onderwater");
-int glVersion = raylib.rlGetVersion();   // Call this after InitWindow()
-if (glVersion < 3)
-    return;
-
+raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
+raylib.InitWindow(0, 0, "-");
+f32 screenWidth = raylib.GetScreenWidth();
+f32 screenHeight = raylib.GetScreenHeight();
 ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
-bool isOK = raylib.IsShaderValid(shader);
+f32[2] resolution = [screenWidth, screenHeight];
+raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
 raylib.SetTargetFPS(60);
+raylib.HideCursor();
 
-while (!raylib.WindowShouldClose() && isOK) {
+while (!raylib.WindowShouldClose()) {
     f32 t = raylib.GetTime();
     raylib.SetShaderValue(shader, timeLocation, &t, SHADER_UNIFORM_FLOAT);
-    raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
     raylib.BeginDrawing();
-    raylib.ClearBackground(COLOR_RAYWHITE);
+    raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

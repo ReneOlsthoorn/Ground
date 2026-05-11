@@ -1,6 +1,4 @@
 
-// This is the GPU version of the circles demo effect.
-
 #template raylib
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
@@ -16,13 +14,22 @@ uniform vec2 iResolution;
 uniform float iTime;
 vec2 fragCoord = gl_FragCoord.xy;
 void main() {
-    vec2 coord = fragCoord.xy;
-    vec2 center = iResolution.xy * 0.5;
-    vec2 delta = center - coord;
-    float dist = length(delta);
-    float theAngle = atan(delta.y, delta.x);
-    float c = sin(dist*0.25 + iTime*5.0) + sin(theAngle*2.0 + iTime*5.0) + 0.5;
-	fragColor = vec4(c, c, c, 1.0);
+	float i, j;
+	vec2 circ1, circ2;
+	
+	circ1.x = fragCoord.x-((sin(iTime)*iResolution.x)/4.0 + iResolution.x/2.0);
+	circ1.y = fragCoord.y-((cos(iTime)*iResolution.x)/4.0 + iResolution.y/2.0);
+
+	circ2.x = fragCoord.x-((sin(iTime*0.92+1.2)*iResolution.x)/4.0 + iResolution.x/2.0);
+	circ2.y = fragCoord.y-((cos(iTime*0.43+0.3)*iResolution.x)/4.0 + iResolution.y/2.0);
+	
+	circ1.xy /= 8.0;
+	circ2.xy /= 8.0;
+	
+	i = sin(sqrt(circ1.x*circ1.x+circ1.y*circ1.y))*0.5+0.5;
+	j = sin(sqrt(circ2.x*circ2.x+circ2.y*circ2.y))*0.5+0.5;
+
+	fragColor = vec4(j*1.5,i*1.5,(j+i)/4.0,1.0);
 }`;
 
 raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib shader");
