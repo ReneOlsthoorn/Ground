@@ -548,7 +548,7 @@ GLSL: Quasi Infinite Zoom Voronoi</p>
 
 ### Starfall
 <p align="center">
-<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Starfall?raw=true" width="500" /><br/>
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Starfall.jpg?raw=true" width="500" /><br/>
 GLSL: Starfall</p>
 
 ### Fireball
