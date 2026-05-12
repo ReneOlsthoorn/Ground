@@ -84,7 +84,7 @@ is also possible as can be seen in the sudoku.g example. See the Chess example o
 
 ### GPU programming
 High performance computing also includes the Graphics Processing Unit(GPU) with its many cores. Ground uses `raylib`
-to compile and execute GPU shaders. For graphics effects that hit every pixel on the screen, you best use GPU shaders.
+to compile and execute GPU shaders. For graphics effects that calculate every pixel on the screen, you best use GPU shaders.
 The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the `snippet_circles` example, which
 is an effect done with the CPU. For that example to run smoothly, I had to precalculate values and delegate the workload 
 to 3 threads. That kind of plumbing code makes the simple effect hard to read.  
