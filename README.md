@@ -82,6 +82,18 @@ is also possible as can be seen in the sudoku.g example. See the Chess example o
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Chess.gif?raw=true" width="500" /><br/>
 </p>
 
+### GPU programming
+High performance computing also includes the Graphics Processing Unit(GPU) with its many cores. Ground uses `raylib`
+to compile and execute GPU shaders. For graphics effects that hit every pixel on the screen, you best use GPU shaders.
+The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the `snippet_circles` example, which
+is an effect done with the CPU. For that example to run smoothly, I had to precalculate values and delegate the workload 
+to 3 threads. That kind of plumbing code makes the simple effect hard to read.  
+Now look at `raylib_circles`, which is the same effect but done with GLSL (OpenGL Shader Language). The code has no 
+precalculation, is easier to read and executes faster.
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
+</p>
+
 ### Choosing a template
 With the special `#template` directive, the programmer can choose a generation template. The default is `console`. See the
 directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without a console window.
