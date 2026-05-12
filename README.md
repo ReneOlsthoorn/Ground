@@ -88,7 +88,7 @@ to compile and execute GPU shaders. For graphics effects that calculate every pi
 The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the [snippet_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/snippet_circles.g) example, which
 is an effect done with the CPU. For that example to run smoothly, I had to precalculate values and delegate the workload 
 to 3 threads. That kind of plumbing code makes the simple effect hard to read.  
-Now look at [raylib_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/raylib_circles.g), which is the 
+Now look at [raylib_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/raylib_circles.g) example, which is the 
 same effect but done with GLSL (OpenGL Shader Language). The code has no precalculation, is easier to read and executes faster.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
