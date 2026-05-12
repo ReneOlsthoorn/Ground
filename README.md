@@ -161,6 +161,7 @@ so that will be the future.
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
 * Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
+* During development of your shader, use the `console` template to be able to see the logging of the GLSL compiler. Also don't do fullscreen. When your code crashes the desktop is not restored.
 * The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
 These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I 
 created the make files like this: 
