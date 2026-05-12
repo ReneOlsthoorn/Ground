@@ -85,11 +85,11 @@ is also possible as can be seen in the sudoku.g example. See the Chess example o
 ### GPU programming
 High performance computing also includes the Graphics Processing Unit(GPU) with its many cores. Ground uses `raylib`
 to compile and execute GPU shaders. For graphics effects that calculate every pixel on the screen, you best use GPU shaders.
-The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the `snippet_circles` example, which
+The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the [snippet_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/snippet_circles.g) example, which
 is an effect done with the CPU. For that example to run smoothly, I had to precalculate values and delegate the workload 
 to 3 threads. That kind of plumbing code makes the simple effect hard to read.  
-Now look at `raylib_circles`, which is the same effect but done with GLSL (OpenGL Shader Language). The code has no 
-precalculation, is easier to read and executes faster.
+Now look at [raylib_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/raylib_circles.g), which is the 
+same effect but done with GLSL (OpenGL Shader Language). The code has no precalculation, is easier to read and executes faster.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
 </p>
