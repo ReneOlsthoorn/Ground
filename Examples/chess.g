@@ -32,7 +32,7 @@ bool StatusRunning = true;
 int frameCount = 0;
 string gameStatus = "game running";
 bool thread2Busy = true;
-MouseState mouseState;
+sdl3_MouseState mouseState;
 
 //   CREATING A WINDOW
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);

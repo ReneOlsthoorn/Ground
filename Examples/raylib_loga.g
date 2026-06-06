@@ -3,32 +3,29 @@
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
 
+
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
 uniform mat4 mvp;
 void main() { gl_Position = mvp * vec4(vertexPosition, 1.0); }`;
 
+
 byte* fsCode = `#version 330
 out vec4 fragColor;
 uniform vec2 iResolution;
 uniform float iTime;
-vec2 fragCoord = gl_FragCoord.xy;
 #define TIME        iTime
 #define RESOLUTION  iResolution
 #define PI          3.141592654
 #define TAU         (2.0*PI)
 #define ROT(a)      mat2(cos(a), sin(a), -sin(a), cos(a))
-
 const float ExpBy = log2(2.24);
-
 float forward(float l) {
   return exp2(ExpBy*l);
 }
-
 float reverse(float l) {
   return log2(l)/ExpBy;
 }
-
 float modPolar(inout vec2 p, float repetitions) {
   float angle = TAU/repetitions;
   float a = atan(p.y, p.x) + angle/2.;
@@ -41,7 +38,6 @@ float modPolar(inout vec2 p, float repetitions) {
   if (abs(c) >= (repetitions/2.0)) c = abs(c);
   return c;
 }
-
 vec3 effect(vec2 p) {
   float aa = 4.0/RESOLUTION.y;
   float ltm = 0.75*TIME;
@@ -49,13 +45,10 @@ vec3 effect(vec2 p) {
   float mtm = fract(ltm);
   float ntm = floor(ltm);
   float zz = forward(mtm);
-
   vec2 p0 = p;
   p0 *= rot0;
   p0 /= zz;
-
   float l0 = length(p0);
-  
   float n0 = ceil(reverse(l0));
   float r0 = forward(n0);
   float r1 = forward(n0-1.0);
@@ -67,7 +60,6 @@ vec3 effect(vec2 p) {
   p1 *= ROT(3.0*n0*TAU/16.0);
   float n1 = modPolar(p1, 8.0);
   p1.x -= r;
-
   float a = 0.5*ltm+n1/8.0;
   a = fract(a);
   float d1 = length(p1)-0.5*w;
@@ -81,13 +73,12 @@ vec3 effect(vec2 p) {
   col = sqrt(col);
   return col;
 }
-
 void main() {
+  vec2 fragCoord = gl_FragCoord.xy;
   vec2 q = fragCoord/RESOLUTION.xy;
   vec2 p = -1. + 2. * q;
   p.x *= RESOLUTION.x/RESOLUTION.y;
   vec3 col = effect(p);
-  
   fragColor = vec4(col, 1.0);
 }`;
 
@@ -101,7 +92,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -110,7 +100,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

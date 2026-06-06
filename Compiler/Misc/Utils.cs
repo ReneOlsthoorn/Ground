@@ -25,5 +25,11 @@ namespace GroundCompiler
             return null;
         }
 
+        public static bool IsLog2(int value)
+        {
+            return value > 0 && (value & (value - 1)) == 0;
+        }
+
+
     }
 }

@@ -38,7 +38,7 @@ u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
 int pitch = SCREEN_LINESIZE;
 int figureShow = 0;
 int generations = 0;
-MouseState mouseState;
+sdl3_MouseState mouseState;
 
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);

@@ -676,6 +676,9 @@ namespace GroundCompiler.Statements
                 result += sizeOfVariable;
             }
 
+            //if (this.IsLog2())   // code generatie van niet log2 size classes gaat niet goed. Ik weiger een imul te gaan doen. De oplossing is de grootte log2 te maken.
+            result = Convert.ToInt32(System.Numerics.BitOperations.RoundUpToPowerOf2(Convert.ToUInt32(result)));
+
             return result;
         }
 
@@ -701,7 +704,9 @@ namespace GroundCompiler.Statements
         }
 
         public void SetPacked() => this.Properties["alignment"] = "packed";
+        public void SetLog2() => this.Properties["alignment"] = "log2";
         public bool IsPacked() => (this.Properties.ContainsKey("alignment") && ((string)this.Properties["alignment"]!) == "packed");
+        public bool IsLog2() => (this.Properties.ContainsKey("alignment") && ((string)this.Properties["alignment"]!) == "log2");
 
         public Scope GetScopeFromStatement() => this.Scope;
         public Token GetScopeName() => this.Name;

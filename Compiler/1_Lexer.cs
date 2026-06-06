@@ -237,9 +237,17 @@ namespace GroundCompiler
 
         public void ReadDecimal(Token token)
         {
-            string s = ReadMatching(IsDigitOrPoint);
-            if (s.Contains("."))
+            string s = ReadMatching(IsFloatingPoint);
+            if (s.Contains('.'))
             {
+                if (s.EndsWith('f'))
+                {
+                    float f = float.Parse(s.Substring(0, s.Length - 1), CultureInfo.InvariantCulture);
+                    token.Datatype = Datatype.GetDatatype("f32");
+                    token.Value = f;
+                    token.Lexeme = f.ToString(CultureInfo.InvariantCulture);
+                    return;
+                }
                 double d = double.Parse(s, CultureInfo.InvariantCulture);
                 token.Datatype = Datatype.GetDatatype("f64");
                 token.Value = d;
@@ -409,7 +417,7 @@ namespace GroundCompiler
 
         public bool IsDirective(char c) { return (c == '#'); }
         public bool IsDigit(char c, char followingChar = ' ') { return (c >= '0' && c <= '9'); }
-        public bool IsDigitOrPoint(char c, char followingChar = ' ') { return (c >= '0' && c <= '9') || (c == '.' && followingChar != '.'); }
+        public bool IsFloatingPoint(char c, char followingChar = ' ') { return (c >= '0' && c <= '9') || (c == '.' && followingChar != '.') || (c == 'f'); }
         public bool IsAlphabetical(char c, char followingChar = ' ') { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }
         public bool IsIdentifierStart(char c, char followingChar = ' ') { return (IsAlphabetical(c) || (c == '_')); }
         public bool IsIdentifierRest(char c, char followingChar = ' ') { return (IsIdentifierStart(c) || IsDigit(c) || (c == '$')); }

@@ -1,5 +1,4 @@
-// Introduction : https://www.shadertoy.com/view/mtyGWy
-
+// This is the GPU version of the spiral demo effect.
 #template raylib
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
@@ -10,32 +9,23 @@ uniform mat4 mvp;
 void main() { gl_Position = mvp * vec4(vertexPosition, 1.0); }`;
 
 byte* fsCode = `#version 330
+out vec4 fragColor;
 uniform vec2 iResolution;
 uniform float iTime;
-vec3 palette( float t ) {
-    vec3 a = vec3(0.5, 0.5, 0.5);
-    vec3 b = vec3(0.5, 0.5, 0.5);
-    vec3 c = vec3(1.0, 1.0, 1.0);
-    vec3 d = vec3(0.263,0.416,0.557);
-    return a + b*cos( 6.28318*(c*t+d) );
-}
 void main() {
-    vec2 uv = (gl_FragCoord.xy * 2.0 - iResolution.xy) / iResolution.y;
-    vec2 uv0 = uv;
-    vec3 finalColor = vec3(0.0);
-    for (float i = 0.0; i < 2.0; i++) {
-        uv = fract(uv * 1.5) - 0.5;
-        float d = length(uv) * exp(-length(uv0));
-        vec3 col = palette(length(uv0) + i * 0.4 + iTime * 0.4);
-        d = sin(d * 8.0 + iTime) / 8.0;
-        d = abs(d);
-        d = pow(0.01 / d, 1.2);
-        finalColor += col * d;
-    }       
-    gl_FragColor = vec4(finalColor, 1.0);
+    vec2 center = iResolution.xy * 0.5;
+    vec2 delta = center - gl_FragCoord.xy;
+    float dist = length(delta);
+    float theAngle = atan(delta.y, delta.x) * 3.0;
+    //float c = step(0.5, sin(dist*(sin(iTime*0.5)*0.05) + theAngle + iTime*10.0) + 0.5);
+    //float c = step(0.5, sin(dist*0.035 + theAngle + iTime*10.0) + 0.5);
+    float c = step(0.5, sin(dist*0.007 + theAngle + iTime*10.0) + 0.5);
+	fragColor = vec4(1.0, c, c, 1.0);
 }`;
 
-raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib GLSL");
+raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED | CONFIG_FLAG_WINDOW_MAXIMIZED);
+raylib.InitWindow(0, 0, "-");
+//raylib.InitWindow(screenWidth, screenHeight, "Raylib shader");
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
 ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
@@ -43,7 +33,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -52,7 +41,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

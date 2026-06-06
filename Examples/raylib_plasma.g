@@ -3,17 +3,18 @@
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
 
+
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
 uniform mat4 mvp;
 void main() { gl_Position = mvp * vec4(vertexPosition, 1.0); }`;
+
 
 byte* fsCode = `#version 330
 out vec4 fragColor;
 uniform vec2 iResolution;
 uniform float iTime;
 uniform vec2 iMouse;
-
 void main()
 {
     vec2 fragCoord = gl_FragCoord.xy;
@@ -42,6 +43,7 @@ void main()
 	fragColor = vec4(r,g,b,1.0);
 }`;
 
+
 raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
 f32 screenWidth = raylib.GetScreenWidth();
@@ -52,7 +54,6 @@ int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int mouseLocation = raylib.GetShaderLocation(shader, "iMouse");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -63,7 +64,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

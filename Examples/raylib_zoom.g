@@ -28,13 +28,10 @@ uniform vec2 iResolution;
 uniform float iTime;
 in vec2 fragTexCoord;
 out vec4 fragColor;
-vec2 fragCoord = gl_FragCoord.xy;             //vec2 fragCoord = fragTexCoord * iResolution; (doesn't work...?)
-
 vec2 hash22(vec2 p) { 
     float n = sin(dot(p, vec2(41, 289)));
     return fract(vec2(262144, 32768)*n); 
 }
-
 float Voronoi(vec2 p)
 {	
     vec2 ip = floor(p);
@@ -51,61 +48,49 @@ float Voronoi(vec2 p)
     }    
     return sqrt(d); 
 }
-
 void main()
 {
+    vec2 fragCoord = gl_FragCoord.xy;             //vec2 fragCoord = fragTexCoord * iResolution; (doesn't work...?)
 	vec2 uv = (fragCoord - iResolution.xy*.5)/iResolution.y;
 	float t = iTime, s, a, b, e;
     float th = sin(iTime*.1)*sin(iTime*.13)*4.;
     float cs = cos(th), si = sin(th);
     uv *= mat2(cs, -si, si, cs);
-    
     vec3 sp = vec3(uv, 0);
     vec3 ro = vec3(0, 0, -1);
     vec3 rd = normalize(sp - ro);
     vec3 lp = vec3(cos(iTime)*.375, sin(iTime)*0.1, -1);
-    
     const float L = 8.;
     const float gFreq = .5;
     float sum = 0.;  
-    
     th = 3.14159265*.7071/L;
     cs = cos(th), si = sin(th);
     mat2 M = mat2(cs, -si, si, cs);
-    
     vec3 col = vec3(0);
     float f = 0., fx = 0., fy = 0.;
     vec2 eps = vec2(4./iResolution.y, 0);    
     vec2 offs = vec2(.1);  
-	
 	for (float i = 0.; i<L; i++){
 		s = fract((i - t*2.)/L);
         e = exp2(s*L)*gFreq; // Range (approx): [ 1, pow(2., L)*gFreq ]
         a = (1. - cos(s*6.2831))/e;  // Smooth transition.
-
         f += Voronoi(M*sp.xy*e + offs)*a;
         fx += Voronoi(M*(sp.xy - eps.xy)*e + offs)*a;
         fy += Voronoi(M*(sp.xy - eps.yx)*e + offs)*a;
-        
         sum += a;
         M *= M;
 	}
-    
     sum = max(sum, .001);
-    
     f /= sum;
     fx /= sum;
     fy /= sum;
-   
     float bumpFactor = .2;
     fx = (fx - f)/eps.x; // Change in X
     fy = (fy - f)/eps.x; // Change in Y.
     vec3 n = normalize( vec3(0, 0, -1) + vec3(fx, fy, 0)*bumpFactor );           
-   
 	vec3 ld = lp - sp;
 	float lDist = max(length(ld), .001);
 	ld /= lDist;
-      
     float atten = 1.25/(1. + lDist*0.15 + lDist*lDist*0.15);
 	float diff = max(dot(n, ld), 0.);  
     diff = pow(diff, 2.)*.66 + pow(diff, 4.)*.34; 
@@ -116,8 +101,7 @@ void main()
 }`;
 
 
-
-raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
+raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED | CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
@@ -126,7 +110,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -135,7 +118,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

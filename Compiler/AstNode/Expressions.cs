@@ -226,15 +226,13 @@ namespace GroundCompiler.Expressions
     // identifier.identifier = Value
     public class PropertySet : Expression
     {
-        public Expression ObjectNode;
-        public Token Name;
+        public PropertyExpression PropExpr;
         public Token AssignmentOperation;
         public Expression ValueNode;
 
-        public PropertySet(Expression theObject, Token theName, Token theAssignmentOperation, Expression theValue)
+        public PropertySet(PropertyExpression propExpr, Token theAssignmentOperation, Expression theValue)
         {
-            ObjectNode = theObject;
-            Name = theName;
+            PropExpr = new PropertyExpression(propExpr.ObjectNode, propExpr.Name); // create shallow copy
             ValueNode = theValue;
             AssignmentOperation = theAssignmentOperation;
         }
@@ -243,8 +241,8 @@ namespace GroundCompiler.Expressions
         {
             get
             {
-                if (ObjectNode != null)
-                    yield return ObjectNode;
+                if (PropExpr.ObjectNode != null)
+                    yield return PropExpr.ObjectNode;
 
                 if (ValueNode != null)
                     yield return ValueNode;
@@ -253,10 +251,10 @@ namespace GroundCompiler.Expressions
 
         public override bool ReplaceNode(AstNode oldNode, AstNode newNode)
         {
-            if (Object.ReferenceEquals(ObjectNode, oldNode))
+            if (Object.ReferenceEquals(PropExpr.ObjectNode, oldNode))
             {
                 newNode.Parent = this;
-                ObjectNode = (Expression)newNode;
+                PropExpr.ObjectNode = (Expression)newNode;
                 return true;
             }
             if (Object.ReferenceEquals(ValueNode, oldNode))
@@ -313,7 +311,12 @@ namespace GroundCompiler.Expressions
                     skipDefineFloatingPoint = theList.Properties.ContainsKey("fixed");
 
                 if (!skipDefineFloatingPoint)
-                    GetScope()?.DefineFloatingpoint(Convert.ToDouble(Value));
+                {
+                    if (ExprType.SizeInBytes == 4)
+                        GetScope()?.DefineFloatingpoint32(Convert.ToSingle(Value));
+                    else 
+                        GetScope()?.DefineFloatingpoint64(Convert.ToDouble(Value));
+                }
             }
         }
 
@@ -878,6 +881,15 @@ namespace GroundCompiler.Expressions
                         scope = theGroupStmt.GetScope();
                 }
 
+
+                bool objectNodeIsPointer = Datatype.IsPointerType(functionNameGet.ObjectNode.ExprType);
+                if (objectNodeIsPointer)
+                {
+                    ClassStatement? classStatement = (propGetObjectNode.ExprType.Base.Properties.ContainsKey("classStatement")) ? propGetObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement : null;
+                    if (classStatement != null)
+                        scope = classStatement.GetScope();
+                }
+
                 if (functionNameGet.ObjectNode is ArrayAccess objectNodeArray)
                 {
                     ClassStatement? classStatement = (propGetObjectNode.ExprType.Properties.ContainsKey("classStatement")) ? propGetObjectNode.ExprType.Properties["classStatement"] as ClassStatement : null;
@@ -933,7 +945,15 @@ namespace GroundCompiler.Expressions
                         }
                         else
                         {
-                            var classStatement = objectNodeVar!.ExprType.Properties["classStatement"] as ClassStatement;
+                            ClassStatement? classStatement = null;
+                            if (Datatype.IsPointerType(objectNodeVar!.ExprType))
+                            {
+                                classStatement = objectNodeVar!.ExprType.Base.Properties["classStatement"] as ClassStatement;
+                            }
+                            else
+                            {
+                                classStatement = objectNodeVar!.ExprType.Properties["classStatement"] as ClassStatement;
+                            }
                             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == exprGet.Name.Lexeme);
                             arg.ExprType = instVar.ResultType;
                         }

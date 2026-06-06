@@ -28,21 +28,17 @@ uniform vec2 iResolution;
 uniform float iTime;
 in vec2 fragTexCoord;
 out vec4 fragColor;
-vec2 fragCoord = gl_FragCoord.xy;
-
 #define TAU 6.28318530718
 #define MAX_ITER 5
-
 void main() 
 {
+    vec2 fragCoord = gl_FragCoord.xy;
 	float time = iTime * .5+23.0;
 	vec2 uv = fragCoord.xy / iResolution.xy;
-    
     vec2 p = mod(uv*TAU, TAU)-250.0;
 	vec2 i = vec2(p);
 	float c = 1.0;
 	float inten = .005;
-
 	for (int n = 0; n < MAX_ITER; n++) 
 	{
 		float t = time * (1.0 - (3.5 / float(n+1)));
@@ -66,7 +62,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -75,7 +70,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

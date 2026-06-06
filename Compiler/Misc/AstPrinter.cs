@@ -144,7 +144,7 @@ namespace GroundCompiler
 
         public string VisitorPropertySet(PropertySet expr)
         {
-            return Parenthesize2("=", expr.ObjectNode, expr.Name.Lexeme, expr.ValueNode);
+            return Parenthesize2("=", expr.PropExpr.ObjectNode, expr.PropExpr.Name.Lexeme, expr.ValueNode);
         }
 
         public string VisitorUnary(Unary expr)

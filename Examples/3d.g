@@ -23,13 +23,12 @@ f32[4] ballSrcRectVoetbal = [0,0,32,32];
 f32[4] ballSrcRectTennisbal = [0,32,32,32];
 f32[4] ballSrcRectKogel = [0,64,32,32];
 f32[4] ballDestRect = [0,0,32,32];
-//ptr ballSrc = ballSrcRectVoetbal;
-ptr ballSrc = ballSrcRectKogel;
+ptr ballSrc = ballSrcRectKogel;  //ballSrcRectVoetbal;
 
 
 ptr processHandle = kernel32.GetCurrentProcess();
 int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
-kernel32.SetPriorityClass(processHandle, 0x80); //HIGH_PRIORITY_CLASS
+kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
 ptr thread1Handle = kernel32.GetCurrentThread();
 int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
 kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
@@ -85,7 +84,7 @@ f32[] cube = [ -0.5,-0.5,-0.5,1.0,  0.5,-0.5,-0.5,1.0,
                 0.2, 0.2, 0.2,1.0, -0.2, 0.2, 0.2,1.0 ] asm; 
 
 
-f32[CUBE_SIZE*VEC3] ndcCube = [ ] asm;
+f32[CUBE_SIZE*glm_VEC3] ndcCube = [ ] asm;
 
 
 f32[16] model = [ ] asm;
@@ -160,7 +159,7 @@ ndcCube_Compare:
 }
 
 
-f32[VEC4] tmpVec4 = [] asm;
+f32[glm_VEC4] tmpVec4 = [] asm;
 f32 cube_XRotation = 0.0;
 f32 cube_YRotation = 0.0;
 
@@ -178,24 +177,24 @@ function RenderCube() {
 	glm.glmc_mat4_mulN(matrixArray, 3, mvp);
 
 	for (i in 0 ..< CUBE_SIZE) {
-		glm.glmc_mat4_mulv(mvp, &cube[i*VEC4], tmpVec4);
+		glm.glmc_mat4_mulv(mvp, &cube[i*glm_VEC4], tmpVec4);
 
 		float ndc_x = tmpVec4[0] / tmpVec4[3];
 		float ndc_y = tmpVec4[1] / tmpVec4[3];
 		float ndc_z = tmpVec4[2] / tmpVec4[3];   // depth
 
-		ndcCube[i*VEC3] = ndc_x;
-		ndcCube[i*VEC3+1] = ndc_y;
-		ndcCube[i*VEC3+2] = ndc_z;
+		ndcCube[i*glm_VEC3] = ndc_x;
+		ndcCube[i*glm_VEC3+1] = ndc_y;
+		ndcCube[i*glm_VEC3+2] = ndc_z;
 	}
 
 	sdl3.SDL_qsort(ndcCube, CUBE_SIZE, 3*sizeof(f32), g.ndcCube_Compare);
 
 	for (i in (CUBE_SIZE-1)..0) {
-		float screen_x = (ndcCube[i*VEC3] + 0.5) * 1280.0;
-		float screen_y = (1.0 - (ndcCube[i*VEC3+1] + 0.5)) * 720.0; // flip Y for screen space
+		float screen_x = (ndcCube[i*glm_VEC3] + 0.5) * 1280.0;
+		float screen_y = (1.0 - (ndcCube[i*glm_VEC3+1] + 0.5)) * 720.0; // flip Y for screen space
 
-		float ballSize = (0.99 - ndcCube[i*VEC3+2]) * 1500.0;
+		float ballSize = (0.99 - ndcCube[i*glm_VEC3+2]) * 1500.0;
 
 		ballDestRect[0] = screen_x - 32.0;
 		ballDestRect[1] = screen_y - 32.0;
@@ -223,26 +222,25 @@ ProtrackerMod ptMod;
 ptMod.Load(soundFile);
 ptMod.StartPlay();
 
-
 string[] NoteMapping = [ "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" ];
-string GetNoteResult;
-function GetNoteInfo(int note, int sample, int effect) {
+function GetNoteInfo(int note, int sample, int effect) : string {
 	if (note == 0 and sample == 0 and effect == 0) {
-		GetNoteResult = "        "; //"--- 0000";
-		return;
+		return "        "; // "--- 0000";
 	}
+	string result;
 	if (note != 0) {
 		note = note - 1;
 		int octaaf = note / 12;
 		int noteWithin = note % 12;
-		GetNoteResult = NoteMapping[noteWithin] + (octaaf+1) + " ";
+		result = NoteMapping[noteWithin] + (octaaf+1) + " ";
 	} else {
-		GetNoteResult = "--- ";
+		result = "--- ";
 	}
 	if (sample != 0 or effect != 0) {
-		GetNoteResult = GetNoteResult + gc.hex$(sample,1) + gc.hex$(effect,3);
+		result = result + gc.hex$(sample,1) + gc.hex$(effect,3);
 	} else
-		GetNoteResult = "0000";
+		result = "0000";
+	return result;
 }
 
 
@@ -281,7 +279,7 @@ function PrintMusicInfo() {
 			int note = ptMod.GetNote(*(aRow+(v*4)));
 			int sample = ptMod.GetSample(*(aRow+(v*4)));
 			int effect = ptMod.GetEffect(*(aRow+(v*4)));
-			GetNoteInfo(note, sample, effect);
+			string noteResult = GetNoteInfo(note, sample, effect);
 
 			if (v == 0)
 				g.[screen_cursor] = g.[screen_cursor] + 1;
@@ -291,7 +289,7 @@ function PrintMusicInfo() {
 				g.[screen_cursor] = g.[screen_cursor] + 40;
 			if (v == 3)
 				g.[screen_cursor] = g.[screen_cursor] + 3;
-			print(GetNoteResult);
+			print(noteResult);
 		}
 		print("\n");
 	}

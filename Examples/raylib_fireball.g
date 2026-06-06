@@ -28,8 +28,6 @@ uniform vec2 iResolution;
 uniform float iTime;
 in vec2 fragTexCoord;
 out vec4 fragColor;
-vec2 fragCoord = gl_FragCoord.xy;             //vec2 fragCoord = fragTexCoord * iResolution; (doesn't work...?)
-
 float snoise(vec3 uv, float res)
 {
 	const vec3 s = vec3(1e0, 1e2, 1e3);
@@ -37,16 +35,15 @@ float snoise(vec3 uv, float res)
 	vec3 uv0 = floor(mod(uv, res))*s;
 	vec3 uv1 = floor(mod(uv+vec3(1.), res))*s;
 	vec3 f = fract(uv); f = f*f*(3.0-2.0*f);
-	vec4 v = vec4(uv0.x+uv0.y+uv0.z, uv1.x+uv0.y+uv0.z,
-		      	  uv0.x+uv1.y+uv0.z, uv1.x+uv1.y+uv0.z);
+	vec4 v = vec4(uv0.x+uv0.y+uv0.z, uv1.x+uv0.y+uv0.z,    uv0.x+uv1.y+uv0.z, uv1.x+uv1.y+uv0.z);
 	vec4 r = fract(sin(v*1e-1)*1e3);
 	float r0 = mix(mix(r.x, r.y, f.x), mix(r.z, r.w, f.x), f.y);
 	r = fract(sin((v + uv1.z - uv0.z)*1e-1)*1e3);
 	float r1 = mix(mix(r.x, r.y, f.x), mix(r.z, r.w, f.x), f.y);
 	return mix(r0, r1, f.z)*2.-1.;
 }
-
 void main() {
+    vec2 fragCoord = gl_FragCoord.xy;             //vec2 fragCoord = fragTexCoord * iResolution; (doesn't work...?)
 	vec2 p = -.5 + fragCoord.xy / iResolution.xy;
 	p.x *= iResolution.x/iResolution.y;	
 	float color = 3.0 - (3.*length(2.*p));
@@ -59,6 +56,7 @@ void main() {
 	fragColor = vec4( color, pow(max(color,0.),2.)*0.4, pow(max(color,0.),3.)*0.15 , 1.0);
 }`;
 
+
 raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
 f32 screenWidth = raylib.GetScreenWidth();
@@ -68,7 +66,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -77,7 +74,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

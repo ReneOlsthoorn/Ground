@@ -1,6 +1,4 @@
-
 // This is the GPU version of the circles demo effect.
-
 #template raylib
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
@@ -29,7 +27,6 @@ int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -38,7 +35,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0xffffffff);
+    raylib.DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

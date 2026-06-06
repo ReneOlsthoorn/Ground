@@ -73,7 +73,8 @@ namespace GroundCompiler
                 emitter.FramePosition = oldFramePos;
                 emitter.CloseGeneratedCode_Procedures();
 
-                emitter.EmitLiteralFloats(prog.Scope.GetLiteralFloatSymbols());
+                emitter.EmitLiteralFloat64(prog.Scope.GetLiteralFloatSymbols());
+                emitter.EmitLiteralFloat32(prog.Scope.GetLiteralFloat32Symbols());
                 emitter.EmitStrings(prog.Scope.GetStringSymbols());
                 emitter.CloseGeneratedCode_Data();
             };
@@ -308,11 +309,29 @@ namespace GroundCompiler
         // Get a class property. Direction: Read.
         public object? VisitorPropertyGet(PropertyExpression expr)
         {
-            var objectNodeAsVariable = expr.ObjectNode as Variable;
-            var objectNodeAsArray = expr.ObjectNode as ArrayAccess;
-            var objectNodeAsThis = expr.ObjectNode as ThisExpression;
+            // The deepest PropertyExpression is the first we need to evaluate. I use a stack to do that.
+            Stack<PropertyExpression> propExprStack = new();
+            propExprStack.Push(expr);
+            PropertyExpression needle = expr;
+            while (needle.ObjectNode is PropertyExpression propExpr)
+            {
+                needle = propExpr;
+                propExprStack.Push(propExpr);
+            }
+            needle = propExprStack.Pop();
+            while (propExprStack.Count >= 1)
+            {
+                PropertyExpressionAddressOf(needle);
+                needle = propExprStack.Pop();
+            }
 
-            var currentScope = expr.GetScope();
+            var objectNodeAsVariable = needle.ObjectNode as Variable;
+            var objectNodeAsArray = needle.ObjectNode as ArrayAccess;
+            var objectNodeAsThis = needle.ObjectNode as ThisExpression;
+
+
+            var objectNodeIsPointer = Datatype.IsPointerType(needle.ObjectNode.ExprType);
+            var currentScope = needle.GetScope();
 
             ClassStatement? classStatement = null;
             VarStatement? instVar = null;
@@ -321,8 +340,8 @@ namespace GroundCompiler
             {
                 if (objectNodeAsVariable?.Name.Lexeme == "g")
                 {
-                    string theVariable = expr.Name.Lexeme;
-                    if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(Datatype.TypeEnum.String))
+                    string theVariable = needle.Name.Lexeme;
+                    if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
                         theVariable = theVariable.Substring(1, (theVariable.Length - 2));
 
                     emitter.LoadHardcodedGroupVariable(theVariable);
@@ -333,7 +352,7 @@ namespace GroundCompiler
                 if (variableSymbol is GroupSymbol groupSymbol)
                 {
                     var groupScope = groupSymbol.GroupStatement.GetScope();
-                    var groupVar = groupScope.GetVariable(expr.Name.Lexeme);
+                    var groupVar = groupScope.GetVariable(needle.Name.Lexeme);
                     if (groupVar is HardcodedVariable hardCodedVar)
                     {
                         string varName = emitter.AssemblyVariableNameForHardcodedGroupVariable(groupSymbol.Name, hardCodedVar.Name);
@@ -341,33 +360,27 @@ namespace GroundCompiler
                     }
                     return null;
                 }
-
-                // Is there a pointer?
-                // A pointer is a special. It will not use the indexed memory, but direct memory.
-                if (Datatype.IsPointerType(expr.ObjectNode.ExprType))
-                {
-                    classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
-                    instVar = classStatement!.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
-                    if (instVar == null)
-                        Compiler.Error($"Instance variable {expr.Name.Lexeme} not found.", expr.Name);
-                }
-                else
-                {
-                    classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                    instVar = classStatement!.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
-                    if (instVar == null)
-                        Compiler.Error($"Instance variable {expr.Name.Lexeme} not found.", expr.Name);
-
-                    VariableRead(objectNodeAsVariable);
-                }
             }
+
+            if (objectNodeIsPointer)
+                classStatement = needle.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
+            else
+            {
+                classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                if (objectNodeAsVariable != null)
+                    VariableRead(objectNodeAsVariable);
+            }
+
+            instVar = classStatement!.InstanceVariableNodes.Find((instVariable) => instVariable.Name.Lexeme == needle.Name.Lexeme);
+            if (instVar == null)
+                Compiler.Error($"Instance variable {needle.Name.Lexeme} not found.", needle.Name);
 
             if (objectNodeAsThis != null)
             {
-                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == needle.Name.Lexeme);
 
-                var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
+                var functionStmt = needle.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
                 string procName = functionStmt!.Name.Lexeme;
                 string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
                 emitter.LoadFunctionParameter64(theName);
@@ -377,9 +390,12 @@ namespace GroundCompiler
             {
                 ArrayAccess(objectNodeAsArray!, addressOf: true);
 
-                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+                classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == needle.Name.Lexeme);
             }
+
+            if (objectNodeIsPointer)
+                EmitExpression(needle.ObjectNode);
 
             string instVarReg = cpu.GetTmpRegister();
             emitter.Codeline($"mov   {instVarReg}, rax");
@@ -395,45 +411,59 @@ namespace GroundCompiler
         {
             var currentScope = expr.GetScope();
 
-            var objectNodeAsVariable = expr.ObjectNode as Variable;
-            var objectNodeAsArray = expr.ObjectNode as ArrayAccess;
-            var objectNodeAsThis = expr.ObjectNode as ThisExpression;
+            // The deepest PropertyExpression is the first we need to evaluate. I use a stack to do that.
+            Stack<PropertyExpression> propExprStack = new();
+            propExprStack.Push(expr.PropExpr);
+            bool storeCurrent = expr.PropExpr.ObjectNode is PropertyExpression;
+            PropertyExpression needle = expr.PropExpr;
+            while (needle.ObjectNode is PropertyExpression propExpr)
+            {
+                needle = propExpr;
+                propExprStack.Push(propExpr);
+            }
+            needle = propExprStack.Pop();
+            while (propExprStack.Count >= 1)
+            {
+                PropertyExpressionAddressOf(needle);
+                needle = propExprStack.Pop();
+            }
+            if (storeCurrent)
+                emitter.Push();
+
 
             ClassStatement? classStatement = null;
-            if (Datatype.IsPointerType(expr.ObjectNode.ExprType))
-            {
-                // Als er een pointer binnenkomt, dan gaan we ervan uit dat de value al emitted is.
-                classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
-            }
+            VarStatement? instVar = null;
+
+            var objectNodeAsVariable = needle.ObjectNode as Variable;
+            var objectNodeAsArray = needle.ObjectNode as ArrayAccess;
+            var objectNodeAsThis = needle.ObjectNode as ThisExpression;
+            bool needleObjectIsPointer = Datatype.IsPointerType(needle.ObjectNode.ExprType);
+
+            classStatement = null;
+            if (needleObjectIsPointer)
+                classStatement = needle.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;   // Als er een pointer binnenkomt, dan gaan we ervan uit dat de value al emitted is.
             else
             {
                 if (expr.ValueNode != null)
                 {
                     EmitExpression(expr.ValueNode);
-
-                    if (expr.Name.Contains(TokenType.Literal))
+                    if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
                     {
-                        string theLiteralVariable = expr.Name.Lexeme;
-                        if (expr.Name.Contains(TokenType.Literal) && expr.Name.Datatype!.Contains(Datatype.TypeEnum.String))
+                        string theLiteralVariable = needle.Name.Lexeme;
+                        if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
                             theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
 
                         emitter.StoreCurrent(theLiteralVariable);
                         return null;
                     }
-
-                    if (objectNodeAsVariable?.Name.Lexeme == "g")
-                    {
-                        string theLiteralVariable = expr.Name.Lexeme;
-                        emitter.StoreCurrent($"[{theLiteralVariable}]");
-                        return null;
-                    }
-
-                    emitter.Push(expr.ValueNode.ExprType);
                 }
-                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+                //classStatement = needle.ObjectNode.ExprType.Properties.TryGetValue("classStatement", out var raw) && raw is ClassStatement cs ? cs : null;
             }
 
-            var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
+
+
+            instVar = classStatement?.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == needle.Name.Lexeme);
 
             if (objectNodeAsVariable != null)
                 VariableRead(objectNodeAsVariable);
@@ -449,9 +479,32 @@ namespace GroundCompiler
             if (objectNodeAsArray != null)
                 ArrayAccess(objectNodeAsArray!, addressOf: true);
 
+
+            if (storeCurrent)
+                emitter.Pop();
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
-            emitter.Pop(expr.ValueNode);
+
+            if (expr.ValueNode != null)
+            {
+                emitter.PushRegister(instVarReg);
+                EmitExpression(expr.ValueNode);
+                emitter.PopRegister(instVarReg);
+                /*
+                if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
+                {
+                    string theLiteralVariable = needle.Name.Lexeme;
+                    if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
+                        theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+
+                    emitter.StoreCurrent(theLiteralVariable);
+                    return null;
+                }
+                */
+                //emitter.Push(expr.ValueNode.ExprType);
+            } else
+                emitter.Pop();  //emitter.Pop(expr.ValueNode);
+
             if (expr.ValueNode != null)
                 EmitConversionCompatibleType(expr.ValueNode, instVar.ResultType);
 
@@ -721,6 +774,8 @@ namespace GroundCompiler
 
             Variable? instVar = null;
             ArrayAccess? propertyGetArrayAccess = null;
+            bool objectNodeIsPointer = false;
+            Expression? objectNodeIsPointerExpression = null;
 
             // When we have an methodcall, we use the scope from the class
             if (expr.FunctionNameNode is PropertyExpression propertyGet)
@@ -752,6 +807,15 @@ namespace GroundCompiler
                     instVarName = "this";
                     if (expr.FindParentType(typeof(ClassStatement)) is ClassStatement cStmt)
                         classStatement = cStmt;
+                }
+
+                objectNodeIsPointer = Datatype.IsPointerType(propertyGet.ObjectNode.ExprType);
+                if (objectNodeIsPointer)
+                {
+                    objectNodeIsPointerExpression = propertyGet.ObjectNode;
+                    classStatement = propertyGet.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
+                    if (classStatement != null)
+                        scope = classStatement.GetScope();
                 }
 
                 if (propertyGet.ObjectNode is ArrayAccess objectNodeArray)
@@ -800,7 +864,7 @@ namespace GroundCompiler
                     emitter.Codeline("mov   rax, [rbp+G_PARAMETER_LEXPARENT]");    // "this" is the same lexical level, so as a trick we use the previous lexparent as lexparent.
                 else
                 {
-                    if (instVarName != null || propertyGetArrayAccess != null)
+                    if (instVarName != null || propertyGetArrayAccess != null || objectNodeIsPointer == true)
                         emitter.Codeline("mov   rax, [main_rbp]");
                     else
                     {
@@ -839,6 +903,8 @@ namespace GroundCompiler
                 }
                 else if (propertyGetArrayAccess != null)
                     ArrayAccess(propertyGetArrayAccess, addressOf: true);
+                else if (objectNodeIsPointer)
+                    EmitExpression(objectNodeIsPointerExpression);
                 else
                     emitter.LoadNull();
 
@@ -983,10 +1049,12 @@ namespace GroundCompiler
                 }
                 else
                 {
-                    string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, "const float");
-                    emitter.LoadConstantFloat64(id);
-                    if (expr.ExprType.SizeInBytes == 4)
-                        emitter.resizeCurrentFloatingPoint(8, 4);
+                    bool isFloat32 = (expr.ExprType.SizeInBytes == 4);
+                    string id = expr.GetScope()!.IdFor(Convert.ToString(expr.Value, CultureInfo.InvariantCulture)!, isFloat32 ? "const f32" : "const f64");
+                    if (isFloat32)
+                        emitter.LoadConstantFloat32(id);
+                    else
+                        emitter.LoadConstantFloat64(id);
                 }
             }
             else if (expr.ExprType.Contains(Datatype.TypeEnum.Boolean))
@@ -1007,7 +1075,7 @@ namespace GroundCompiler
                 else if (expr.RightNode is ArrayAccess arrayAccess)
                     ArrayAccess(arrayAccess, assignment: null, addressOf: true);
                 else if (expr.RightNode is PropertyExpression propExpr)
-                    PropertyExpressionAddressOf(propExpr);
+                    PropertyExpressionsAddressOf(propExpr);
                 else
                     Compiler.Error("AddressOf can only be done on a variable.");
                 return null;
@@ -1024,7 +1092,7 @@ namespace GroundCompiler
                     if (expr.Operator.Contains(TokenType.MinusMinus))
                         emitter.DecrementCurrent();
                     emitter.Push();
-                    PropertySet propSet = new PropertySet(propExpr.ObjectNode, propExpr.Name, null, null);
+                    PropertySet propSet = new PropertySet(propExpr, null, null);
                     propSet.Parent = propExpr.Parent;
                     VisitorPropertySet(propSet);
                     emitter.Pop();

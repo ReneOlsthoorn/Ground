@@ -30,4 +30,5 @@
           msvcrt_strlen, 'strlen', \
           msvcrt_strstr, 'strstr', \
           msvcrt_strcpy, 'strcpy', \
+          msvcrt_tolower, 'tolower', \
           msvcrt_getch,  '_getch'

@@ -94,16 +94,29 @@ namespace GroundCompiler
         }
     }
 
-    public class FloatConstantSymbol : Symbol
+    public class Float64ConstantSymbol : Symbol
     {
         public double Value;
         public string? SymbolRefId;
 
-        public FloatConstantSymbol(double @value, string symbolRefId)
+        public Float64ConstantSymbol(double @value, string symbolRefId)
         {
             Value = @value;
             SymbolRefId = symbolRefId;
-            Symboltype = "const float";
+            Symboltype = "const f64";
+        }
+    }
+
+    public class Float32ConstantSymbol : Symbol
+    {
+        public float Value;
+        public string? SymbolRefId;
+
+        public Float32ConstantSymbol(float @value, string symbolRefId)
+        {
+            Value = @value;
+            SymbolRefId = symbolRefId;
+            Symboltype = "const f32";
         }
     }
 

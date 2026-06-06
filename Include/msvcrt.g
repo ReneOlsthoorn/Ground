@@ -25,6 +25,7 @@ dll msvcrt function strcpy(ptr dest, ptr src) : ptr;
 dll msvcrt function strstr(ptr haystack, ptr needle) : ptr;
 dll msvcrt function fseek64(int handle, int offset, int origin);
 dll msvcrt function ftell(int handle) : int;
+dll msvcrt function tolower(int c) : int;
 
 asm equates {
 msvcrt_SEEK_CUR = 1

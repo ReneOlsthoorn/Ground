@@ -57,7 +57,7 @@ namespace GroundCompiler
         public string NewLabel() { return $"L{labelCounter++}"; }
 
 
-        public void EmitLiteralFloats(List<FloatConstantSymbol> globalLiteralFloats)
+        public void EmitLiteralFloat64(List<Float64ConstantSymbol> globalLiteralFloats)
         {
             if (globalLiteralFloats.Count > 0)
                 Writeline($"align 16");
@@ -66,6 +66,18 @@ namespace GroundCompiler
             {
                 string quoted = ((double)variable.Value).ToString("0.0000000000", CultureInfo.InvariantCulture);
                 Writeline($"{variable.SymbolRefId} dq {quoted}");
+            }
+        }
+
+        public void EmitLiteralFloat32(List<Float32ConstantSymbol> globalLiteralFloats)
+        {
+            if (globalLiteralFloats.Count > 0)
+                Writeline($"align 16");
+
+            foreach (var variable in globalLiteralFloats)
+            {
+                string quoted = ((float)variable.Value).ToString("0.0000000000", CultureInfo.InvariantCulture);
+                Writeline($"{variable.SymbolRefId} dd {quoted}");
             }
         }
 
@@ -167,6 +179,11 @@ namespace GroundCompiler
             Codeline($"movq  xmm0, rax");
         }
 
+        public void LoadConstantFloat32(string name)
+        {
+            Codeline($"movss xmm0, dword [{name}]");
+        }
+
         public void LoadConstantFloat64(string name)
         {
             Codeline($"movq  xmm0, qword [{name}]");
@@ -199,6 +216,17 @@ namespace GroundCompiler
                 Codeline($"push  rax");
                 StackPush();
             }
+        }
+
+        public void PushRegister(string reg)
+        {
+            Codeline($"push  {reg}");
+            StackPush();
+        }
+        public void PopRegister(string reg)
+        {
+            Codeline($"pop  {reg}");
+            StackPop();
         }
 
         public void PushFloat()
@@ -904,16 +932,18 @@ namespace GroundCompiler
         public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
-            if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
+            if (nrBytes >= 16 && Utils.IsLog2(nrBytes))
             {
                 string reg = cpu.GetTmpRegister();
                 Codeline($"mov   {reg}, {indexReg}");
-                Codeline($"shl   {reg}, 8");
-                Codeline($"mov   rax, [{baseReg}+{reg}]");
+                Codeline($"shl   {reg}, {Math.Log2(nrBytes)}");
+                Codeline($"lea   rax, [{baseReg}+{reg}]");
                 cpu.FreeRegister(reg);
             }
-            else
+            else if (nrBytes == 1 || nrBytes == 2 || nrBytes == 4 || nrBytes == 8)
                 Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+            else
+                Compiler.Error($"LoadBasedIndexToCurrent: Index of {nrBytes} is not supported.");
 
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 8))
                 Codeline($"movq   xmm0, rax");
@@ -924,15 +954,16 @@ namespace GroundCompiler
         public void LeaBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
             Codeline($"xor   eax, eax");
-            if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
+            //if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
+            if (nrBytes >= 16 && Utils.IsLog2(nrBytes))
             {
                 string reg = cpu.GetTmpRegister();
                 Codeline($"mov   {reg}, {indexReg}");
-                Codeline($"shl   {reg}, 8");
+                Codeline($"shl   {reg}, {Math.Log2(nrBytes)}");
                 Codeline($"lea   rax, [{baseReg}+{reg}]");
                 cpu.FreeRegister(reg);
             }
-            else if (nrBytes != 1 && nrBytes != 2 && nrBytes != 4 && nrBytes != 8)
+            else if (nrBytes == 1 || nrBytes == 2 || nrBytes == 4 || nrBytes == 8)
                 Codeline($"lea   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
             else
                 Compiler.Error($"LeaBasedIndexToCurrent: Index of {nrBytes} is not supported.");

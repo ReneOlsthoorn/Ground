@@ -4,19 +4,19 @@
 #include graphics_defines1280x720.g
 #library raylib raylib.dll
 
+
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
 uniform mat4 mvp;
 void main() { gl_Position = mvp * vec4(vertexPosition, 1.0); }`;
+
 
 byte* fsCode = `#version 330
 out vec4 fragColor;
 uniform vec2 iResolution;
 uniform float iTime;
 uniform vec2 iMouse;
-
 vec3 cubevec;
-
 // Sinus bars function
 vec3 calcSine(vec2 uv, float frequency, float amplitude, float shift, float offset, vec3 color, float width, float exponent)
 {
@@ -25,7 +25,6 @@ vec3 calcSine(vec2 uv, float frequency, float amplitude, float shift, float offs
     float scale = smoothstep(width, 0.0, distance(y, uv.y));
     return color * scale;
 }
-
 // Render the bars calling 3 CalcSines() and adding rgb componants
 vec3 Bars(vec2 f)
 {
@@ -36,7 +35,6 @@ vec3 Bars(vec2 f)
     color += calcSine(uv, 0.9, 0.35, 0.4, 0.5, vec3(1.0, 0.0, 0.0), 0.1, 1.0);
     return color;
 }
-
 // Classic iq twist function
 vec3 Twist(vec3 p)
 {
@@ -46,7 +44,6 @@ vec3 Twist(vec3 p)
     mat2  m = mat2(c,-s,s,c);
     return vec3(m*p.xz,p.y);
 }
-
 // The distance function which generate a rotating twisted rounded cube 
 // and we save its pos into cubevec
 float Cube( vec3 p )
@@ -59,7 +56,6 @@ float Cube( vec3 p )
     cubevec = p;
     return length(max(abs(p)-vec3(0.4),0.0))-0.08;
 }
-
 // Split the face in 4 triangles zones
 // return color index 0 or 1 if color1 or color2
 float Face( vec2 uv )
@@ -67,7 +63,6 @@ float Face( vec2 uv )
         uv.y = mod( uv.y, 1.0 );
         return ( ( uv.y < uv.x ) != ( 1.0 - uv.y < uv.x ) ) ? 1.0 : 0.0;
 }
-
 //Classic iq normal
 vec3 getNormal( in vec3 p )
 {
@@ -78,7 +73,6 @@ vec3 getNormal( in vec3 p )
         e.yxy * Cube(p + e.yxy) +
         e.xxx * Cube(p + e.xxx));
 }
-
 void main()
 {
     vec2 fragCoord = gl_FragCoord.xy;
@@ -95,14 +89,12 @@ void main()
     vec4 m = vec4(iMouse, 0.0, 0.0) / vec4(iResolution.x);
     float hd=-1.;								// Hit Distance
     float ay=max(0.1,0.5-iTime/6.);		// For opening the screen
-     
     // Non standard Raymarching
     // When we hit a face, we continue to march, so the ray goes into the cube
     // But we keep in Near the color index of the first face hit by the ray
     // We also keep in Far the last color index the ray hit
     // We break when 256 steps has been done or distance > 4
     // Finnaly we get in Near and Far vars the coloring values to simulate the transparency
-    
     p.x *= iResolution.x / iResolution.y;
     vec3 ro = vec3( 0.0, 0.0, 2.1 );
     vec3 rd = normalize( vec3( p, -2. ) );
@@ -125,10 +117,8 @@ void main()
             		if(m.z<=0.0) Distance += 0.05; else break; // 0.05 is a magic number 
                 }
         }
-
     // Initialize the background color to the sinus bars
     vec3 Color=Bars(fragCoord);
-    
     // if we hit something
     if( Near > 0.0 )
     	{
@@ -150,15 +140,14 @@ void main()
             // Applying the lighting to color
             Color = Color*(diff+ambience)+vec3(0.78,0.5,1.)*spec/1.5;
         }
-
     // The bottom and top rainbow lines
     if (kp.y > ay && kp.y < ay+0.006 || kp.y > (1.-ay) && kp.y < 1.-ay+0.006 ) Color = vec3(0.5 + 0.5 * sin(x/120. + 3.14 + pat), 0.5 + 0.5 * cos (x/120. + pat), 0.5 + 0.5 * sin (x/120. + pat));
     // The bottom and top purple zones
     if(kp.y<ay || kp.y>1.-ay+0.006) Color=vec3(0.20,0.17,0.35);
-
     // Presenting color to the screen
     fragColor = vec4( Color, 1.0 );
 }`;
+
 
 raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib shader");
 f32 screenWidth = raylib.GetScreenWidth();
@@ -169,7 +158,6 @@ int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int mouseLocation = raylib.GetShaderLocation(shader, "iMouse");
 f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
-raylib.SetTargetFPS(60);
 raylib.HideCursor();
 
 while (!raylib.WindowShouldClose()) {
@@ -180,7 +168,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.BeginDrawing();
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
-    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, 0xffffffff);
+    raylib.DrawRectangle(0, 0, screenWidth, screenHeight, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

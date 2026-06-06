@@ -15,6 +15,6 @@ dll glm function glmc_rotate_x(ptr mat4_m, f32 rad, ptr mat4_dest);
 dll glm function glmc_rotate_y(ptr mat4_m, f32 rad, ptr mat4_dest);
 dll glm function glmc_rotate_z(ptr mat4_m, f32 rad, ptr mat4_dest);
 
-#define VEC3 3
-#define VEC4 4
-#define MAT4 16
+#define glm_VEC3 3
+#define glm_VEC4 4
+#define glm_MAT4 16

@@ -160,15 +160,17 @@ so that will be the future.
 
 ### Some remarks
 * You can only declare Classes at the root level. Inner classes are not supported.
-* Unrelated methods and variables can be easily stored in a separate file that you include in the main sourcefile.
-* During development of your shader, use the `console` template to be able to see the logging of the GLSL compiler. Also don't do fullscreen. When your code crashes the desktop is not restored.
+* To clean up your code, methods and variables can be easily stored in a separate file that you include in the main sourcefile.
+* During development of your shader, use the `console` template to be able to see the logging of the GLSL compiler. Also don't use fullscreen, because in the case your code crashes the desktop is not restored.
 * The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
-These steps where done: I checked out the sourcecode and created a directory called build. Into this directory I 
+These steps were done: I checked out the sourcecode and created a directory called build. Into this directory I 
 created the make files like this: 
 `cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON`  
 In the CMakeLists.txt, I included: `target_link_options(chipmunk PRIVATE -static)` as the last line, to prevent 
 the libwinpthread loadtime dependency. After that build the library with `cmake --build .` and the `libchipmunk.dll` 
 is created in build\src.
+* At this moment, Ground does not support namespaces, so use a prefix in front of your classname when you reuse the class in different projects.
+* Although float is a 64 bit datatype in Ground, 32 bit float literals can be described with an 'f' behind the value (like 0.0f). 0.0f32 would just look too confusing.
 
 ### Debugging Ground code in x64dbg:
 In `Program>>Generate_x64dbg_EXE` you see that the Ground compiler can generate a comments database for your .EXE 
@@ -584,24 +586,16 @@ The Ground Release zipfile on Github contains all the sourcecode and most of the
 The executables are in the `bin\Release` directory of the zipfile.
 
 ### Changelog
-2025.01.29: Added kotlin for-loops.  
-2025.04.15: Bertus game added.  
-2025.06.06: Snake game added.  
-2025.06.10: Game Of Life added.  
-2025.07.14: Tetrus game.  
-2025.08.23: Racer game.  
-2025.09.04: Jump game added containing Sfxr sounds.  
-2025.09.10: Bugs game added.  
-2025.09.18: ConnectFour (Vier-op-een-rij) added.  
-2025.09.29: Chess added using StockFish.  
-2025.10.28: High Noon game added.  
-2025.11.09: Memory game added.  
-2025.11.29: GroundSideLibrary now build with MSYS2.  
-2025.12.05: Fireworks demo added.  
-2025.12.09: 3D demo added.  
-2026.01.16: Electronic Life 2026 added.  
-2026.02.08: Circles and Spiral added.  
-2026.02.13: Hexacubes added.  
-2026.04.09: Major refactoring done by removing the reference counting memorymanager. Great improvement.  
-2026.04.26: Raylib 6.0 template added. 5 GLSL examples added.  
-2026.05.11: Several GLSL examples added.
+2025.01: Kotlin look-a-like for-loops.  
+2025.04: Bertus game.  
+2025.06: Snake game. Game Of Life.  
+2025.07: Tetrus game.  
+2025.08: Racer game.  
+2025.09: Jump game, Bugs game, ConnectFour (Vier-op-een-rij) and Chess using StockFish added.  
+2025.10: High Noon game.  
+2025.11: Memory game. GroundSideLibrary now build with MSYS2.  
+2025.12: Fireworks demo. 3D demo.  
+2026.01: Electronic Life 2026.  
+2026.02: Circles effect, Spiral effect and Hexacubes effect added.  
+2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
+2026.05: Several GLSL examples added. f32 literals added.

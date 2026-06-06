@@ -63,7 +63,7 @@ f32[4] itemDestRect = [0,0,TILE_WIDTH,TILE_HEIGHT];
 f32[4] closedOutlineSrcRect = [0,0,OUTLINE_WIDTH,OUTLINE_HEIGHT];
 f32[4] openedOutlineSrcRect = [0,OUTLINE_HEIGHT,OUTLINE_WIDTH,OUTLINE_HEIGHT];
 f32[4] outlineDestRect = [0,0,OUTLINE_WIDTH,OUTLINE_HEIGHT];
-MouseState mouseState;
+sdl3_MouseState mouseState;
 
 
 // LOADING RESOURCES

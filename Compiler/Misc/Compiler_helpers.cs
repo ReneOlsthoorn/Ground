@@ -177,15 +177,54 @@ namespace GroundCompiler
         }
 
 
+        public void PropertyExpressionsAddressOf(PropertyExpression expr)
+        {
+            // The deepest PropertyExpression is the first we need to evaluate. I use a stack to do that.
+            Stack<PropertyExpression> propExprStack = new();
+            propExprStack.Push(expr);
+            PropertyExpression needle = expr;
+            while (needle.ObjectNode is PropertyExpression propExpr)
+            {
+                needle = propExpr;
+                propExprStack.Push(propExpr);
+            }
+            while (propExprStack.Count > 0)
+            {
+                needle = propExprStack.Pop();
+                PropertyExpressionAddressOf(needle);
+            }
+        }
+
+
         public void PropertyExpressionAddressOf(PropertyExpression expr)
         {
-            var classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+            bool objectNodeIsPointer = Datatype.IsPointerType(expr.ObjectNode.ExprType);
+
+            ClassStatement classStatement = null;
+            if (objectNodeIsPointer)
+                classStatement = expr.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;
+            else
+                classStatement = expr.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
+
             var instVar = classStatement!.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == expr.Name.Lexeme);
 
             var functionStmt = expr.FindParentType(typeof(FunctionStatement)) as FunctionStatement;
             string procName = functionStmt!.Name.Lexeme;
-            string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
-            emitter.LoadFunctionParameter64(theName);
+
+            if (expr.ObjectNode is ThisExpression thisExpression)
+            {
+                string theName = emitter.AssemblyVariableNameForFunctionParameter(procName, "this", classStatement.Name.Lexeme);
+                emitter.LoadFunctionParameter64(theName);
+            } else if (expr.ObjectNode is Variable objVar)
+            {
+                VariableRead(objVar);
+            } else if (expr.ObjectNode is ArrayAccess arrayVar)
+            {
+                ArrayAccess(arrayVar, addressOf: false);
+            } else if (objectNodeIsPointer)
+            {
+                EmitExpression(expr.ObjectNode);
+            }
 
             string instVarReg = cpu.GetTmpRegister();
             emitter.Codeline($"mov   {instVarReg}, rax");
@@ -248,7 +287,7 @@ namespace GroundCompiler
             {
                 if (propExpr.ObjectNode is Variable objVar)
                 {
-                    PropertySet propSet = new PropertySet(propExpr.ObjectNode, propExpr.Name, assignment.Operator, assignment.RightOfEqualSignNode);
+                    PropertySet propSet = new PropertySet(propExpr, assignment.Operator, assignment.RightOfEqualSignNode);
                     propSet.Parent = propExpr.Parent;
                     VisitorPropertySet(propSet);
                     return;
@@ -332,7 +371,7 @@ namespace GroundCompiler
                     }
                     else
                     {
-                        if (targetType.Contains(Datatype.TypeEnum.String))
+                        if (targetType.Contains(Datatype.TypeEnum.String) || elementSizeInBytes > 8)
                             emitter.LeaBasedIndexToCurrent(elementSizeInBytes, baseReg, indexReg, targetType);
                         else
                         {

@@ -309,7 +309,7 @@ function MovePiece(ptr moveStr) {
 #define MAX_PATH 260
 
 ptr loadFileBuffer = msvcrt.calloc(1, LOADFILEBUFFERSIZE);
-OPENFILENAMEA ofn;
+win32_OPENFILENAMEA ofn;
 byte[MAX_PATH] szFile = [ ] asm;
 asm data {
 align 16

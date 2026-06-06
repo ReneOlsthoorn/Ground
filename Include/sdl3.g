@@ -120,7 +120,7 @@ class SDL_Vertex {		//sizeof: 8*4=32 bytes
 }
 
 
-class MouseState {
+class sdl3_MouseState {
 	bool LeftPressed;
 	bool RightPressed;
 	f32 x_f32;

@@ -1,5 +1,5 @@
 
-class OPENFILENAMEA {  //sizeof: 152 bytes
+class win32_OPENFILENAMEA {  //sizeof: 152 bytes
 	u32	lStructSize;
 	u64 hwndOwner;
 	u64	hInstance;

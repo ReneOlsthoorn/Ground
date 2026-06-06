@@ -126,10 +126,8 @@ namespace GroundCompiler
             return Symboltable[id] as StringConstantSymbol;
         }
 
-        public FloatConstantSymbol? GetFloatById(string id)
-        {
-            return Symboltable[id] as FloatConstantSymbol;
-        }
+        public Float64ConstantSymbol? GetFloat64ById(string id) => Symboltable[id] as Float64ConstantSymbol;
+        public Float32ConstantSymbol? GetFloat32ById(string id) => Symboltable[id] as Float32ConstantSymbol;
 
         public List<LocalVariableSymbol> GetVariableSymbols()
         {
@@ -155,12 +153,24 @@ namespace GroundCompiler
             return result;
         }
 
-        public List<FloatConstantSymbol> GetLiteralFloatSymbols()
+        public List<Float64ConstantSymbol> GetLiteralFloatSymbols()
         {
-            List<FloatConstantSymbol> result = new();
+            List<Float64ConstantSymbol> result = new();
             foreach (var symbol in Symboltable.Values)
             {
-                var aVar = symbol as FloatConstantSymbol;
+                var aVar = symbol as Float64ConstantSymbol;
+                if (aVar != null)
+                    result.Add(aVar);
+            }
+            return result;
+        }
+
+        public List<Float32ConstantSymbol> GetLiteralFloat32Symbols()
+        {
+            List<Float32ConstantSymbol> result = new();
+            foreach (var symbol in Symboltable.Values)
+            {
+                var aVar = symbol as Float32ConstantSymbol;
                 if (aVar != null)
                     result.Add(aVar);
             }
@@ -226,8 +236,11 @@ namespace GroundCompiler
             if (datatype == "const str")
                 return "str_" + name;
 
-            if (datatype == "const float")
-                return "float_" + name.Replace(".","_").Replace("-","min");
+            if (datatype == "const f32")
+                return "f32_" + name.Replace(".","_").Replace("-","min");
+
+            if (datatype == "const f64")
+                return "f64_" + name.Replace(".", "_").Replace("-", "min");
 
             return name;
         }
@@ -365,15 +378,28 @@ namespace GroundCompiler
             return newElement;
         }
 
-        public FloatConstantSymbol? DefineFloatingpoint(double d)
+        public Float64ConstantSymbol? DefineFloatingpoint64(double d)
         {
             Scope rootScope = GetRootScope();
 
-            string id = IdFor(d.ToString(System.Globalization.CultureInfo.InvariantCulture), "const float");
+            string id = IdFor(d.ToString(System.Globalization.CultureInfo.InvariantCulture), "const f64");
             if (rootScope.Contains(id))
-                return rootScope.GetFloatById(id);
+                return rootScope.GetFloat64ById(id);
             
-            var newElement = new FloatConstantSymbol(d, id);
+            var newElement = new Float64ConstantSymbol(d, id);
+            rootScope.Symboltable[id] = newElement;
+            return newElement;
+        }
+
+        public Float32ConstantSymbol? DefineFloatingpoint32(float f)
+        {
+            Scope rootScope = GetRootScope();
+
+            string id = IdFor(f.ToString(System.Globalization.CultureInfo.InvariantCulture), "const f32");
+            if (rootScope.Contains(id))
+                return rootScope.GetFloat32ById(id);
+
+            var newElement = new Float32ConstantSymbol(f, id);
             rootScope.Symboltable[id] = newElement;
             return newElement;
         }

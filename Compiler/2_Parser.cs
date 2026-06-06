@@ -409,6 +409,9 @@ namespace GroundCompiler
         private Statement ExpressionStatement()
         {
             var expr = ParseExpression();
+            if (!Check(TokenType.SemiColon) && expr is GroundCompiler.Expressions.Variable theVar)
+                Compiler.Error($"Undeclared variable {theVar.Name.Lexeme}.", theVar.Name);
+
             Consume(TokenType.SemiColon, "Expected ';' after expression.");
             return new ExpressionStatement(expr);
         }
@@ -419,7 +422,7 @@ namespace GroundCompiler
             if (Match(TokenType.Class)) return ClassDeclaration();
             if (Match(TokenType.Group)) return GroupDeclaration();
             if (Match(TokenType.Function)) return FunctionDeclaration("function");
-            if (Check(TokenType.Type) || (Check(TokenType.Identifier) && IsCustomClass())) return VariableDeclaration();
+            if (Check(TokenType.Type) || IsClass()) return VariableDeclaration();
             if (Match(TokenType.Poke)) return PokeStatement();
             if (Match(TokenType.Return)) return ReturnStatement();
             if (Check(TokenType.Assembly)) return AssemblyStatement();
@@ -433,8 +436,10 @@ namespace GroundCompiler
             return ExpressionStatement();
         }
 
-        public bool IsCustomClass()
+        public bool IsClass()
         {
+            bool isIdentifier = Check(TokenType.Identifier);
+            if (!isIdentifier) return false;
             Token peekToken = Peek();
             bool isACustomClass = Datatype.ContainsDatatype(peekToken.Lexeme);
             if (isACustomClass && (!peekToken.Contains(TokenType.Type)))
@@ -469,8 +474,9 @@ namespace GroundCompiler
                 var equals = NextToken();
                 var rightValue = Assignment();
 
+                // transform the propertyexpression to PropertySet elements.
                 if (expr is PropertyExpression getExpr)
-                    return new PropertySet(getExpr.ObjectNode, getExpr.Name, equals, rightValue);
+                    return new PropertySet(getExpr, equals, rightValue);
 
                 return new Assignment(expr, rightValue, equals);
             }
@@ -512,7 +518,9 @@ namespace GroundCompiler
                     Type theType = literal.Value!.GetType();
                     if (literal.ExprType.Contains(Datatype.TypeEnum.Integer))
                         literal.Value = -((long)literal.Value!);
-                    else if (literal.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    else if (literal.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) && literal.ExprType.SizeInBytes == 4)
+                        literal.Value = -((float)literal.Value!);
+                    else if (literal.ExprType.Contains(Datatype.TypeEnum.FloatingPoint) && literal.ExprType.SizeInBytes == 8)
                         literal.Value = -((double)literal.Value!);
                     return right;
                 }
@@ -671,12 +679,15 @@ namespace GroundCompiler
         {
             var name = Consume(TokenType.Identifier, "Expect class name before body.");
             bool isPacked = false;
+            bool isLog2 = false;
 
             if (Check(TokenType.Identifier))
             {
                 var alignment = Consume(TokenType.Identifier);
                 if (alignment.Lexeme.ToLower() == "packed")
                     isPacked = true;
+                if (alignment.Lexeme.ToLower() == "log2")
+                    isLog2 = true;
             }
 
             Consume(TokenType.LeftBrace, "Expect '{' before class body.");
@@ -689,14 +700,23 @@ namespace GroundCompiler
 
                 if (Check(TokenType.Type))
                     instanceVariables.Add(VariableDeclaration());
+
+                if (IsClass())
+                    instanceVariables.Add(VariableDeclaration());
             }
             Consume(TokenType.RightBrace, "Expect '}' after class body.");
 
-            var result = new ClassStatement(name, instanceVariables, methods);
+            var clsStmt = new ClassStatement(name, instanceVariables, methods);
             if (isPacked)
-                result.SetPacked();
-            Datatype.AddClass(result);
-            return result;
+                clsStmt.SetPacked();
+            if (isLog2)
+                clsStmt.SetLog2();
+
+            if (Datatype.ContainsDatatype(clsStmt.Name.Lexeme))
+                Compiler.Error($"Class {clsStmt.Name.Lexeme} already declared!");
+
+            Datatype.AddClass(clsStmt);
+            return clsStmt;
         }
 
 
@@ -727,7 +747,7 @@ namespace GroundCompiler
                 do
                 {
                     Datatype datatype = Datatype.Default;
-                    if (Check(TokenType.Type) || (Check(TokenType.Identifier) && IsCustomClass()))
+                    if (Check(TokenType.Type) || IsClass())
                         datatype = ConsumeDatatype("FunctionDeclaration parameter");
 
                     var parameterName = Consume(TokenType.Identifier, "FunctionDeclaration: Expected parameter name.");

@@ -32,7 +32,7 @@ f32[] cube = [ -0.5,-0.5,-0.5,1.0,  0.5,-0.5,-0.5,1.0,
                 0.2, 0.2, 0.2,1.0, -0.2, 0.2, 0.2,1.0 ] asm; 
 
 
-f32[CUBE_SIZE*VEC3] ndcCube = [ ] asm;
+f32[CUBE_SIZE*glm_VEC3] ndcCube = [ ] asm;
 
 
 f32[16] model = [ ] asm;
@@ -111,7 +111,7 @@ ptr[CUBE_SIZE] cubePointBodies = [];
 ptr[CUBE_SIZE] cubePointShapes = [];
 
 
-f32[VEC4] tmpVec4 = [] asm;
+f32[glm_VEC4] tmpVec4 = [] asm;
 f32 cube_XRotation = 0.0;
 f32 cube_YRotation = 0.0;
 f32 cube_ZRotation = 0.0;
@@ -133,24 +133,24 @@ function RenderCube() {
 	glm.glmc_mat4_mulN(matrixArray, 3, mvp);
 
 	for (i in 0 ..< CUBE_SIZE) {
-		glm.glmc_mat4_mulv(mvp, &cube[i*VEC4], tmpVec4);
+		glm.glmc_mat4_mulv(mvp, &cube[i*glm_VEC4], tmpVec4);
 
 		float ndc_x = tmpVec4[0] / tmpVec4[3];
 		float ndc_y = tmpVec4[1] / tmpVec4[3];
 		float ndc_z = tmpVec4[2] / tmpVec4[3];   // depth
 
-		ndcCube[i*VEC3] = ndc_x;
-		ndcCube[i*VEC3+1] = ndc_y;
-		ndcCube[i*VEC3+2] = ndc_z;
+		ndcCube[i*glm_VEC3] = ndc_x;
+		ndcCube[i*glm_VEC3+1] = ndc_y;
+		ndcCube[i*glm_VEC3+2] = ndc_z;
 	}
 
 	sdl3.SDL_qsort(ndcCube, CUBE_SIZE, 3*sizeof(f32), g.ndcCube_Compare);
 
 	for (i in 0 ..< CUBE_SIZE) {
-		float x = ((ndcCube[i*VEC3] + 0.5) * 1280.0) - 420.0;
-		float y = ((ndcCube[i*VEC3+1] + 0.5) * 720.0) + -36.0;
+		float x = ((ndcCube[i*glm_VEC3] + 0.5) * 1280.0) - 420.0;
+		float y = ((ndcCube[i*glm_VEC3+1] + 0.5) * 720.0) + -36.0;
 
-		//float ballSize = (0.99 - ndcCube[i*VEC3+2]) * 1500.0;
+		//float ballSize = (0.99 - ndcCube[i*glm_VEC3+2]) * 1500.0;
 
 		cpv.x = x;
 		cpv.y = y;
