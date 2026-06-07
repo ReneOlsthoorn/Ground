@@ -281,13 +281,13 @@ Surely, `C/C++` will allow you to use `bswap` easily... NOT!!
 The modern software industry has turned it's back on high performance computing. Native assembly is much too dangerous!
 According to them...  
 In modernity, security is prevalent above performance. "Write once, run anywhere" is the mantra. It cripples, however. 
-Your PC is specific. Use the specifics to get the maximum performance!
+Your PC is specific. Use these specifics to get the maximum performance!
 
 ### The C++ problem
 C++ is often used as a high-performance language. In the past, I used it often, but it always resulted in unreadable code. 
 Good luck with C++'s `reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the 
 copy-constructor is not called when the compiler is doing `Return value optimization`. You cannot rely on that behaviour 
-however, because some compilers will.  
+however, because different compilers give different results.  
 A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_Geometry2D.h, you see:
 ```
 	// closest(l,p)
@@ -300,7 +300,7 @@ A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_
 		return l.start + u * d;
 	}
 ```
-I will not conform with this kind of code. This function is only 4 lines and already unreadable.  
+I will not conform with this kind of code. The function is only 4 lines and already unreadable.  
 
 ### The annoyances of Visual Studio C
 On Windows, many programmers use the 50 year old language C as their low-level programming language. Understandably so. 
@@ -321,6 +321,22 @@ C also shows its age. On x86, `int` and `float` are 2 bytes. On x86-32, they are
 remain 4 bytes! That's confusing and not consistent.  
 Ground tries to leave C behind and close the gap between compact highlevel constructs and assembly. Typical usage of 
 x86-64 is in innerloops. See `.\Examples\mode7_optimized.g` for an example of innerloop optimization.  
+
+### The C dereference pointer code problem
+One specific problem, that I already discovered 30 years ago is the C pointer code problem. 
+For instance, you got the following code:
+```
+Texture2D* tp = &texture;
+tp->height = 100;
+tp->format = 1;
+tp->width = 100;
+tp->mipmaps = 100;
+```
+After writing this code, you want to reuse it in a function which delivers the Texture2D parameter as a reference. 
+Now you have a problem. You need to change all the `->` to `.`. It hits almost all of your code.  
+The root problem is C demanding you to use `->` when it already knows the variable is a pointer. `Ground` will not put
+you through this dereferencing of the pointer in every code line. It sees the variable is a pointer, so calling a 
+property on it will automatically dereference.
 
 ### The neglected native Windows DLLs
 The Portable Executable Format was introduced in Windows NT 3.1 in 1993. Along with it came the Windows DLL system as we
@@ -598,4 +614,5 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.01: Electronic Life 2026.  
 2026.02: Circles effect, Spiral effect and Hexacubes effect added.  
 2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
-2026.05: Several GLSL examples added. f32 literals added.
+2026.05: Several GLSL examples added. f32 literals added.  
+2026.06: Support for nested properties and automatic dereferencing of pointer related code.
