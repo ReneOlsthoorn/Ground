@@ -88,7 +88,7 @@ to compile and execute GPU shaders. For graphics effects that calculate every pi
 The CPU is fast enough to do the work, but the memory bus delay is the bottleneck. See the [snippet_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/snippet_circles.g) example, which
 is an effect done with the CPU. For that example to run smoothly, I had to precalculate values and delegate the workload 
 to 3 threads. That kind of plumbing code makes the simple effect hard to read.  
-Now look at [raylib_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/raylib_circles.g) example, which is the 
+Now look at [gpu_circles](https://github.com/ReneOlsthoorn/Ground/blob/master/Examples/gpu_circles.g) example, which is the 
 same effect but done with GLSL (OpenGL Shader Language). The code has no precalculation, is easier to read and executes faster.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
@@ -597,6 +597,11 @@ GLSL: Under water</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Rubber_Cube.jpg?raw=true" width="500" /><br/>
 GLSL: Rubber Cube</p>
 
+### Tempo Typen
+<p align="center">
+<img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_TempoTypen.gif?raw=true" width="500" /><br/>
+Tempo Typen</p>
+
 ### Ground Release zipfile
 The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
 The executables are in the `bin\Release` directory of the zipfile.
@@ -615,4 +620,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.02: Circles effect, Spiral effect and Hexacubes effect added.  
 2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
 2026.05: Several GLSL examples added. f32 literals added.  
-2026.06: Support for nested properties and automatic dereferencing of pointer related code.
+2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.

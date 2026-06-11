@@ -183,3 +183,4 @@ dll raylib function GetKeyPressed() : u32;
 dll raylib function GetCharPressed() : u32;
 
 dll raylib function DrawFPS(int posX, int posY);
+dll raylib function ClearWindowState(u32 flags);
