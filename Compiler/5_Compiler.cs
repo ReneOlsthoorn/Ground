@@ -410,9 +410,10 @@ namespace GroundCompiler
         public object? VisitorPropertySet(PropertySet expr)
         {
             var currentScope = expr.GetScope();
+            string? storeCurrentReg = null;
 
             // The deepest PropertyExpression is the first we need to evaluate. I use a stack to do that.
-            Stack<PropertyExpression> propExprStack = new();
+            Stack <PropertyExpression> propExprStack = new();
             propExprStack.Push(expr.PropExpr);
             bool storeCurrent = expr.PropExpr.ObjectNode is PropertyExpression;
             PropertyExpression needle = expr.PropExpr;
@@ -428,8 +429,11 @@ namespace GroundCompiler
                 needle = propExprStack.Pop();
             }
             if (storeCurrent)
-                emitter.Push();
-
+            {
+                storeCurrentReg = cpu.GetRestoredRegister();
+                emitter.PushRegister(storeCurrentReg);
+                emitter.Codeline($"mov   {storeCurrentReg}, rax");
+            }
 
             ClassStatement? classStatement = null;
             VarStatement? instVar = null;
@@ -439,29 +443,32 @@ namespace GroundCompiler
             var objectNodeAsThis = needle.ObjectNode as ThisExpression;
             bool needleObjectIsPointer = Datatype.IsPointerType(needle.ObjectNode.ExprType);
 
+            if (expr.ValueNode != null)
+            {
+                if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    emitter.Push();
+
+                EmitExpression(expr.ValueNode);
+                if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
+                {
+                    string theLiteralVariable = needle.Name.Lexeme;
+                    if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
+                        theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
+
+                    emitter.StoreCurrent(theLiteralVariable);
+                    return null;
+                }
+                if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    emitter.Pop();
+
+                emitter.Push(expr.ValueNode.ExprType);
+            }
+
             classStatement = null;
             if (needleObjectIsPointer)
                 classStatement = needle.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;   // Als er een pointer binnenkomt, dan gaan we ervan uit dat de value al emitted is.
             else
-            {
-                if (expr.ValueNode != null)
-                {
-                    EmitExpression(expr.ValueNode);
-                    if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
-                    {
-                        string theLiteralVariable = needle.Name.Lexeme;
-                        if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
-                            theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
-
-                        emitter.StoreCurrent(theLiteralVariable);
-                        return null;
-                    }
-                }
                 classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
-                //classStatement = needle.ObjectNode.ExprType.Properties.TryGetValue("classStatement", out var raw) && raw is ClassStatement cs ? cs : null;
-            }
-
-
 
             instVar = classStatement?.InstanceVariableNodes.First((instVariable) => instVariable.Name.Lexeme == needle.Name.Lexeme);
 
@@ -481,29 +488,11 @@ namespace GroundCompiler
 
 
             if (storeCurrent)
-                emitter.Pop();
+                emitter.Codeline($"mov   rax, {storeCurrentReg}");
+
             string instVarReg = cpu.GetTmpRegister();
             emitter.StoreCurrent(instVarReg);
-
-            if (expr.ValueNode != null)
-            {
-                emitter.PushRegister(instVarReg);
-                EmitExpression(expr.ValueNode);
-                emitter.PopRegister(instVarReg);
-                /*
-                if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
-                {
-                    string theLiteralVariable = needle.Name.Lexeme;
-                    if (needle.Name.Contains(TokenType.Literal) && needle.Name.Datatype!.Contains(Datatype.TypeEnum.String))
-                        theLiteralVariable = theLiteralVariable.Substring(1, (theLiteralVariable.Length - 2));
-
-                    emitter.StoreCurrent(theLiteralVariable);
-                    return null;
-                }
-                */
-                //emitter.Push(expr.ValueNode.ExprType);
-            } else
-                emitter.Pop();  //emitter.Pop(expr.ValueNode);
+            emitter.Pop(expr.ValueNode);
 
             if (expr.ValueNode != null)
                 EmitConversionCompatibleType(expr.ValueNode, instVar.ResultType);
@@ -511,6 +500,11 @@ namespace GroundCompiler
             emitter.StoreInstanceVar($"{instVar.Name.Lexeme}@{classStatement.Name.Lexeme}", instVarReg, instVar.ResultType);
             cpu.FreeRegister(instVarReg);
 
+            if (storeCurrent)
+            {
+                emitter.PopRegister(storeCurrentReg);
+                cpu.FreeRegister(storeCurrentReg);
+            }
             return null;
         }
 
