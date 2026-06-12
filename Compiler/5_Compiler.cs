@@ -445,8 +445,8 @@ namespace GroundCompiler
 
             if (expr.ValueNode != null)
             {
-                if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                    emitter.Push();
+                //if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                //    emitter.Push();
 
                 EmitExpression(expr.ValueNode);
                 if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
@@ -458,8 +458,8 @@ namespace GroundCompiler
                     emitter.StoreCurrent(theLiteralVariable);
                     return null;
                 }
-                if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                    emitter.Pop();
+                //if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+                //    emitter.Pop();
 
                 emitter.Push(expr.ValueNode.ExprType);
             }
