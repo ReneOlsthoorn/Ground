@@ -23,7 +23,7 @@ bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 int screenpitch = SCREEN_LINESIZE;
-u32[SCREEN_WIDTH,SCREEN_HEIGHT] plasma = [];
+u32[SCREEN_WIDTH,SCREEN_HEIGHT] plasma = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 bool recalcPlasma = true;
 u32[palettesize] palette = [];
 
@@ -138,6 +138,7 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
+msvcrt.free(plasma);
 
 kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
 
