@@ -182,7 +182,7 @@ float thunder(vec2 uv, float time, float seed, float segments, float amplitude)
     float h2 = mix(h21, h22, fract(s));
     float alpha = mix(h1, h2, fract(t));
     
-    return 1.0 - abs(alpha - 0.5) / 0.5;
+    return 1.0 - abs(alpha - 0.5);
 }
 
 void main()

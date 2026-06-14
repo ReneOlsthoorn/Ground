@@ -46,7 +46,6 @@ call :compileExample raylib_quantum
 call :compileExample raylib_rubbercube
 call :compileExample raylib_slitscan
 call :compileExample raylib_starfall
-call :compileExample raylib_starnest
 call :compileExample raylib_sunsprite
 call :compileExample raylib_water
 call :compileExample raylib_zoom

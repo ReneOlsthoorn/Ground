@@ -288,6 +288,14 @@ C++ is often used as a high-performance language. In the past, I used it often, 
 Good luck with C++'s `reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the 
 copy-constructor is not called when the compiler is doing `Return value optimization`. You cannot rely on that behaviour 
 however, because different compilers give different results.  
+C++ is copy-by-value, which is different from C# and other modern languages. Suppose you have an array of XMSong objects:
+`XMSong songs[]` and you want to change the name of the first entry.
+```
+XMSong song = songs[0];
+song.name = "andere naam";
+```
+This works in C# but not in C++, because `song = songs[0]` will use the C++ copy-constructor to copy every field to the
+new object. You can solve the problem in C++ by using pointers, but it will complicate the code.  
 A fan of C++ is [OneLoneCoder](https://github.com/onelonecoder). In his olcUtil_Geometry2D.h, you see:
 ```
 	// closest(l,p)
@@ -324,7 +332,7 @@ x86-64 is in innerloops. See `.\Examples\mode7_optimized.g` for an example of in
 
 ### The C dereference pointer code problem
 One specific problem, that I already discovered 30 years ago is the C pointer code problem. 
-For instance, you got the following code:
+For instance, you have the following code:
 ```
 Texture2D* tp = &texture;
 tp->height = 100;
