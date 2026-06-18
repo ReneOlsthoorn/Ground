@@ -125,7 +125,7 @@ The following templates are avaible:
 * `#template retrovm` Template that works similarly to the C-64 VIC-II. It redraws the screen every frame and has several video modes. See `smoothscroller.g` for example.
 See the directory `Templates` for the sourcecode of the templates.
 
-### adding a library
+### Adding a library
 With the `#library` directive, you can include a library. For instance `#library user32 user32.dll` does 3 things:
 1. include user32.g into your sourcecode at that location.
 2. insert the user32.dll into the loadtime DLL list of the template.
@@ -148,7 +148,7 @@ The following libraries can be seen in examples:
 #library libcurl libcurl-x64.dll
 ```
 
-### include a file
+### Include a file
 With the `#include` directive, you can insert a textfile into your sourcefile. This can be handy for splitting large sourcefiles. For
 example see `bertus`, which is split into `bertus.g` and `bertus_helper.g`.  
 When programming a `sdl3` or `raylib` program, you need to decide the screensize. So, you will often see:
