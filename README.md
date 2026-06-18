@@ -132,19 +132,21 @@ With the `#library` directive, you can include a library. For instance `#library
 3. insert the user32_api.inc into the template.
 Two libraries are automatically included: `msvcrt` and `kernel32`. They cannot be added again. For using them, you need to do `#include msvcrt.g` or `#include kernel32.g`
 The following libraries can be seen in examples:
-* `#library user32 user32.dll`
-* `#library comdlg32 comdlg32.dll`
-* `#library gdi32 gdi32.dll`
-* `#library ucrt ucrtbase.dll`
-* `#library sdl3 sdl3.dll`
-* `#library sdl3_image sdl3_image.dll`
-* `#library raylib raylib.dll`
-* `#library sidelib GroundSideLibrary.dll`
-* `#library soloud soloud_x64.dll`
-* `#library mikmod libmikmod-3.dll`
-* `#library glm libcglm-0.dll`
-* `#library chipmunk libchipmunk.dll`
-* `#library libcurl libcurl-x64.dll`
+```
+#library user32 user32.dll
+#library comdlg32 comdlg32.dll
+#library gdi32 gdi32.dll
+#library ucrt ucrtbase.dll
+#library sdl3 sdl3.dll
+#library sdl3_image sdl3_image.dll
+#library raylib raylib.dll
+#library sidelib GroundSideLibrary.dll
+#library soloud soloud_x64.dll
+#library mikmod libmikmod-3.dll
+#library glm libcglm-0.dll
+#library chipmunk libchipmunk.dll
+#library libcurl libcurl-x64.dll
+```
 
 ### include a file
 With the `#include` directive, you can insert a textfile into your sourcefile. This can be handy for splitting large sourcefiles. For
