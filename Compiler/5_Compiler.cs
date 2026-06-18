@@ -431,7 +431,7 @@ namespace GroundCompiler
             if (storeCurrent)
             {
                 storeCurrentReg = cpu.GetRestoredRegister();
-                emitter.PushRegister(storeCurrentReg);
+                emitter.PushRegister(storeCurrentReg);      //save the restored register
                 emitter.Codeline($"mov   {storeCurrentReg}, rax");
             }
 
@@ -445,9 +445,6 @@ namespace GroundCompiler
 
             if (expr.ValueNode != null)
             {
-                //if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                //    emitter.Push();
-
                 EmitExpression(expr.ValueNode);
                 if (needle.Name.Contains(TokenType.Literal))  // for example g.[pixels_p]  The Literal part is [pixels_p]
                 {
@@ -458,15 +455,12 @@ namespace GroundCompiler
                     emitter.StoreCurrent(theLiteralVariable);
                     return null;
                 }
-                //if (expr.ValueNode.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-                //    emitter.Pop();
-
                 emitter.Push(expr.ValueNode.ExprType);
             }
 
             classStatement = null;
             if (needleObjectIsPointer)
-                classStatement = needle.ObjectNode.ExprType.Base.Properties["classStatement"] as ClassStatement;   // Als er een pointer binnenkomt, dan gaan we ervan uit dat de value al emitted is.
+                classStatement = needle.ObjectNode.ExprType.Base!.Properties["classStatement"] as ClassStatement;
             else
                 classStatement = needle.ObjectNode.ExprType.Properties["classStatement"] as ClassStatement;
 
@@ -485,7 +479,6 @@ namespace GroundCompiler
 
             if (objectNodeAsArray != null)
                 ArrayAccess(objectNodeAsArray!, addressOf: true);
-
 
             if (storeCurrent)
                 emitter.Codeline($"mov   rax, {storeCurrentReg}");

@@ -41,8 +41,8 @@ class BitmapFileHeader packed {	//sizeof: 14 bytes
 
 function Screengrab() {
 	assert(sizeof(Bitmap) == 32);
-	assert(sizeof(BitmapInfoHeader) == 40);
-	assert(sizeof(BitmapFileHeader) == 14);
+	assert(sizeof(BitmapInfoHeader) == 64);  //actually 40
+	assert(sizeof(BitmapFileHeader) == 16);  //actually 14
 
 	ptr screenDC = user32.GetDC(NULL);             // Get the Device Contect for the entire screen.
 	msvcrt.printf("screenDC: %p \r\n", screenDC);

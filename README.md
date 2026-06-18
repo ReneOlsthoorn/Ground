@@ -54,8 +54,8 @@ the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-cal
 ### How to run Ground
 In your `Ground` root folder you have a file named `LoadResources.bat`. Run it.  
 It will unzip `.\Resources\GroundResources.zip` and download the needed DLLs, like SDL3, from trusted repositories 
-like MSYS2 or Github. The zipfile also contains extra files that could not be downloaded from the internet, like manual 
-build DLLs, sounds and images. For all DLLs used, sourcecode is available. The included 
+like MSYS2 or Github. The zipfile also contains additional files that cannot be downloaded from the internet, such as manually 
+built DLLs, sounds and images. For all DLLs used, sourcecode is available. The included 
 [GroundSideLibrary](https://github.com/ReneOlsthoorn/GroundSideLibrary) is available on github.  
 After this is done, Run `Visual Studio 2026` and open `GroundCompiler.slnx`. Hit the Play button in Visual Studio and 
 the game Bertus should compile and run.
@@ -71,6 +71,28 @@ The mode7_optimized is the optimized version and has an innerloop of 1ms.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Mode7.png?raw=true" width="500" /><br/>
 </p>
+
+### Cause of Ground
+Your Windows PC has a treasure inside it: a CPU which can execute code incredibly fast using a language called `x86-64` 
+assembly. It has approx. 774 different instructions. Are you familiar with them?  
+For instance "sqrtsd", which does a floating point square root calculation. Did you ever use it?  
+While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
+conversion like this:
+```
+var data = base.ReadBytes(4);
+Array.Reverse(data);
+return BitConverter.ToInt32(data, 0);
+```
+In x86-64, this functionality is done with one statement:
+```
+bswap eax
+```
+Surely, `Kotlin`, `Java` or `C#` will allow you to insert x86-64 assembly... NOT!!  
+Surely, `C/C++` will allow you to use `bswap` easily... NOT!!  
+The modern software industry has turned it's back on high performance computing. According to them native assemblies
+are much too dangerous!  
+In modernity, security is prevalent above performance. "Write once, run anywhere" is the mantra. It cripples, however. 
+Your PC is specific. Use these specifics to get the maximum performance!
 
 ### Ground has no memory manager
 Ground has no garbage collector or reference count system. Objects are allocated on the stack and released when the 
@@ -94,19 +116,54 @@ same effect but done with GLSL (OpenGL Shader Language). The code has no precalc
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Circles.gif?raw=true" width="500" /><br/>
 </p>
 
-### Choosing a template
-With the special `#template` directive, the programmer can choose a generation template. The default is `console`. See the
-directory Templates for the console.fasm template. Use the `sdl3` template for SDL3 applications without a console window.
-A lot of functions are shared between the console.fasm, sdl3.fasm and raylib.fasm templates.
+### Starting a new Ground program. Choosing a template
+With the `#template` directive, the programmer can choose the template where the generated code is poured into.
+The following templates are avaible:
+* `#template console` This is the default and will open a console window.
+* `#template sdl3` This will automatically include SDL3 assembly defines in the generated code. Specific template for SDL3.
+* `#template raylib` Specific template for raylib. See `gpu_circles.g` for example.
+* `#template retrovm` Template that works similarly to the C-64 VIC-II. It redraws the screen every frame and has several video modes. See `smoothscroller.g` for example.
+See the directory `Templates` for the sourcecode of the templates.
 
-### include a library
+### adding a library
 With the `#library` directive, you can include a library. For instance `#library user32 user32.dll` does 3 things:
 1. include user32.g into your sourcecode at that location.
 2. insert the user32.dll into the loadtime DLL list of the template.
 3. insert the user32_api.inc into the template.
+Two libraries are automatically included: `msvcrt` and `kernel32`. They cannot be added again. For using them, you need to do `#include msvcrt.g` or `#include kernel32.g`
+The following libraries can be seen in examples:
+* `#library user32 user32.dll`
+* `#library comdlg32 comdlg32.dll`
+* `#library gdi32 gdi32.dll`
+* `#library ucrt ucrtbase.dll`
+* `#library sdl3 sdl3.dll`
+* `#library sdl3_image sdl3_image.dll`
+* `#library raylib raylib.dll`
+* `#library sidelib GroundSideLibrary.dll`
+* `#library soloud soloud_x64.dll`
+* `#library mikmod libmikmod-3.dll`
+* `#library glm libcglm-0.dll`
+* `#library chipmunk libchipmunk.dll`
+* `#library libcurl libcurl-x64.dll`
 
 ### include a file
-With the `#include` directive, you can insert a textfile into your sourcefile.
+With the `#include` directive, you can insert a textfile into your sourcefile. This can be handy for splitting large sourcefiles. For
+example see `bertus`, which is split into `bertus.g` and `bertus_helper.g`.  
+When programming a `sdl3` or `raylib` program, you need to decide the screensize. So, you will often see:
+```
+#include graphics_defines1280x720.g
+#include msvcrt.g
+#include kernel32.g
+```
+That defines SCREEN_WIDTH and SCREEN_HEIGHT. When going to 960x560 screensize, you only need to change the include into `#include graphics_defines960x560.g`.
+
+### Hello, World and hardcoded functions
+The smallest program is:
+```
+#template console
+println("Hello, World");
+```
+See the function AddHardcodedFunctions() in the compiler for all the available hardcoded functions like println().
 
 ### Mixing of ground code and assembly
 The danger of programming in higher level languages is that the control over the CPU is lost. Ground refuses that.
@@ -261,28 +318,6 @@ however, this substraction is skipped and a byte-for-byte string comparison is d
 Most functions start with `push rbp` followed by `mov rbp, rsp`. This makes the stack 16-byte aligned which is needed 
 for the fastcall convention. This also means that the pointer for the parentframe is at `[rbp]`.
 
-### Cause of Ground
-Your Windows PC has a treasure inside it: a CPU which can execute code incredibly fast using a language called `x86-64` 
-assembly. It has approx. 1500 different instructions. Are you familiar with them?  
-For instance "sqrtsd", which does a floating point square root calculation. Did you ever use it?  
-While learning the Amiga Protracker format, I found C# code that could read a mod file. It does the necessary BigEndian 
-conversion like this:
-```
-var data = base.ReadBytes(4);
-Array.Reverse(data);
-return BitConverter.ToInt32(data, 0);
-```
-In x86-64, this functionality is done with one statement:
-```
-bswap eax
-```
-Surely, `Kotlin`, `Java` or `C#` will allow you to insert x86-64 assembly... NOT!!  
-Surely, `C/C++` will allow you to use `bswap` easily... NOT!!  
-The modern software industry has turned it's back on high performance computing. Native assembly is much too dangerous!
-According to them...  
-In modernity, security is prevalent above performance. "Write once, run anywhere" is the mantra. It cripples, however. 
-Your PC is specific. Use these specifics to get the maximum performance!
-
 ### The C++ problem
 C++ is often used as a high-performance language. In the past, I used it often, but it always resulted in unreadable code. 
 Good luck with C++'s `reinterpret_cast<Object>(-1)` or `std::shared_ptr<>`. Maybe you will also wonder, like me, why the 
@@ -424,12 +459,12 @@ There is only one CPU in your PC. Get a grip on it and let it dance!
 The Ground language is `Alpha`, so do not use the language if you look for a stable language.
 Ground is created to facilitate high performance code. Ground will always be Alpha!
 
-## Write your own Programming Language!
+### Write your own Programming Language!
 The choices made in Ground might not be to your liking. Perhaps you want to use Go as the implementation language or 
 support an other OS. Why not write your own language? Use the lexer from this compiler or borrow some code 
 generation constructs. It might be less work than you think.  
 
-## Ground is an Ode to the x86-64 Windows PC
+### Ground is an Ode to the x86-64 Windows PC
 Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old `Commodore 64` and `Amiga 500` days. Back then, I was heavily invested in the 
@@ -451,22 +486,25 @@ The PC platform had cheap hardware, so everybody joined. This resulted in total 
 In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and 
 numerous PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment 
 to upgrade. We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
-  
-At this moment in 2026, several expert users are migrating to Linux because Windows 11 collects personal data and 
-sends it to the cloud or uses it for AI. Microsoft wants to make Windows an agentic AI OS and forces users to give 
-up privacy. I strongly disagree with this course, because AI should be made optional.  
+
+### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud Operating System
+At this moment in 2026, several experts are moving to Linux because Windows 11 collects personal data and sends 
+it to the cloud. I'm referring to issues with Microsoft Edge, Copilot and Recall. Microsoft wants to make Windows an 
+agentic AI OS and forces users to give up anonymity with a forced microsoft account login.  
 Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
 and Recall. However, with each new update, the settings can be turned on again. The whole situation is a shame, 
 because Windows has such a great history. Like many users, I don't want to fight my OS. For the moment, I will not 
 yet migrate to Linux because I owe so much to the Windows platform. I will stay on Windows 10.  
-Microsoft is hard pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
+Microsoft is pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
 browser which transfers data to Microsoft and Ads in the start menu. It is irritating. Doesn't Microsoft know that 
 Google became popular for not having ads in the startpage?  
 Microsoft also has keys to unlock your bitlocker. 
-[They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/) 
-A lot of people are baffled by this and are starting to turn away from Microsoft. At this moment, Microsoft still 
-has time to fix their issues and make Windows a nice OS for users and programmers. If not, what will be the 
-future OS of the world? Steam OS? Could be!
+[They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/)  
+There is also the issue with Smart App Control. Valid software is no longer executed because Microsoft’s cloud service 
+does not recognize it as secure. Even my own software that I wrote could not run, so I turned Smart App Control off.  
+Windows is moving away from the old free `Personal Computer` idea towards a controlled AI cloud computer.  
+At this moment, Microsoft still has time to fix their issues and make Windows a nice OS for users and programmers. 
+If not, what will be the future OS of the world? Steam OS? A Linux distro? Apple OS? BSD?
 
 ### Smoothscroller
 <p align="center">

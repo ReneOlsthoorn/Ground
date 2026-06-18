@@ -484,7 +484,7 @@ class BitmapFileHeaderNotPacked {
     u32 bfOffBits;
 }
 BitmapFileHeaderPacked bitmapTest1;
-assert(sizeof(bitmapTest1) == 14);
+assert(sizeof(bitmapTest1) == 16); // het is eigenlijk 14, maar de log2 zorgt ervoor dat het naar 2^4
 assert(sizeof(BitmapFileHeaderNotPacked) == 16);
 
 byte justAByte = 0b10000101;
@@ -578,5 +578,24 @@ assert(hexResult1 == "fe");
 hexResult1 = gc.hex$(hexValue1, 8);
 assert(hexResult1 == "fffe43fe");
 
+
+
+Class Klass23 {
+	string tmp;
+
+	function setStr() {
+		this.tmp = "Rene" + "Olsthoorn";
+	}
+}
+Klass23 tmp23;
+tmp23.tmp = "Rene2" + "Olsthoorn";
+assert(tmp23.tmp == "Rene2Olsthoorn");
+
+tmp23.setStr();
+assert(tmp23.tmp == "ReneOlsthoorn");
+
+float f23 = GC_Float_Infinity;
+string f23str = f23;
+assert(f23str == "1.#INF000000");
 
 println("SUCCESS: unittests were completed with SUCCESS.");

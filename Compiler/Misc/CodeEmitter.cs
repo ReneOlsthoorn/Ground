@@ -56,6 +56,7 @@ namespace GroundCompiler
         public void Codeline(string text) { Writeline($"  {text}"); }
         public string NewLabel() { return $"L{labelCounter++}"; }
 
+        public void EmitNOP() => Codeline("nop");
 
         public void EmitLiteralFloat64(List<Float64ConstantSymbol> globalLiteralFloats)
         {

@@ -48,8 +48,8 @@ Tempo Typen was gemaakt door het softwarebedrijf radarsoft met een postadres in 
 Anno 2026 is dit mijn variant op Tempo Typen.      \
 De muziek is een bekende soundtracker module van de Amiga.      \
 De visuals worden gedaan door een pixelshader op de GPU.       \
-Ik gebruik Raylib ervoor, waarbij ik merk dat het veel schokkeriger is dan sdk3.      \
-Groet, Rene Olsthoorn.      `;
+Ik gebruik Raylib ervoor, waarbij ik merk dat het veel schokkeriger is dan SDL3.      \
+Groet, Rene Olsthoorn.                        `;
 
 
 function GetNewScrollLetter() : u8 {
