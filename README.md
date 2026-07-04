@@ -489,24 +489,31 @@ In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory
 numerous PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment 
 to upgrade. We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
 
-### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud Operating System
+### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud OS
 At this moment in 2026, several experts are moving to Linux because Windows 11 collects personal data and sends 
 it to the cloud. I'm referring to issues with Microsoft Edge, Copilot and Recall. Microsoft wants to make Windows an 
 agentic AI OS and forces users to give up anonymity with a forced microsoft account login.  
-Use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
+You can use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
 and Recall. However, with each new update, the settings can be turned on again. The whole situation is a shame, 
-because Windows has such a great history. Like many users, I don't want to fight my OS. For the moment, I will not 
-yet migrate to Linux because I owe so much to the Windows platform. I will stay on Windows 10.  
+because Windows has such a great history. Users don't want to fight their OS.  
 Microsoft is pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
 browser which transfers data to Microsoft and Ads in the start menu. It is irritating. Doesn't Microsoft know that 
 Google became popular for not having ads in the startpage?  
 Microsoft also has keys to unlock your bitlocker. 
 [They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/)  
-There is also the issue with Smart App Control. Valid software is no longer executed because Microsoft’s cloud service 
-does not recognize it as secure. Even my own software that I wrote could not run, so I turned Smart App Control off.  
-Windows is moving away from the old free `Personal Computer` idea towards a controlled AI cloud computer.  
-At this moment, Microsoft still has time to fix their issues and make Windows a nice OS for users and programmers. 
-If not, what will be the future OS of the world? Steam OS? A Linux distro? Apple OS? BSD?
+
+### The Fall of Windows: Smart App Control: No homebrew anymore!
+Microsoft has a new feature in Windows 11 called Smart App Control. This is a gatekeeper for executables, 
+preventing unrecognized programs from running. Apple already has this feature.  
+Several services that I created myself would not run on Windows 11. After investigation, I noticed that the Smart
+App Control prevented the services from running. Fortunately it could be deactived, but this is again a feature I don't 
+want. Windows is moving away from the old free `Personal Computer` idea towards a controlled AI cloud computer.  
+Give me my freedom back! My search for a new Free OS has been triggered!
+
+### CachyOS : Playing Steam games on Linux
+Did you ever see CachyOS? It is a great Linux distribution that can play Steam games and is very user friendly. 
+I will be investigating how to run Ground on Linux the coming months.
+[The ABI and syscall is different](https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/) 
 
 ### Smoothscroller
 <p align="center">
