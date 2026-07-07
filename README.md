@@ -466,7 +466,7 @@ The choices made in Ground might not be to your liking. Perhaps you want to use 
 support an other OS. Why not write your own language? Use the lexer from this compiler or borrow some code 
 generation constructs. It might be less work than you think.  
 
-### Ground is an Ode to the x86-64 Windows PC
+### Ground is an Ode to the old x86-64 Windows PC
 Ever since 1994, that is more than 30 years ago, I use the Microsoft DOS/Windows platform on x86 compatible machines.
 I want to take a moment here to give credits to that platform.  
 Recently, I took time to remember my old `Commodore 64` and `Amiga 500` days. Back then, I was heavily invested in the 
@@ -488,14 +488,18 @@ The PC platform had cheap hardware, so everybody joined. This resulted in total 
 In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and 
 numerous PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment 
 to upgrade. We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
+However, it seems that the good times have ended!
 
 ### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud OS
-At this moment in 2026, several experts are moving to Linux because Windows 11 collects personal data and sends 
-it to the cloud. I'm referring to issues with Microsoft Edge, Copilot and Recall. Microsoft wants to make Windows an 
-agentic AI OS and forces users to give up anonymity with a forced microsoft account login.  
+At this moment in 2026, several users are moving to Linux because Windows 11 collects personal data and sends 
+it to the cloud. I'm referring to issues with Microsoft Edge, Copilot and Recall.  
 You can use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
 and Recall. However, with each new update, the settings can be turned on again. The whole situation is a shame, 
 because Windows has such a great history. Users don't want to fight their OS.  
+Microsoft plans to make Windows an agentic AI OS and forces users to give up anonymity with a required microsoft 
+account login. This is on purpose.  
+Microsoft promotes subscription based computing. They have large investments in their 500+ datacenters. These 
+datacenters must be paid for with Azure, AI or remote gaming subscriptions.  
 Microsoft is pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
 browser which transfers data to Microsoft and Ads in the start menu. It is irritating. Doesn't Microsoft know that 
 Google became popular for not having ads in the startpage?  
@@ -507,8 +511,10 @@ Microsoft has a new feature in Windows 11 called Smart App Control. This is a ga
 preventing unrecognized programs from running. Apple already has this feature.  
 Several services that I created myself would not run on Windows 11. After investigation, I noticed that the Smart
 App Control prevented the services from running. Fortunately it could be deactived, but this is again a feature I don't 
-want. Windows is moving away from the old free `Personal Computer` idea towards a controlled AI cloud computer.  
-Give me my freedom back! My search for a new Free OS has been triggered!
+want. Windows is moving away from the old free `Personal Computer` idea towards a subscription based AI cloud computer. 
+If we are not careful, in the future we will no longer own our own computing power and technology.  
+Many users want their freedom back and are on mass looking for a new Free OS. Most definately the users that don't have 
+the required TPM 2.0 that Windows 11 requires will be looking for a new OS.
 
 ### CachyOS : Playing Steam games on Linux
 Did you ever see CachyOS? It is a great Linux distribution that can play Steam games and is very user friendly. 
