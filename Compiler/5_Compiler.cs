@@ -32,7 +32,7 @@ namespace GroundCompiler
         {
             StringBuilder result = new StringBuilder();
             foreach (var (libraryName, dllFilename) in session.PreProcessor.Libraries)
-                result.AppendLine($"  include 'Include\\{libraryName}_api.inc'");
+                result.AppendLine($"  include 'Include/{libraryName}_api.inc'");
             return result.ToString();
         }
 
@@ -43,7 +43,8 @@ namespace GroundCompiler
             EmitStatement(stmt);
 
             // Read the codetemplate
-            string tmpl = File.ReadAllText($"Templates\\{this.CodeTemplateName}.fasm");
+            string linuxExtension = this.session.CompileForLinux ? "_linux" : "";
+            string tmpl = File.ReadAllText($"Templates/{this.CodeTemplateName + linuxExtension}.fasm");
 
             // Fill in the blocks in the template
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_EQUATES", string.Join("", emitter.GeneratedCode_Equates));
@@ -633,6 +634,23 @@ namespace GroundCompiler
                 }
             }
         }
+ 
+        
+        private bool EmitLinuxToRegisterParameters(Expression? arg, Scope? scope)
+        {
+            if (arg is Variable argVariable && argVariable.ExprType.Contains(Datatype.TypeEnum.CustomClass) && arg.ExprType.SizeInBytes > 8 && arg.ExprType.SizeInBytes <= 16)
+            {
+                cpu.ReserveRegister("rdx");
+                emitter.Codeline("mov   rdx, [rax+8]");
+                emitter.Codeline("push  rdx");
+                emitter.Codeline("mov   rdx, [rax]");
+                emitter.Codeline("push  rdx");
+                cpu.FreeRegister("rdx");
+                return true;
+            }
+
+            return false;
+        }        
 
 
         // This function needs refactoring. It does too much. We must push it over and create a class for it.
@@ -821,7 +839,7 @@ namespace GroundCompiler
             int nrArguments = expr.ArgumentNodes.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
             if (nrArguments % 2 == 1)
             {
-                if (dllFunctionSymbol == null || (expr.ArgumentNodes.Count > 4))
+                if (dllFunctionSymbol == null || ((expr.ArgumentNodes.Count > 4) && (!session.CompileForLinux)) || ((expr.ArgumentNodes.Count > 6) && (session.CompileForLinux)))
                 {
                     emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
                     emitter.StackPush();
@@ -834,11 +852,16 @@ namespace GroundCompiler
                 var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
 
-                if (dllFunctionSymbol != null)
+                if (dllFunctionSymbol != null && !session.CompileForLinux)
                     EmitCompressedParameters(arg, scope);
-
+                
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
+
+                if (dllFunctionSymbol != null && session.CompileForLinux)
+                    if (EmitLinuxToRegisterParameters(arg, scope))
+                        continue;
+                
                 emitter.Push(arg.ExprType);
             }
 
@@ -900,48 +923,120 @@ namespace GroundCompiler
 
             if (dllFunctionSymbol != null)
             {
-                /* When the returntype is bigger than 8 bytes, when need to reserve space on the stack and put it in RCX */
                 int registerIndex = 0;
-                if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
+                int linuxCopyResultBytes = 0;
+
+                if (session.CompileForLinux)
                 {
-                    int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
-                    if (nrBytes > 8)
+                    //linux stopt het resultaat in rdi 
+                    if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
                     {
-                        emitter.ReserveOnStack(nrBytes, "rcx");
-                        registerIndex += 1;
+                        int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
+                        if (nrBytes > 8 && nrBytes <= 16)
+                            linuxCopyResultBytes = nrBytes;
+                        
+                        if (nrBytes > 16)
+                        {
+                            emitter.ReserveOnStack(nrBytes, "rdi");
+                            registerIndex += 1;
+                        }
+                    }                    
+                }
+                else
+                {
+                    /* When the returntype is bigger than 8 bytes, when need to reserve space on the stack and put it in RCX or rdi (linux)*/
+                    if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
+                    {
+                        int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
+                        if (nrBytes > 8)
+                        {
+                            emitter.ReserveOnStack(nrBytes, "rcx");
+                            registerIndex += 1;
+                        }
                     }
                 }
 
                 nrArguments = expr.ArgumentNodes.Count;
-                if (nrArguments > 0)
-                {
-                    InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[0]);
-                    if (nrArguments > 1)
-                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[1]);
-                }
-                if (nrArguments > 2)
-                {
-                    InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[2]);
-                    if (nrArguments > 3)
-                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[3]);
-                }
-                int stackToReserve = 32;
-                if (!emitter.IsAlign16(emitter.StackPos - stackToReserve))
-                    stackToReserve += 8;    // align the stack to 16 bytes
-                string hexStackToReserve = stackToReserve.ToString("X");
-                emitter.Codeline($"sub   rsp, {hexStackToReserve}h");
-                emitter.StackSub(stackToReserve);
+
                 string groupName = (string)dllFunctionSymbol.FunctionStmt.Properties["group"];
                 string functionName = (string)dllFunctionSymbol.FunctionStmt.Name.Lexeme;
-                emitter.Codeline($"call  [{groupName}_{functionName}]");
-                emitter.Codeline($"add   rsp, {hexStackToReserve}h");
-                emitter.StackAdd(stackToReserve);
-                // If we have more than 4 parameters, than we need to free those stack parameters.
-                if (nrArguments > 4)
+                
+                if (session.CompileForLinux)
                 {
-                    int extraToRelease = (((nrArguments - (4 + 1)) * 8) & 0xfff0) + 16;
-                    emitter.Codeline($"add   rsp, {extraToRelease}");
-                    emitter.StackPop(extraToRelease);
+                    if (nrArguments > 0)
+                    {
+                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[0]);
+                        registerIndex++;
+                        if (nrArguments > 1)
+                        {
+                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[1]);
+                            registerIndex++;
+                        }
+                    }     
+                    if (nrArguments > 2)
+                    {
+                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[2]);
+                        registerIndex++;
+                        if (nrArguments > 3)
+                        {
+                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[3]);
+                            registerIndex++;
+                        }
+                    }
+                    if (nrArguments > 4)
+                    {
+                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[4]);
+                        registerIndex++;
+                        if (nrArguments > 5)
+                        {
+                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[5]);
+                            registerIndex++;
+                        }
+                    }                    
+                    emitter.Codeline($"call  {functionName}");
+
+                    if (linuxCopyResultBytes > 0)
+                    {
+                        emitter.Codeline("push  rcx");
+                        emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
+                        emitter.Codeline("mov   [rcx], rax");
+                        emitter.Codeline("mov   [rcx+8], rdx");
+                        emitter.Codeline("mov   rax, rcx");
+                        emitter.Codeline("pop   rcx");
+                    }
+                }
+                else
+                {
+                    if (nrArguments > 0)
+                    {
+                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[0]);
+                        if (nrArguments > 1)
+                            InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[1]);
+                    }
+
+                    if (nrArguments > 2)
+                    {
+                        InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[2]);
+                        if (nrArguments > 3)
+                            InsertFastCallArgument(registerIndex++, expr.ArgumentNodes[3]);
+                    }
+                    
+                    int stackToReserve = 32;
+                    if (!emitter.IsAlign16(emitter.StackPos - stackToReserve))
+                        stackToReserve += 8;    // align the stack to 16 bytes
+                    string hexStackToReserve = stackToReserve.ToString("X");
+                    emitter.Codeline($"sub   rsp, {hexStackToReserve}h");
+                    emitter.StackSub(stackToReserve);
+                    emitter.Codeline($"call  [{groupName}_{functionName}]");
+                    emitter.Codeline($"add   rsp, {hexStackToReserve}h");
+                    emitter.StackAdd(stackToReserve);
+                    // If we have more than 4 parameters, than we need to free those stack parameters.
+                    if (nrArguments > 4)
+                    {
+                        int extraToRelease = (((nrArguments - (4 + 1)) * 8) & 0xfff0) + 16;
+                        emitter.Codeline($"add   rsp, {extraToRelease}");
+                        emitter.StackPop(extraToRelease);
+                    }
                 }
             }
             else
@@ -949,7 +1044,80 @@ namespace GroundCompiler
 
             return null;
         }
+        
+        
+        private void InsertLinuxCallArgument(ref int index, Expression expr)
+        {
+            string theRegister = "rax";
+            int linuxInputInTwoRegisters = 0;
+            
+            if (expr.ExprType?.isClass() ?? false)
+            {
+                // als je een class in een parameter zet, dan is het altijd een struct. 
+                // onder linux moet je dan meerdere registers gebruiken om een 16 byte struct door te geven.
+                int nrBytes = expr.ExprType.SizeInBytes;
+                if (nrBytes > 8 && nrBytes <= 16)
+                    linuxInputInTwoRegisters = nrBytes;
+            }
 
+            if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
+            {
+                switch (index)
+                {
+                    case 0:
+                        theRegister = "xmm0";
+                        break;
+                    case 1:
+                        theRegister = "xmm1";
+                        break;
+                    case 2:
+                        theRegister = "xmm2";
+                        break;
+                    case 3:
+                        theRegister = "xmm3";
+                        break;
+                }
+                cpu.ReserveRegister(theRegister);
+                emitter.Pop(expr, theRegister);
+                cpu.FreeRegister(theRegister);
+            }
+            else
+            {
+                int nrRegisters = (linuxInputInTwoRegisters > 0) ? 2 : 1;
+
+                for (int i = 0; i < nrRegisters; i++)
+                {
+                    switch (index)
+                    {
+                        case 0:
+                            theRegister = "rdi";
+                            break;
+                        case 1:
+                            theRegister = "rsi";
+                            break;
+                        case 2:
+                            theRegister = "rdx";
+                            break;
+                        case 3:
+                            theRegister = "rcx";
+                            break;
+                        case 4:
+                            theRegister = "r8";
+                            break;
+                        case 5:
+                            theRegister = "r9";
+                            break;
+                    }
+
+                    //cpu.ReserveRegister("rcx");
+                    emitter.Pop(expr, theRegister);
+                    //cpu.FreeRegister("rcx");
+                    if (i != (nrRegisters - 1))
+                        index++;
+                }
+            }
+        }
+        
 
         private void InsertFastCallArgument(int index, Expression expr)
         {

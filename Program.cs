@@ -17,9 +17,9 @@ namespace GroundCompiler
             if (args.Length == 0)
             {
 #if DEBUG
-                fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
-                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}")); }
+                fileName = "gpu_circles.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
+                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
                 runAfterCompilation = true;
 #else
@@ -30,13 +30,13 @@ namespace GroundCompiler
             else
             {
                 fileName = args[0];
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode/{fileName}"));
                 if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName)); }
                 if (!File.Exists(fullPath)) { Console.WriteLine($"GroundCompiler. Error: cannot find {fileName}"); return; }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            CompilationSession newSession = new CompilationSession() { RunAfterCompilation = runAfterCompilation, GenerateDebugInformation = false };
+            CompilationSession newSession = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux(), RunAfterCompilation = runAfterCompilation, GenerateDebugInformation = false };
             newSession.PushSourcecodeFile(fileName, fullPath, File.ReadAllText(fullPath));
             Program compilation = new() { sess = newSession };
             compilation.Build();
@@ -79,6 +79,7 @@ namespace GroundCompiler
         {
             //Console.WriteLine("*** Write generated code to disk.");
 
+            string outputAsmFilenameClean = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}"));
             string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.asm"));
             string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.fas"));
             string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.lst"));
@@ -92,7 +93,7 @@ namespace GroundCompiler
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = "fasm\\fasm.exe",
+                FileName = sess.IsCurrentlyOnLinux ? "fasm" : "fasm\\fasm.exe",
                 Arguments = assemblerParameters,
                 WorkingDirectory = currentDir
             };
@@ -102,6 +103,18 @@ namespace GroundCompiler
             p.StartInfo = info;
             p.Start();
             p.WaitForExit();
+
+            if (sess.IsCurrentlyOnLinux)
+            {
+                //gcc raytest.o -o raytest -lraylib -lm -lpthread -ldl -lrt -no-pie
+                //gcc tmp6.o -o tmp6 -lm -lpthread -ldl -lrt -no-pie
+                info = new System.Diagnostics.ProcessStartInfo("gcc", $"{outputAsmFilenameClean}.o -o {outputAsmFilenameClean} -lm -lpthread -ldl -lrt -lraylib -no-pie");
+                info.WorkingDirectory = currentDir;
+                p = new System.Diagnostics.Process();
+                p.StartInfo = info;
+                p.Start();
+                p.WaitForExit();
+            }
 
             if (sess.GenerateDebugInformation)
             {
@@ -193,9 +206,20 @@ namespace GroundCompiler
             if (!sess.RunAfterCompilation)
                 return;
 
-            Console.WriteLine($"*** Starting {sess.SourceFilename}.exe\r\n");
-            string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.exe"));
-            Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
+            if (sess.IsCurrentlyOnLinux)
+            {
+                Console.WriteLine($"*** Starting {sess.SourceFilename}\r\n");
+                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}"));
+                var psi = new ProcessStartInfo(startupFilename);
+                var proces = Process.Start(psi);
+                proces.WaitForExit();
+            }
+            else
+            {
+                Console.WriteLine($"*** Starting {sess.SourceFilename}.exe\r\n");
+                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.exe"));
+                Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
+            }
         }
 
 

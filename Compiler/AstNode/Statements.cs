@@ -178,6 +178,7 @@ namespace GroundCompiler.Statements
 
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
+            this.Scope.DefineHardcodedVariable("GC_CWD", Datatype.GetDatatype("string"));
             this.Scope.DefineHardcodedVariable("GC_Float_Infinity", Datatype.GetDatatype("float"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));

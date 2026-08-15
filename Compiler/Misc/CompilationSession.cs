@@ -28,6 +28,8 @@ namespace GroundCompiler
 
         public bool RunAfterCompilation = false;
         public bool GenerateDebugInformation = false;
+        public bool IsCurrentlyOnLinux = false;
+        public bool CompileForLinux = false;
         public string GeneratedCode;
 
         public PreProcessor PreProcessor;

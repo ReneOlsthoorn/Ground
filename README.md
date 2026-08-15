@@ -1,6 +1,6 @@
 # Ground
 
-This is the compiler for the programming language `Ground` for Windows that promotes high performance computing. 
+This is the compiler for the programming language `Ground` for Windows and Linux that promotes high performance computing. 
 It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
 Ground code, so the programmer stays in control of the CPU.  
   
@@ -14,7 +14,7 @@ files when the template is chosen wisely. For instance, there is a `console` tem
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
 template is the `raylib` template which you can use to execute GPU code. Ofcourse you can create your own template.  
   
-The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k.  
+The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k on Windows.  
 Ground .EXE files will be small because most external code is loaded at load-time. The usage of the known system 
 DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
@@ -208,7 +208,7 @@ The `AMD Opteron` in 2003 was the first x86 processor to get 64-bit extensions. 
 `Windows 7`, which was released in 2009, the 64-bit version is pushed as the default. Nowadays, `Windows 11` only 
 ships as 64-bit version, so 64-bit is a safe bet. That's why Ground will only generate x86-64 code.
 
-### Using ucrt or msvcrt
+### On Windows: Using ucrt or msvcrt
 When you compile a C program with `Visual Studio 2026`, it links to `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll` or whatever 
 version of the VC runtime is active that week. It's a mess. Those DLLs are not available by default on a Windows system. 
 So the users need to install the VC Runtime Redistributable, which is a hassle. The way to avoid this is simple: 
@@ -231,7 +231,7 @@ is created in build\src.
 * At this moment, Ground does not support namespaces, so use a prefix in front of your classname when you reuse the class in different projects.
 * Although float is a 64 bit datatype in Ground, 32 bit float literals can be described with an 'f' behind the value (like 0.0f). 0.0f32 would just look too confusing.
 
-### Debugging Ground code in x64dbg:
+### On Windows: Debugging Ground code in x64dbg:
 In `Program>>Generate_x64dbg_EXE` you see that the Ground compiler can generate a comments database for your .EXE 
 file in x64dbg. Set `GenerateDebugInformation = true` in the CompilationSession and check if the 
 `Program>>x64dbgDbFolder` is set correct for your system.  
@@ -511,15 +511,14 @@ Microsoft has a new feature in Windows 11 called Smart App Control. This is a ga
 preventing unrecognized programs from running. Apple already has this feature.  
 Several services that I created myself would not run on Windows 11. After investigation, I noticed that the Smart
 App Control prevented the services from running. Fortunately it could be deactived, but this is again a feature I don't 
-want. Windows is moving away from the old free `Personal Computer` idea towards a subscription based AI cloud computer. 
+want. Windows is moving its users away from the `Personal Computer` concept towards a subscription-based AI cloud computer usage. 
 If we are not careful, in the future we will no longer own our own computing power and technology.  
-Many users want their freedom back and are on mass looking for a new Free OS. Most definately the users that don't have 
-the required TPM 2.0 that Windows 11 requires will be looking for a new OS.
+Many users want their freedom back and are looking at Linux. Most definately the users that don't have the required 
+TPM 2.0 that Windows 11 requires will be looking for a new OS.
 
-### CachyOS : Playing Steam games on Linux
-Did you ever see CachyOS? It is a great Linux distribution that can play Steam games and is very user friendly. 
-I will be investigating how to run Ground on Linux the coming months.
-[The ABI and syscall is different](https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/) 
+### Running Ground on CachyOS / Linux
+Did you ever see CachyOS? It is a nice Linux distribution that can play Steam games and is very user friendly.
+If you install Rider and Raylib, you can run Ground and compile the `cpu_circles.g` example.
 
 ### Smoothscroller
 <p align="center">
@@ -681,4 +680,5 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.02: Circles effect, Spiral effect and Hexacubes effect added.  
 2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
 2026.05: Several GLSL examples added. f32 literals added.  
-2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.
+2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
+2026.08: `gpu_circles.g` working on CachyOS / Linux.  

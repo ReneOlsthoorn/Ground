@@ -134,22 +134,22 @@ dll raylib function GetTime() : float;      // Get elapsed time in seconds since
 dll raylib function GetFPS() : int;         // Get current FPS
 
 dll raylib function LoadShaderFromMemory(string vsCode, string fsCode) : raylib_Shader;
-dll raylib function GetShaderLocation(ptr shader, string uniformName) : int;
-dll raylib function SetShaderValue(ptr shader, int locIndex, ptr value, int uniformType);
-dll raylib function SetShaderValueV(ptr shader, int locIndex, ptr value, int uniformType, int count);
-dll raylib function SetShaderValueTexture(ptr shader, int locIndex, ptr texture);
-dll raylib function BeginShaderMode(ptr shader);
+dll raylib function GetShaderLocation(raylib_Shader shader, string uniformName) : int;
+dll raylib function SetShaderValue(raylib_Shader shader, int locIndex, ptr value, int uniformType);
+dll raylib function SetShaderValueV(raylib_Shader shader, int locIndex, ptr value, int uniformType, int count);
+dll raylib function SetShaderValueTexture(raylib_Shader shader, int locIndex, raylib_Texture2D texture);
+dll raylib function BeginShaderMode(raylib_Shader shader);
 dll raylib function EndShaderMode();
 dll raylib function DrawRectangle(int posX, int posY, int width, int height, u32 color);
-dll raylib function UnloadShader(ptr shader);
-dll raylib function IsShaderValid(ptr shader) : bool;
+dll raylib function UnloadShader(raylib_Shader shader);
+dll raylib function IsShaderValid(raylib_Shader shader) : bool;
 
 dll raylib function rlGetVersion() : int;
 dll raylib function LoadTexture(string fileName) : raylib_Texture2D;
-dll raylib function UnloadTexture(ptr texture2d);
-dll raylib function DrawTexture(ptr texture2d, int posX, int posY, u32 tint);
-dll raylib function DrawTexturePro(ptr texture2d, ptr rectangleSrc, ptr rectangleDest, ptr vectorOrigin, float rotation, u32 tint);
-dll raylib function DrawTextureRec(ptr texture2d, ptr rectangleSrc, ptr vectorPosition, u32 tint);
+dll raylib function UnloadTexture(raylib_Texture2D texture2d);
+dll raylib function DrawTexture(raylib_Texture2D texture2d, int posX, int posY, u32 tint);
+dll raylib function DrawTexturePro(raylib_Texture2D texture2d, ptr rectangleSrc, ptr rectangleDest, ptr vectorOrigin, float rotation, u32 tint);
+dll raylib function DrawTextureRec(raylib_Texture2D texture2d, ptr rectangleSrc, ptr vectorPosition, u32 tint);
 dll raylib function GetMousePosition() : raylib_Vector2;
 
 dll raylib function GetCurrentMonitor() : int;
@@ -170,11 +170,11 @@ dll raylib function IsCursorHidden() : bool;
 dll raylib function IsWindowReady() : bool;
 
 dll raylib function ToggleFullscreen();
-dll raylib function UpdateTexture(ptr texture, ptr pixels);
+dll raylib function UpdateTexture(raylib_Texture2D texture, ptr pixels);
 dll raylib function LoadTextureFromImage(ptr image) : raylib_Texture2D;
 dll raylib function LoadRenderTexture(int width, int height) : raylib_RenderTexture;
 
-dll raylib function BeginTextureMode(ptr target);
+dll raylib function BeginTextureMode(raylib_RenderTexture target);
 dll raylib function EndTextureMode();
 dll raylib function GetRandomValue(i32 min, i32 max) : u32;
 dll raylib function ColorFromHSV(f32 hue, f32 saturation, f32 value) : u32;

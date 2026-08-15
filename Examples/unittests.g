@@ -60,7 +60,7 @@ assert(i == 0x100000004);
 
 
 // Array style can also be used, which does the offset calculation for you. Useful for pixel arrays. Array indexes start at zero.
-i = 0x1ffff;
+i = $1ffff;
 u32p[0] = 0xFEDC1234;
 u32p[1] = 2;
 assert(i == 0x2fedc1234);

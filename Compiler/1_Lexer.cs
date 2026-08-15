@@ -69,7 +69,7 @@ namespace GroundCompiler
                 }
 
                 if (IsIdentifierStart(c)) { Filter_ReservedWords(token);           break; }
-                if (IsDigit(c))           { ReadNumber(token);                     break; }
+                if (IsDigit(c) || IsPascalHexadecimal(c))           { ReadNumber(token);                     break; }
 
                 if (SkipIfMatch("==", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.IsEqual)) break;
                 if (SkipIfMatch("!=", token, TokenType.Operator, TokenType.BooleanResultOperator, TokenType.NotIsEqual)) break;
@@ -99,6 +99,7 @@ namespace GroundCompiler
                 if (SkipIfMatch("/",  token, TokenType.Operator, TokenType.Slash)) break;
                 if (SkipIfMatch("^",  token, TokenType.Operator, TokenType.Caret)) break;  // xor
                 if (SkipIfMatch("%",  token, TokenType.Operator, TokenType.Percentage, TokenType.Modulo)) break;
+                if (SkipIfMatch("$",  token, TokenType.Operator, TokenType.DollarSign)) break;
 
                 if (SkipIfMatch(";",  token, TokenType.Separator, TokenType.SemiColon)) break;
                 if (SkipIfMatch(":",  token, TokenType.Separator, TokenType.Colon)) break;
@@ -271,7 +272,7 @@ namespace GroundCompiler
                 ReadBinary(token);
                 return;
             }
-            if (SkipIfMatch("0X") || SkipIfMatch("0x"))
+            if (SkipIfMatch("0X") || SkipIfMatch("0x") || SkipIfMatch("$"))
             {
                 ReadHexadecimal(token);
                 return;
@@ -416,6 +417,7 @@ namespace GroundCompiler
         }
 
         public bool IsDirective(char c) { return (c == '#'); }
+        public bool IsPascalHexadecimal(char c) { return (c == '$'); }
         public bool IsDigit(char c, char followingChar = ' ') { return (c >= '0' && c <= '9'); }
         public bool IsFloatingPoint(char c, char followingChar = ' ') { return (c >= '0' && c <= '9') || (c == '.' && followingChar != '.') || (c == 'f'); }
         public bool IsAlphabetical(char c, char followingChar = ' ') { return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')); }

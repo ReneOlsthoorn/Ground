@@ -10,9 +10,17 @@
     <OutputPath>$(SolutionDir)bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
 
+  <PropertyGroup>
+     <IsWindows Condition="'$(OS)' == 'Windows_NT'">true</IsWindows>
+  </PropertyGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(ProjectDir)Templates&quot; &quot;$(TargetDir)Templates&quot; /E /Y /I&#xD;&#xA;xcopy &quot;$(ProjectDir)Include&quot; &quot;$(TargetDir)Include&quot; /E /Y /I" />
-    <Exec Command="xcopy &quot;$(ProjectDir)Examples&quot; &quot;$(TargetDir)GroundCode&quot; /E /Y /I" Condition="'$(Configuration)' == 'Release'" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Templates&quot; &quot;$(TargetDir)Templates&quot; /E /Y /I" Condition="'$(IsWindows)' == 'true'" />
+    <Exec Command="cp -r &quot;$(ProjectDir)Templates&quot; &quot;$(TargetDir)&quot;" Condition="'$(IsWindows)' != 'true'" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Include&quot; &quot;$(TargetDir)Include&quot; /E /Y /I" Condition="'$(IsWindows)' == 'true'" />
+    <Exec Command="cp -r &quot;$(ProjectDir)Include&quot; &quot;$(TargetDir)Include&quot;" Condition="'$(IsWindows)' != 'true'" />
+    <Exec Command="xcopy &quot;$(ProjectDir)Examples&quot; &quot;$(TargetDir)GroundCode&quot; /E /Y /I" Condition="'$(Configuration)' == 'Release' and '$(IsWindows)' == 'true'" />
+    <Exec Command="cp -r &quot;$(ProjectDir)Examples&quot; &quot;$(TargetDir)GroundCode&quot;" Condition="'$(Configuration)' == 'Release' and '$(IsWindows)' != 'true'" />
   </Target>
   
 </Project>

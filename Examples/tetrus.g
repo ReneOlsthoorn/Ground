@@ -34,8 +34,8 @@ int[32,7] figures = [
 ] asm;
 
 //   Colors of the figures.
-u32[8] fgColorList = [ 0xff3D3D3C, 0xFF953692, 0xFFFEF74E, 0xFF51E1FC, 0xFFEA3D1D, 0xFF79AE3C, 0xFFF69431, 0xFFF16FB9 ];
-u32[8] bgColorList = [ 0xff7B7B7B, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB, 0xffBBBBBB ];
+u32[8] fgColorList = [ $FF3D3D3C, $FF953692, $FFFEF74E, $FF51E1FC, $FFEA3D1D, $FF79AE3C, $FFF69431, $FFF16FB9 ];
+u32[8] bgColorList = [ $FF7B7B7B, $FFBBBBBB, $FFBBBBBB, $FFBBBBBB, $FFBBBBBB, $FFBBBBBB, $FFBBBBBB, $FFBBBBBB ];
 
 
 int[GRID_ELEMENTS_X, GRID_ELEMENTS_Y] board = [ ] asm;
@@ -66,7 +66,7 @@ int linesDoneCounter = 0;
 int gameTimeFrameStart;
 int secondsGameTime;
 int loopStartTicks = 0;
-int debugBestTicks = 0xffff;
+int debugBestTicks = $ffff;
 int screenpitch = SCREEN_LINESIZE;
 int RandomSeed = 123123;    //msvcrt.time64(&RandomSeed);
 class Point {
@@ -103,10 +103,10 @@ ptr sfxrSelectObject = soloud.Sfxr_create();
 int sfxrSelectLoaded = soloud.Sfxr_loadParams(sfxrSelectObject, "sound/sfxr/select.sfs");
 if (sfxrSelectLoaded != 0) return;
 
-f32 theVolume = 1.0;
+f32 theVolume = 1.0f;
 soloud.Sfxr_setVolume(sfxrObject, theVolume);
 soloud.Sfxr_setVolume(dropObject, theVolume);
-theVolume = 0.5;
+theVolume = 0.5f;
 soloud.Sfxr_setVolume(sfxrSelectObject, theVolume);
 soloud.Sfxr_setLooping(sfxrObject, false);
 
@@ -115,10 +115,10 @@ function playDrop() { soloud.Soloud_play(soloudObject, dropObject); }
 function playTurn() { soloud.Soloud_play(soloudObject, sfxrSelectObject); }
 
 function writeText(ptr renderer, f32 x, f32 y, string text) {
-	sdl3.SDL_SetRenderScale(renderer, 2.0, 2.0);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
-	sdl3.SDL_RenderDebugText(renderer, x+2.0, y, text);
-	sdl3.SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0x00, 0xff);
+	sdl3.SDL_SetRenderScale(renderer, 2.0f, 2.0f);
+	sdl3.SDL_SetRenderDrawColor(renderer, $00, $00, $00, $ff);
+	sdl3.SDL_RenderDebugText(renderer, x + 2.0f, y, text);
+	sdl3.SDL_SetRenderDrawColor(renderer, $ff, $ff, $00, $ff);
 	sdl3.SDL_RenderDebugText(renderer, x, y, text);
 }
 
@@ -457,7 +457,7 @@ while (StatusRunning)
 
 	if (gameStatus == "game running") { MovePiece(); }
 
-	GC_ClearScreenPixels(0xff000000);
+	GC_ClearScreenPixels($ff000000);
 	DrawBoard();
 
 	sdl3.SDL_UnlockTexture(texture);

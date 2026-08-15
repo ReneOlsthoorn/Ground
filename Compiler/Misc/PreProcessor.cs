@@ -57,19 +57,19 @@ namespace GroundCompiler
         public void IncludeFile(string fileName)
         {
 #if DEBUG
-            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Include\\{fileName}"));
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Include/{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include/{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Examples\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"..\\..\\Test\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
 #else
-            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include\\{fileName}"));
+            string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include/{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode\\{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode/{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
 #endif

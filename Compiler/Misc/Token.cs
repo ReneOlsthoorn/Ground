@@ -54,6 +54,7 @@ namespace GroundCompiler
         Caret,        // ^  (xor)
         Percentage,   // %
         Modulo,       // %
+        DollarSign,   // $
         While,        // while
         For,          // for
         In,           // in

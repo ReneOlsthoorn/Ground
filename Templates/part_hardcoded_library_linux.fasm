@@ -1,0 +1,511 @@
+
+; HARDCODED LIBRARY FUNCTIONS
+
+; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
+; Extra storage in function?  push rbp;  mov rbp, rsp;  sub rsp, 8h;  mov [rbp-8h], rcx;  ...   mov rsp, rbp;  pop rbp;  ret;
+
+value@_f_BitValue@gc equ rbp+G_PARAMETER1
+bitnr@_f_BitValue@gc equ rbp+G_PARAMETER2
+_f_BitValue@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [value@_f_BitValue@gc]
+  mov   rcx, qword [bitnr@_f_BitValue@gc]
+  shr	rax, cl
+  and	rax, 1
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
+
+
+extrn scanf
+
+
+_f_input_int@gc:
+  push  rbp
+  xor   eax, eax
+  mov   rdi, scanf_int_read
+  lea   rsi, [scanf_int_result]
+  call  scanf
+  mov   rax, [scanf_int_result]
+  pop   rbp
+  ret   G_STACKSPACE_0_PARAM      ; no parameters pushes the lexical parent frame on the stack, and the class instance (which is null in this case)
+
+
+_f_input_string@gc:
+  push  rbp
+  xor   eax, eax
+  mov   rdi, scanf_string_read
+  lea   rsi, [tmpCharSpace]
+  call  scanf  
+  mov   rax, tmpCharSpace
+  pop   rbp
+  ret   G_STACKSPACE_0_PARAM
+
+  
+_f_strlen@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_cstr_len@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_cstr_linelen@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  xor	ecx, ecx
+.loop:
+  mov   dl, [rax + rcx]
+  test  dl, dl
+  je    .done
+  cmp	dl, 0x0a
+  je	.done
+  inc   rcx
+  jmp   .loop
+.done:
+  mov	rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_cstr_convert@gc:
+  push  rbp
+  mov   rbp, rsp
+  sub	rsp, 256
+  lea	rax, [rsp]
+  push  rax rsi rdi rcx
+
+  mov	rdi, rax
+
+  mov   rcx, qword [rbp+G_PARAMETER2]
+  inc	rcx			; include the ending zero.
+  mov	rsi, qword [rbp+G_PARAMETER1]
+  cld
+  rep	movsb			; copy string 1
+  mov	byte [rdi], 0
+
+  pop   rcx rdi rsi rax
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
+
+
+_f_println:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+if defined PrintScreenString
+  call	PrintScreenString
+end if
+  lea	rax, [carriage_return_bytes]
+if defined PrintScreenString
+  call	PrintScreenString
+end if
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+_f_print:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+if defined PrintScreenString
+  call	PrintScreenString
+end if
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_1_PARAM
+
+
+_f_colorprint:
+  push  rbp
+  mov   rbp, rsp
+  push	r8
+  mov   rax, qword [rbp+G_PARAMETER2]
+  mov   r8, qword [rbp+G_PARAMETER1]
+if defined PrintScreenColorString
+  call	PrintScreenColorString
+end if
+  pop	r8
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM
+
+
+_f_assert:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, qword [rbp+G_PARAMETER1]
+  cmp	rax, 0
+  jnz	.assert_correct
+  mov   rax, qword [rbp+G_PARAMETER2]
+  mov	rcx, 10
+  call	PrintNumber
+  lea	rax, [assert_errormessage]
+if defined PrintScreenString
+  call	PrintScreenString
+end if
+  mov   rbp, [main_rbp]
+  mov   rsp, [main_rbp]
+  jmp	assert_exitpoint
+.assert_correct:
+  mov   rsp, rbp
+  pop   rbp
+  ret   G_STACKSPACE_2_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
+
+
+intvalue@_f_chr$ equ rbp+G_PARAMETER1
+_f_chr$:
+  push  rbp
+  mov   rbp, rsp
+  sub	rsp, 8		; 2 bytes needed, but we align 8 it
+  lea	rax, [rsp]
+  mov   rdx, qword [intvalue@_f_chr$]
+  mov   byte [rax], dl
+  mov   byte [rax+1], 0
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+value@_f_hex2$@gc equ rbp+G_PARAMETER1
+_f_hex2$@gc:
+  push  rbp
+  mov   rbp, rsp
+  sub	rsp, 8     ; we need 3 bytes, but we align 8
+  lea	rax, [rsp]
+  mov	rcx, rax
+
+  push	rdx r8
+  mov   r8, qword [value@_f_hex2$@gc]
+
+  mov	dl, r8b
+  shr	dl, 4
+  mov	dh, dl
+  mov	dl, r8b
+  and	dl, 0x0f
+
+  cmp	dl, 9
+  jbe	.low_digit
+  add	dl, 7
+.low_digit:
+  add	dl, '0'
+
+  cmp	dh, 9
+  jbe	.high_digit
+  add	dh, 7
+.high_digit:
+  add	dh, '0'
+
+  mov   byte [rax], dh
+  mov   byte [rax+1], dl
+  mov   byte [rax+2], 0
+  pop	r8 rdx
+
+  mov   rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_hex$@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [rbp+G_PARAMETER2]
+  add   rcx, 1		; one extra for the trailing zero
+
+  mov	rdx, rcx
+  and	dx, 0xfff0	; align to 16
+  add	rdx, 16
+
+  sub	rsp, rdx
+  lea	rax, [rsp]	; This is now the string pointer
+  mov	rcx, rax
+
+  push  rcx rdx rdi
+
+  mov   rcx, qword [rbp+G_PARAMETER2]
+  lea   rdi, [rax+rcx]
+  mov   byte [rdi], 0		;set the string terminator
+  mov   rax, qword [rbp+G_PARAMETER1]
+
+.convert_loop:
+  mov   rdx, rax
+  and   rdx, 0x0f           ; isolate lowest 4 bits
+  add   dl, '0'
+  cmp   dl, '9'
+  jbe   .no_letter
+  add   dl, 'a'-'9'-1		; 'a' to 'f'
+.no_letter:
+  dec   rdi
+  mov   [rdi], dl
+  shr   rax, 4				; bring next nibble to lowest position
+  loop	.convert_loop
+
+  pop	rdi rdx rcx
+
+  mov   rax, rcx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_2_PARAM
+
+
+filename@_f_ReadAllText@gc equ rbp+G_PARAMETER1
+_f_ReadAllText@gc:
+  push  rbp
+  mov   rbp, rsp
+  push  r11 r12 r13 r14 r15
+  mov   rax, qword [filename@_f_ReadAllText@gc]
+  mov   rcx, rax
+  lea   rdx, [readalltext_openmode]
+  sub   rsp, 50h
+  ;call  [msvcrt_fopen]
+  mov   r12, rax     ; r12 = FILE*
+  mov   rcx, r12     ; p1 = FILE*
+  mov   rdx, 0       ; p2 = offset = 0
+  mov   r8, 2        ; p3 = SEEK_END        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
+  ;call  [msvcrt_fseek]
+
+  mov   rcx, r12     ; p1 = FILE*
+  ;call  [msvcrt_ftell]
+  mov   r13, rax     ; r13 = size
+
+  mov   rcx, r12     ; p1 = FILE*
+  mov   rdx, 0       ; p2 = offset = 0
+  mov   r8, 0        ; p3 = SEEK_SET        ;SEEK_SET=0,SEEK_CUR=1,SEEK_END=2
+  ;call  [msvcrt_fseek]
+
+  mov   rcx, r13
+  add   rcx, 1       ; Add trailing zero...
+
+  mov	r14, rsp
+  sub	rsp, 0x1000	 ; subtract 4k to create a distance, because else the stack gets destroyed by the msvcrt_fclose
+  mov	r15, rcx
+  add	r15, 0x10
+  and	r15w, 0xfff0  ; remain with an 16-byte aligned stack
+  sub	rsp, r15
+  lea   r15, [rsp]
+
+  mov   rcx, r15
+  mov   rdx, r13
+  mov   r8, 1
+  mov   r9, r12
+  ;call  [msvcrt_fread]
+
+  mov   byte [r15+r13], 0  ; r13 = content length (trailing zero not included!)
+  mov	rsp, r14
+  mov   rcx, r12     ; p1 = FILE*
+  ;call  [msvcrt_fclose]
+  add   rsp, 50h
+  mov   rax, r15
+
+  pop   r15 r14 r13 r12 r11
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+stream@_f_fgets@msvcrt equ rbp+G_PARAMETER1
+_f_fgets@msvcrt:
+  push  rbp
+  mov   rbp, rsp
+  mov   r8, qword [stream@_f_fgets@msvcrt]
+  lea   rcx, [tmpCharSpace]
+  mov   rdx, 255
+  sub   rsp, 30h
+  ;call  [msvcrt_fgets]
+  add   rsp, 30h
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+dest@_f_fill@gc equ rbp+G_PARAMETER1
+size@_f_fill@gc equ rbp+G_PARAMETER2
+value@_f_fill@gc equ rbp+G_PARAMETER3
+_f_fill@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdi rcx
+
+  mov   rdi, qword [dest@_f_fill@gc]
+  mov   rcx, qword [size@_f_fill@gc]
+  mov   rax, qword [value@_f_fill@gc]
+  cld
+  rep stosb	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+
+  pop	rcx rdi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM
+
+
+dest@_f_rectfill@gc equ rbp+G_PARAMETER1
+width@_f_rectfill@gc equ rbp+G_PARAMETER2
+height@_f_rectfill@gc equ rbp+G_PARAMETER3
+linesize@_f_rectfill@gc equ rbp+G_PARAMETER4
+value@_f_rectfill@gc equ rbp+G_PARAMETER5
+_f_rectfill@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	r8 r9 r10 rdi rcx rdx
+  cld
+
+  mov	r8, qword [height@_f_rectfill@gc]
+  mov	r9, qword [linesize@_f_rectfill@gc]
+  mov	r10, qword [width@_f_rectfill@gc]
+  mov   rdi, qword [dest@_f_rectfill@gc]
+  mov   rax, qword [value@_f_rectfill@gc]
+
+  mov	r11, 0
+.loopNext:
+  mov   rcx, r10
+  rep stosb	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+
+  sub	rdi, r10
+  add	rdi, r9
+  add	r11, 1
+  cmp	r11, r8
+  jne	.loopNext
+
+  pop	rdx rcx rdi r10 r9 r8
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_5_PARAM
+
+
+_f_bswap32@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov	rax, [rbp+G_PARAMETER1]
+  bswap	eax
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_copy@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rsi rdi rdx rcx
+  mov	rsi, [rbp+G_PARAMETER1]
+  mov	rdi, [rbp+G_PARAMETER2]
+  mov	rcx, [rbp+G_PARAMETER3]
+  cld
+  rep movsb
+  pop	rcx rdx rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM
+
+
+_f_fill32@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdi rcx
+  mov   rdi, [rbp+G_PARAMETER1]
+  mov   rcx, [rbp+G_PARAMETER2]
+  mov   eax, [rbp+G_PARAMETER3]
+  cld
+  rep stosd	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
+  pop	rcx rdi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_3_PARAM
+
+
+_f_abs@gc:
+  push  rbp
+  mov   rbp, rsp
+  mov   rax, [rbp+G_PARAMETER1]
+  test	rax, rax
+  js	.isNeg
+  jmp	.exitAbs
+.isNeg:
+  neg	rax
+.exitAbs:
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_max@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdx
+  mov   rax, [rbp+G_PARAMETER1]
+  mov   rdx,  [rbp+G_PARAMETER2]
+  cmp	rax, rdx
+  jge	.exitMax
+  mov	rax, rdx
+.exitMax:
+  pop	rdx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_min@gc:
+  push  rbp
+  mov   rbp, rsp
+  push	rdx
+  mov   rax, [rbp+G_PARAMETER1]
+  mov   rdx,  [rbp+G_PARAMETER2]
+  cmp	rax, rdx
+  jle	.exitMin
+  mov	rax, rdx
+.exitMin:
+  pop	rdx
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+_f_sqrt@gc:
+  push  rbp
+  mov   rbp, rsp
+
+  sub   rsp, 8
+  movq  qword [rsp], xmm1
+
+  movq  xmm1, qword [rbp+G_PARAMETER1]
+  sqrtsd xmm0, xmm1
+
+  movq  xmm1, qword [rsp]
+
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+

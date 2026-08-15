@@ -110,6 +110,14 @@ namespace GroundCompiler
 
             foreach (var obj in toReplace)
                 obj.ParentNode.ReplaceNode(obj.OldNode, obj.NewNode);
+
+
+            // Warning for variable assignments which need conversion
+            foreach (VarStatement varStat in rootNode.FindAllNodes(typeof(VarStatement)))
+            {
+                if (varStat.InitializerNode != null && (Datatype.IsFloatingPoint(varStat.ResultType) && Datatype.IsFloatingPoint(varStat.InitializerNode.ExprType)) && varStat.ResultType.SizeInBytes != varStat.InitializerNode.ExprType.SizeInBytes)
+                    Compiler.Warning($"Variable {varStat.Name.Lexeme} will be converted from {varStat.InitializerNode.ExprType.Name}({varStat.InitializerNode.ExprType.SizeInBytes}) to {varStat.ResultType.Name}. It is slow.", varStat.Name);
+            }
         }
 
 

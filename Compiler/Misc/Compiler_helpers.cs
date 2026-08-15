@@ -17,11 +17,21 @@ namespace GroundCompiler
             return symbol;
         }
 
-        public static void Error(String message, Token? token = null)
+        public static void Error(string message, Token? token = null)
         {
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("ERROR:\r\n" + message);
             if (token != null) { Console.WriteLine(token.LineLocation()); }
+            Console.ResetColor();
             Environment.Exit(0);
+        }
+
+        public static void Warning(string message, Token? token = null)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("WARNING: " + message);
+            if (token != null) { Console.WriteLine(token.LineLocation()); }
+            Console.ResetColor();
         }
 
 
@@ -106,6 +116,9 @@ namespace GroundCompiler
 
                 if (symbol.Name == "GC_CurrentExeDir")
                     emitter.LoadAssemblyVariableString("currentExeDirChars");
+
+                if (symbol.Name == "GC_CWD")
+                    emitter.LoadAssemblyVariableString("cwdChars");
 
                 if (symbol.Name == "GC_Float_Infinity") {
                     emitter.LoadInfinityFloat64();

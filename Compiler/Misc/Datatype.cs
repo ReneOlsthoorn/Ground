@@ -206,6 +206,7 @@ namespace GroundCompiler
 
         public static bool ContainsDatatype(string theType) => Cached.ContainsKey(theType);
         public static bool IsPointerType(Datatype datatype) => datatype.Contains(Datatype.TypeEnum.Pointer);
+        public static bool IsFloatingPoint(Datatype datatype) => datatype.Contains(Datatype.TypeEnum.FloatingPoint);
 
     }
 }

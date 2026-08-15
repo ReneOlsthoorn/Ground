@@ -22,7 +22,7 @@ void main() {
 }`;
 
 raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Circles effect done with GLSL");
-ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
+raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
