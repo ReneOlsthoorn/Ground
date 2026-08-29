@@ -117,9 +117,6 @@ namespace GroundCompiler
                 if (symbol.Name == "GC_CurrentExeDir")
                     emitter.LoadAssemblyVariableString("currentExeDirChars");
 
-                if (symbol.Name == "GC_CWD")
-                    emitter.LoadAssemblyVariableString("cwdChars");
-
                 if (symbol.Name == "GC_Float_Infinity") {
                     emitter.LoadInfinityFloat64();
                 }

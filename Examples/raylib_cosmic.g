@@ -1,7 +1,7 @@
 
 #template raylib
 #include graphics_defines1280x720.g
-#library raylib raylib.dll
+#library raylib raylib.dll raylib
 
 
 byte* vsCode = `#version 330
@@ -114,9 +114,12 @@ void main()
 
 raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
+if (gc.linux)
+    raylib.SetTargetFPS(60);
+	
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
-ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
+raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int mouseLocation = raylib.GetShaderLocation(shader, "iMouse");

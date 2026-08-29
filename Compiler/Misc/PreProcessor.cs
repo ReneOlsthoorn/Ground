@@ -7,7 +7,7 @@ namespace GroundCompiler
     public class PreProcessor
     {
         public Dictionary<string, Token> Defines;
-        public List<(string, string)> Libraries;
+        public List<(string, string, string)> Libraries;
         public string Template;
         public CompilationSession CompilationSession;
 
@@ -16,7 +16,7 @@ namespace GroundCompiler
         public PreProcessor(CompilationSession session)
         {
             Defines = new Dictionary<string, Token>();
-            Libraries = new List<(string, string)>();
+            Libraries = new List<(string, string, string)>();
             Template = "console";
             this.CompilationSession = session;
         }
@@ -39,7 +39,10 @@ namespace GroundCompiler
                 string[] parts = Regex.Split(line, @"\s+");
                 var libraryName = parts[1].Trim();
                 var dllFilename = parts[2].Trim();
-                Libraries.Add((libraryName, dllFilename));
+                var linuxLib = "";
+                if (parts.Length > 3)
+                    linuxLib = parts[3].Trim();
+                Libraries.Add((libraryName, dllFilename, linuxLib));
                 IncludeFile($"{libraryName}.g");
                 return;
             }
@@ -62,6 +65,10 @@ namespace GroundCompiler
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include/{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
+            if (!File.Exists(fullPath) && !CompilationSession.IsCurrentlyOnLinux)
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}"));
+            if (!File.Exists(fullPath) && CompilationSession.IsCurrentlyOnLinux)
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}"));
             if (!File.Exists(fullPath))

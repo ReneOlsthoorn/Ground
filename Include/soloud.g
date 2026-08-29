@@ -1,6 +1,7 @@
 
 dll soloud function Soloud_create() : ptr;
 dll soloud function Soloud_init(ptr soloud_p) : int;
+dll soloud function Soloud_initEx(ptr soloud_p, int flags, int backend, int sampleRate, int bufferSize, int nrChannels) : int;
 dll soloud function Soloud_deinit(ptr soloud_p);
 dll soloud function Soloud_destroy(ptr soloud_p);
 dll soloud function Soloud_play(ptr soloud_p, ptr wav_p) : int;

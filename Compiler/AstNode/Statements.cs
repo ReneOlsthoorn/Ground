@@ -144,6 +144,8 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("value", Datatype.GetDatatype("float")));
             fn.FunctionStmt.Parent = group;
 
+            HardcodedVariable hVar = group.Scope.DefineHardcodedVariable("linux", Datatype.GetDatatype("bool"));
+            hVar = group.Scope.DefineHardcodedVariable("windows", Datatype.GetDatatype("bool"));
 
             /* program scope */
             fn = this.Scope.DefineHardcodedFunction("print");
@@ -178,7 +180,6 @@ namespace GroundCompiler.Statements
 
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
-            this.Scope.DefineHardcodedVariable("GC_CWD", Datatype.GetDatatype("string"));
             this.Scope.DefineHardcodedVariable("GC_Float_Infinity", Datatype.GetDatatype("float"));
             this.Scope.DefineHardcodedFunction("zero");
             this.Scope.DefineHardcodedFunction("sizeof", Datatype.GetDatatype("int"));

@@ -13,13 +13,14 @@ namespace GroundCompiler
         public List<string> GeneratedCode_Data;
         public List<string> generatedCode;
         public int FramePosition;
+        private CompilationSession session;
 
         // When entering a function, the stack is always unaligned, because the returnaddress is on the stack.
         // So StackPos is always -8 when starting a procedure.
         public long StackPos = -8;  // position of the stack for align16 purposes. Resetted in EmitProcedure>>EmitCreateStackframe()
         long labelCounter = 0;
 
-        public CodeEmitter(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null)
+        public CodeEmitter(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null, CompilationSession session = null)
         {
             this.cpu = cpu;
             generatedCode = new List<string>();
@@ -28,6 +29,7 @@ namespace GroundCompiler
             GeneratedCode_Main = new List<string>();
             GeneratedCode_Procedures = new List<string>();
             GeneratedCode_Data = new List<string>();
+            this.session = session;
         }
 
         public void CloseGeneratedCode_Main()
@@ -313,35 +315,69 @@ namespace GroundCompiler
 
         public void PopSub(Binary expr, Datatype conversionDatatype)
         {
-            if (conversionDatatype.Contains(Datatype.TypeEnum.String))
+            if (session.CompileForLinux)
             {
-                // We have the situation that in string comparison there can be a null value in both arguments.
-                var nullExitLabel = NewLabel();
-                var strCmpLabel = NewLabel();
-                var secondArgNull = NewLabel();
-                cpu.ReserveRegister("rcx");
-                cpu.ReserveRegister("rdx");
-                Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
-                Codeline($"jne    {strCmpLabel}");
-                Codeline($"pop    rcx");
-                StackPop();
-                InsertLabel(secondArgNull);
-                Codeline($"sub    rax, rcx");
-                Codeline($"jmp    {nullExitLabel}");
-                InsertLabel(strCmpLabel);
-                Codeline($"mov    rcx, rax");
-                Codeline($"pop    rax");
-                //StackPop(); // deze tweede pop doen we niet, omdat normaal gesproken er maar 1 tijdens executie wordt uitgevoerd.
-                Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
-                Codeline($"je     {secondArgNull}");
-                Codeline($"mov    rdx, rax");
-                Codeline($"sub    rsp, 20h");
-                Codeline($"call   [msvcrt_strcmp]");
-                Codeline($"add    rsp, 20h");
-                InsertLabel(nullExitLabel);
-                cpu.FreeRegister("rdx");
-                cpu.FreeRegister("rcx");
-                return;
+                if (conversionDatatype.Contains(Datatype.TypeEnum.String))
+                {
+                    // We have the situation that in string comparison there can be a null value in both arguments.
+                    var nullExitLabel = NewLabel();
+                    var strCmpLabel = NewLabel();
+                    var secondArgNull = NewLabel();
+                    cpu.ReserveRegister("rdi");
+                    cpu.ReserveRegister("rsi");
+                    Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
+                    Codeline($"jne    {strCmpLabel}");
+                    Codeline($"pop    rdi");
+                    StackPop();
+                    InsertLabel(secondArgNull);
+                    Codeline($"sub    rax, rdi");
+                    Codeline($"jmp    {nullExitLabel}");
+                    InsertLabel(strCmpLabel);
+                    Codeline($"mov    rdi, rax");
+                    Codeline($"pop    rax");
+                    //StackPop(); // deze tweede pop doen we niet, omdat normaal gesproken er maar 1 tijdens executie wordt uitgevoerd.
+                    Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
+                    Codeline($"je     {secondArgNull}");
+                    Codeline($"mov    rsi, rax");
+                    Codeline($"call   strcmp");
+                    InsertLabel(nullExitLabel);
+                    cpu.FreeRegister("rsi");
+                    cpu.FreeRegister("rdi");
+                    return;
+                }
+            }
+            else
+            {
+                if (conversionDatatype.Contains(Datatype.TypeEnum.String))
+                {
+                    // We have the situation that in string comparison there can be a null value in both arguments.
+                    var nullExitLabel = NewLabel();
+                    var strCmpLabel = NewLabel();
+                    var secondArgNull = NewLabel();
+                    cpu.ReserveRegister("rcx");
+                    cpu.ReserveRegister("rdx");
+                    Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
+                    Codeline($"jne    {strCmpLabel}");
+                    Codeline($"pop    rcx");
+                    StackPop();
+                    InsertLabel(secondArgNull);
+                    Codeline($"sub    rax, rcx");
+                    Codeline($"jmp    {nullExitLabel}");
+                    InsertLabel(strCmpLabel);
+                    Codeline($"mov    rcx, rax");
+                    Codeline($"pop    rax");
+                    //StackPop(); // deze tweede pop doen we niet, omdat normaal gesproken er maar 1 tijdens executie wordt uitgevoerd.
+                    Codeline($"cmp    rax, 0");         // Are we checking for a null value? In that case do not do a string comparison
+                    Codeline($"je     {secondArgNull}");
+                    Codeline($"mov    rdx, rax");
+                    Codeline($"sub    rsp, 20h");
+                    Codeline($"call   [msvcrt_strcmp]");
+                    Codeline($"add    rsp, 20h");
+                    InsertLabel(nullExitLabel);
+                    cpu.FreeRegister("rdx");
+                    cpu.FreeRegister("rcx");
+                    return;
+                }
             }
 
             if (conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))

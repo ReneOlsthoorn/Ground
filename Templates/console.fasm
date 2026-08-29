@@ -4,6 +4,8 @@ stack 80000h, 80000h      ; reserve 512k stack virtual space, allocate 512k at s
 
 include 'fasm\win64a.inc'
 include 'Templates\part_equates.fasm'
+gc_linux equ 0
+gc_windows equ 1
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES
@@ -39,6 +41,8 @@ start:
   jnz   .currentExeDirloop
   mov   byte [r8], 0
 .currentExeDirExitloop:
+  mov   byte [r8+rcx], 0
+
 
 ; *** GENERATED MAIN CODE ***
 ;GC_INSERTIONPOINT_MAIN
@@ -103,6 +107,7 @@ GetStdHandle_outputhandle dq 0
 GetStdHandle_inputhandle  dq 0
 
 currentExeDirChars      db 256 dup(0)
+cwdChars                db 256 dup(0)
 tmpCharSpace            db 256 dup(0)
 
 align 8

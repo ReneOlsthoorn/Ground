@@ -17,13 +17,13 @@ namespace GroundCompiler
             this.session = session;
             CodeTemplateName = session.PreProcessor.Template;
             cpu = new CPU_X86_64();
-            emitter = new CodeEmitter(cpu, session.PreProcessor.Defines);
+            emitter = new CodeEmitter(cpu, session.PreProcessor.Defines, session);
         }
 
         public string LibrariesToInclude()
         {
             StringBuilder result = new StringBuilder();
-            foreach (var (libraryName, dllFilename) in session.PreProcessor.Libraries)
+            foreach (var (libraryName, dllFilename, linuxLib) in session.PreProcessor.Libraries)
                 result.AppendLine($"          {libraryName}, '{dllFilename}', \\");
             return result.ToString();
         }
@@ -31,7 +31,7 @@ namespace GroundCompiler
         public string LibraryApiIncludes()
         {
             StringBuilder result = new StringBuilder();
-            foreach (var (libraryName, dllFilename) in session.PreProcessor.Libraries)
+            foreach (var (libraryName, dllFilename, linuxLib) in session.PreProcessor.Libraries)
                 result.AppendLine($"  include 'Include/{libraryName}_api.inc'");
             return result.ToString();
         }
@@ -834,12 +834,25 @@ namespace GroundCompiler
                 string functionName = propertyGet.Name.Lexeme;
                 theFunction = GetSymbol(functionName, scope!, propertyGet.Name) as FunctionSymbol;
             }
-            var dllFunctionSymbol = theFunction as DllFunctionSymbol;
 
-            int nrArguments = expr.ArgumentNodes.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last
-            if (nrArguments % 2 == 1)
+            /* Het idee is om alle parameters op de stack te zetten en vervolgens de parameters 
+               die in registers geladen moeten worden weer van de stack af te halen. De stack moet wel 16-byte aligned worden. */
+
+            var dllFunctionSymbol = theFunction as DllFunctionSymbol;
+            LinuxAbiParameterManager? lpm = null;
+            if (session.CompileForLinux && dllFunctionSymbol != null)
+            { 
+                lpm = new LinuxAbiParameterManager(cpu, emitter, dllFunctionSymbol);
+                lpm.Load(expr.ArgumentNodes, theFunction!.FunctionStmt.Parameters); // The difficult Linux System V AMD64 Abi
+            }
+
+            int nrArguments = expr.ArgumentNodes.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last. Only needed for local calls.
+            int nrRegistersNeeded = (lpm == null) ? expr.ArgumentNodes.Count : lpm.stackNr;
+
+            // Before putting all parameters on the stack we must do alignment.
+            if (nrRegistersNeeded % 2 == 1)
             {
-                if (dllFunctionSymbol == null || ((expr.ArgumentNodes.Count > 4) && (!session.CompileForLinux)) || ((expr.ArgumentNodes.Count > 6) && (session.CompileForLinux)))
+                if (dllFunctionSymbol == null || ((nrRegistersNeeded > 4) && (!session.CompileForLinux)) || session.CompileForLinux)
                 {
                     emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
                     emitter.StackPush();
@@ -924,27 +937,9 @@ namespace GroundCompiler
             if (dllFunctionSymbol != null)
             {
                 int registerIndex = 0;
-                int linuxCopyResultBytes = 0;
-
-                if (session.CompileForLinux)
+                if (!session.CompileForLinux)
                 {
-                    //linux stopt het resultaat in rdi 
-                    if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
-                    {
-                        int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
-                        if (nrBytes > 8 && nrBytes <= 16)
-                            linuxCopyResultBytes = nrBytes;
-                        
-                        if (nrBytes > 16)
-                        {
-                            emitter.ReserveOnStack(nrBytes, "rdi");
-                            registerIndex += 1;
-                        }
-                    }                    
-                }
-                else
-                {
-                    /* When the returntype is bigger than 8 bytes, when need to reserve space on the stack and put it in RCX or rdi (linux)*/
+                    /* When the returntype is bigger than 8 bytes, when need to reserve space on the stack and put it in RCX */
                     if (dllFunctionSymbol.FunctionStmt.ResultDatatype?.isClass() ?? false)
                     {
                         int nrBytes = dllFunctionSymbol.FunctionStmt.ResultDatatype.SizeInBytes;
@@ -963,47 +958,35 @@ namespace GroundCompiler
                 
                 if (session.CompileForLinux)
                 {
-                    if (nrArguments > 0)
+                    foreach (string reg in lpm.registerAllocation)
                     {
-                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[0]);
-                        registerIndex++;
-                        if (nrArguments > 1)
-                        {
-                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[1]);
-                            registerIndex++;
-                        }
-                    }     
-                    if (nrArguments > 2)
-                    {
-                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[2]);
-                        registerIndex++;
-                        if (nrArguments > 3)
-                        {
-                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[3]);
-                            registerIndex++;
-                        }
+                        cpu.ReserveRegister(reg);
+                        if (reg.StartsWith("xmm"))
+                            emitter.PopFloat(reg);
+                        else
+                            emitter.Pop(null, reg);
+                        cpu.FreeRegister(reg);
                     }
-                    if (nrArguments > 4)
-                    {
-                        InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[4]);
-                        registerIndex++;
-                        if (nrArguments > 5)
-                        {
-                            InsertLinuxCallArgument(ref registerIndex, expr.ArgumentNodes[5]);
-                            registerIndex++;
-                        }
-                    }                    
+                    
+                    bool needAlignment = !emitter.IsAlign16(emitter.StackPos);
+                    if (needAlignment)
+                        emitter.Codeline($"sub   rsp, 8");
+
                     emitter.Codeline($"call  {functionName}");
 
-                    if (linuxCopyResultBytes > 0)
+                    if (needAlignment)
+                        emitter.Codeline($"add   rsp, 8");
+
+
+                    // If we stack parameters, we need to free them.
+                    if (lpm.stackNr > 0)
                     {
-                        emitter.Codeline("push  rcx");
-                        emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
-                        emitter.Codeline("mov   [rcx], rax");
-                        emitter.Codeline("mov   [rcx+8], rdx");
-                        emitter.Codeline("mov   rax, rcx");
-                        emitter.Codeline("pop   rcx");
+                        int extraToRelease = ((lpm.stackNr * 8) & 0xfff0) + 16;
+                        emitter.Codeline($"add   rsp, {extraToRelease}");
+                        emitter.StackPop(extraToRelease);
                     }
+
+                    lpm.RetrieveLargerResult();
                 }
                 else
                 {
@@ -1043,79 +1026,6 @@ namespace GroundCompiler
                 emitter.CallFunction(theFunction!, expr);
 
             return null;
-        }
-        
-        
-        private void InsertLinuxCallArgument(ref int index, Expression expr)
-        {
-            string theRegister = "rax";
-            int linuxInputInTwoRegisters = 0;
-            
-            if (expr.ExprType?.isClass() ?? false)
-            {
-                // als je een class in een parameter zet, dan is het altijd een struct. 
-                // onder linux moet je dan meerdere registers gebruiken om een 16 byte struct door te geven.
-                int nrBytes = expr.ExprType.SizeInBytes;
-                if (nrBytes > 8 && nrBytes <= 16)
-                    linuxInputInTwoRegisters = nrBytes;
-            }
-
-            if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-            {
-                switch (index)
-                {
-                    case 0:
-                        theRegister = "xmm0";
-                        break;
-                    case 1:
-                        theRegister = "xmm1";
-                        break;
-                    case 2:
-                        theRegister = "xmm2";
-                        break;
-                    case 3:
-                        theRegister = "xmm3";
-                        break;
-                }
-                cpu.ReserveRegister(theRegister);
-                emitter.Pop(expr, theRegister);
-                cpu.FreeRegister(theRegister);
-            }
-            else
-            {
-                int nrRegisters = (linuxInputInTwoRegisters > 0) ? 2 : 1;
-
-                for (int i = 0; i < nrRegisters; i++)
-                {
-                    switch (index)
-                    {
-                        case 0:
-                            theRegister = "rdi";
-                            break;
-                        case 1:
-                            theRegister = "rsi";
-                            break;
-                        case 2:
-                            theRegister = "rdx";
-                            break;
-                        case 3:
-                            theRegister = "rcx";
-                            break;
-                        case 4:
-                            theRegister = "r8";
-                            break;
-                        case 5:
-                            theRegister = "r9";
-                            break;
-                    }
-
-                    //cpu.ReserveRegister("rcx");
-                    emitter.Pop(expr, theRegister);
-                    //cpu.FreeRegister("rcx");
-                    if (i != (nrRegisters - 1))
-                        index++;
-                }
-            }
         }
         
 

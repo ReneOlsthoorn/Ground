@@ -1,18 +1,14 @@
 
+// Game called Bugs. Works on Windows and Linux
+
 #template sdl3
 
 #include graphics_defines960x560.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
-#library soloud soloud_x64.dll
-#library mikmod libmikmod-3.dll
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+#library mikmod libmikmod-3.dll mikmod
 
 #define NR_BUGS 5
-
 
 bool StatusRunning = true;
 int frameCount = 0;
@@ -34,15 +30,15 @@ function IsPointInCircle(float px, float py, float cx, float cy, float radius) :
 	return result;
 }
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
 ptr window = sdl3.SDL_CreateWindow("Bugs", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 ptr surface = sdl3_image.IMG_Load("image/bugs_wood.jpg");
-if (surface == null) { user32.MessageBox(null, "The file cannot be found!", "Message", g.MB_OK); return; }
+if (surface == null) { sdl3.SDL_ShowSimpleMessageBox(g.SDL_MESSAGEBOX_ERROR, "Error", "The file cannot be found!", null); return; }
 ptr convertedSurface = sdl3.SDL_ConvertSurface(surface, g.SDL_PIXELFORMAT_ARGB8888);
-ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 SDL_Surface* psurface = convertedSurface;
 ptr surfacePixels = *psurface.pixels;
@@ -74,20 +70,17 @@ sdl3.SDL_SetTextureScaleMode(bug2Texture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_DestroySurface(surface);
 
 
-// Loading sounds...
-ptr soloudObject = soloud.Soloud_create();
-int soloudResult = soloud.Soloud_init(soloudObject);
-if (soloudResult != 0) return;
-ptr hurtSfxr = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(hurtSfxr, "sound/sfxr/hurt.sfs");
-if (sfxrLoaded != 0) return;
-ptr fallSfxr = soloud.Sfxr_create();
-sfxrLoaded = soloud.Sfxr_loadParams(fallSfxr, "sound/sfxr/fall.sfs");
-if (sfxrLoaded != 0) return;
+#include soundtracker.g
+SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 50);
 
-function playHurt() { soloud.Soloud_play(soloudObject, hurtSfxr); }
-function playFall() { soloud.Soloud_play(soloudObject, fallSfxr); }
+SDL_AudioSpec wavPlayerSpec;
+WavPlayer wavFall;
+wavFall.Load("sound/sfxr/fall.wav", &wavPlayerSpec);
+WavPlayer wavHurt;
+wavHurt.Load("sound/sfxr/hurt.wav", &wavPlayerSpec);
 
+function playHurt() { wavHurt.Play(); }
+function playFall() { wavFall.Play(); }
 
 class Actor {
 	float x;
@@ -175,8 +168,6 @@ function NextLevelInformation() {
 	writeText(renderer, 150.0, 140.0, "   Next level coming up...");
 }
 
-#include soundtracker.g
-SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 50);
 
 while (StatusRunning)
 {
@@ -294,10 +285,8 @@ while (StatusRunning)
 	frameCount++;
 }
 
-soloud.Sfxr_destroy(hurtSfxr);
-soloud.Sfxr_destroy(fallSfxr);
-soloud.Soloud_deinit(soloudObject);
-soloud.Soloud_destroy(soloudObject);
+wavFall.Free();
+wavHurt.Free();
 SoundtrackerFree();
 
 sdl3.SDL_DestroyTexture(bugTexture);

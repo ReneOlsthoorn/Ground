@@ -1,7 +1,9 @@
-//#template raylib
-#template console
+// Fireworks works on Windows and Linux
+// This is taken from the tutorial of the youtube channel "Art of Code". It is not optimized.
+
+#template raylib
 #include graphics_defines1280x720.g
-#library raylib raylib.dll
+#library raylib raylib.dll raylib
 
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
@@ -62,7 +64,10 @@ void main() {
 }`;
 
 raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Raylib shader");
-ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
+if (gc.linux)
+    raylib.SetTargetFPS(60);
+    
+raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];

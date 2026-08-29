@@ -2,28 +2,15 @@ format ELF64
 
 include 'Include\raylib.inc'
 include 'Templates\part_equates.fasm'
+gc_linux equ 1
+gc_windows equ 0
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES
 
 section '.text' executable
 
-extrn InitWindow
-extrn LoadShaderFromMemory
-extrn GetShaderLocation
-extrn SetShaderValue
-extrn HideCursor
-extrn WindowShouldClose
-extrn GetTime
-extrn BeginDrawing
-extrn ClearBackground
-extrn BeginShaderMode
-extrn DrawRectangle
-extrn EndShaderMode
-extrn EndDrawing
-extrn UnloadShader
-extrn CloseWindow
-extrn IsShaderValid
+include 'Include\raylib_extrn.inc'
 
 public main
 
@@ -34,12 +21,12 @@ main:
 
   ;invoke kernel32_GetProcessHeap
   ;mov	[processHeapHandle], rax
-  
+   
   mov   rax, 89                 ; SYS_readlink
-  mov   rdi, exe_path           ; "/proc/self/exe"
+  mov   rdi, cwd_path           ; "/proc/self/cwd"
   mov   rsi, currentExeDirChars ; buffer
   mov   rdx, 256                ; size
-  syscall                       ; returns length in rax
+  syscall                       ; returns length in rax  
 
 ; *** GENERATED MAIN CODE ***
 ;GC_INSERTIONPOINT_MAIN
@@ -106,7 +93,7 @@ bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 carriage_return_bytes	db 13,10,0
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
-exe_path                db '/proc/self/exe',0
+cwd_path                db '/proc/self/cwd',0
 
 align 16
 

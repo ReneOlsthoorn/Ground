@@ -29,29 +29,3 @@ function ScreenPointerForXY(int x, int y) {
 	pointer result = g.[pixels_p] + ((y*SCREEN_WIDTH)+x)*SCREEN_PIXELSIZE;
 	return result;
 }
-
-// Loading sounds...
-ptr soloudObject = soloud.Soloud_create();
-int soloudResult = soloud.Soloud_init(soloudObject);
-if (soloudResult != 0) return;
-ptr jumpSfxr = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(jumpSfxr, "sound/sfxr/jump.sfs");
-if (sfxrLoaded != 0) return;
-ptr fallSfxr = soloud.Sfxr_create();
-sfxrLoaded = soloud.Sfxr_loadParams(fallSfxr, "sound/sfxr/fall.sfs");
-if (sfxrLoaded != 0) return;
-ptr hurtSfxr = soloud.Sfxr_create();
-sfxrLoaded = soloud.Sfxr_loadParams(hurtSfxr, "sound/sfxr/hurt.sfs");
-if (sfxrLoaded != 0) return;
-
-function playJump() { soloud.Soloud_play(soloudObject, jumpSfxr); }
-function playFall() { soloud.Soloud_play(soloudObject, fallSfxr); }
-function playHurt() { soloud.Soloud_play(soloudObject, hurtSfxr); }
-
-function deleteSoundObjects() {
-	soloud.Sfxr_destroy(jumpSfxr);
-	soloud.Sfxr_destroy(fallSfxr);
-	soloud.Sfxr_destroy(hurtSfxr);
-	soloud.Soloud_deinit(soloudObject);
-	soloud.Soloud_destroy(soloudObject);
-}

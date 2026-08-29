@@ -1,7 +1,9 @@
 // This is the GPU version of the circles demo effect.
+// Works on Windows and Linux
+
 #template raylib
 #include graphics_defines1280x720.g
-#library raylib raylib.dll
+#library raylib raylib.dll raylib
 
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
@@ -22,6 +24,9 @@ void main() {
 }`;
 
 raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Circles effect done with GLSL");
+if (gc.linux)
+    raylib.SetTargetFPS(60);
+    
 raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");

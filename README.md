@@ -51,7 +51,7 @@ every detail. Reading it will give you knowledge of the x86-64 WIN32 runtime env
 the [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format) and 
 the [x64 calling convention](https://learn.microsoft.com/en-us/cpp/build/x64-calling-convention).  
 
-### How to run Ground
+### How to run Ground on Windows
 In your `Ground` root folder you have a file named `LoadResources.bat`. Run it.  
 It will unzip `.\Resources\GroundResources.zip` and download the needed DLLs, like SDL3, from trusted repositories 
 like MSYS2 or Github. The zipfile also contains additional files that cannot be downloaded from the internet, such as manually 
@@ -62,6 +62,13 @@ the game Bertus should compile and run.
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.gif?raw=true" width="500" /><br/>
 </p>
+
+### How to run Ground on Linux / CachyOS
+Ground needs several libraries and packages. The following packages need to be installed on CachyOS:
+* paru -S fasm
+* other needed libraries are: sdl3, sdl3_image, raylib, libmikmod
+
+In the `Examples` folder are the programs that work on both Windows and Linux. A good IDE to try is `Rider` by Jetbrains.
 
 ### Running other examples
 When the resources are downloaded, you can change line 24 in Program.cs `fileName = "bertus.g";` to 

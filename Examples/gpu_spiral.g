@@ -1,7 +1,9 @@
 // This is the GPU version of the spiral demo effect.
+// Works on Windows and Linux.
+
 #template raylib
 #include graphics_defines1280x720.g
-#library raylib raylib.dll
+#library raylib raylib.dll raylib
 
 byte* vsCode = `#version 330
 in vec3 vertexPosition;
@@ -25,10 +27,12 @@ void main() {
 
 raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED | CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
-//raylib.InitWindow(screenWidth, screenHeight, "Raylib shader");
+if (gc.linux)
+    raylib.SetTargetFPS(60);
+
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
-ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
+raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 f32[2] resolution = [screenWidth, screenHeight];

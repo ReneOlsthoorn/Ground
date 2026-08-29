@@ -135,7 +135,7 @@ namespace GroundCompiler
 
         public string LineLocation()
         {
-            if (this.SourcecodePack() == null)
+            if (SourcecodePackIndex == -1 || this.SourcecodePack() == null)
                 return "";
             return $"line {this.LineNumber()} in {this.SourcecodePack()?.SourceFilename}"; 
         }

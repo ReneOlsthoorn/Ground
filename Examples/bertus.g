@@ -1,4 +1,6 @@
 
+// Game called Bertus. Works on Windows and Linux
+
 #template sdl3
 
 #define SPRITESHEET_WIDTH 256
@@ -15,14 +17,9 @@
 #define GRID_START_Y 100
 
 #include graphics_defines960x560.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
-#library soloud soloud_x64.dll
-#library mikmod libmikmod-3.dll
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+#library mikmod libmikmod-3.dll mikmod
 #include bertus_helper.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -45,22 +42,41 @@ int[] level4 = [1,2,4,5,7,8,9,10,11,12,14,15,17,19,20,21,22,23,24,25,26,28,30,31
 int* levelPtr = &level1[0];
 int levelSize = sizeof(level1) / sizeof(int);
 
+
 asm data {spritesheet_p dq 0}
-g.[spritesheet_p] = sidelib.LoadImage("image/Bertus.png");
-if (g.[spritesheet_p] == null) { user32.MessageBox(null, "The spritesheet cannot be found!", "Message", g.MB_OK); return; }
-sidelib.FlipRedAndGreenInImage(g.[spritesheet_p], SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
+SDL_Surface* spritesheetSurface = sdl3_image.IMG_Load("image/Bertus.png");
+if (spritesheetSurface == null) return;
+SDL_Surface* convertedSpritesheetSurface = sdl3.SDL_ConvertSurface(spritesheetSurface, g.SDL_PIXELFORMAT_ARGB8888);
+g.[spritesheet_p] = *convertedSpritesheetSurface.pixels;
 u32[SPRITESHEET_WIDTH, SPRITESHEET_HEIGHT] spritesheet = g.[spritesheet_p];
 
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Bertus", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
+
+
+// Loading sounds...
+SDL_AudioSpec wavPlayerSpec;
+WavPlayer wavJump;
+wavJump.Load("sound/sfxr/jump.wav", &wavPlayerSpec);
+WavPlayer wavFall;
+wavFall.Load("sound/sfxr/fall.wav", &wavPlayerSpec);
+WavPlayer wavHurt;
+wavHurt.Load("sound/sfxr/hurt.wav", &wavPlayerSpec);
+
+function playJump() { wavJump.Play(); }
+function playFall() { wavFall.Play(); }
+function playHurt() { wavHurt.Play(); }
+
+function deleteSoundObjects() {
+	wavJump.Free();
+	wavFall.Free();
+	wavHurt.Free();
+}
 
 
 class CubeShape {
@@ -114,7 +130,7 @@ class Actor {
 		this.falling = false;
 	}
 	function isHit(int otherX, int otherY) : bool {
-		return msvcrt.abs(otherX-this.x) < 16 && msvcrt.abs(otherY-this.y) < 16;
+		return sdl3.SDL_abs(otherX-this.x) < 16 && sdl3.SDL_abs(otherY-this.y) < 16;
 	}
 	function isArrivedAtBlock() {
 		return (this.falling == false and this.movex == 0 and this.movey == 0);
@@ -364,7 +380,7 @@ function GameIsOver() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/mlp magic-78.mod", 50);
+SoundtrackerInit("sound/mod/mlp magic-78.mod", 100);
 mikmod.Player_SetPosition(1);
 
 // BEGIN Mainloop:
@@ -430,14 +446,10 @@ while (StatusRunning)
 deleteSoundObjects();
 
 sdl3.SDL_ShowCursor();
+sdl3.SDL_DestroySurface(convertedSpritesheetSurface);
+sdl3.SDL_DestroySurface(spritesheetSurface);
 sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-sidelib.FreeImage(g.[spritesheet_p]);
 SoundtrackerFree();
-
-kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
-
-//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-//user32.MessageBox(null, showStr, "Message", g.MB_OK);

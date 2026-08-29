@@ -5,7 +5,7 @@ namespace GroundCompiler
 {
     public class Program
     {
-        required public CompilationSession sess;
+        required public CompilationSession theSession;
         private string currentDir = System.IO.Directory.GetCurrentDirectory();
 
 
@@ -13,19 +13,28 @@ namespace GroundCompiler
         {
             string currentDir = System.IO.Directory.GetCurrentDirectory();
             string fileName, fullPath;
-            bool runAfterCompilation = false;
+            CompilationSession session = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux(), RunAfterCompilation = false, GenerateDebugInformation = false };
+#if DEBUG
+            session.RunAfterCompilation = true;
+#else
+            if (args.Length == 0) { Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g"); return; }
+#endif
+            bool crossCompileLinuxOnWindows = false;
+            if (crossCompileLinuxOnWindows)
+            {
+                session.IsCurrentlyOnLinux = false;
+                session.CompileForLinux = true;
+                session.RunAfterCompilation = false;
+            }
+
             if (args.Length == 0)
             {
-#if DEBUG
-                fileName = "gpu_circles.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
+                fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
                 if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}")); }
+                if (!File.Exists(fullPath) && !OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}")); }
+                if (!File.Exists(fullPath) && OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
-                runAfterCompilation = true;
-#else
-                Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g");
-                return;
-#endif
             }
             else
             {
@@ -36,36 +45,35 @@ namespace GroundCompiler
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
             }
 
-            CompilationSession newSession = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux(), RunAfterCompilation = runAfterCompilation, GenerateDebugInformation = false };
-            newSession.PushSourcecodeFile(fileName, fullPath, File.ReadAllText(fullPath));
-            Program compilation = new() { sess = newSession };
+            session.PushSourcecodeFile(fileName, fullPath, File.ReadAllText(fullPath));
+            Program compilation = new() { theSession = session };
             compilation.Build();
         }
 
 
         public void Build()
         {
-            sess.PreProcessor = new PreProcessor(sess);
+            theSession.PreProcessor = new PreProcessor(theSession);
 
             Console.WriteLine("*** Step 1: Lexer. Convert sourcecode to tokens.");
-            sess.Lexer = new Lexer(sess);
-            sess.Tokens = sess.Lexer.GetTokens().ToList();
+            theSession.Lexer = new Lexer(theSession);
+            theSession.Tokens = theSession.Lexer.GetTokens().ToList();
 
             Console.WriteLine("*** Step 2: Parser: Convert tokens into an Abstract Syntax Tree.");
-            sess.Parser = new Parser(sess.Tokens);
-            sess.AST = sess.Parser.GetAbstractSyntaxTree();                           //WriteASTDebugInfo(session.AST);
+            theSession.Parser = new Parser(theSession.Tokens);
+            theSession.AST = theSession.Parser.GetAbstractSyntaxTree();                           //WriteASTDebugInfo(session.AST);
 
             Console.WriteLine("*** Step 3a: Type Checker. Initialize the Abstract Syntax Tree.");
-            TypeChecker.Initialize(sess.AST);
+            TypeChecker.Initialize(theSession.AST);
             Console.WriteLine("*** Step 3b: Type Checker. Evaluate the Abstract Syntax Tree.");     
-            TypeChecker.Evaluate(sess.AST);
+            TypeChecker.Evaluate(theSession.AST);
 
             Console.WriteLine("*** Step 4: Optimizer. Literal folding, Unused variable removal, etc...Optimize the AST.");
-            Optimizer.Optimize(sess.AST);
+            Optimizer.Optimize(theSession.AST);
 
             Console.WriteLine("*** Step 5: Compiler. Convert AST to x86-64 assembly.");
-            sess.Compiler = new Compiler(sess);
-            sess.GeneratedCode = sess.Compiler.GenerateAssembly(sess.AST);
+            theSession.Compiler = new Compiler(theSession);
+            theSession.GeneratedCode = theSession.Compiler.GenerateAssembly(theSession.AST);
 
             Console.WriteLine("*** Assemble with FASM.");
             Assemble();
@@ -79,21 +87,21 @@ namespace GroundCompiler
         {
             //Console.WriteLine("*** Write generated code to disk.");
 
-            string outputAsmFilenameClean = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}"));
-            string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.asm"));
-            string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.fas"));
-            string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.lst"));
+            string outputAsmFilenameClean = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
+            string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.asm"));
+            string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.fas"));
+            string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.lst"));
 
-            File.WriteAllText(outputAsmFilename, sess.GeneratedCode);
+            File.WriteAllText(outputAsmFilename, theSession.GeneratedCode);
             Console.WriteLine("*** Start assembler.");
 
             string assemblerParameters = $"{outputAsmFilename}";
-            if (sess.GenerateDebugInformation)
+            if (theSession.GenerateDebugInformation)
                 assemblerParameters = $"{outputAsmFilename} -s {outputFasFilename}";
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = sess.IsCurrentlyOnLinux ? "fasm" : "fasm\\fasm.exe",
+                FileName = theSession.IsCurrentlyOnLinux ? "fasm" : "fasm\\fasm.exe",
                 Arguments = assemblerParameters,
                 WorkingDirectory = currentDir
             };
@@ -104,11 +112,17 @@ namespace GroundCompiler
             p.Start();
             p.WaitForExit();
 
-            if (sess.IsCurrentlyOnLinux)
+            if (theSession.IsCurrentlyOnLinux)
             {
-                //gcc raytest.o -o raytest -lraylib -lm -lpthread -ldl -lrt -no-pie
-                //gcc tmp6.o -o tmp6 -lm -lpthread -ldl -lrt -no-pie
-                info = new System.Diagnostics.ProcessStartInfo("gcc", $"{outputAsmFilenameClean}.o -o {outputAsmFilenameClean} -lm -lpthread -ldl -lrt -lraylib -no-pie");
+                List<string> libsToLink = new List<string>();
+                foreach (var item in theSession.PreProcessor.Libraries) {
+                    if (item.Item3 != "")
+                        libsToLink.Add(item.Item3);
+                }
+                string allLibs = string.Join(" ", libsToLink.Select(lib => $"-l{lib}"));
+                string processStart = $"{outputAsmFilenameClean}.o -o {outputAsmFilenameClean} -lm -lpthread -ldl -lrt {allLibs} -no-pie";
+                Console.WriteLine("gcc " + processStart);
+                info = new System.Diagnostics.ProcessStartInfo("gcc", processStart);
                 info.WorkingDirectory = currentDir;
                 p = new System.Diagnostics.Process();
                 p.StartInfo = info;
@@ -116,7 +130,7 @@ namespace GroundCompiler
                 p.WaitForExit();
             }
 
-            if (sess.GenerateDebugInformation)
+            if (theSession.GenerateDebugInformation)
             {
                 Console.WriteLine("*** Generating Debug information.");
 
@@ -182,7 +196,7 @@ namespace GroundCompiler
                 if (commentPart != "") { commentPart += ",\n"; }
 
                 string commentLittlePart = "  {\n";
-                commentLittlePart += "   \"module\": \"" + sess.SourceFilename + ".exe\",\n";
+                commentLittlePart += "   \"module\": \"" + theSession.SourceFilename + ".exe\",\n";
                 commentLittlePart += $"   \"address\": \"{outputAddress}\",\n";
                 commentLittlePart += $"   \"manual\": true,\n";
                 commentLittlePart += $"   \"text\": \"{ text }\"\n";
@@ -196,28 +210,28 @@ namespace GroundCompiler
             dd64 += commentPart;
             dd64 += "\n ]\n}";
 
-            string dd64Filename = $"{ x64dbgDbFolder }\\{sess.SourceFilename}.exe.dd64";
+            string dd64Filename = $"{ x64dbgDbFolder }\\{theSession.SourceFilename}.exe.dd64";
             File.WriteAllText(dd64Filename, dd64);
         }
 
 
         public void RunExecutable()
         {
-            if (!sess.RunAfterCompilation)
+            if (!theSession.RunAfterCompilation)
                 return;
 
-            if (sess.IsCurrentlyOnLinux)
+            if (theSession.IsCurrentlyOnLinux)
             {
-                Console.WriteLine($"*** Starting {sess.SourceFilename}\r\n");
-                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}"));
+                Console.WriteLine($"*** Starting {theSession.SourceFilename}\r\n");
+                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
                 var psi = new ProcessStartInfo(startupFilename);
                 var proces = Process.Start(psi);
                 proces.WaitForExit();
             }
             else
             {
-                Console.WriteLine($"*** Starting {sess.SourceFilename}.exe\r\n");
-                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{sess.SourceFilename}.exe"));
+                Console.WriteLine($"*** Starting {theSession.SourceFilename}.exe\r\n");
+                string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.exe"));
                 Process.Start(new ProcessStartInfo(startupFilename)); // { UseShellExecute = true });
             }
         }

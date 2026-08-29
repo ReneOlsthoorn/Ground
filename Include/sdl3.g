@@ -74,6 +74,7 @@ dll sdl3 function SDL_srand(int seed);
 dll sdl3 function SDL_rand(i32 n) : i32;
 dll sdl3 function SDL_randf() : f32;
 dll sdl3 function SDL_rand_bits() : i32;
+dll sdl3 function SDL_abs(i32 x) : i32;
 dll sdl3 function SDL_rand_r(ptr state, i32 n) : i32;
 dll sdl3 function SDL_randf_r(ptr state) : f32;
 dll sdl3 function SDL_rand_bits_r(ptr state) : i32;
@@ -94,6 +95,16 @@ dll sdl3 function SDL_LoadPNG(string filename) : ptr;  // result = SDL_Surface*
 dll sdl3 function SDL_SetRenderTarget(ptr renderer, ptr texture);
 dll sdl3 function SDL_SetTextureBlendMode(ptr texture, u32 blendmode);
 dll sdl3 function SDL_RenderGeometry(ptr renderer, ptr texture, ptr vertices, int num_vertices, ptr indices, int num_indices);
+dll sdl3 function SDL_OpenAudioDevice(u32 devid, ptr audiospec);
+dll sdl3 function SDL_DestroyAudioStream(ptr stream);
+dll sdl3 function SDL_ShowSimpleMessageBox(int messageBoxFlags, string title, string message, ptr sdlWindow) : bool;
+
+
+class SDL_AudioSpec {
+	u32 format;
+	i32 channels;
+	i32 freq;
+}
 
 
 class SDL_Surface {     //sizeof: 48 bytes
@@ -141,4 +152,25 @@ class sdl3_MouseState {
 			this.LeftWasClicked = false;
 		this.OldLeftPressed = this.LeftPressed;
     }
+}
+
+
+class WavPlayer {
+	u8* data;
+	u32 length;
+	ptr stream;
+	function Load(string str, ptr spec) {
+		sdl3.SDL_LoadWAV(str, spec, &this.data, &this.length);
+		this.stream = sdl3.SDL_OpenAudioDeviceStream(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, spec, null, null);
+	}
+	function Play() {
+		sdl3.SDL_ResumeAudioStreamDevice(this.stream);
+		if (sdl3.SDL_GetAudioStreamAvailable(this.stream) < this.length) {
+			sdl3.SDL_PutAudioStreamData(this.stream, this.data, this.length);
+		}
+	}
+	function Free() {
+		sdl3.SDL_DestroyAudioStream(this.stream);
+		sdl3.SDL_free(this.data);
+	}
 }

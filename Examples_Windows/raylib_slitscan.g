@@ -2,10 +2,7 @@
 #template raylib
 
 #include graphics_defines960x560.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library raylib raylib.dll
+#library raylib raylib.dll raylib
 
 
 byte* vsCode = `#version 330
@@ -40,10 +37,13 @@ void main()
 
 raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);
 raylib.InitWindow(0, 0, "-");
-ptr tex = raylib.LoadTexture(GC_CurrentExeDir + "image/slitscan.png");
+if (gc.linux)
+    raylib.SetTargetFPS(60);
+	
+ptr tex = raylib.LoadTexture(GC_CurrentExeDir + "/image/slitscan.png");
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
-ptr shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
+raylib_Shader shader = raylib.LoadShaderFromMemory(vsCode, fsCode);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int iChannelLocation = raylib.GetShaderLocation(shader, "iChannel0");

@@ -1,6 +1,8 @@
 format ELF64
 
 include 'Templates/part_equates.fasm'
+gc_linux equ 1
+gc_windows equ 0
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES
@@ -8,6 +10,8 @@ include 'Templates/part_equates.fasm'
 section '.text' executable
 
 public main
+include 'Include/clib_extrn.inc'
+
 
 main:
   push	rbp
@@ -15,14 +19,8 @@ main:
   mov   [main_rbp], rbp
 
   mov   rax, 89                 ; SYS_readlink
-  mov   rdi, exe_path           ; "/proc/self/exe"
-  mov   rsi, currentExeDirChars ; buffer
-  mov   rdx, 256                ; size
-  syscall                       ; returns length in rax
-
-  mov   rax, 89                 ; SYS_readlink
   mov   rdi, cwd_path           ; "/proc/self/cwd"
-  mov   rsi, cwdChars           ; buffer
+  mov   rsi, currentExeDirChars           ; buffer
   mov   rdx, 256                ; size
   syscall                       ; returns length in rax
 
@@ -81,7 +79,6 @@ Negation_XMM32          db 0,0,0,80h,0,0,0,0
 main_rbp                dq 0
 
 currentExeDirChars      db 256 dup(0)
-cwdChars                db 256 dup(0)
 tmpCharSpace            db 256 dup(0)
 
 align 8
@@ -97,7 +94,6 @@ bool_true_tostring      db 'true',0
 bool_false_tostring     db 'false',0
 carriage_return_bytes	db 13,10,0
 assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
-exe_path                db '/proc/self/exe',0
 cwd_path                db '/proc/self/cwd',0
 
 align 16

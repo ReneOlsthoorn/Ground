@@ -5,6 +5,8 @@ stack 80000h, 80000h
 include 'fasm\win64a.inc'
 include 'Include\raylib.inc'
 include 'Templates\part_equates.fasm'
+gc_linux equ 0
+gc_windows equ 1
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES

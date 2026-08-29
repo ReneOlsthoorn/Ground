@@ -1,0 +1,235 @@
+format ELF64
+
+include 'Include\sdl3.inc'
+include 'Templates\part_equates.fasm'
+gc_linux equ 1
+gc_windows equ 0
+
+
+; *** GENERATED EQUATES CODE ***
+;GC_INSERTIONPOINT_EQUATES
+
+section '.text' executable
+
+include 'Include\sdl3_extrn.inc'
+include 'Include\sdl3_image_extrn.inc'
+include 'Include\mikmod_extrn.inc'
+include 'Include\clib_extrn.inc'
+
+public main
+
+main:
+  push	rbp
+  mov	rbp, rsp
+  mov   [main_rbp], rbp
+   
+  mov   rax, 89                 ; SYS_readlink
+  mov   rdi, cwd_path           ; "/proc/self/cwd"
+  mov   rsi, currentExeDirChars           ; buffer
+  mov   rdx, 256                ; size
+  syscall                       ; returns length in rax  
+
+; *** GENERATED MAIN CODE ***
+;GC_INSERTIONPOINT_MAIN
+; *** END MAIN CODE ***
+
+assert_exitpoint:
+  mov   rsp, rbp
+  xor   rdi, rdi                ; exit code 0
+  mov   rax, 60                 ; sys_exit
+  syscall
+  pop   rbp
+  ret
+
+
+; *** GENERATED PROCEDURES (GROUND FUNCTIONS AND CLASSES) ***
+;GC_INSERTIONPOINT_PROCEDURES
+; *** END PROCEDURES ***
+
+
+include 'Templates\part_string_linux.fasm'
+include 'Templates\part_utils.fasm'
+include 'Templates\part_hardcoded_library_linux.fasm'
+
+PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_SCREEN_WIDTH
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  ret
+
+
+source@_f_PlotSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSprite equ rbp+G_PARAMETER2
+width@_f_PlotSprite equ rbp+G_PARAMETER3
+height@_f_PlotSprite equ rbp+G_PARAMETER4
+_f_PlotSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSprite]
+  mov   rdx, qword [destination@_f_PlotSprite]
+  mov   r8, qword [width@_f_PlotSprite]
+  mov   r9, qword [height@_f_PlotSprite]
+  push	rsi rdi r10 r15 r14
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_SCREEN_WIDTH
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r10
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_4_PARAM
+
+
+source@_f_PlotSheetSprite equ rbp+G_PARAMETER1
+destination@_f_PlotSheetSprite equ rbp+G_PARAMETER2
+width@_f_PlotSheetSprite equ rbp+G_PARAMETER3
+height@_f_PlotSheetSprite equ rbp+G_PARAMETER4
+sheetwidth@_f_PlotSheetSprite equ rbp+G_PARAMETER5
+_f_PlotSheetSprite:
+;rcx = source
+;rdx = destination pixels
+;r8  = width
+;r9  = height
+;r13 = sheetwidth
+  push  rbp
+  mov   rbp, rsp
+  mov   rcx, qword [source@_f_PlotSheetSprite]
+  mov   rdx, qword [destination@_f_PlotSheetSprite]
+  mov   r8, qword [width@_f_PlotSheetSprite]
+  mov   r9, qword [height@_f_PlotSheetSprite]
+  push	rsi rdi r10 r15 r14 r13
+  mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
+  shl	r13d, 2
+
+  mov	r15, [pixels_p]
+  mov	rsi, rcx
+  mov	rdi, rdx
+  mov	r10d, r8d
+  shl	r10d, 2
+  mov	rdx, GC_SCREEN_WIDTH
+  shl	edx, 2
+.newLine:
+  mov	ecx, 0
+@@:
+  mov	eax, [rsi+rcx*4]
+  cmp	eax, 0h
+  je	.skip
+  lea	r14, [rdi+rcx*4]
+  cmp	r14, r15
+  jl	.skip
+  mov	[r14], eax
+.skip:
+  add	ecx, 1
+  cmp	ecx, r8d
+  jnz	@B
+  add	rsi, r13
+  add	rdi, rdx
+  dec	r9d
+  jnz	.newLine
+  pop	r13 r14 r15 r10 rdi rsi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_5_PARAM
+
+color@_f_GC_ClearScreenPixels equ rbp+G_PARAMETER1
+_f_GC_ClearScreenPixels:
+  push  rbp
+  mov   rbp, rsp
+  mov	rcx, GC_SCREEN_WIDTH * GC_SCREEN_HEIGHT
+  mov	rdx, [pixels_p]
+  mov	rax, qword [color@_f_GC_ClearScreenPixels]
+  push	rdi
+  mov	rdi, rdx
+  cld
+  rep	stosd
+  pop   rdi
+  mov   rsp, rbp
+  pop   rbp
+  retn  G_STACKSPACE_1_PARAM
+
+
+section '.data' writeable align 16
+Negation_XMM            db 0,0,0,0,0,0,0,80h
+                        db 0,0,0,0,0,0,0,80h
+Negation_XMM32          db 0,0,0,80h,0,0,0,0
+                        db 0,0,0,80h,0,0,0,0
+main_rbp                dq 0
+processHeapHandle		dq 0
+currentExeDirChars      db 256 dup(0)
+tmpCharSpace            db 256 dup(0)	; needed for some hardcoded_library functions
+
+align 8
+ResultBytesWritten      dq 0
+ResultBytesRead         dq 0
+LockObject64            dq 0
+pixels_p				dq 0
+
+scanf_int_result        dq 0
+scanf_int_read          db '%d',0
+scanf_string_read       db '%s',0
+sprintf_float_template  db '%.10f',0 
+readalltext_openmode    db 'rb',0
+bool_true_tostring      db 'true',0
+bool_false_tostring     db 'false',0
+carriage_return_bytes	db 13,10,0
+assert_errormessage	    db 13,10,'*** ASSERT ERROR ***',13,10,13,10,0
+cwd_path                db '/proc/self/cwd',0
+
+align 16
+
+; *** GENERATED DATA ***
+;GC_INSERTIONPOINT_DATA
+; *** END DATA ***

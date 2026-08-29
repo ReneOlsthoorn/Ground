@@ -1,7 +1,8 @@
 
+mikmod.MikMod_RegisterAllLoaders();
 mikmod.MikMod_RegisterAllDrivers();
 if (mikmod.MikMod_Init("") != 0) return;
-mikmod.MikMod_RegisterAllLoaders();
+// mikmod.MikMod_SetNumVoices(-1, 32);
 MikMod_Module* mikmodModule = null;
 
 function SoundtrackerInit(string path, int volume) {

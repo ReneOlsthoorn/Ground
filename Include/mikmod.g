@@ -12,6 +12,10 @@ dll mikmod function Player_SetPosition(int pos);
 dll mikmod function Player_SetVolume(int volume);
 dll mikmod function MikMod_Update();
 dll mikmod function MikMod_Exit();
+dll mikmod function Sample_Load(string str) : ptr;
+dll mikmod function Sample_Play(ptr sample, int offset,  int flags);
+dll mikmod function Sample_Free(ptr sample);
+dll mikmod function MikMod_SetNumVoices(int q, int nr) : int;
 
 class MikMod_Module packed {
 	byte* songname;
