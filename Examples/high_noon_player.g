@@ -8,8 +8,8 @@ class Tree {
 	int x;
 	int y;
 	function Randomize() {
-		this.x = 40 + ((msvcrt.rand() % 20) * 8);
-		this.y = 20 + ((msvcrt.rand() % 20) * 6);
+		this.x = 40 + ((sdl3.SDL_rand(32767) % 20) * 8);
+		this.y = 20 + ((sdl3.SDL_rand(32767) % 20) * 6);
 	}
 	function Draw() {
 		playerDestRect[0] = this.x;
@@ -317,8 +317,8 @@ class ComputerPlayer {
 		this.campingCounter = this.campingCounter + 1;
 		if (this.campingCounter > 180) {
 			this.otherRouteTimer = 120;
-			this.otherRouteX = msvcrt.rand() % 240;
-			this.otherRouteY = msvcrt.rand() % 180;
+			this.otherRouteX = sdl3.SDL_rand(32767) % 240;
+			this.otherRouteY = sdl3.SDL_rand(32767) % 180;
 			this.campingCounter = 0;
 		}
 	}
@@ -331,8 +331,8 @@ class ComputerPlayer {
 		this.stuckCounter = this.stuckCounter + 1;
 		if (this.stuckCounter > 5) {
 			this.otherRouteTimer = 120;
-			this.otherRouteX = msvcrt.rand() % 240;
-			this.otherRouteY = msvcrt.rand() % 180;
+			this.otherRouteX = sdl3.SDL_rand(32767) % 240;
+			this.otherRouteY = sdl3.SDL_rand(32767) % 180;
 			this.stuckCounter = 0;
 		}
 	}

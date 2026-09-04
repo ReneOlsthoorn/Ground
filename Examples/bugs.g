@@ -6,7 +6,7 @@
 #include graphics_defines960x560.g
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
-#library mikmod libmikmod-3.dll mikmod
+#library sdl3_mixer SDL3_mixer.dll SDL3_mixer
 
 #define NR_BUGS 5
 
@@ -71,7 +71,7 @@ sdl3.SDL_DestroySurface(surface);
 
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/bbc bottle of acid.mod", 50);
+SoundtrackerInit("sound/mod/bbc bottle of acid.mod");
 
 SDL_AudioSpec wavPlayerSpec;
 WavPlayer wavFall;
@@ -171,7 +171,6 @@ function NextLevelInformation() {
 
 while (StatusRunning)
 {
-	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;

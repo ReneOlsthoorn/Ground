@@ -743,6 +743,55 @@ namespace GroundCompiler
                     emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
                     return null;
                 }
+                
+                if (functionNameVariable.Name.Lexeme == "GC_Fork")
+                {
+                    string threadName = ((Variable)expr.ArgumentNodes[0]).Name.Lexeme;
+                    emitter.Codeline($"mov   rax, 57  ;SYS_FORK");
+                    emitter.Codeline($"syscall");
+                    emitter.Codeline($"cmp   rax, 0");
+                    emitter.Codeline($"jne _f_Generated_{threadName}_AfterStartup");
+                    emitter.Codeline($"push  rbp");
+                    emitter.Codeline($"mov   rax, [main_rbp]");
+                    emitter.Codeline($"mov   rbp, rax");
+                    emitter.Codeline($"push  rax");
+                    emitter.Codeline($"push  qword 0");
+                    emitter.Codeline($"call  _f_{threadName}");
+                    emitter.Codeline($"mov   rax, 60  ;SYS_EXIT");
+                    emitter.Codeline($"mov   rdi, 0");
+                    emitter.Codeline($"syscall");
+                    emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
+                    return null;
+                }         
+                
+                if (functionNameVariable.Name.Lexeme == "GC_Clone")
+                {
+                    string threadName = ((Variable)expr.ArgumentNodes[0]).Name.Lexeme;
+                    emitter.Codeline($"mov  rdi, 102400  ; STACK_SIZE");
+                    emitter.Codeline($"call malloc");
+                    emitter.Codeline($"lea  rsi, [rax + (102400 - 128)]  ; STACK_SIZE");
+                    emitter.Codeline($"mov   rax, 56  ;SYS_CLONE");
+                    emitter.Codeline($"xor   r8, r8 ; no Thread Local Storage");
+                    emitter.Codeline($"lea   rdx, [rsi + 16]");  // we geven wat ruimte in het gereserveerde geheugen
+                    emitter.Codeline($"lea   r10, [rsi + 32]");
+//CLONE_FLAGS equ (0x00000100 + 0x00000200 + 0x00000400 + 0x00000800 + 0x00010000)
+//                ; CLONE_VM   | CLONE_FS   | CLONE_FILES  | CLONE_SIGHAND  | CLONE_THREAD
+                    emitter.Codeline($"mov   rdi, 0x00000100 + 0x00000200 + 0x00000400 + 0x00000800 + 0x00010000");
+                    emitter.Codeline($"syscall");
+                    emitter.Codeline($"cmp   rax, 0");
+                    emitter.Codeline($"jne _f_Generated_{threadName}_AfterStartup");
+                    emitter.Codeline($"push  rbp");
+                    emitter.Codeline($"mov   rax, [main_rbp]");
+                    emitter.Codeline($"mov   rbp, rax");
+                    emitter.Codeline($"push  rax");
+                    emitter.Codeline($"push  qword 0");
+                    emitter.Codeline($"call  _f_{threadName}");
+                    emitter.Codeline($"mov   rax, 60  ;SYS_EXIT");
+                    emitter.Codeline($"mov   rdi, 0");
+                    emitter.Codeline($"syscall");
+                    emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
+                    return null;
+                }                  
 
                 if (functionNameVariable.Name.Lexeme == "zero")
                 {

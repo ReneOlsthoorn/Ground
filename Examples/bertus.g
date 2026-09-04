@@ -19,7 +19,7 @@
 #include graphics_defines960x560.g
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
-#library mikmod libmikmod-3.dll mikmod
+#library sdl3_mixer SDL3_mixer.dll SDL3_mixer
 #include bertus_helper.g
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -380,15 +380,12 @@ function GameIsOver() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/mlp magic-78.mod", 100);
-mikmod.Player_SetPosition(1);
+SoundtrackerInit("sound/mod/mlp magic-78.mod");
 
 // BEGIN Mainloop:
 GotoLevel();
 while (StatusRunning)
 {
-	SoundtrackerUpdate();
-
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -444,6 +441,7 @@ while (StatusRunning)
 
 
 deleteSoundObjects();
+SoundtrackerFree();
 
 sdl3.SDL_ShowCursor();
 sdl3.SDL_DestroySurface(convertedSpritesheetSurface);
@@ -452,4 +450,4 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-SoundtrackerFree();
+

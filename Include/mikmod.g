@@ -2,6 +2,7 @@
 dll mikmod function MikMod_RegisterAllDrivers();
 dll mikmod function MikMod_RegisterAllLoaders();
 dll mikmod function MikMod_Init(string str) : int;
+dll mikmod function MikMod_InitThreads() : int;
 dll mikmod function Player_Load(string filename, int nrVoices, int unknown) : ptr;
 dll mikmod function Player_Start(ptr smodule);
 dll mikmod function Player_GetRow() : int;

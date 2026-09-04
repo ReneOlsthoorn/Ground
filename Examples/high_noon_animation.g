@@ -1,7 +1,6 @@
 
-int currentTime = 0;
-msvcrt.time64(&currentTime);
-msvcrt.srand(currentTime);
+u64 currentTime = sdl3.SDL_GetTicks();
+sdl3.SDL_srand(currentTime);
 
 int[] moveAnimation = [1,2,3,4,5,6] asm;
 int[] shootAnimation = [7,7,8,8] asm;
@@ -343,35 +342,20 @@ prepareTexture(15, false, &treesTextures[7], 0xff4653FF);  // blue
 
 // SOUND RELATED
 
-ptr soloudObject = soloud.Soloud_create();
-int soloudResult = soloud.Soloud_init(soloudObject);
-if (soloudResult != 0) return;
-ptr sfxrObject = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(sfxrObject, "sound/sfxr/explosion4.sfs");
-if (sfxrLoaded != 0) return;
-ptr dropObject = soloud.Sfxr_create();
-int dropLoaded = soloud.Sfxr_loadParams(dropObject, "sound/sfxr/hit3.sfs");
-if (dropLoaded != 0) return;
-ptr sfxrSelectObject = soloud.Sfxr_create();
-int sfxrSelectLoaded = soloud.Sfxr_loadParams(sfxrSelectObject, "sound/sfxr/select.sfs");
-if (sfxrSelectLoaded != 0) return;
-ptr sfxrHurtObject = soloud.Sfxr_create();
-int sfxrHurtLoaded = soloud.Sfxr_loadParams(sfxrHurtObject, "sound/sfxr/hurt.sfs");
-if (sfxrHurtLoaded != 0) return;
+SDL_AudioSpec wavPlayerSpec;
+WavPlayer wavShoot;
+wavShoot.Load("sound/sfxr/explosion4.wav", &wavPlayerSpec);
+WavPlayer wavHit;
+wavHit.Load("sound/sfxr/hit3.wav", &wavPlayerSpec);
+WavPlayer wavSelect;
+wavSelect.Load("sound/sfxr/select.wav", &wavPlayerSpec);
+WavPlayer wavHurt;
+wavHurt.Load("sound/sfxr/hurt.wav", &wavPlayerSpec);
 
-f32 theVolume = 1.0;
-soloud.Sfxr_setVolume(sfxrObject, theVolume);
-soloud.Sfxr_setVolume(dropObject, theVolume);
-soloud.Sfxr_setVolume(sfxrHurtObject, theVolume);
-theVolume = 0.5;
-soloud.Sfxr_setVolume(sfxrSelectObject, theVolume);
-//soloud.Sfxr_setLooping(sfxrHurtObject, 1);   // 1 = true, 0 = false
-
-function playShoot() { soloud.Soloud_play(soloudObject, sfxrObject); }
-function playHit() { soloud.Soloud_play(soloudObject, dropObject); }
-function playBeep() { soloud.Soloud_play(soloudObject, sfxrSelectObject); }
-function playHurt() { soloud.Soloud_play(soloudObject, sfxrHurtObject); }
-
+function playShoot() { wavShoot.Play(); }
+function playHit() { wavHit.Play(); }
+function playBeep() { wavSelect.Play(); }
+function playHurt() { wavHurt.Play(); }
 
 
 // BACKGROUND RELATED

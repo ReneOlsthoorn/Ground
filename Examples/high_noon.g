@@ -18,15 +18,9 @@
 // GENERIC INCLUDES
 
 #include graphics_defines1280x720.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
-#library soloud soloud_x64.dll
-#library mikmod libmikmod-3.dll
-
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+#library sdl3_mixer SDL3_mixer.dll SDL3_mixer
 
 // GENERIC GLOBAL VARIABLES
 
@@ -42,9 +36,9 @@ string gameStatus = "game running";    // "intro screen", "game running", "game 
 
 // CREATING A WINDOW
 
-sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
 ptr window = sdl3.SDL_CreateWindow("High Noon", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 
@@ -93,7 +87,7 @@ function NewDuel() {
 		player[0].score = player[0].score + 1;
 
 	bool scoredEnough = (player[0].score >= WIN_SCORE or player[1].score >= WIN_SCORE);
-	bool scoreDifferenceEnough = (msvcrt.abs(player[0].score - player[1].score) >= 1);
+	bool scoreDifferenceEnough = (sdl3.SDL_abs(player[0].score - player[1].score) >= 1);
 	bool humanPlayerWon = scoredEnough and scoreDifferenceEnough and (player[0].score > player[1].score) and !player[0].died;
 	bool computerWon = scoredEnough and scoreDifferenceEnough and (player[1].score > player[0].score) and !player[1].died;
 
@@ -172,13 +166,12 @@ function PrintIntroScreen() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/tip - joyride.mod", 64);
+SoundtrackerInit("sound/mod/tip - joyride.mod");
 
 // MAINLOOP
 
 while (StatusRunning)
 {
-	SoundtrackerUpdate();
 	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
 		if (*eventType == g.SDL_EVENT_QUIT)
 			StatusRunning = false;
@@ -262,7 +255,7 @@ while (StatusRunning)
 			bool hasTreeInFront = ComputerPlayerHasTreeInBulletPath();
 			if (!hasTreeInFront and player[0].action != ACTOR_ACTION_DEATH and player[1].action != ACTOR_ACTION_DEATH and ai.otherRouteTimer == 0) {
 				player[1].Shoot();
-				ai.timeOut = msvcrt.rand() % 120;
+				ai.timeOut = sdl3.SDL_rand(32767) % 120;
 			} else if (hasTreeInFront) {
 				ai.BeingStuck();
 			}
@@ -377,14 +370,12 @@ while (StatusRunning)
 	frameCount++;
 }
 
-
-soloud.Sfxr_destroy(sfxrSelectObject);
-soloud.Sfxr_destroy(sfxrObject);
-soloud.Sfxr_destroy(dropObject);
-soloud.Sfxr_destroy(sfxrHurtObject);
-soloud.Soloud_deinit(soloudObject);
-soloud.Soloud_destroy(soloudObject);
+wavShoot.Free();
+wavHit.Free();
+wavSelect.Free();
+wavHurt.Free();
 SoundtrackerFree();
+
 sdl3.SDL_ShowCursor();
 FreeTextures();
 sdl3.SDL_DestroyTexture(bgTexture);

@@ -13,7 +13,7 @@ section '.text' executable
 
 include 'Include\sdl3_extrn.inc'
 include 'Include\sdl3_image_extrn.inc'
-include 'Include\mikmod_extrn.inc'
+include 'Include\sdl3_mixer_extrn.inc'
 include 'Include\clib_extrn.inc'
 
 public main

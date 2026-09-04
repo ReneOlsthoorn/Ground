@@ -31,6 +31,8 @@
 #define SDL_EVENT_WINDOW_SHOWN 0x202
 
 dll sdl3 function SDL_Init(int flags);
+dll sdl3 function SDL_SetHint(string hint, string value);
+dll sdl3 function SDL_GetRenderDriver(int index) : string;
 dll sdl3 function SDL_CreateWindow(string title, int w, int h, int flags);
 dll sdl3 function SDL_CreateRenderer(ptr window, string name);
 dll sdl3 function SDL_CreateTexture(ptr renderer, int format, int access, int w, int h);
@@ -38,7 +40,7 @@ dll sdl3 function SDL_SetRenderVSync(ptr renderer, int vsync);
 dll sdl3 function SDL_PollEvent(ptr event);
 dll sdl3 function SDL_LockTexture(ptr texture, ptr rect, ptr pixels, ptr pitch);
 dll sdl3 function SDL_UnlockTexture(ptr texture);
-dll sdl3 function SDL_GetTicks();
+dll sdl3 function SDL_GetTicks() : u64;
 dll sdl3 function SDL_RenderTexture(ptr renderer, ptr texture, ptr srcrect, ptr dstrect);
 dll sdl3 function SDL_RenderTextureRotated(ptr renderer, ptr texture, ptr srcrect, ptr dstrect, float angle, ptr center, int flip);
 dll sdl3 function SDL_RenderPresent(ptr renderer);
@@ -74,6 +76,7 @@ dll sdl3 function SDL_srand(int seed);
 dll sdl3 function SDL_rand(i32 n) : i32;
 dll sdl3 function SDL_randf() : f32;
 dll sdl3 function SDL_rand_bits() : i32;
+dll sdl3 function SDL_fabs(float x) : float;
 dll sdl3 function SDL_abs(i32 x) : i32;
 dll sdl3 function SDL_rand_r(ptr state, i32 n) : i32;
 dll sdl3 function SDL_randf_r(ptr state) : f32;

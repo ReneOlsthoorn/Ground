@@ -178,6 +178,8 @@ namespace GroundCompiler.Statements
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("height", Datatype.GetDatatype("int")));
             fn.FunctionStmt.Parameters.Add(new FunctionParameter("sheetwidth", Datatype.GetDatatype("int")));
 
+            this.Scope.DefineHardcodedFunction("GC_Clone");
+            this.Scope.DefineHardcodedFunction("GC_Fork");
             this.Scope.DefineHardcodedFunction("GC_CreateThread", Datatype.GetDatatype("ptr"));
             this.Scope.DefineHardcodedVariable("GC_CurrentExeDir", Datatype.GetDatatype("string"));
             this.Scope.DefineHardcodedVariable("GC_Float_Infinity", Datatype.GetDatatype("float"));

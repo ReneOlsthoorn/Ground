@@ -1,25 +1,23 @@
 
-mikmod.MikMod_RegisterAllLoaders();
-mikmod.MikMod_RegisterAllDrivers();
-if (mikmod.MikMod_Init("") != 0) return;
-// mikmod.MikMod_SetNumVoices(-1, 32);
-MikMod_Module* mikmodModule = null;
+int mixInitResult = sdl3_mixer.MIX_Init();
+if (mixInitResult == 0)
+   return;
 
-function SoundtrackerInit(string path, int volume) {
-	mikmodModule = mikmod.Player_Load(path, 64, 0);
-	*mikmodModule.wrap = 1;
-	mikmod.Player_Start(mikmodModule);
-	//*mikmodModule.volume = volume;    // volume will reset to full when song is restart
-	mikmod.Player_SetVolume(volume);
-}
+ptr soundtrackerMixer = null;
+ptr mod_audio = null;
+ptr soundtrackerTrack = null;
 
-function SoundtrackerUpdate() {
-	if (mikmod.Player_Active())
-		mikmod.MikMod_Update();
+function SoundtrackerInit(string path) {
+    soundtrackerMixer = sdl3_mixer.MIX_CreateMixerDevice(-1, null);
+    mod_audio = sdl3_mixer.MIX_LoadAudio(soundtrackerMixer, path, false);
+    soundtrackerTrack = sdl3_mixer.MIX_CreateTrack(soundtrackerMixer);
+    sdl3_mixer.MIX_SetTrackAudio(soundtrackerTrack, mod_audio);
+    sdl3_mixer.MIX_PlayTrack(soundtrackerTrack, 0);
 }
 
 function SoundtrackerFree() {
-	mikmod.Player_Stop();
-	mikmod.Player_Free(mikmodModule);
-	mikmod.MikMod_Exit();
+    sdl3_mixer.MIX_DestroyTrack(soundtrackerTrack);
+    sdl3_mixer.MIX_DestroyAudio(mod_audio);
+    sdl3_mixer.MIX_DestroyMixer(soundtrackerMixer);
+    sdl3_mixer.MIX_Quit();
 }

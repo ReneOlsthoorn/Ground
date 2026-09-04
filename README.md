@@ -1,7 +1,7 @@
 # Ground
 
-This is the compiler for the programming language `Ground` for Windows and Linux that promotes high performance computing. 
-It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
+This is the compiler for the programming language `Ground` for Windows and Linux that promotes high performance 
+computing. It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
 Ground code, so the programmer stays in control of the CPU.  
   
 Ground has constructs like `class` and `function`, statements like `if`, `for` and `while`, datatypes 
@@ -9,14 +9,14 @@ like `int`, `float`, `byte`, `string` and arrays. See file `unittests.g` for som
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
 written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/).  
-The generated code is poured into an assembly template which can be freely chosen. This will result in small `.EXE` 
+The generated code is poured into an assembly template which can be freely chosen. This will result in small executable 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
 template is the `raylib` template which you can use to execute GPU code. Ofcourse you can create your own template.  
   
 The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k on Windows.  
-Ground .EXE files will be small because most external code is loaded at load-time. The usage of the known system 
-DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
+Ground .EXE files on Windows will be small because most external code is loaded at load-time. The usage of the known 
+system DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
 <p align="center">
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Racer.gif?raw=true" width="500" />
@@ -68,7 +68,8 @@ Ground needs several libraries and packages. The following packages need to be i
 * paru -S fasm
 * other needed libraries are: sdl3, sdl3_image, raylib, libmikmod
 
-In the `Examples` folder are the programs that work on both Windows and Linux. A good IDE to try is `Rider` by Jetbrains.
+The `Examples` folder contains the programs that work both Windows and Linux. A good IDE to use for compiling and 
+running Ground is `Rider` by Jetbrains.
 
 ### Running other examples
 When the resources are downloaded, you can change line 24 in Program.cs `fileName = "bertus.g";` to 
@@ -247,7 +248,8 @@ only `Entry Breakpoint` active.
 When it is all done, the original generated code is seen as comments in x64dbg when you load the .EXE file.  
 To easily reach a certain code location, you can use `asm{  nop}` to generate a nop instruction. In x64dbg, you 
 go to `View / Comments`. In the window, search for "nop" and double click the instruction to go to the location. 
-Set the breakpoint there.
+Set the breakpoint there.  
+On Linux, you can use `edb` as a debugger.
 
 ### Optimizer
 Ground contains an optimizer (in `Optimizer.cs`), which will replace literals and removes unused variables. It will 
@@ -523,9 +525,13 @@ If we are not careful, in the future we will no longer own our own computing pow
 Many users want their freedom back and are looking at Linux. Most definately the users that don't have the required 
 TPM 2.0 that Windows 11 requires will be looking for a new OS.
 
-### Running Ground on CachyOS / Linux
-Did you ever see CachyOS? It is a nice Linux distribution that can play Steam games and is very user friendly.
-If you install Rider and Raylib, you can run Ground and compile the `cpu_circles.g` example.
+### The Move to CachyOS / Linux
+If you read this document, you'll notice that I'm grateful for the past of Windows, but was highly frustrated by its state 
+in 2026. As a result, in July 2026 I gave CachyOS a try, and it is very nice: an OS with focus on performance and that is 
+able to run Steam.  
+The BORE scheduler seems to do a good job. When I was porting Ground and its many realtime Ground examples to Linux, I 
+noticed how smooth they run on CachyOS. And there is more to like: the great `paru` package installer and the fact that 
+it is derived from Arch which offers rolling releases.
 
 ### Smoothscroller
 <p align="center">
@@ -688,4 +694,6 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
 2026.05: Several GLSL examples added. f32 literals added.  
 2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
-2026.08: `gpu_circles.g` working on CachyOS / Linux.  
+2026.08: Support for Linux added. Implemented the System V AMD64 ABI.  
+2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod.
+Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (CachyOS in my case).  

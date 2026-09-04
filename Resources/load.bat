@@ -78,6 +78,22 @@ rmdir /s /q libmikmod
 del /Q /F libmikmod.tar
 
 
+rem  *** SDL3_mixer.dll ***  Needed to play Amiga Soundtracker files
+set THEFILE="sdl3-mixer.tar.zst"
+if exist %THEFILE% (
+  echo File %THEFILE% already exists. Skipping download.
+) else (
+  echo Downloading %THEFILE%...
+  curl -L -o %THEFILE% "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-sdl3-mixer-3.2.4-1-any.pkg.tar.zst"
+)
+zstd.exe -df %THEFILE%
+mkdir sdl3-mixer
+tar -xf sdl3-mixer.tar -C sdl3-mixer
+move sdl3-mixer\mingw64\bin\SDL3_mixer.dll .
+rmdir /s /q sdl3-mixer
+del /Q /F sdl3-mixer.tar
+
+
 rem  *** libcglm-0.dll ***  3d matrix
 set THEFILE="libcglm.tar.zst"
 if exist %THEFILE% (

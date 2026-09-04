@@ -1,0 +1,119 @@
+//Mode7 example. See here the proof that depth is a division.
+//This version is not optimized. The innerloop runs in 5ms on my PC.  See mode7_optimized.g to see how each statement in the innerloop can be replaced by x86-64.
+
+#template sdl3
+
+#include graphics_defines960x560.g
+#include clib.g
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+
+#define MAP_SIZE 1024
+
+sdl3.SDL_Init(g.SDL_INIT_VIDEO);
+ptr window = sdl3.SDL_CreateWindow("Mode 7", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
+ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
+sdl3.SDL_SetRenderVSync(renderer, 1);
+
+int frameCount = 0;
+u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
+byte[SDL3_EVENT_SIZE] event = [];
+u32* eventType = &event[SDL3_EVENT_TYPE_OFFSET];
+u32* eventScancode = &event[SDL3_EVENT_SCANCODE_OFFSET];
+bool StatusRunning = true;
+float fWorldX = 132.8;
+float fWorldY = 651.5;
+float fWorldAngle = MATH_PI / 2.0;
+float fNear = MAP_SIZE * 0.025;
+float fFar = MAP_SIZE * 0.60;
+float fFoVHalf = MATH_PI / 4.0;		// 180 degrees divided by four = 45 degrees. De FOV = 90, so start = -45 degrees, end = +45 degrees.
+float space_y = 100.0;
+float scale_y = 200.0;
+int horizon = 15;
+int pitch = SCREEN_LINESIZE;
+int loopStartTicks = 0;
+int debugBestTicks = 0xffff;
+asm data {racetrack_p dq 0}
+
+
+ptr surface = sdl3_image.IMG_Load("image/playfield1024.png");
+if (surface == null) { sdl3.SDL_ShowSimpleMessageBox(g.SDL_MESSAGEBOX_ERROR, "Error", "The file cannot be found!", null); return; }
+SDL_Surface* convertedSurface = sdl3.SDL_ConvertSurface(surface, g.SDL_PIXELFORMAT_ARGB8888);
+ptr surfacePixels = *convertedSurface.pixels;
+g.[racetrack_p] = surfacePixels;
+u32[MAP_SIZE, MAP_SIZE] racetrack = g.[racetrack_p];
+
+
+function Innerloop() {
+	for (y in 0 ..< SCREEN_HEIGHT) {
+		float distance = space_y * scale_y / (y + horizon);
+		float fStartX = fWorldX + (clib.cos(fWorldAngle + fFoVHalf) * distance);
+		float fStartY = fWorldY - (clib.sin(fWorldAngle + fFoVHalf) * distance);
+		float fEndX = fWorldX + (clib.cos(fWorldAngle - fFoVHalf) * distance);
+		float fEndY = fWorldY - (clib.sin(fWorldAngle - fFoVHalf) * distance);
+
+		for (x in 0 ..< SCREEN_WIDTH) {
+			float fSampleWidth = x / SCREEN_WIDTH_F;
+			float fSampleX = fStartX + ((fEndX - fStartX) * fSampleWidth);
+			float fSampleY = fStartY + ((fEndY - fStartY) * fSampleWidth);
+			int iSampleX = fSampleX;
+			int iSampleY = fSampleY;
+
+			u32 pixelColor = 0xff000000;
+			if ((iSampleX >= 0) and (iSampleX < MAP_SIZE) and (iSampleY >= 0) and (iSampleY < MAP_SIZE)) {
+				pixelColor = racetrack[iSampleX, iSampleY];
+			}
+			pixels[x, y] = pixelColor;
+		}
+	}
+}
+
+
+while (StatusRunning)
+{
+	while (sdl3.SDL_PollEvent(&event[SDL3_EVENT_TYPE_OFFSET])) {
+		if (*eventType == g.SDL_EVENT_QUIT)
+			StatusRunning = false;
+
+		if (*eventType == g.SDL_EVENT_KEY_DOWN) {
+			if (*eventScancode == g.SDL_SCANCODE_ESCAPE)
+				StatusRunning = false;
+		}
+	}
+
+	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
+	g.[pixels_p] = pixels;
+	loopStartTicks = sdl3.SDL_GetTicks();
+
+	Innerloop();
+
+	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
+	if (currentTicks < debugBestTicks and currentTicks != 0)
+		debugBestTicks = currentTicks;
+
+	sdl3.SDL_UnlockTexture(texture);
+	sdl3.SDL_RenderTexture(renderer, texture, null, null);
+	sdl3.SDL_RenderPresent(renderer);
+
+	frameCount++;
+	fWorldY = fWorldY - 0.3;
+	fWorldAngle = fWorldAngle - 0.001;
+
+	if (frameCount > 1000) {
+		fWorldAngle = MATH_PI / 2.0;
+		fWorldY = 551.5;
+		frameCount = 1;
+	}
+}
+
+sdl3.SDL_DestroyTexture(texture);
+sdl3.SDL_DestroyRenderer(renderer);
+sdl3.SDL_DestroyWindow(window);
+sdl3.SDL_Quit();
+
+sdl3.SDL_DestroySurface(convertedSurface);
+sdl3.SDL_DestroySurface(surface);
+
+//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
+//sdl3.SDL_ShowSimpleMessageBox(g.SDL_MESSAGEBOX_INFORMATION, "Info", showStr, null);
