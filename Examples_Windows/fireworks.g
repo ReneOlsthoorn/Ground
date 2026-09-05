@@ -334,7 +334,7 @@ function RenderTexts() {
 	SpaceWrite(11057,"      Thanks for reading this far. Regards!      ");
 }
 
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit("sound/mod/tip - animotion.mod", 127);
 
 Init();

@@ -197,7 +197,7 @@ function Thread2() {
 ptr thread2Handle = GC_CreateThread(Thread2);
 kernel32.SetThreadPriority(thread2Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
 
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit("sound/mod/stardust memory.mod", 127);
 
 //frameCount = 3*888;  // speed up seeing the sun.

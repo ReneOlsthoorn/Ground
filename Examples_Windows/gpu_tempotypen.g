@@ -358,7 +358,7 @@ int mostRightIndex;
 f32[2] explosionArray = [ 0.0f, 0.0f ];
 f32 explosionTime = 0.0f;
 
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit("sound/mod/back on earth.mod", 50);
 
 while (!raylib.WindowShouldClose()) {

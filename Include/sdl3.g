@@ -101,9 +101,11 @@ dll sdl3 function SDL_RenderGeometry(ptr renderer, ptr texture, ptr vertices, in
 dll sdl3 function SDL_OpenAudioDevice(u32 devid, ptr audiospec);
 dll sdl3 function SDL_DestroyAudioStream(ptr stream);
 dll sdl3 function SDL_ShowSimpleMessageBox(int messageBoxFlags, string title, string message, ptr sdlWindow) : bool;
+dll sdl3 function SDL_CreateProperties() : i32;
+dll sdl3 function SDL_SetNumberProperty(i32 props, string propname, int val) : bool;
+dll sdl3 function SDL_DestroyProperties(i32 props);
 
-
-class SDL_AudioSpec {
+class SDL_AudioSpec packed {
 	u32 format;
 	i32 channels;
 	i32 freq;
@@ -176,4 +178,8 @@ class WavPlayer {
 		sdl3.SDL_DestroyAudioStream(this.stream);
 		sdl3.SDL_free(this.data);
 	}
+}
+
+function SimpleMessage(string message) {
+	sdl3.SDL_ShowSimpleMessageBox(g.SDL_MESSAGEBOX_ERROR, "Message", message, null);
 }

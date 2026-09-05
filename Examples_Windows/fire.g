@@ -147,7 +147,7 @@ ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
 
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit("sound/mod/monday - random voice.mod", 127);
 
 

@@ -2,7 +2,7 @@
 // This is the CPU version of the circles demo effect.
 
 string pixelWindowTitle = "Circles";        // Inspiration: https://github.com/ivan-guerra/plasma
-#include pixelwindow.g
+#include pixelwindow_win32.g
 
 float[SCREEN_WIDTH, SCREEN_HEIGHT] DistanceCache = null;
 float[SCREEN_WIDTH, SCREEN_HEIGHT] AngleCache = null;

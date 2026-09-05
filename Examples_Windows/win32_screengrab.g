@@ -40,6 +40,9 @@ class BitmapFileHeader packed {	//sizeof: 14 bytes
 
 
 function Screengrab() {
+	int sizeBitmapInfoHeader = 40;
+	int sizeBitmapFileHeader = 14;
+
 	assert(sizeof(Bitmap) == 32);
 	assert(sizeof(BitmapInfoHeader) == 64);  //actually 40
 	assert(sizeof(BitmapFileHeader) == 16);  //actually 14
@@ -71,7 +74,7 @@ function Screengrab() {
 
 	BitmapInfoHeader bi;
 	zero(bi);
-	bi.biSize = sizeof(BitmapInfoHeader);
+	bi.biSize = sizeBitmapInfoHeader;
 	bi.biWidth = bmp.bmWidth;
 	bi.biHeight = -bmp.bmHeight;   // Negative to flip the bitmap vertically.
 	bi.biPlanes = 1;
@@ -87,13 +90,17 @@ function Screengrab() {
 	BitmapFileHeader bfh;
 	zero(bfh);
 	bfh.bfType = 0x4D42;  // 'BM'
-	bfh.bfSize = sizeof(BitmapFileHeader) + sizeof(BitmapInfoHeader) + bmpSize;
-	bfh.bfOffBits = sizeof(BitmapFileHeader) + sizeof(BitmapInfoHeader);
+	bfh.bfSize = sizeBitmapFileHeader + sizeBitmapInfoHeader + bmpSize;
+	bfh.bfOffBits = sizeBitmapFileHeader + sizeBitmapInfoHeader;
+
+	msvcrt.printf("bmpSize: %i \r\n", bmpSize);
+	msvcrt.printf("bfh.bfSize: %i \r\n", bfh.bfSize);
+	msvcrt.printf("bfh.bfOffBits: %i \r\n", bfh.bfOffBits);
 	
 	string bmpFilename = "screengrab.bmp";
 	int tmpFile = msvcrt.fopen(bmpFilename, "wb");
-	msvcrt.fwrite(bfh, sizeof(BitmapFileHeader), 1, tmpFile);
-	msvcrt.fwrite(bi, sizeof(BitmapInfoHeader), 1, tmpFile);
+	msvcrt.fwrite(bfh, sizeBitmapFileHeader, 1, tmpFile);
+	msvcrt.fwrite(bi, sizeBitmapInfoHeader, 1, tmpFile);
 	msvcrt.fwrite(bmpData, bmpSize, 1, tmpFile);
 	msvcrt.fclose(tmpFile);
 	

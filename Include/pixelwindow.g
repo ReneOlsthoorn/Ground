@@ -2,12 +2,8 @@
 #template sdl3
 
 #include graphics_defines1280x720.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[SDL3_EVENT_SIZE] event = [];
@@ -27,17 +23,9 @@ function WaitForThread2() { while (thread2Busy) { } }
 function WaitForThread3() { while (thread3Busy) { } }
 function WaitForThread4() { while (thread4Busy) { } }
 
-
-ptr processHandle = kernel32.GetCurrentProcess();
-int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
-kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
-
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow(pixelWindowTitle, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
@@ -90,6 +78,3 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-
-kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
-kernel32.SetPriorityClass(processHandle, oldPriorityClass);

@@ -298,7 +298,7 @@ for (i in 0 ..< NR_BALLS)
 		chipmunk.cpBodySetUserData(ballBodies[i], ballSrcRectKogel);
 }
 
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit("sound/mod/mlp desire n-tracker.mod", 127);
 
 

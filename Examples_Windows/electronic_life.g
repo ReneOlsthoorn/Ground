@@ -78,7 +78,7 @@ sdl3.SDL_UnlockTexture(texture);
 
 /*   SOUND RELATED   */
 string soundFile = "sound/mod/bbc never look back.mod";
-#include soundtracker.g
+#include soundtracker_mikmod.g
 SoundtrackerInit(soundFile, 127); //127
 
 #include protracker.g

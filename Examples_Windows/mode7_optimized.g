@@ -69,7 +69,7 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 			asm {
 				mov	rax, [x@Innerloop]
 				cvtsi2sd xmm0, rax
-				movq  xmm1, qword [float_960]
+				movq  xmm1, qword [f64_960]
 				divsd xmm0, xmm1
 				movq [fSampleWidth@Innerloop], xmm0
 			}

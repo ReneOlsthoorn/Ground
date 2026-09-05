@@ -2,12 +2,8 @@
 #template sdl3
 
 #include graphics_defines1280x720.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
 
 u32[120, 100] pixels = null;
 byte[SDL3_EVENT_SIZE] event = [];
@@ -19,16 +15,9 @@ bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 
-ptr processHandle = kernel32.GetCurrentProcess();
-int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
-kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
-
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Hexacubes", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d"); //null);
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, 120, 100);
 sdl3.SDL_SetTextureScaleMode(texture, g.SDL_SCALEMODE_NEAREST);
 sdl3.SDL_SetRenderVSync(renderer, 1);
@@ -193,9 +182,6 @@ while (StatusRunning)
 	}
 	loopStartTicks = sdl3.SDL_GetTicks();
 
-    //sdl3.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    //sdl3.SDL_RenderClear(renderer);
-
 	textureOffset = textureOffset + 0.002;
 	if (textureOffset > 1.0)
 		textureOffset = textureOffset - 1.0;
@@ -219,9 +205,3 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-
-kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
-kernel32.SetPriorityClass(processHandle, oldPriorityClass);
-
-//string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-//user32.MessageBox(null, showStr, "Message", g.MB_OK);

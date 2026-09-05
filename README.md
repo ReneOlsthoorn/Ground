@@ -466,6 +466,21 @@ not convenient to say it nice.
 So, now you understand why `Ground` is necessary :-)  
 There is only one CPU in your PC. Get a grip on it and let it dance!
 
+### Windows: How to make the current thread realtime
+```
+ptr processHandle = kernel32.GetCurrentProcess();
+int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
+kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
+ptr thread1Handle = kernel32.GetCurrentThread();
+int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
+kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);
+
+[ Mainloop ]
+
+kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);
+kernel32.SetPriorityClass(processHandle, oldPriorityClass);
+```
+
 ### State of Ground : Alpha
 The Ground language is `Alpha`, so do not use the language if you look for a stable language.
 Ground is created to facilitate high performance code. Ground will always be Alpha!
