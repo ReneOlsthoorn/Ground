@@ -62,6 +62,26 @@ namespace GroundCompiler
                     SkipIfMatch("*/");
                     continue;
                 }
+                if (session.CompileForLinux)
+                {
+                    if (SkipIfMatch("#windows"))
+                    {
+                        SkipUntil("\n");
+                        continue;
+                    }
+                    if (SkipIfMatch("#linux"))
+                        continue;
+                }
+                if (!session.CompileForLinux)
+                {
+                    if (SkipIfMatch("#linux"))
+                    {
+                        SkipUntil("\n");
+                        continue;
+                    }
+                    if (SkipIfMatch("#windows"))
+                        continue;
+                }
                 if (IsDirective(c)) {               // A Directive is an immediately executed command, not a token.
                     string line = ReadUntil("\n");
                     session.PreProcessor.HandleDirective(line);

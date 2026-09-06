@@ -750,7 +750,7 @@ namespace GroundCompiler
                     emitter.Codeline($"mov   rax, 57  ;SYS_FORK");
                     emitter.Codeline($"syscall");
                     emitter.Codeline($"cmp   rax, 0");
-                    emitter.Codeline($"jne _f_Generated_{threadName}_AfterStartup");
+                    emitter.Codeline($"jne _f_Fork_Generated_{threadName}_After");
                     emitter.Codeline($"push  rbp");
                     emitter.Codeline($"mov   rax, [main_rbp]");
                     emitter.Codeline($"mov   rbp, rax");
@@ -760,7 +760,7 @@ namespace GroundCompiler
                     emitter.Codeline($"mov   rax, 60  ;SYS_EXIT");
                     emitter.Codeline($"mov   rdi, 0");
                     emitter.Codeline($"syscall");
-                    emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
+                    emitter.Writeline($"_f_Fork_Generated_{threadName}_After:");
                     return null;
                 }         
                 
@@ -779,7 +779,7 @@ namespace GroundCompiler
                     emitter.Codeline($"mov   rdi, 0x00000100 + 0x00000200 + 0x00000400 + 0x00000800 + 0x00010000");
                     emitter.Codeline($"syscall");
                     emitter.Codeline($"cmp   rax, 0");
-                    emitter.Codeline($"jne _f_Generated_{threadName}_AfterStartup");
+                    emitter.Codeline($"jne _f_Clone_Generated_{threadName}_After");
                     emitter.Codeline($"push  rbp");
                     emitter.Codeline($"mov   rax, [main_rbp]");
                     emitter.Codeline($"mov   rbp, rax");
@@ -789,7 +789,7 @@ namespace GroundCompiler
                     emitter.Codeline($"mov   rax, 60  ;SYS_EXIT");
                     emitter.Codeline($"mov   rdi, 0");
                     emitter.Codeline($"syscall");
-                    emitter.Writeline($"_f_Generated_{threadName}_AfterStartup:");
+                    emitter.Writeline($"_f_Clone_Generated_{threadName}_After:");
                     return null;
                 }                  
 

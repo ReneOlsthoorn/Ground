@@ -15,6 +15,7 @@
           msvcrt_ftell,  'ftell', \
           msvcrt_strcmp, 'strcmp', \
           msvcrt_scanf,  'scanf', \
+          msvcrt_malloc, 'malloc', \
           msvcrt_calloc, 'calloc', \
           msvcrt_free,   'free', \
           msvcrt_sin,    'sin', \

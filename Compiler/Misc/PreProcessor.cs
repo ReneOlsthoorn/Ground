@@ -25,20 +25,6 @@ namespace GroundCompiler
 
         public void HandleDirective(string line)
         {
-            if (line.StartsWith("#linux"))
-            {
-                if (CompilationSession.CompileForLinux)
-                    line = line.Substring("#linux".Length).TrimStart();
-                else
-                    return;
-            }
-            if (line.StartsWith("#windows"))
-            {
-                if (!CompilationSession.CompileForLinux)
-                    line = line.Substring("#windows".Length).TrimStart();
-                else
-                    return;
-            }
             if (line.StartsWith("#template"))
             {
                 Template = line.Split()[1].Trim();
