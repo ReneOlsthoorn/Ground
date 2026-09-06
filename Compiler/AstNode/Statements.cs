@@ -30,6 +30,7 @@ namespace GroundCompiler.Statements
 
     public class ProgramNode : FunctionStatement
     {
+        public CompilationSession? session;
         // The inheritance from FunctionStatement is not a very good match. For instance, the base.initializer cannot be called.
 
         public void AddHardcodedFunctions()
@@ -223,9 +224,16 @@ namespace GroundCompiler.Statements
                 if (!this.Scope.Contains(groupName))
                     AddDynamicDLL(groupName);
             }
+
+            foreach (var item in session.PreProcessor.DllAliases)
+            {
+                var gs = AddDynamicDLL(item.Key);
+                GroupSymbol ogs = this.Scope.GetVariable(item.Value) as GroupSymbol;
+                gs.GroupStatement = ogs.GroupStatement;
+            }
         }
 
-        public void AddDynamicDLL(string dllName)
+        public GroupSymbol AddDynamicDLL(string dllName)
         {
             var nameToken = new Token(TokenType.Identifier);
             nameToken.Lexeme = dllName;
@@ -234,7 +242,7 @@ namespace GroundCompiler.Statements
             var group = new GroupStatement(nameToken, functionStmts);
             group.Properties["don't generate"] = true;
             group.Parent = this;
-            this.Scope.DefineGroup(group);
+            return this.Scope.DefineGroup(group);
         }
 
         public override void Initialize()

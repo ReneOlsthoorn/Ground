@@ -6,12 +6,13 @@
 #define palettesize 256
 
 #include graphics_defines1280x720.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+
+#linux   #include clib.g
+#linux   #dllalias cruntime clib
+#windows #include msvcrt.g
+#windows #dllalias cruntime msvcrt
 
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
@@ -23,19 +24,14 @@ bool StatusRunning = true;
 int loopStartTicks = 0;
 int debugBestTicks = 0xffff;
 int screenpitch = SCREEN_LINESIZE;
-u32[SCREEN_WIDTH,SCREEN_HEIGHT] plasma = msvcrt.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
+u32[SCREEN_WIDTH,SCREEN_HEIGHT] plasma = cruntime.calloc(1, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(u32));
 bool recalcPlasma = true;
 u32[palettesize] palette = [];
 
 
-
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
-
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
 ptr window = sdl3.SDL_CreateWindow("Colorcycling plasma", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
@@ -61,14 +57,14 @@ for (int i = 0; i < palettesize; i++) {
 	ColorRGB color;
 
 	/*
-    color.red = 128.0 + (127.0 * msvcrt.sin(validRadian(6.283185307 * (i / 64.0))));
-    color.green = 128.0 + (127.0 * msvcrt.sin(validRadian(6.283185307 * (i / 512.0))));
+    color.red = 128.0 + (127.0 * sdl3.SDL_sin(validRadian(6.283185307 * (i / 64.0))));
+    color.green = 128.0 + (127.0 * sdl3.SDL_sin(validRadian(6.283185307 * (i / 512.0))));
     color.blue = 0;
 	*/
 
-    color.red = 128.0 + (127.0 * msvcrt.sin(validRadian(MATH_2PI * (i / 64.0))));
-    color.green = 128.0 + (127.0 * msvcrt.sin(validRadian(MATH_2PI * (i / 128.0))));
-    color.blue = 128.0 + (127.0 * msvcrt.sin(validRadian(MATH_2PI * (i / 256.0))));
+    color.red = 128.0 + (127.0 * sdl3.SDL_sin(validRadian(MATH_2PI * (i / 64.0))));
+    color.green = 128.0 + (127.0 * sdl3.SDL_sin(validRadian(MATH_2PI * (i / 128.0))));
+    color.blue = 128.0 + (127.0 * sdl3.SDL_sin(validRadian(MATH_2PI * (i / 256.0))));
     palette[i] = color.ToInteger();
 }
 
@@ -78,22 +74,22 @@ function Innerloop() {
 			u32 pixelColor = plasma[x, y];
 
 			if (recalcPlasma == true) {
-				//pixelColor = 128.0 + (127.0 * msvcrt.sin(x / 32.0));
-				//pixelColor = 128.0 + (127.0 * msvcrt.sin((x+y) / 64.0));
-				//pixelColor = 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt((x - SCREEN_WIDTH / 2.0) * (x - SCREEN_WIDTH / 2.0) + (y - SCREEN_HEIGHT / 2.0) * (y - SCREEN_HEIGHT / 2.0)) / 64.0));
-				//pixelColor = (128.0 + (127.0 * msvcrt.sin(x / 64.0)) + 128.0 + (127.0 * msvcrt.sin(y / 64.0))) / 2;
+				//pixelColor = 128.0 + (127.0 * sdl3.SDL_sin(x / 32.0));
+				//pixelColor = 128.0 + (127.0 * sdl3.SDL_sin((x+y) / 64.0));
+				//pixelColor = 128.0 + (127.0 * sdl3.SDL_sin(sdl3.SDL_sqrt((x - SCREEN_WIDTH / 2.0) * (x - SCREEN_WIDTH / 2.0) + (y - SCREEN_HEIGHT / 2.0) * (y - SCREEN_HEIGHT / 2.0)) / 64.0));
+				//pixelColor = (128.0 + (127.0 * sdl3.SDL_sin(x / 64.0)) + 128.0 + (127.0 * sdl3.SDL_sin(y / 64.0))) / 2;
 				/*
-				pixelColor = (128.0 + (127.0 * msvcrt.sin(x / 128.0)) +
-						 128.0 + (127.0 * msvcrt.sin(y / 64.0)) + 
-						 128.0 + (127.0 * msvcrt.sin((x + y) / 128.0)) + 
-						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt(x * x + y * y) / 64.0))
+				pixelColor = (128.0 + (127.0 * sdl3.SDL_sin(x / 128.0)) +
+						 128.0 + (127.0 * sdl3.SDL_sin(y / 64.0)) + 
+						 128.0 + (127.0 * sdl3.SDL_sin((x + y) / 128.0)) + 
+						 128.0 + (127.0 * sdl3.SDL_sin(sdl3.SDL_sqrt(x * x + y * y) / 64.0))
 						 ) / 4;
 				*/
 
-				pixelColor = (128.0 + (127.0 * msvcrt.sin(x / 64.0)) +
-						 128.0 + (127.0 * msvcrt.sin(y / 128.0)) + 
-						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt((x - SCREEN_WIDTH / 2.0) * (x - SCREEN_WIDTH / 2.0) + (y - SCREEN_HEIGHT / 2.0) * (y - SCREEN_HEIGHT / 2.0)) / 32.0)) + 
-						 128.0 + (127.0 * msvcrt.sin(msvcrt.sqrt(x * x + y * y) / 128.0))
+				pixelColor = (128.0 + (127.0 * sdl3.SDL_sin(x / 64.0)) +
+						 128.0 + (127.0 * sdl3.SDL_sin(y / 128.0)) + 
+						 128.0 + (127.0 * sdl3.SDL_sin(sdl3.SDL_sqrt((x - SCREEN_WIDTH / 2.0) * (x - SCREEN_WIDTH / 2.0) + (y - SCREEN_HEIGHT / 2.0) * (y - SCREEN_HEIGHT / 2.0)) / 32.0)) + 
+						 128.0 + (127.0 * sdl3.SDL_sin(sdl3.SDL_sqrt(x * x + y * y) / 128.0))
 						 ) / 4;
 
 				plasma[x,y] = pixelColor;
@@ -138,9 +134,6 @@ sdl3.SDL_DestroyTexture(texture);
 sdl3.SDL_DestroyRenderer(renderer);
 sdl3.SDL_DestroyWindow(window);
 sdl3.SDL_Quit();
-msvcrt.free(plasma);
-
-kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
+cruntime.free(plasma);
 
 //string showStr = "Best innerloop time: " + debugBestTicks + "ms";
-//user32.MessageBox(null, showStr, "Message", g.MB_OK);

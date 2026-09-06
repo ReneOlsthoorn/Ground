@@ -8,6 +8,7 @@ namespace GroundCompiler
     {
         public Dictionary<string, Token> Defines;
         public List<(string, string, string)> Libraries;
+        public Dictionary<string, string> DllAliases;
         public string Template;
         public CompilationSession CompilationSession;
 
@@ -17,20 +18,47 @@ namespace GroundCompiler
         {
             Defines = new Dictionary<string, Token>();
             Libraries = new List<(string, string, string)>();
+            DllAliases = new Dictionary<string, string>();
             Template = "console";
             this.CompilationSession = session;
         }
 
         public void HandleDirective(string line)
         {
+            if (line.StartsWith("#linux"))
+            {
+                if (CompilationSession.CompileForLinux)
+                    line = line.Substring("#linux".Length).TrimStart();
+                else
+                    return;
+            }
+            if (line.StartsWith("#windows"))
+            {
+                if (!CompilationSession.CompileForLinux)
+                    line = line.Substring("#windows".Length).TrimStart();
+                else
+                    return;
+            }
             if (line.StartsWith("#template"))
             {
                 Template = line.Split()[1].Trim();
                 return;
             }
+            if (line.StartsWith("#dllalias"))
+            {
+                string[] parts = Regex.Split(line, @"\s+");
+                if (parts.Length > 2)
+                {
+                    string multiplatformName = parts[1].Trim();
+                    string oldName = parts[2].Trim();
+                    DllAliases[multiplatformName] = oldName;
+                }
+                return;
+            }
             if (line.StartsWith("#include"))
             {
-                string fileToInclude = line.Substring("#include".Length).Trim();
+                string[] parts = Regex.Split(line, @"\s+");
+                string fileToInclude = parts[1].Trim();
                 IncludeFile(fileToInclude);             // immediate tokenize this newly included file
                 return;
             }

@@ -4,9 +4,14 @@
 #template sdl3
 
 #include graphics_defines960x560.g
-#include clib.g
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
+
+#linux   #include clib.g
+#linux   #dllalias cruntime clib
+#windows #include msvcrt.g
+#windows #dllalias cruntime msvcrt
+
 
 #define MAP_SIZE 1024
 
@@ -48,10 +53,10 @@ u32[MAP_SIZE, MAP_SIZE] racetrack = g.[racetrack_p];
 function Innerloop() {
 	for (y in 0 ..< SCREEN_HEIGHT) {
 		float distance = space_y * scale_y / (y + horizon);
-		float fStartX = fWorldX + (clib.cos(fWorldAngle + fFoVHalf) * distance);
-		float fStartY = fWorldY - (clib.sin(fWorldAngle + fFoVHalf) * distance);
-		float fEndX = fWorldX + (clib.cos(fWorldAngle - fFoVHalf) * distance);
-		float fEndY = fWorldY - (clib.sin(fWorldAngle - fFoVHalf) * distance);
+		float fStartX = fWorldX + (cruntime.cos(fWorldAngle + fFoVHalf) * distance);
+		float fStartY = fWorldY - (cruntime.sin(fWorldAngle + fFoVHalf) * distance);
+		float fEndX = fWorldX + (cruntime.cos(fWorldAngle - fFoVHalf) * distance);
+		float fEndY = fWorldY - (cruntime.sin(fWorldAngle - fFoVHalf) * distance);
 
 		for (x in 0 ..< SCREEN_WIDTH) {
 			float fSampleWidth = x / SCREEN_WIDTH_F;

@@ -6,10 +6,12 @@ namespace GroundCompiler
 {
     public class Parser
     {
+        private CompilationSession session;
         private TokenDispenser tokenDispenser;
-        public Parser(IEnumerable<Token> tokens)
+        public Parser(CompilationSession theSession, IEnumerable<Token> tokens)
         {
             tokenDispenser = new TokenDispenser(tokens);
+            this.session = theSession;
         }
 
         public Token Peek() { return tokenDispenser.PeekNextToken(); }
@@ -85,6 +87,8 @@ namespace GroundCompiler
         public ProgramNode GetAbstractSyntaxTree()
         {
             ProgramNode programNode = new();
+            programNode.session = session;
+
             while (!IsAtEnd())
                 programNode.BodyNode?.AddNode(ParseStatement());
 

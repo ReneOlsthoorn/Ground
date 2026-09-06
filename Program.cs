@@ -60,7 +60,7 @@ namespace GroundCompiler
             theSession.Tokens = theSession.Lexer.GetTokens().ToList();
 
             Console.WriteLine("*** Step 2: Parser: Convert tokens into an Abstract Syntax Tree.");
-            theSession.Parser = new Parser(theSession.Tokens);
+            theSession.Parser = new Parser(theSession, theSession.Tokens);
             theSession.AST = theSession.Parser.GetAbstractSyntaxTree();                           //WriteASTDebugInfo(session.AST);
 
             Console.WriteLine("*** Step 3a: Type Checker. Initialize the Abstract Syntax Tree.");

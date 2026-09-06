@@ -133,7 +133,7 @@ The following templates are avaible:
 * `#template retrovm` Template that works similarly to the C-64 VIC-II. It redraws the screen every frame and has several video modes. See `smoothscroller.g` for example.
 See the directory `Templates` for the sourcecode of the templates.
 
-### Adding a library
+### Adding a library in Windows
 With the `#library` directive, you can include a library. For instance `#library user32 user32.dll` does 3 things:
 1. include user32.g into your sourcecode at that location.
 2. insert the user32.dll into the loadtime DLL list of the template.
@@ -145,16 +145,17 @@ The following libraries can be seen in examples:
 #library comdlg32 comdlg32.dll
 #library gdi32 gdi32.dll
 #library ucrt ucrtbase.dll
-#library sdl3 sdl3.dll
-#library sdl3_image sdl3_image.dll
 #library raylib raylib.dll
 #library sidelib GroundSideLibrary.dll
-#library soloud soloud_x64.dll
-#library mikmod libmikmod-3.dll
 #library glm libcglm-0.dll
 #library chipmunk libchipmunk.dll
 #library libcurl libcurl-x64.dll
+
+#library sdl3 sdl3.dll SDL3
+#library sdl3_image sdl3_image.dll SDL3_image
+#library sdl3_mixer SDL3_mixer.dll SDL3_mixer
 ```
+The second parameter is the Windows DLL name, third parameter is the Linux library name.
 
 ### Include a file
 With the `#include` directive, you can insert a textfile into your sourcefile. This can be handy for splitting large sourcefiles. For
@@ -166,6 +167,18 @@ When programming a `sdl3` or `raylib` program, you need to decide the screensize
 #include kernel32.g
 ```
 That defines SCREEN_WIDTH and SCREEN_HEIGHT. When going to 960x560 screensize, you only need to change the include into `#include graphics_defines960x560.g`.
+
+### Multiplatform C runtime library
+On Windows there is msvcrt.dll, on Linux there is the clib runtime. Both libraries have simular functions. You can create a Ground
+program that can run on both platforms. You will often see the following construction:
+```
+#linux   #include clib.g
+#linux   #dllalias cruntime clib
+#windows #include msvcrt.g
+#windows #dllalias cruntime msvcrt
+```
+The lines starting with `#linux` will only run on linux, the lines starting with `#windows` only on Windows. This means that the 
+dll alias `cruntime` will only point to clib on linux and will point to msvcrt on Windows.
 
 ### Hello, World and hardcoded functions
 The smallest program is:

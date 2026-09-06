@@ -1,4 +1,3 @@
 #template console
-if (gx.linux)
-	println("hello, world");
-	
+if (gc.linux)
+	println("Hello, Linux World!");

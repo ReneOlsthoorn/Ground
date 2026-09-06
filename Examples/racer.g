@@ -1,6 +1,7 @@
 
 #template sdl3
 
+#include graphics_defines960x560.g
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
 #library sdl3_mixer SDL3_mixer.dll SDL3_mixer
@@ -15,10 +16,6 @@
 #define PLAYER_CLIP_HIT_BREAKING 0.20
 #define PLAYER_STEERING 0.00008
 #define PLAYER_MAX_STEERING 0.003
-
-#include graphics_defines960x560.g
-#include msvcrt.g
-#include kernel32.g
 
 
 float[] track = [ 
