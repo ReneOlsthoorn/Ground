@@ -4,6 +4,10 @@
 #include graphics_defines1280x720.g
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
+#linux   #include clib.g
+#linux   #dllalias cruntime clib
+#windows #include msvcrt.g
+#windows #dllalias cruntime msvcrt
 
 u32[SCREEN_WIDTH, SCREEN_HEIGHT] pixels = null;
 byte[SDL3_EVENT_SIZE] event = [];

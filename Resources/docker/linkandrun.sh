@@ -1,0 +1,1 @@
+gcc test1.o -o test1 -lm -lpthread -ldl -lrt  -no-pie && ./test1

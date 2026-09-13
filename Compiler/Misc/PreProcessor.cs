@@ -78,6 +78,8 @@ namespace GroundCompiler
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include/{fileName}"));
             if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+            if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
             if (!File.Exists(fullPath) && !CompilationSession.IsCurrentlyOnLinux)
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}"));
@@ -85,14 +87,14 @@ namespace GroundCompiler
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}"));
             if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}"));
-            if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
 #else
             string fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Include/{fileName}"));
             if (!File.Exists(fullPath))
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+            if (!File.Exists(fullPath))
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode/{fileName}"));
             if (!File.Exists(fullPath))
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"{fileName}"));
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Examples/{fileName}"));
 #endif
 
             string theIncludedSourceCode = File.ReadAllText(fullPath);

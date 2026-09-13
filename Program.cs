@@ -13,36 +13,38 @@ namespace GroundCompiler
         {
             string currentDir = System.IO.Directory.GetCurrentDirectory();
             string fileName, fullPath;
-            CompilationSession session = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux(), RunAfterCompilation = false, GenerateDebugInformation = false };
-#if DEBUG
-            session.RunAfterCompilation = true;
-#else
-            if (args.Length == 0) { Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g"); return; }
-#endif
-            bool crossCompileLinuxOnWindows = false;
-            if (crossCompileLinuxOnWindows)
-            {
-                session.IsCurrentlyOnLinux = false;
-                session.CompileForLinux = true;
-                session.RunAfterCompilation = false;
-            }
-
+            CompilationSession session = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux() };
             if (args.Length == 0)
             {
+#if DEBUG
                 fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
+                session.GenerateDebugInformation = false;
+                session.LinkingAfterCompilation = true;
+                session.RunAfterCompilation = true;
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
                 if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}")); }
                 if (!File.Exists(fullPath) && !OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}")); }
                 if (!File.Exists(fullPath) && OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
+
+                //Generate Linux Output on a Window host:
+                //session.CompileForLinux = true;  session.IsCurrentlyOnLinux = false;  session.RunAfterCompilation = false;
+#else
+                Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g");
+                return;
+#endif
             }
             else
             {
                 fileName = args[0];
-                fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode/{fileName}"));
-                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName)); }
+                fullPath = Path.GetFullPath(Path.Combine(currentDir, fileName));
+                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"GroundCode/{fileName}")); }
+                if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"Examples/{fileName}")); }
                 if (!File.Exists(fullPath)) { Console.WriteLine($"GroundCompiler. Error: cannot find {fileName}"); return; }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
+
+                if (args.Length > 1)
+                    session.CompileForLinux = !(args[1].ToLower() == "windows");
             }
 
             session.PushSourcecodeFile(fileName, fullPath, File.ReadAllText(fullPath));
@@ -78,15 +80,16 @@ namespace GroundCompiler
             Console.WriteLine("*** Assemble with FASM.");
             Assemble();
 
-            Console.WriteLine("*** Run the executable.");
-            RunExecutable();
+            if (theSession.RunAfterCompilation)
+            {
+                Console.WriteLine("*** Run the executable.");
+                RunExecutable();
+            }
         }
 
 
         public void Assemble()
         {
-            //Console.WriteLine("*** Write generated code to disk.");
-
             string outputAsmFilenameClean = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
             string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.asm"));
             string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.fas"));
@@ -121,16 +124,23 @@ namespace GroundCompiler
                 }
                 string allLibs = string.Join(" ", libsToLink.Select(lib => $"-l{lib}"));
                 string processStart = $"{outputAsmFilenameClean}.o -o {outputAsmFilenameClean} -lm -lpthread -ldl -lrt {allLibs} -no-pie";
-                Console.WriteLine("gcc " + processStart);
-                info = new System.Diagnostics.ProcessStartInfo("gcc", processStart);
-                info.WorkingDirectory = currentDir;
-                p = new System.Diagnostics.Process();
-                p.StartInfo = info;
-                p.Start();
-                p.WaitForExit();
+                string linkingStr = $"gcc {theSession.SourceFilename}.o -o {theSession.SourceFilename} -lm -lpthread -ldl -lrt {allLibs} -no-pie && ./{theSession.SourceFilename}";
+
+                if (theSession.LinkingAfterCompilation)
+                {
+                    Console.WriteLine($"gcc {processStart}");
+                    info = new System.Diagnostics.ProcessStartInfo("gcc", processStart);
+                    info.WorkingDirectory = currentDir;
+                    p = new System.Diagnostics.Process();
+                    p.StartInfo = info;
+                    p.Start();
+                    p.WaitForExit();
+                }
+                else
+                    File.WriteAllText(Path.GetFullPath(Path.Combine(currentDir, $"linkandrun.sh")), linkingStr);
             }
 
-            if (theSession.GenerateDebugInformation)
+            if (theSession.GenerateDebugInformation && !theSession.IsCurrentlyOnLinux)
             {
                 Console.WriteLine("*** Generating Debug information.");
 
@@ -217,16 +227,13 @@ namespace GroundCompiler
 
         public void RunExecutable()
         {
-            if (!theSession.RunAfterCompilation)
-                return;
-
             if (theSession.IsCurrentlyOnLinux)
             {
                 Console.WriteLine($"*** Starting {theSession.SourceFilename}\r\n");
                 string startupFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
                 var psi = new ProcessStartInfo(startupFilename);
-                var proces = Process.Start(psi);
-                proces.WaitForExit();
+                var process = Process.Start(psi);
+                process?.WaitForExit();
             }
             else
             {
