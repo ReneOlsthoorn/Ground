@@ -63,13 +63,13 @@ the game Bertus should compile and run.
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_Bertus.gif?raw=true" width="500" /><br/>
 </p>
 
-### How to run Ground on Linux / CachyOS
-Ground needs several libraries and packages. The following packages need to be installed on CachyOS:
-* paru -S fasm
-* other needed libraries are: sdl3, sdl3_image, raylib, libmikmod
+### How to run Ground on Linux / Manjaro
+Ground needs several libraries and packages. The following packages need to be installed on Manjaro:
+* sudo pacman -S fasm
+* other needed libraries are: dotnet-sdk, base-devel, sdl3_image, sdl3_mixer, raylib
 
 The `Examples` folder contains the programs that work both Windows and Linux. A good IDE to use for compiling and 
-running Ground is `Rider` by Jetbrains.
+running Ground is `Rider` by Jetbrains. It is free for non-commercial usage.
 
 ### Running other examples
 When the resources are downloaded, you can change line 24 in Program.cs `fileName = "bertus.g";` to 
@@ -553,13 +553,10 @@ If we are not careful, in the future we will no longer own our own computing pow
 Many users want their freedom back and are looking at Linux. Most definately the users that don't have the required 
 TPM 2.0 that Windows 11 requires will be looking for a new OS.
 
-### The Move to CachyOS / Linux
+### The Move to Manjaro / Linux
 If you read this document, you'll notice that I'm grateful for the past of Windows, but was highly frustrated by its state 
-in 2026. As a result, in July 2026 I gave CachyOS a try, and it is very nice: an OS with focus on performance and that is 
-able to run Steam.  
-The BORE scheduler seems to do a good job. When I was porting Ground and its many realtime Ground examples to Linux, I 
-noticed how smooth they run on CachyOS. And there is more to like: the great `paru` package installer and the fact that 
-it is derived from Arch which offers rolling releases.
+in 2026. As a result, in July 2026 I gave Linux a try, and it is very nice. At this moment I use Manjaro, a stable OS that
+is able to run Steam. It is derived from Arch which offers rolling releases.
 
 ### Smoothscroller
 <p align="center">
@@ -724,4 +721,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
 2026.08: Support for Linux added. Implemented the System V AMD64 ABI.  
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod.
-Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (CachyOS in my case).  
+Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
