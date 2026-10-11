@@ -239,6 +239,24 @@ namespace GroundCompiler
             Codeline($"movq  qword [rsp], xmm0");
         }
 
+        public void ReserveOnRSP(int size, string? register = null)
+        {
+            if (size > 0)
+                Codeline($"sub   rsp, 0x{size.ToString("x")}");
+
+            if (register != null)
+            {
+                cpu.ReserveRegister(register);
+                Codeline($"mov   {register}, rsp");
+                cpu.FreeRegister(register);
+            }
+        }
+        public void FreeOnRSP(int size)
+        {
+            if (size > 0)
+                Codeline($"add   rsp, 0x{size.ToString("x")}");
+        }
+
         public void PopFloat(string? register = null)
         {
             string usedRegister = "xmm0";

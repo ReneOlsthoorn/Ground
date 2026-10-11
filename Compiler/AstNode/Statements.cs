@@ -891,17 +891,27 @@ namespace GroundCompiler.Statements
         }
     }
 
+    public enum FunctionParameterPropKey
+    {
+        LinuxLargeParameterOnStack,  // parameter > 16 bytes
+        LinuxTwoRegisterParameter,  // parameter > 8 and parameter <= 16 bytes
+        LinuxNormalParameterOnStack, // parameter = 8 bytes
+        LinuxParameterStackOffset,  // offset into the stack for this parameter
+        LinuxParameterNrBytes
+    }
 
     // A helper for FunctionStatement
     public class FunctionParameter
     {
         public string Name { get; }
         public Datatype TheType { get; }
+        public Dictionary<FunctionParameterPropKey, object?> Properties;
 
         public FunctionParameter(string theName, Datatype theType)
         {
             Name = theName;
             TheType = theType;
+            Properties = new Dictionary<FunctionParameterPropKey, object?>();
         }
     }
 

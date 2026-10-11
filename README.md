@@ -719,6 +719,7 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
 2026.05: Several GLSL examples added. f32 literals added.  
 2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
-2026.08: Support for Linux added. Implemented the System V AMD64 ABI.  
+2026.08: Support for Linux added. Started implementation of the System V AMD64 ABI.  
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod.
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
+2026.10: Continued to work on the system v amd64 abi.  

@@ -14,10 +14,11 @@ public class LinuxAbiParameterManager
     private CodeEmitter emitter;
     public int integerRegisterIndex = 0; // 6 registers, rdi, rsi, rdx, rcx, r8, r9
     public int floatRegisterIndex = 0;  // 8 registers xmm0-xmm7
-    public int stackNr = 0; // remaining parameters are put on the stack. This is the number of 64 bit stack elements
+    public int nrRegistersOnStack = 0; // remaining parameters are put on the stack. This is the number of 64 bit stack elements
     public int linuxCopyResultBytes = 0;
     public DllFunctionSymbol dllFunctionSymbol;
     public List<string> registerAllocation;
+    public int totalStackByteSize = 0;
 
     public LinuxAbiParameterManager(CPU_X86_64 theCpu,  CodeEmitter theEmitter, DllFunctionSymbol theDllFunctionSymbol)
     {
@@ -26,15 +27,22 @@ public class LinuxAbiParameterManager
         integerRegisterIndex = 0;
         floatRegisterIndex = 0;
         linuxCopyResultBytes = 0;
-        stackNr = 0;
+        totalStackByteSize = 0;
+        nrRegistersOnStack = 0;
         this.dllFunctionSymbol = theDllFunctionSymbol;
         registerAllocation = new List<string>();
     }
 
-    public void getFloatRegister()
+    public void getFloatRegister(FunctionParameter par)
     {
-        if (floatRegisterIndex > 7)
-            stackNr++;
+        // xmm0 t/m xmm7
+        if (floatRegisterIndex > 7 || (integerRegisterIndex == 7 && par.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter)))
+        {
+            par.Properties[FunctionParameterPropKey.LinuxNormalParameterOnStack] = true;
+            nrRegistersOnStack++;
+            par.Properties[FunctionParameterPropKey.LinuxParameterStackOffset] = totalStackByteSize;
+            totalStackByteSize += 8;
+        }
         else
         {
             string theRegister = $"xmm{floatRegisterIndex}";
@@ -43,10 +51,18 @@ public class LinuxAbiParameterManager
         }
     }
 
-    public void getIntegerRegister()
+    public void getIntegerRegister(FunctionParameter par)
     {
-        if (integerRegisterIndex > 5)
-            stackNr++;
+        // Bij een LinuxTwoRegisterParameter mag je de parameter niet splitsen over een register en de stack. 
+
+        // 0=rdi  1=rsi  2=rdx  3=rcx  4=r8  5=r9
+        if (integerRegisterIndex > 5 || (integerRegisterIndex == 5 && par.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter)))
+        {
+            par.Properties[FunctionParameterPropKey.LinuxNormalParameterOnStack] = true;
+            nrRegistersOnStack++;
+            par.Properties[FunctionParameterPropKey.LinuxParameterStackOffset] = totalStackByteSize;
+            totalStackByteSize += 8;
+        }
         else
         {
             string theRegister = "";
@@ -78,6 +94,8 @@ public class LinuxAbiParameterManager
 
     public void Load(List<Expression> argNodes, List<FunctionParameter> functionParameters)
     {
+        totalStackByteSize = 0;
+
         CheckForLargeResult();
         foreach (FunctionParameter par in functionParameters)
         {
@@ -92,29 +110,46 @@ public class LinuxAbiParameterManager
                 if (nrBytes > 8 && nrBytes <= 16)
                 {
                     var classStatement = dt.Properties["classStatement"] as ClassStatement;
+                    par.Properties[FunctionParameterPropKey.LinuxTwoRegisterParameter] = true;
                     int newAddedRegisters = 0;
                     foreach (VarStatement vs in classStatement!.InstanceVariableNodes)
                     {
                         if (vs.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
-                            getFloatRegister();
+                            getFloatRegister(par);
                         else
-                            getIntegerRegister();
+                            getIntegerRegister(par);
 
-                        newAddedRegisters++;
-                        if (newAddedRegisters == 2)
-                            break;
+                        if (!par.Properties.ContainsKey(FunctionParameterPropKey.LinuxNormalParameterOnStack))
+                        {
+                            newAddedRegisters++;
+                            if (newAddedRegisters == 2)
+                            {
+                                par.Properties[FunctionParameterPropKey.LinuxTwoRegisterParameter] = true;
+                                break;
+                            }
+                        }
                     }
+                    continue;
                 }
-                continue;
+                else if (nrBytes > 16)
+                {
+                    par.Properties[FunctionParameterPropKey.LinuxLargeParameterOnStack] = true;
+                    par.Properties[FunctionParameterPropKey.LinuxParameterStackOffset] = totalStackByteSize;
+                    par.Properties[FunctionParameterPropKey.LinuxParameterNrBytes] = nrBytes;
+                    totalStackByteSize += nrBytes;
+                    continue;
+                }
             }
+
+            if (dt.Contains(Datatype.TypeEnum.FloatingPoint))
+                getFloatRegister(par);
             else
-            {
-                if (dt.Contains(Datatype.TypeEnum.FloatingPoint))
-                    getFloatRegister();
-                else
-                    getIntegerRegister();
-            }
+                getIntegerRegister(par);
         }
+
+        //totalStackByteSize += nrRegistersOnStack * 8;
+        if (totalStackByteSize > 0)
+            totalStackByteSize = (totalStackByteSize & 0xffffff0) + 16;
     }
 
     public void CheckForLargeResult()
@@ -127,6 +162,7 @@ public class LinuxAbiParameterManager
                         
             if (nrBytes > 16)
             {
+                // In the System V AMD64 ABI, a result larger than 16 bytes is generally returned through a hidden pointer to caller-allocated memory, passed as the first argument in RDI.
                 emitter.ReserveOnStack(nrBytes, "rdi");
                 this.integerRegisterIndex++;
             }
@@ -139,7 +175,7 @@ public class LinuxAbiParameterManager
         {
             emitter.Codeline("push  rcx");
             emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
-            emitter.Codeline("mov   [rcx], rax");
+            emitter.Codeline("mov   [rcx], rax");     // deze twee kloppen wel, want voor resultaten groter dan 16 wordt het resultaat in een pointer in RDI teruggegeven. Zie CheckForLargeResult.
             emitter.Codeline("mov   [rcx+8], rdx");
             emitter.Codeline("mov   rax, rcx");
             emitter.Codeline("pop   rcx");

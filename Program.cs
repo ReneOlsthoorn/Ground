@@ -17,7 +17,7 @@ namespace GroundCompiler
             if (args.Length == 0)
             {
 #if DEBUG
-                fileName = "bertus.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
+                fileName = "raylib_test.g";    //  racer  jump  bertus  tetrus  snake  bugs  game_of_life  unittests  sudoku  smoothscroller  mode7  mode7_optimized  plasma_non_colorcycling  fire  win32_screengrab  connect4  chess  star_taste  high_noon  memory  fireworks  3d  electronic_life  snippet_circles  snippet_spiral  hexacubes  raylib_zoom  raylib_fireball  raylib_onderwater  raylib_starfall  gpu_tempotypen
                 session.GenerateDebugInformation = false;
                 session.LinkingAfterCompilation = true;
                 session.RunAfterCompilation = true;

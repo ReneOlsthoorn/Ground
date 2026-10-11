@@ -636,26 +636,29 @@ namespace GroundCompiler
         }
  
         
-        private bool EmitLinuxToRegisterParameters(Expression? arg, Scope? scope)
+        private void PushLinuxTwoRegisterParameter()
         {
-            if (arg is Variable argVariable && argVariable.ExprType.Contains(Datatype.TypeEnum.CustomClass) && arg.ExprType.SizeInBytes > 8 && arg.ExprType.SizeInBytes <= 16)
-            {
-                cpu.ReserveRegister("rdx");
-                emitter.Codeline("mov   rdx, [rax+8]");
-                emitter.Codeline("push  rdx");
-                emitter.Codeline("mov   rdx, [rax]");
-                emitter.Codeline("push  rdx");
-                cpu.FreeRegister("rdx");
-                return true;
-            }
-
-            return false;
+            cpu.ReserveRegister("r10");
+            emitter.Codeline("mov   r10, [rax+8]");
+            emitter.Codeline("push  r10");
+            emitter.Codeline("mov   r10, [rax]");
+            emitter.Codeline("push  r10");
+            cpu.FreeRegister("r10");
         }        
 
 
         // This function needs refactoring. It does too much. We must push it over and create a class for it.
         public object? VisitorFunctionCall(FunctionCall expr)
         {
+            /*
+             * De Win32 abi is veel makkelijker dan System v: bij win32 zijn er alleen 64-bits parameters en het resultaat komt in RAX.
+             * In system v, een parameter kan veel groter zijn en dan wordt ie op de stack gezet. Die waarden zijn geen pointers maar de
+             * concrete data zelf, dus moeten we kopieer acties gaan doen (aardig wat werk).
+             * In win32 pushen we alle parameters op de stack en poppen de parameters eraf die in registers moeten komen. De rest blijft
+             * op de stack. In system v kan dat niet, want parameters zijn mogelijk groter dan 64-bit.
+             * Voor system v reserveren we de hele stack in 1 keer.
+            */
+
             ClassStatement? classStatement = null;
             var scope = expr.GetScope();  // normally, the scope of the functioncall is used.
             FunctionSymbol? theFunction = null;
@@ -888,26 +891,33 @@ namespace GroundCompiler
                die in registers geladen moeten worden weer van de stack af te halen. De stack moet wel 16-byte aligned worden. */
 
             var dllFunctionSymbol = theFunction as DllFunctionSymbol;
+            bool isLinuxDllCall = session.CompileForLinux && dllFunctionSymbol != null;
             LinuxAbiParameterManager? lpm = null;
-            if (session.CompileForLinux && dllFunctionSymbol != null)
+            if (isLinuxDllCall)
             { 
-                lpm = new LinuxAbiParameterManager(cpu, emitter, dllFunctionSymbol);
+                lpm = new LinuxAbiParameterManager(cpu, emitter, dllFunctionSymbol!);
                 lpm.Load(expr.ArgumentNodes, theFunction!.FunctionStmt.Parameters); // The difficult Linux System V AMD64 Abi
             }
 
             int nrArguments = expr.ArgumentNodes.Count + 2;  // +2 for lexicalparentframe and "this", which is added the last. Only needed for local calls.
-            int nrRegistersNeeded = (lpm == null) ? expr.ArgumentNodes.Count : lpm.stackNr;
+            int nrRegistersNeeded = (lpm == null) ? expr.ArgumentNodes.Count : lpm.nrRegistersOnStack;
 
             // Before putting all parameters on the stack we must do alignment.
             if (nrRegistersNeeded % 2 == 1)
             {
                 if (dllFunctionSymbol == null || ((nrRegistersNeeded > 4) && (!session.CompileForLinux)) || session.CompileForLinux)
                 {
-                    emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment! (for win32)");
+                    emitter.Codeline("push  qword 0          ; Keep 16-byte stack alignment!");
                     emitter.StackPush();
                 }
             }
 
+            if (isLinuxDllCall && lpm!.totalStackByteSize > 0)
+            {
+                emitter.ReserveOnRSP(lpm.totalStackByteSize, "r10");
+            }
+
+            // We iterate the parameters and put them on the stack.
             List<FunctionParameter> fPars = theFunction!.FunctionStmt.Parameters;
             for (int i = (nrArguments-3); i >= 0; i--)
             {
@@ -920,10 +930,41 @@ namespace GroundCompiler
                 FunctionParameter fPar = fPars[i];
                 EmitConversionCompatibleType(arg, fPar.TheType);
 
-                if (dllFunctionSymbol != null && session.CompileForLinux)
-                    if (EmitLinuxToRegisterParameters(arg, scope))
+                if (isLinuxDllCall)
+                {
+                    if (fPar.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter))
+                    {
+                        PushLinuxTwoRegisterParameter();
                         continue;
-                
+                    }
+ 
+                    if (fPar.Properties.ContainsKey(FunctionParameterPropKey.LinuxLargeParameterOnStack))
+                    {
+                        // we hebben r10 gevuld met het begin van de stack.
+                        // copy the parameter to the stack.
+                        int startOffset = (int)fPar.Properties[FunctionParameterPropKey.LinuxParameterStackOffset]!;
+                        int nrIterates = (int)fPar.Properties[FunctionParameterPropKey.LinuxParameterNrBytes]! / 8;
+                        cpu.ReserveRegister("r11");
+                        for (int j = 0; j < nrIterates; j++)
+                        {
+                            emitter.Codeline($"mov   r11, [rax+0x{(j * 8).ToString("x")}]");
+                            emitter.Codeline($"mov   [r10+0x{(startOffset + j * 8).ToString("x")}], r11");
+                        }
+                        cpu.FreeRegister("r11");
+                        continue;
+                    }
+
+                    if (fPar.Properties.ContainsKey(FunctionParameterPropKey.LinuxNormalParameterOnStack))
+                    {
+                        int startOffset = (int)fPar.Properties[FunctionParameterPropKey.LinuxParameterStackOffset]!;
+                        cpu.ReserveRegister("r11");
+                        emitter.Codeline($"mov   r11, [rax]");
+                        emitter.Codeline($"mov   [r10+0x{startOffset.ToString("x")}], r11");
+                        cpu.FreeRegister("r11");
+                        continue;
+                    }
+                }
+
                 emitter.Push(arg.ExprType);
             }
 
@@ -1028,14 +1069,17 @@ namespace GroundCompiler
 
 
                     // If we stack parameters, we need to free them.
-                    if (lpm.stackNr > 0)
+                    if (lpm.nrRegistersOnStack > 0)
                     {
-                        int extraToRelease = ((lpm.stackNr * 8) & 0xfff0) + 16;
+                        int extraToRelease = ((lpm.nrRegistersOnStack * 8) & 0xfff0) + 16;
                         emitter.Codeline($"add   rsp, {extraToRelease}");
                         emitter.StackPop(extraToRelease);
                     }
 
                     lpm.RetrieveLargerResult();
+
+                    if (isLinuxDllCall && lpm.totalStackByteSize > 0)
+                        emitter.FreeOnRSP(lpm.totalStackByteSize);
                 }
                 else
                 {
