@@ -107,27 +107,38 @@ public class LinuxAbiParameterManager
                 // onder linux moet je dan meerdere registers gebruiken om een 16 byte struct door te geven.
                 // Deze register paren zijn al op de stack gezet. Dus dit is niet de enige plek waar de "TwoRegisters" bepaald worden.
                 int nrBytes = dt.SizeInBytes;
-                if (nrBytes > 8 && nrBytes <= 16)
+                if (nrBytes <= 8)
+                {
+                    var classStatement = dt.Properties["classStatement"] as ClassStatement;
+                    var varStList = classStatement!.InstanceVariableNodes;
+                    var firstInstType = varStList[0].ResultType;
+                    par.Properties[FunctionParameterPropKey.LinuxOneRegisterParameter] = true;
+                    if (firstInstType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        getFloatRegister(par);
+                    else
+                        getIntegerRegister(par);
+
+                    continue;
+                }
+                else if (nrBytes > 8 && nrBytes <= 16)
                 {
                     var classStatement = dt.Properties["classStatement"] as ClassStatement;
                     par.Properties[FunctionParameterPropKey.LinuxTwoRegisterParameter] = true;
-                    int newAddedRegisters = 0;
-                    foreach (VarStatement vs in classStatement!.InstanceVariableNodes)
+                    // Het is complex om te bepalen welke registers je gaat gebruiken.
+                    var varStList = classStatement!.InstanceVariableNodes;
+                    var reprList = new List<VarStatement>();
+                    reprList.Add(varStList[0]);
+                    if (varStList.Count > 2)
+                        reprList.Add(varStList[2]);
+                    else
+                        reprList.Add(varStList[1]);
+
+                    foreach (var varSt in reprList)
                     {
-                        if (vs.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
+                        if (varSt.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
                             getFloatRegister(par);
                         else
                             getIntegerRegister(par);
-
-                        if (!par.Properties.ContainsKey(FunctionParameterPropKey.LinuxNormalParameterOnStack))
-                        {
-                            newAddedRegisters++;
-                            if (newAddedRegisters == 2)
-                            {
-                                par.Properties[FunctionParameterPropKey.LinuxTwoRegisterParameter] = true;
-                                break;
-                            }
-                        }
                     }
                     continue;
                 }

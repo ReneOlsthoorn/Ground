@@ -148,7 +148,7 @@ dll raylib function rlGetVersion() : int;
 dll raylib function LoadTexture(string fileName) : raylib_Texture2D;
 dll raylib function UnloadTexture(raylib_Texture2D texture2d);
 dll raylib function DrawTexture(raylib_Texture2D texture2d, int posX, int posY, u32 tint);
-dll raylib function DrawTexturePro(raylib_Texture2D texture2d, ptr rectangleSrc, ptr rectangleDest, ptr vectorOrigin, float rotation, u32 tint);
+dll raylib function DrawTexturePro(raylib_Texture2D texture2d, raylib_Rectangle source, raylib_Rectangle dest, raylib_Vector2 origin, float rotation, u32 tint);
 dll raylib function DrawTextureRec(raylib_Texture2D texture2d, ptr rectangleSrc, ptr vectorPosition, u32 tint);
 dll raylib function GetMousePosition() : raylib_Vector2;
 

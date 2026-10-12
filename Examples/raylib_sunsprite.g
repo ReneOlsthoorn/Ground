@@ -69,9 +69,10 @@ f32[2] resolution = [screenWidth, screenHeight];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
 raylib.SetTargetFPS(60);
 raylib.HideCursor();
-f32[4] src = [0.0f, 0.0f, 1.0f, 1.0f];
-f32[4] dst = [0.0f, 0.0f, screenWidth, screenHeight];
-f32[2] origin = [0.0f, 0.0f];
+
+raylib_Rectangle src = raylib_Rectangle(0.0f, 0.0f, 1.0f, 1.0f);
+raylib_Rectangle dst = raylib_Rectangle(0.0f, 0.0f, screenWidth, screenHeight);
+raylib_Vector2 origin = raylib_Vector2(0.0f, 0.0f);
 
 while (!raylib.WindowShouldClose()) {
     f32 t = raylib.GetTime();
@@ -80,7 +81,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.ClearBackground(COLOR_BLACK);
     raylib.BeginShaderMode(shader);
     raylib.SetShaderValueTexture(shader, iChannelLocation, tex);
-    raylib.DrawTexturePro(tex, src, dst, origin, 0.0, COLOR_WHITE);
+    raylib.DrawTexturePro(tex, src, dst, origin, 0.0f, COLOR_WHITE);
     raylib.EndShaderMode();
     raylib.EndDrawing();
 }

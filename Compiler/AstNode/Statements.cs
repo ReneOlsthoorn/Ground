@@ -897,7 +897,8 @@ namespace GroundCompiler.Statements
         LinuxTwoRegisterParameter,  // parameter > 8 and parameter <= 16 bytes
         LinuxNormalParameterOnStack, // parameter = 8 bytes
         LinuxParameterStackOffset,  // offset into the stack for this parameter
-        LinuxParameterNrBytes
+        LinuxParameterNrBytes,
+        LinuxOneRegisterParameter
     }
 
     // A helper for FunctionStatement

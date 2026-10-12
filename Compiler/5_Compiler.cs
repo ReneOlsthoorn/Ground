@@ -634,17 +634,29 @@ namespace GroundCompiler
                 }
             }
         }
- 
-        
+
+
+        private void PushLinuxOneRegisterParameter()
+        {
+            cpu.ReserveRegister("r11");
+            emitter.Codeline("mov   r11, [rax]");
+            emitter.Codeline("push  r11");
+            cpu.FreeRegister("r11");
+            emitter.StackPush();
+        }
+
+
         private void PushLinuxTwoRegisterParameter()
         {
-            cpu.ReserveRegister("r10");
-            emitter.Codeline("mov   r10, [rax+8]");
-            emitter.Codeline("push  r10");
-            emitter.Codeline("mov   r10, [rax]");
-            emitter.Codeline("push  r10");
-            cpu.FreeRegister("r10");
-        }        
+            cpu.ReserveRegister("r11");
+            emitter.Codeline("mov   r11, [rax+8]");
+            emitter.Codeline("push  r11");
+            emitter.StackPush();
+            emitter.Codeline("mov   r11, [rax]");
+            emitter.Codeline("push  r11");
+            emitter.StackPush();
+            cpu.FreeRegister("r11");
+        }
 
 
         // This function needs refactoring. It does too much. We must push it over and create a class for it.
@@ -912,6 +924,13 @@ namespace GroundCompiler
                 }
             }
 
+            bool linuxNeedAlignment = false;
+            if (isLinuxDllCall)
+            {
+                linuxNeedAlignment = !emitter.IsAlign16(emitter.StackPos);
+                if (linuxNeedAlignment)
+                    emitter.Codeline($"sub   rsp, 8");
+            }
             if (isLinuxDllCall && lpm!.totalStackByteSize > 0)
             {
                 emitter.ReserveOnRSP(lpm.totalStackByteSize, "r10");
@@ -932,6 +951,12 @@ namespace GroundCompiler
 
                 if (isLinuxDllCall)
                 {
+                    if (fPar.Properties.ContainsKey(FunctionParameterPropKey.LinuxOneRegisterParameter))
+                    {
+                        PushLinuxOneRegisterParameter();
+                        continue;
+                    }
+
                     if (fPar.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter))
                     {
                         PushLinuxTwoRegisterParameter();
@@ -1059,12 +1084,13 @@ namespace GroundCompiler
                     }
                     
                     bool needAlignment = !emitter.IsAlign16(emitter.StackPos);
-                    if (needAlignment)
-                        emitter.Codeline($"sub   rsp, 8");
+                    //Alignment doen we eerder
+                    //if (needAlignment)
+                    //    emitter.Codeline($"sub   rsp, 8");
 
                     emitter.Codeline($"call  {functionName}");
 
-                    if (needAlignment)
+                    if (linuxNeedAlignment)
                         emitter.Codeline($"add   rsp, 8");
 
 
