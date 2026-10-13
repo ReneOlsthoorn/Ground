@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
-using System.Text;
 using GroundCompiler.Expressions;
 using GroundCompiler.Statements;
 
@@ -8,7 +5,11 @@ namespace GroundCompiler;
 
 public class LinuxAbiParameterManager
 {
-    /* The system v amd64 abi is difficult. */
+    /* The System V AMD64 ABI is difficult.
+     * Large structs > 16 bytes is stored on the stack.
+     * Struct > 8 bytes <= 16 bytes is stored in two registers. You cannot distribute them over a register and the stack.
+     * Struct <= 8 bytes must be integer if one value is integer. If all is float, than it is a float register.
+     */
     
     private CPU_X86_64 cpu;
     private CodeEmitter emitter;
@@ -109,11 +110,15 @@ public class LinuxAbiParameterManager
                 int nrBytes = dt.SizeInBytes;
                 if (nrBytes <= 8)
                 {
+                    par.Properties[FunctionParameterPropKey.LinuxOneRegisterParameter] = true;
                     var classStatement = dt.Properties["classStatement"] as ClassStatement;
                     var varStList = classStatement!.InstanceVariableNodes;
-                    var firstInstType = varStList[0].ResultType;
-                    par.Properties[FunctionParameterPropKey.LinuxOneRegisterParameter] = true;
-                    if (firstInstType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    bool willBeFloatParameter = true;
+                    foreach (var varSt in varStList)
+                        if (!varSt.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
+                            willBeFloatParameter = false;
+
+                    if (willBeFloatParameter)
                         getFloatRegister(par);
                     else
                         getIntegerRegister(par);
@@ -122,24 +127,60 @@ public class LinuxAbiParameterManager
                 }
                 else if (nrBytes > 8 && nrBytes <= 16)
                 {
-                    var classStatement = dt.Properties["classStatement"] as ClassStatement;
                     par.Properties[FunctionParameterPropKey.LinuxTwoRegisterParameter] = true;
-                    // Het is complex om te bepalen welke registers je gaat gebruiken.
+                    var classStatement = dt.Properties["classStatement"] as ClassStatement;
                     var varStList = classStatement!.InstanceVariableNodes;
-                    var reprList = new List<VarStatement>();
-                    reprList.Add(varStList[0]);
-                    if (varStList.Count > 2)
-                        reprList.Add(varStList[2]);
-                    else
-                        reprList.Add(varStList[1]);
-
-                    foreach (var varSt in reprList)
+                    bool willBeFloatParameter = true;
+                    int nrByteCounter = 0;
+                    bool reg1Set = false;
+                    foreach (var varSt in varStList)
                     {
-                        if (varSt.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
-                            getFloatRegister(par);
+                        bool currentIsFloat = varSt.ResultType.Contains(Datatype.TypeEnum.FloatingPoint);
+                        nrByteCounter += varSt.ResultType.SizeInBytes;
+
+                        if (nrByteCounter > 8 && !reg1Set)
+                        {
+                            // Dit komt voor als een 4 byte variabele wordt gevolgd door een 8 byte variabele.
+                            // We moeten dan eerst het type van de 4 byte variabele gebruiken.
+
+                            // register 1
+                            if (willBeFloatParameter)
+                                getFloatRegister(par);
+                            else
+                                getIntegerRegister(par);
+
+                            willBeFloatParameter = true;
+                            nrByteCounter = 0; // without this we will return in this if-clause the next iteration.
+                            reg1Set = true;
+
+                            if (!currentIsFloat)
+                                willBeFloatParameter = false;
+                        }
+                        else if (nrByteCounter == 8 && !reg1Set)
+                        {
+                            if (!currentIsFloat)
+                                willBeFloatParameter = false;
+
+                            // register 1
+                            if (willBeFloatParameter)
+                                getFloatRegister(par);
+                            else
+                                getIntegerRegister(par);
+
+                            willBeFloatParameter = true;
+                            nrByteCounter = 0; // without this we will return in this if-clause the next iteration.
+                            reg1Set = true;
+                        }
                         else
-                            getIntegerRegister(par);
+                            if (!currentIsFloat)
+                                willBeFloatParameter = false;
                     }
+                    // register 2
+                    if (willBeFloatParameter)
+                        getFloatRegister(par);
+                    else
+                        getIntegerRegister(par);
+
                     continue;
                 }
                 else if (nrBytes > 16)
@@ -158,9 +199,8 @@ public class LinuxAbiParameterManager
                 getIntegerRegister(par);
         }
 
-        //totalStackByteSize += nrRegistersOnStack * 8;
         if (totalStackByteSize > 0)
-            totalStackByteSize = (totalStackByteSize & 0xffffff0) + 16;
+            totalStackByteSize = (totalStackByteSize + 15) & ~15;
     }
 
     public void CheckForLargeResult()
@@ -193,82 +233,4 @@ public class LinuxAbiParameterManager
         }
     }
     
-    public bool ReserveArgument(Expression expr)
-    {
-        string theRegister = "rax";
-        int linuxInputInTwoRegisters = 0;
-        
-        if (expr.ExprType?.isClass() ?? false)
-        {
-            // als je een class in een parameter zet, dan is het altijd een struct. 
-            // onder linux moet je dan meerdere registers gebruiken om een 16 byte struct door te geven.
-            // Deze register paren zijn al op de stack gezet. Dus dit is niet de enige plek waar de "TwoRegisters" bepaald worden.
-            int nrBytes = expr.ExprType.SizeInBytes;
-            if (nrBytes > 8 && nrBytes <= 16)
-                linuxInputInTwoRegisters = nrBytes;
-        }
-        int nrRegistersToReserve = (linuxInputInTwoRegisters > 0) ? 2 : 1;
-        
-        /*
-
-        if (expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
-        {
-            switch (index)
-            {
-                case 0:
-                    theRegister = "xmm0";
-                    break;
-                case 1:
-                    theRegister = "xmm1";
-                    break;
-                case 2:
-                    theRegister = "xmm2";
-                    break;
-                case 3:
-                    theRegister = "xmm3";
-                    break;
-            }
-            cpu.ReserveRegister(theRegister);
-            emitter.Pop(expr, theRegister);
-            cpu.FreeRegister(theRegister);
-        }
-        else
-        {
-            int nrRegisters = (linuxInputInTwoRegisters > 0) ? 2 : 1;
-
-            if ((index + 1 + nrRegisters) > 6)
-                return true;
-
-            for (int i = 0; i < nrRegisters; i++)
-            {
-                switch (index)
-                {
-                    case 0:
-                        theRegister = "rdi";
-                        break;
-                    case 1:
-                        theRegister = "rsi";
-                        break;
-                    case 2:
-                        theRegister = "rdx";
-                        break;
-                    case 3:
-                        theRegister = "rcx";
-                        break;
-                    case 4:
-                        theRegister = "r8";
-                        break;
-                    case 5:
-                        theRegister = "r9";
-                        break;
-                }
-                emitter.Pop(expr, theRegister);
-                if (i != (nrRegisters - 1))
-                    index++;
-            }
-        }
-        */
-
-        return false;
-    }
 }

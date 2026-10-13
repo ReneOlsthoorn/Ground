@@ -893,12 +893,12 @@ namespace GroundCompiler.Statements
 
     public enum FunctionParameterPropKey
     {
-        LinuxLargeParameterOnStack,  // parameter > 16 bytes
-        LinuxTwoRegisterParameter,  // parameter > 8 and parameter <= 16 bytes
-        LinuxNormalParameterOnStack, // parameter = 8 bytes
-        LinuxParameterStackOffset,  // offset into the stack for this parameter
-        LinuxParameterNrBytes,
-        LinuxOneRegisterParameter
+        LinuxLargeParameterOnStack,  // parameter > 16 bytes on the stack
+        LinuxTwoRegisterParameter,   // parameter > 8 and parameter <= 16 bytes
+        LinuxOneRegisterParameter,   // parameter <= 8
+        LinuxNormalParameterOnStack, // parameter = 8 bytes but is on the stack, not in a register
+        LinuxParameterStackOffset,   // offset into the stack for this parameter
+        LinuxParameterNrBytes,       // the nr of bytes of this parameter
     }
 
     // A helper for FunctionStatement

@@ -75,8 +75,7 @@ namespace GroundCompiler
                 Emitter.Writeline($"_register_{theName} equ rbp-{negativeOffset}");
             }
 
-            bool notAligned = (negativeOffset & 0xf) > 0;
-            StackSpaceToReserve = (negativeOffset & 0xffffff0) + (notAligned ? 16 : 0);  // take care of a 16 byte stack alignment;
+            StackSpaceToReserve = (negativeOffset + 15) & ~15;  // take care of a 16 byte stack alignment;
         }
 
 
@@ -157,7 +156,7 @@ namespace GroundCompiler
         public void EmitReleaseStackframe()
         {
             int stackToReclaim = 0;
-            stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16;  // zorg voor een 16 byte alignment in de stack
+            stackToReclaim = (((FunctionStatement.Parameters.Count + 1) * 8) & 0xfff0) + 16; // + 15) & ~15;  // zorg voor een 16 byte alignment in de stack
             Emitter.EndFunction(stackToReclaim, noFrameRestoration: FunctionStatement.AssemblyOnlyFunctionWithNoParameters());
         }
 

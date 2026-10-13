@@ -1097,7 +1097,7 @@ namespace GroundCompiler
                     // If we stack parameters, we need to free them.
                     if (lpm.nrRegistersOnStack > 0)
                     {
-                        int extraToRelease = ((lpm.nrRegistersOnStack * 8) & 0xfff0) + 16;
+                        int extraToRelease = ((lpm.nrRegistersOnStack * 8) + 15) & ~15;
                         emitter.Codeline($"add   rsp, {extraToRelease}");
                         emitter.StackPop(extraToRelease);
                     }
@@ -1135,7 +1135,7 @@ namespace GroundCompiler
                     // If we have more than 4 parameters, than we need to free those stack parameters.
                     if (nrArguments > 4)
                     {
-                        int extraToRelease = (((nrArguments - (4 + 1)) * 8) & 0xfff0) + 16;
+                        int extraToRelease = (((nrArguments - 4) * 8) + 15) & ~15;
                         emitter.Codeline($"add   rsp, {extraToRelease}");
                         emitter.StackPop(extraToRelease);
                     }
