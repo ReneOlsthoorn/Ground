@@ -34,7 +34,13 @@ f32[2] resolution = [SCREEN_WIDTH, SCREEN_HEIGHT];
 raylib.SetShaderValue(shader, resolutionLocation, resolution, SHADER_UNIFORM_VEC2);
 raylib.HideCursor();
 
+raylib.InitAudioDevice();
+raylib_Music music = raylib.LoadMusicStream("sound/mod/back on earth.mod");
+music.looping = true;
+raylib.PlayMusicStream(music);
+
 while (!raylib.WindowShouldClose()) {
+    raylib.UpdateMusicStream(music);
     f32 t = raylib.GetTime();
     raylib.SetShaderValue(shader, timeLocation, &t, SHADER_UNIFORM_FLOAT);
     raylib.BeginDrawing();
@@ -45,4 +51,6 @@ while (!raylib.WindowShouldClose()) {
     raylib.EndDrawing();
 }
 raylib.UnloadShader(shader);
+raylib.UnloadMusicStream(music);
+raylib.CloseAudioDevice();
 raylib.CloseWindow();

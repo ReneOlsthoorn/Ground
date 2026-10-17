@@ -809,6 +809,10 @@ namespace GroundCompiler
             {
                 Codeline($"lea   rax, qword [{reg}+{instVar}]");
             }
+            else if (datatype.Contains(Datatype.TypeEnum.CustomClass))
+            {
+                Codeline($"lea   rax, qword [{reg}+{instVar}]");
+            }
             else
             {
                 var nrBytes = datatype.SizeInBytes;

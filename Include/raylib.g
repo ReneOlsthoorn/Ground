@@ -118,6 +118,49 @@ class raylib_Rectangle {
 }
 
 
+class raylib_Wave {
+    u32 frameCount;    // Total number of frames (considering channels)
+    u32 sampleRate;    // Frequency (samples per second)
+    u32 sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    u32 channels;      // Number of channels (1-mono, 2-stereo, ...)
+    ptr data;          // Buffer data pointer
+}
+
+
+class raylib_Sound {
+    ptr buffer;       // Pointer to internal data used by the audio system
+    ptr processor;    // Pointer to internal data processor, useful for audio effects
+
+    u32 sampleRate;    // Frequency (samples per second)
+    u32 sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    u32 channels;      // Number of channels (1-mono, 2-stereo, ...)
+    u32 __opvul1;
+
+    u32 frameCount;    // Total number of frames (considering channels)
+    u32 __opvul2;
+}
+
+
+class raylib_Music {
+    ptr buffer;       // Pointer to internal data used by the audio system
+    ptr processor;    // Pointer to internal data processor, useful for audio effects
+
+    u32 sampleRate;    // Frequency (samples per second)
+    u32 sampleSize;    // Bit depth (bits per sample): 8, 16, 32 (24 not supported)
+    u32 channels;      // Number of channels (1-mono, 2-stereo, ...)
+    u32 __opvul1;
+
+    u32 frameCount;    // Total number of frames (considering channels)
+    u8 looping;        // Music looping enable
+    u8 __opvul2;
+    u8 __opvul3;
+    u8 __opvul4;
+
+    i32 ctxType;       // Type of music context (audio filetype)
+    u32 __opvul5;
+    ptr ctxData;       // Audio context data, depends on type
+}
+
 dll raylib function InitWindow(int width, int height, string title);
 dll raylib function CloseWindow();
 dll raylib function WindowShouldClose() : boolean;
@@ -149,7 +192,7 @@ dll raylib function LoadTexture(string fileName) : raylib_Texture2D;
 dll raylib function UnloadTexture(raylib_Texture2D texture2d);
 dll raylib function DrawTexture(raylib_Texture2D texture2d, int posX, int posY, u32 tint);
 dll raylib function DrawTexturePro(raylib_Texture2D texture2d, raylib_Rectangle source, raylib_Rectangle dest, raylib_Vector2 origin, float rotation, u32 tint);
-dll raylib function DrawTextureRec(raylib_Texture2D texture2d, ptr rectangleSrc, ptr vectorPosition, u32 tint);
+dll raylib function DrawTextureRec(raylib_Texture2D texture2d, raylib_Rectangle source, raylib_Vector2 position, u32 tint);
 dll raylib function GetMousePosition() : raylib_Vector2;
 
 dll raylib function GetCurrentMonitor() : int;
@@ -171,7 +214,7 @@ dll raylib function IsWindowReady() : bool;
 
 dll raylib function ToggleFullscreen();
 dll raylib function UpdateTexture(raylib_Texture2D texture, ptr pixels);
-dll raylib function LoadTextureFromImage(ptr image) : raylib_Texture2D;
+dll raylib function LoadTextureFromImage(raylib_Image image) : raylib_Texture2D;
 dll raylib function LoadRenderTexture(int width, int height) : raylib_RenderTexture;
 
 dll raylib function BeginTextureMode(raylib_RenderTexture target);
@@ -184,3 +227,20 @@ dll raylib function GetCharPressed() : u32;
 
 dll raylib function DrawFPS(int posX, int posY);
 dll raylib function ClearWindowState(u32 flags);
+
+dll raylib function LoadWave(string fileName) : raylib_Wave;
+dll raylib function LoadSoundFromWave(raylib_Wave wave) : raylib_Sound;
+dll raylib function UnloadWave(raylib_Wave wave);
+dll raylib function UnloadSound(raylib_Sound sound);
+dll raylib function PlaySound(raylib_Sound sound);
+dll raylib function InitAudioDevice();
+dll raylib function CloseAudioDevice();
+dll raylib function SetMasterVolume(f32 volume);
+dll raylib function SetSoundVolume(raylib_Sound sound, f32 volume);
+
+dll raylib function LoadMusicStream(string fileName) : raylib_Music;
+dll raylib function PlayMusicStream(raylib_Music music);
+dll raylib function UnloadMusicStream(raylib_Music music);
+dll raylib function IsMusicStreamPlaying(raylib_Music music) : bool;
+dll raylib function UpdateMusicStream(raylib_Music music);
+dll raylib function StopMusicStream(raylib_Music music);

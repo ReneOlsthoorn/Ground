@@ -83,6 +83,7 @@ assert(u8d[56,31] == *(u8p+2048-8));
 assert(*(u8p+2048-8) == 0x53);
 
 
+
 // You can define an array without size specification, but then an initialize is necessary.
 int[] array = [ 1, 2, 4, 8, 16, 0x10000ffff ];
 assert(array[4] == 16);
@@ -594,8 +595,11 @@ assert(tmp23.tmp == "Rene2Olsthoorn");
 tmp23.setStr();
 assert(tmp23.tmp == "ReneOlsthoorn");
 
-float f23 = GC_Float_Infinity;
-string f23str = f23;
-assert(f23str == "1.#INF000000");
+
+if (gc.windows) {
+    float f23 = GC_Float_Infinity;
+    string f23str = f23;
+    assert(f23str == "1.#INF000000");
+}
 
 println("SUCCESS: unittests were completed with SUCCESS.");

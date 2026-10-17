@@ -13,6 +13,7 @@ section '.text' executable
 include 'Include\raylib_extrn.inc'
 
 public main
+include 'Include/clib_extrn.inc'
 
 main:
   push	rbp

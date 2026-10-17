@@ -1,14 +1,13 @@
 
-
 #template raylib
 //#template console
 #include graphics_defines1280x720.g
-#include msvcrt.g
-#include kernel32.g
-#library user32 user32.dll
-#library raylib raylib.dll
-#library soloud soloud_x64.dll
-#library mikmod libmikmod-3.dll
+#library raylib raylib.dll raylib
+
+#linux   #include clib.g
+#linux   #dllalias cruntime clib
+#windows #include msvcrt.g
+#windows #dllalias cruntime msvcrt
 
 
 class ScrollCharacter {
@@ -54,7 +53,7 @@ Groet, Rene Olsthoorn.                        `;
 
 function GetNewScrollLetter() : u8 {
 	u8 c = scrollText[scrollTextNeedle];
-    c = msvcrt.tolower(c);
+    c = cruntime.tolower(c);
 	scrollTextNeedle++;
 	if (scrollText[scrollTextNeedle] == 0)
 		scrollTextNeedle = 0;
@@ -63,8 +62,8 @@ function GetNewScrollLetter() : u8 {
 
 
 /*   Precalculation   */
-int* fontXOffsets = msvcrt.calloc(sizeof(int), 256);
-int* fontYOffsets = msvcrt.calloc(sizeof(int), 256);
+int* fontXOffsets = cruntime.calloc(sizeof(int), 256);
+int* fontYOffsets = cruntime.calloc(sizeof(int), 256);
 function setupFontOffsetsLine(string fontString, int offsetY) {
 	for (i in 0..7) {
 		fontXOffsets[fontString[i]] = i * 40;
@@ -290,41 +289,31 @@ for (i in 0 ..< NR_LETTERS) {
 }
 
 
-// Loading sounds...
-ptr soloudObject = soloud.Soloud_create();
-int soloudResult = soloud.Soloud_init(soloudObject);
-if (soloudResult != 0) return;
-ptr explosionSfxr = soloud.Sfxr_create();
-int sfxrLoaded = soloud.Sfxr_loadParams(explosionSfxr, "sound/sfxr/explosion.sfs");
-if (sfxrLoaded != 0) return;
-soloud.Sfxr_setVolume(explosionSfxr, 0.5f);
+raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tempo Typen");
+raylib.SetTargetFPS(60);
 
-function playExplosion() { soloud.Soloud_play(soloudObject, explosionSfxr); }
+
+// Loading sounds...
+
+raylib.InitAudioDevice();
+//raylib.SetMasterVolume(0.2f);
+raylib_Wave wave = raylib.LoadWave("sound/sfxr/explosion.wav");
+raylib_Sound sound = raylib.LoadSoundFromWave(wave);
+raylib.SetSoundVolume(sound, 0.5f);
+
+function playExplosion() { raylib.PlaySound(sound); }
 
 function deleteSoundObjects() {
-	soloud.Sfxr_destroy(explosionSfxr);
-	soloud.Soloud_deinit(soloudObject);
-	soloud.Soloud_destroy(soloudObject);
+    raylib.UnloadSound(sound);
+    raylib.UnloadWave(wave);
+    raylib.CloseAudioDevice();
 }
 
-
-
-ptr processHandle = kernel32.GetCurrentProcess();
-int oldPriorityClass = kernel32.GetPriorityClass(processHandle);
-kernel32.SetPriorityClass(processHandle, KERNEL32_HIGH_PRIORITY_CLASS);
-ptr thread1Handle = kernel32.GetCurrentThread();
-int oldThread1Prio = kernel32.GetThreadPriority(thread1Handle);
-kernel32.SetThreadPriority(thread1Handle, g.kernel32_THREAD_PRIORITY_TIME_CRITICAL);  // Realtime priority gives us the best chance for 60hz screenrefresh.
-
-raylib.SetConfigFlags(CONFIG_FLAG_VSYNC_HINT);
-//raylib.ClearWindowState(CONFIG_FLAG_VSYNC_HINT); 
-raylib.InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Tempo Typen");      //raylib.SetConfigFlags(CONFIG_FLAG_WINDOW_UNDECORATED or CONFIG_FLAG_WINDOW_MAXIMIZED);    //raylib.InitWindow(0, 0, "-");
-raylib.SetTargetFPS(0);   // turn off 60herz, because it is a sleep-loop. I rely on vsync which is smoother.
 
 f32 screenWidth = raylib.GetScreenWidth();
 f32 screenHeight = raylib.GetScreenHeight();
 
-raylib_Texture2D fontTexture = raylib.LoadTexture(GC_CurrentExeDir + "image/thefont_rgba_outline.png");
+raylib_Texture2D fontTexture = raylib.LoadTexture(GC_CurrentExeDir + "/image/thefont_rgba_outline.png");
 f32[2] screenTextureResolution = [ screenWidth, screenHeight ];
 
 f32[16] iPoints = [ 
@@ -333,7 +322,7 @@ f32[16] iPoints = [
 0.5f, 0.6f,
 0.7f, 0.8f ];
 
-ptr shader = raylib.LoadShaderFromMemory(vertexShader, fragmentShader);
+raylib_Shader shader = raylib.LoadShaderFromMemory(vertexShader, fragmentShader);
 int resolutionLocation = raylib.GetShaderLocation(shader, "iResolution");
 int timeLocation = raylib.GetShaderLocation(shader, "iTime");
 int iPointsLocation = raylib.GetShaderLocation(shader, "iPoints");
@@ -358,11 +347,12 @@ int mostRightIndex;
 f32[2] explosionArray = [ 0.0f, 0.0f ];
 f32 explosionTime = 0.0f;
 
-#include soundtracker_mikmod.g
-SoundtrackerInit("sound/mod/back on earth.mod", 50);
+raylib_Music music = raylib.LoadMusicStream("sound/mod/back on earth.mod");
+music.looping = false;
+raylib.PlayMusicStream(music);
 
 while (!raylib.WindowShouldClose()) {
-	SoundtrackerUpdate();
+	raylib.UpdateMusicStream(music);
 
     f32 t = raylib.GetTime();
     raylib.SetShaderValue(shader, timeLocation, &t, SHADER_UNIFORM_FLOAT);
@@ -396,7 +386,8 @@ while (!raylib.WindowShouldClose()) {
                 mostRightX = sc.position.x;
                 mostRightIndex = i;
             }
-            raylib.DrawTextureRec(fontTexture,  &letterRect, sc[0].position, COLOR_WHITE);
+
+            raylib.DrawTextureRec(fontTexture, letterRect, sc[0].position, COLOR_WHITE);
         }
     }
 
@@ -463,7 +454,7 @@ while (!raylib.WindowShouldClose()) {
     raylib.EndDrawing();
 
     int theKey = raylib.GetCharPressed();
-    theKey = msvcrt.tolower(theKey);
+    theKey = cruntime.tolower(theKey);
     sc = &scrollChars[0];
     if (theKey == sc.theChar) {
         sc.visible = false;
@@ -475,14 +466,11 @@ while (!raylib.WindowShouldClose()) {
 }
 raylib.UnloadShader(shader);
 raylib.CloseWindow();
-SoundtrackerFree();
+raylib.UnloadMusicStream(music);
 deleteSoundObjects();
 
 function FreeMemory() {
-	msvcrt.free(fontXOffsets);
-	msvcrt.free(fontYOffsets);
+	cruntime.free(fontXOffsets);
+	cruntime.free(fontYOffsets);
 }
 FreeMemory();
-
-kernel32.SetThreadPriority(thread1Handle, oldThread1Prio);  // Priority of the thread back to the old value.
-kernel32.SetPriorityClass(processHandle, oldPriorityClass);

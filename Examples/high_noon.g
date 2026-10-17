@@ -38,7 +38,8 @@ string gameStatus = "game running";    // "intro screen", "game running", "game 
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
 ptr window = sdl3.SDL_CreateWindow("High Noon", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, null);
+#windows  ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+#linux    ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 sdl3.SDL_HideCursor();
 

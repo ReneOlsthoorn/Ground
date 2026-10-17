@@ -4,3 +4,4 @@ extrn sin
 extrn malloc
 extrn calloc
 extrn free
+extrn tolower

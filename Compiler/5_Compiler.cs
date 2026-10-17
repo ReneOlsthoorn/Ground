@@ -616,7 +616,7 @@ namespace GroundCompiler
         }
 
 
-        // The X64 ABI wants the 
+        // The X64 ABI doesn't want a pointer if the struct can be compressed to an 8 byte value.
         private void EmitCompressedParameters(Expression? arg, Scope? scope)
         {
             if (arg is Variable argVariable && argVariable.ExprType.Contains(Datatype.TypeEnum.CustomClass) && arg.ExprType.SizeInBytes <= 8)
@@ -632,6 +632,9 @@ namespace GroundCompiler
                         //ieder element van de class gaat naar de stack
                     }
                 }
+            } else if (arg.ExprType.Contains(Datatype.TypeEnum.CustomClass) && arg.ExprType.SizeInBytes <= 8)
+            {
+                    emitter.Codeline("mov   rax, [rax]");
             }
         }
 
@@ -942,12 +945,12 @@ namespace GroundCompiler
             {
                 var arg = expr.ArgumentNodes[i];
                 EmitExpression(arg);
+               
+                FunctionParameter fPar = fPars[i];
+                EmitConversionCompatibleType(arg, fPar.TheType);
 
                 if (dllFunctionSymbol != null && !session.CompileForLinux)
                     EmitCompressedParameters(arg, scope);
-                
-                FunctionParameter fPar = fPars[i];
-                EmitConversionCompatibleType(arg, fPar.TheType);
 
                 if (isLinuxDllCall)
                 {
