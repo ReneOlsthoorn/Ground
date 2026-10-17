@@ -244,3 +244,5 @@ dll raylib function UnloadMusicStream(raylib_Music music);
 dll raylib function IsMusicStreamPlaying(raylib_Music music) : bool;
 dll raylib function UpdateMusicStream(raylib_Music music);
 dll raylib function StopMusicStream(raylib_Music music);
+
+dll raylib function TraceLog(int logLevel, string text);
