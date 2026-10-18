@@ -44,7 +44,7 @@ namespace GroundCompiler
 
             // Read the codetemplate
             string linuxExtension = this.session.CompileForLinux ? "_linux" : "";
-            string tmpl = File.ReadAllText($"Templates/{this.CodeTemplateName + linuxExtension}.fasm");
+            string tmpl = File.ReadAllText($"Templates/{this.CodeTemplateName + linuxExtension}.asm");
 
             // Fill in the blocks in the template
             tmpl = tmpl.Replace(";GC_INSERTIONPOINT_EQUATES", string.Join("", emitter.GeneratedCode_Equates));

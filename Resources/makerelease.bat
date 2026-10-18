@@ -8,7 +8,6 @@ del /Q /F load.bat
 del /Q /F raylib-6.0.zip
 del /Q /F SDL3_image-win32-x64.zip
 del /Q /F SDL3-win32-x64.zip
-del /Q /F soloud.zip
 del /Q /F stockfish-windows-x86-64-avx2.zip
 del /Q /F zstd.exe
 del /Q /F zstd-win64.zip
@@ -41,6 +40,7 @@ call :compileExample raylib_fireball
 call :compileExample raylib_intercircles
 call :compileExample raylib_intro
 call :compileExample raylib_loga
+call :compileExample raylib_octahedralis
 call :compileExample raylib_plasma
 call :compileExample raylib_quantum
 call :compileExample raylib_rubbercube

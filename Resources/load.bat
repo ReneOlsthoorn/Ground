@@ -110,19 +110,6 @@ rmdir /s /q libcglm
 del /Q /F libcglm.tar
 
 
-rem  *** soloud_x64.dll ***  Needed to play Sound effects
-rem set THEFILE="soloud.zip"
-rem if exist %THEFILE% (
-rem   echo File %THEFILE% already exists. Skipping download.
-rem ) else (
-rem   echo Downloading %THEFILE%...
-rem   curl -L -o %THEFILE% "https://solhsa.com/soloud/soloud_20200207.zip"
-rem )
-rem tar -xf %THEFILE%
-rem move soloud20200207\bin\soloud_x64.dll .
-rem rmdir /s /q soloud20200207
-
-
 rem  *** stockfish-windows-x86-64-avx2.exe ***  This is the worlds best Chess engine.
 set THEFILE="stockfish-windows-x86-64-avx2.zip"
 if exist %THEFILE% (

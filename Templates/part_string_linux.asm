@@ -5,7 +5,9 @@ AddCombinedStrings:
 ;       rdx = ptr to second string
 ;       rax = ptr to result string being max. 256 bytes. That is 255 chars and 1 ending zero.
 ;OUTPUT:rax = ptr to result string
-  push	r8 r9 rax
+  push	r8
+  push  r9
+  push  rax
   mov	r8, rax 
   xor	r9, r9
 .loopFirst:
@@ -32,7 +34,9 @@ AddCombinedStrings:
   xor	eax, eax
   mov	[r8+r9], al
 .exit:
-  pop	rax r9 r8
+  pop	rax
+  pop   r9
+  pop   r8
   ret
 
 
@@ -40,21 +44,23 @@ PrintNumber:
   push	rbp					; win32 16-byte stack alignment
   mov	rbp, rsp
   sub	rsp, 0x10			; the 16 byte alignment forces us to reserve a full 16 bytes for the needed 2 bytes.
-  push	rdx r8
+  push	rdx
+  push  r8
   cdq						; sign extend eax into edx. edx:eax = number
   idiv	rcx					; rax = quotient, rdx = remainder
   test	eax, eax			; Is quotient zero?
-  je	@F					; yes, don't display it
+  je	.no_display			; yes, don't display it
   call	PrintNumber			; Display the quotient
-@@:
+.no_display:
   lea	r8d, [edx+'0']
   lea	rax, [rbp - 0x10]
   mov	[rax], r8b
   mov	byte [rax+1], 0		; zero-terminated
-if defined PrintScreenString
+%ifdef PrintScreenString
   call	PrintScreenString	; Display the remainder
-end if
-  pop	r8 rdx
+%endif
+  pop	r8
+  pop   rdx
   mov	rsp, rbp
   pop	rbp
   ret
@@ -64,7 +70,11 @@ IntegerToString:
 ; rax = int value to convert
 ; rcx = the buffer to store the result
 ;RESULT: rcx buffer is filled
-  push	rcx rdi rbx r14 r15     ; win32 stack 16-byte alignment
+  push	rcx
+  push  rdi
+  push  rbx
+  push  r14
+  push  r15     ; win32 stack 16-byte alignment
   mov	rdi, rcx
   cld
   test	rax, rax
@@ -106,10 +116,14 @@ IntegerToString:
   xor	eax, eax		; store the string terminating zero byte
   stosb
   mov	rax, r8
-  pop	r15 r14 rbx rdi rcx
+  pop	r15
+  pop   r14
+  pop   rbx
+  pop   rdi
+  pop   rcx
   ret
 
-extrn sprintf
+extern sprintf
 
 ;the %f only prints 64-bit floats, so convert f32 to f64 before using this function.
 ;rcx = the buffer to store the result
@@ -120,7 +134,13 @@ FloatToString:
   sub   rsp, 10h
   mov   [rbp-8h], rcx    ; the buffer to store
   
-  push  rcx rsi rdi  
+  push  rcx
+  push  rsi
+  test	eax, eax			; Is quotient zero?
+  je	.no_display2		; yes, don't display it
+  call	PrintNumber			; Display the quotient
+.no_display2:
+  push  rdi
   mov   eax, 1          ; 1 argument
   ; xmm0 = float argument
   lea   rdi, [tmpCharSpace]             ;   rdi = buffer
@@ -136,14 +156,18 @@ FloatToString:
   cld
   rep	movsb			; copy string
   
-  pop   rdi rsi rcx
+  pop   rdi
+  pop   rsi
+  pop   rcx
   mov   rsp, rbp
   pop   rbp
   ret
 
 
 FloatToString_other:
-    push rsi rdi rcx
+    push rsi
+    push rdi
+    push rcx
     
     ;   xmm0 = float argument
     lea     rdi, [tmpCharSpace]             ;   rdi = buffer
@@ -165,7 +189,9 @@ FloatToString_other:
     cld
     rep     movsb
 
-    pop rcx rdi rsi
+    pop rcx
+    pop rdi
+    pop rsi
     ret
     
 
@@ -199,7 +225,8 @@ StringLength:
 CopyString:
 ; rax = source
 ; rcx = destination
-  push	rsi rdi
+  push	rsi
+  push  rdi
   mov	rsi, rax
   mov	rdi, rcx
   mov	rcx, 255
@@ -213,6 +240,7 @@ CopyString:
   mov	al,0
   stosb
 .done:
-  pop	rdi rsi
+  pop	rdi
+  pop   rsi
   ret
 

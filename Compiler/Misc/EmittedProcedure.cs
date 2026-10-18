@@ -42,7 +42,7 @@ namespace GroundCompiler
 
                     var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, varSymbol.Name);
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
-                    Emitter.Writeline($"{varSymbol.Name}@{ProcedureName} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+                    Emitter.WriteDefine($"{varSymbol.Name}@{ProcedureName}", $"rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }
                 else if (varSymbol.DataType.Types.Contains(Datatype.TypeEnum.String))
                 {
@@ -62,9 +62,9 @@ namespace GroundCompiler
                     Emitter.Writeline($"{theName} equ {negativeOffset}");
 
                     if (varSymbol.Properties.ContainsKey("asm array"))
-                        Emitter.Writeline($"{varSymbol.Name}@{humanReadableProcNamePlusClass} equ {TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
+                        Emitter.WriteDefine($"{varSymbol.Name}@{humanReadableProcNamePlusClass}", $"{TypeChecker.GenerationLabelForAsmArray(varSymbol.Name)}");
                     else
-                        Emitter.Writeline($"{varSymbol.Name}@{humanReadableProcNamePlusClass} equ rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
+                        Emitter.WriteDefine($"{varSymbol.Name}@{humanReadableProcNamePlusClass}", $"rbp-{negativeOffset}");    // negative from RBP, because the variables are stored in the procedure frame, so below RBP
                 }
             }
 
@@ -72,7 +72,7 @@ namespace GroundCompiler
             {
                 negativeOffset += 8;
                 var theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg);
-                Emitter.Writeline($"_register_{theName} equ rbp-{negativeOffset}");
+                Emitter.WriteDefine($"_register_{theName}", $"rbp-{negativeOffset}");
             }
 
             StackSpaceToReserve = (negativeOffset + 15) & ~15;  // take care of a 16 byte stack alignment;
@@ -99,8 +99,8 @@ namespace GroundCompiler
             {
                 theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName());
                 // the 16 bytes are for: push rbp(at position rbp) and call return address(at postition rbp+8).
-                Emitter.Writeline($"{theName} equ G_PARAMETER{counter}");
-                Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName())} equ rbp+G_PARAMETER{counter}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
+                Emitter.WriteDefine($"{theName}", $"G_PARAMETER{counter}");
+                Emitter.WriteDefine($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, par.Name, GetGroupOrClassName())}", $"rbp+G_PARAMETER{counter}");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
                 counter++;
             }
 
@@ -111,8 +111,8 @@ namespace GroundCompiler
             */
 
             theName = Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName());
-            Emitter.Writeline($"{theName} equ G_PARAMETER_THIS");
-            Emitter.Writeline($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())} equ rbp+G_PARAMETER_THIS");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
+            Emitter.WriteDefine($"{theName}", $"G_PARAMETER_THIS");
+            Emitter.WriteDefine($"{Emitter.UserfriendlyVariableNameForFunctionParameter(ProcedureName, "this", GetGroupOrClassName())}", $"rbp+G_PARAMETER_THIS");   // positive from RBP, because the parameters are put on the stack before the procedure frame is created.
         }
 
 

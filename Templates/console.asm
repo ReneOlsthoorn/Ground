@@ -1,10 +1,9 @@
-format pe64 GUI 5.0
+format pe64 console
 entry start
-stack 80000h, 80000h
+stack 80000h, 80000h      ; reserve 512k stack virtual space, allocate 512k at startup. So 512k stack is available.
 
 include 'fasm\win64a.inc'
-include 'Include\raylib.inc'
-include 'Templates\part_equates.fasm'
+include 'Templates\part_equates.asm'
 gc_linux equ 0
 gc_windows equ 1
 
@@ -16,6 +15,12 @@ start:
   push	rbp
   mov	rbp, rsp
   mov   [main_rbp], rbp
+
+  invoke kernel32_GetStdHandle, STD_OUTPUT_HANDLE
+  mov	[GetStdHandle_outputhandle], rax
+
+  invoke kernel32_GetStdHandle, STD_INPUT_HANDLE
+  mov	[GetStdHandle_inputhandle], rax
 
   invoke kernel32_GetProcessHeap
   mov	[processHeapHandle], rax
@@ -36,12 +41,12 @@ start:
   jnz   .currentExeDirloop
   mov   byte [r8], 0
 .currentExeDirExitloop:
+  mov   byte [r8+rcx], 0
 
 
 ; *** GENERATED MAIN CODE ***
 ;GC_INSERTIONPOINT_MAIN
 ; *** END MAIN CODE ***
-
 
 assert_exitpoint:
   mov	rsp, rbp
@@ -55,26 +60,29 @@ assert_exitpoint:
 ; *** END PROCEDURES ***
 
 
-include 'Templates\part_string.fasm'
-include 'Templates\part_utils.fasm'
-include 'Templates\part_hardcoded_library.fasm'
+PrintScreenString:
+;input rax: pointer to string
+  push	r8 r9 rcx       ; fastcall 16-byte stack alignment
+  mov	r8, rax
+  mov	rcx, rax
+  call	StringLength
+  mov	r9, rax
+  invoke kernel32_WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
+  pop   rcx r9 r8
+  ret
 
+ReadChar:
+  push	rbp             ; fastcall 16-byte stack alignment
+  lea	rax, [tmpCharSpace]
+  mov	r8, 1
+  invoke kernel32_ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
+  pop	rbp
+  ret
 
-color@_f_GC_ClearScreenPixels equ rbp+G_PARAMETER1
-_f_GC_ClearScreenPixels:
-  push  rbp
-  mov   rbp, rsp
-  mov	rcx, GC_SCREEN_WIDTH * GC_SCREEN_HEIGHT
-  mov	rdx, [pixels_p]
-  mov	rax, qword [color@_f_GC_ClearScreenPixels]
-  push	rdi
-  mov	rdi, rdx
-  cld
-  rep	stosd
-  pop   rdi
-  mov   rsp, rbp
-  pop   rbp
-  retn  G_STACKSPACE_1_PARAM
+include 'Templates\part_string.asm'
+include 'Templates\part_utils.asm'
+include 'Templates\part_hardcoded_library.asm'
+
 
 
 section '.idata' import data readable writeable
@@ -82,10 +90,10 @@ section '.idata' import data readable writeable
 ;GC_INSERTIONPOINT_LIBRARIES
           msvcrt, 'msvcrt.dll'
 
-
   include 'Include\kernel32_api.inc'
   include 'Include\msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
+
 
 
 section '.data' data readable writeable
@@ -95,15 +103,17 @@ Negation_XMM32          db 0,0,0,80h,0,0,0,0
                         db 0,0,0,80h,0,0,0,0
 main_rbp                dq 0
 processHeapHandle		dq 0
+GetStdHandle_outputhandle dq 0
+GetStdHandle_inputhandle  dq 0
+
 currentExeDirChars      db 256 dup(0)
-tmpCharSpace            db 256 dup(0)	; needed for some hardcoded_library functions
+cwdChars                db 256 dup(0)
+tmpCharSpace            db 256 dup(0)
 
 align 8
+
 ResultBytesWritten      dq 0
 ResultBytesRead         dq 0
-LockObject64            dq 0
-pixels_p				dq 0
-
 scanf_int_result        dq 0
 scanf_int_read          db '%d',0
 scanf_string_read       db '%s',0

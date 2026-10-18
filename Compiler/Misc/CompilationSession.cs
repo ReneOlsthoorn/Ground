@@ -83,5 +83,6 @@ namespace GroundCompiler
         public string SourceCode { get { return SourcecodePackStack.Peek().SourceCode; } }
         public int Needle { get { return SourcecodePackStack.Peek().Needle; } }
         public LineCounter LineCounter { get { return SourcecodePackStack.Peek().LineCounter; } }
+        public bool CompileForNASM() => this.CompileForLinux;
     }
 }

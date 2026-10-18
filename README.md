@@ -8,13 +8,14 @@ Ground has constructs like `class` and `function`, statements like `if`, `for` a
 like `int`, `float`, `byte`, `string` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/).  
+written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/) on Windows 
+and [NASM](https://www.nasm.us/) on Linux.  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small executable 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
 template is the `raylib` template which you can use to execute GPU code. Ofcourse you can create your own template.  
   
-The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k on Windows.  
+The `hello-world.g` is 43 bytes, the generated `hello-world.exe` is 4k on Windows and 21k on Linux.  
 Ground .EXE files on Windows will be small because most external code is loaded at load-time. The usage of the known 
 system DLLs, like `ucrtbase` or `msvcrt`, is promoted. No Visual C++ redistributable installations are needed.  
 Several game examples are included with Ground, like racer.g:
@@ -65,7 +66,7 @@ the game Bertus should compile and run.
 
 ### How to run Ground on Linux / Manjaro
 Ground needs several libraries and packages. The following packages need to be installed on Manjaro:
-* sudo pacman -S fasm
+* sudo pacman -S nasm
 * other needed libraries are: dotnet-sdk, base-devel, sdl3_image, sdl3_mixer, raylib
 
 The `Examples` folder contains the programs that work both Windows and Linux. A good IDE to use for compiling and 
@@ -528,8 +529,8 @@ to upgrade. We were truly blessed with this plaform and it's domination for the 
 However, it seems that the good times have ended!
 
 ### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud OS
-At this moment in 2026, several users are moving to Linux because Windows 11 collects personal data and sends 
-it to the cloud. I'm referring to issues with Microsoft Edge, Copilot and Recall.  
+In 2026, several users were moving to Linux because Windows 11 collects personal data and sends it to the cloud. 
+I'm referring to issues with Microsoft Edge, Copilot and Recall.  
 You can use a third-party tool as such as [O&O ShutUp10++](https://www.oo-software.com/en/shutup10) to disable Copilot 
 and Recall. However, with each new update, the settings can be turned on again. The whole situation is a shame, 
 because Windows has such a great history. Users don't want to fight their OS.  
@@ -553,10 +554,14 @@ If we are not careful, in the future we will no longer own our own computing pow
 Many users want their freedom back and are looking at Linux. Most definately the users that don't have the required 
 TPM 2.0 that Windows 11 requires will be looking for a new OS.
 
-### The Move to Manjaro / Linux
+### My move to Linux / Manjaro
 If you read this document, you'll notice that I'm grateful for the past of Windows, but was highly frustrated by its state 
-in 2026. As a result, in July 2026 I gave Linux a try, and it is very nice. At this moment I use Manjaro, a stable OS that
-is able to run Steam. It is derived from Arch which offers rolling releases.
+in 2026. As a result, in July 2026 I gave Linux a try and it exceeded my expectations. At this moment I use Manjaro, a stable 
+OS that is able to run Steam. It is derived from Arch which offers rolling releases.
+
+### Move to NASM on Linux
+The original FASM that Ground uses, FASM 1, won't get support for APX (Advanced Performance Extensions). So Ground now uses
+NASM 3 on Linux that already has APX implemented in it.
 
 ### Smoothscroller
 <p align="center">
@@ -722,4 +727,4 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.08: Support for Linux added. Started implementation of the System V AMD64 ABI.  
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod.
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
-2026.10: Continued to work on the system v amd64 abi.  
+2026.10: Continued to work on the system v amd64 abi. Move to NASM for Linux. Removed Soloud (Problems on Linux).  

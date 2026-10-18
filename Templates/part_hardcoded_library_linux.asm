@@ -4,8 +4,8 @@
 ; Volatile registers: rax, rcx, rdx, r8-r11.  Other registers rbx, rsi, rdi, rbp, rsp, r12-r15 must be restored when returning.
 ; Extra storage in function?  push rbp;  mov rbp, rsp;  sub rsp, 8h;  mov [rbp-8h], rcx;  ...   mov rsp, rbp;  pop rbp;  ret;
 
-value@_f_BitValue@gc equ rbp+G_PARAMETER1
-bitnr@_f_BitValue@gc equ rbp+G_PARAMETER2
+%define value@_f_BitValue@gc rbp+G_PARAMETER1
+%define bitnr@_f_BitValue@gc rbp+G_PARAMETER2
 _f_BitValue@gc:
   push  rbp
   mov   rbp, rsp
@@ -18,7 +18,7 @@ _f_BitValue@gc:
   ret   G_STACKSPACE_2_PARAM
 
 
-extrn scanf
+extern scanf
 
 
 _f_input_int@gc:
@@ -104,7 +104,10 @@ _f_cstr_convert@gc:
   mov   rbp, rsp
   sub	rsp, 256
   lea	rax, [rsp]
-  push  rax rsi rdi rcx
+  push  rax
+  push  rsi
+  push  rdi
+  push  rcx
 
   mov	rdi, rax
 
@@ -115,7 +118,10 @@ _f_cstr_convert@gc:
   rep	movsb			; copy string 1
   mov	byte [rdi], 0
 
-  pop   rcx rdi rsi rax
+  pop   rcx
+  pop   rdi
+  pop   rsi
+  pop   rax
   mov   rsp, rbp
   pop   rbp
   ret   G_STACKSPACE_2_PARAM
@@ -125,13 +131,13 @@ _f_println:
   push  rbp
   mov   rbp, rsp
   mov   rax, qword [rbp+G_PARAMETER1]
-if defined PrintScreenString
+%ifdef PrintScreenStringDefined
   call	PrintScreenString
-end if
+%endif
   lea	rax, [carriage_return_bytes]
-if defined PrintScreenString
+%ifdef PrintScreenStringDefined
   call	PrintScreenString
-end if
+%endif
   mov   rsp, rbp
   pop   rbp
   ret   G_STACKSPACE_1_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
@@ -141,9 +147,9 @@ _f_print:
   push  rbp
   mov   rbp, rsp
   mov   rax, qword [rbp+G_PARAMETER1]
-if defined PrintScreenString
+%ifdef PrintScreenStringDefined
   call	PrintScreenString
-end if
+%endif
   mov   rsp, rbp
   pop   rbp
   ret   G_STACKSPACE_1_PARAM
@@ -155,9 +161,9 @@ _f_colorprint:
   push	r8
   mov   rax, qword [rbp+G_PARAMETER2]
   mov   r8, qword [rbp+G_PARAMETER1]
-if defined PrintScreenColorString
+%ifdef PrintScreenColorString
   call	PrintScreenColorString
-end if
+%endif
   pop	r8
   mov   rsp, rbp
   pop   rbp
@@ -174,9 +180,9 @@ _f_assert:
   mov	rcx, 10
   call	PrintNumber
   lea	rax, [assert_errormessage]
-if defined PrintScreenString
+%ifdef PrintScreenStringDefined
   call	PrintScreenString
-end if
+%endif
   mov   rbp, [main_rbp]
   mov   rsp, [main_rbp]
   jmp	assert_exitpoint
@@ -186,7 +192,7 @@ end if
   ret   G_STACKSPACE_2_PARAM        ; 1 parameter will result in 32 bytes on the stack. 1=lexical parent, 2=class instance, 3=parameter1, 4=fastcall filler
 
 
-intvalue@_f_chr$ equ rbp+G_PARAMETER1
+%define intvalue@_f_chr$ rbp+G_PARAMETER1
 _f_chr$:
   push  rbp
   mov   rbp, rsp
@@ -200,7 +206,7 @@ _f_chr$:
   retn  G_STACKSPACE_1_PARAM
 
 
-value@_f_hex2$@gc equ rbp+G_PARAMETER1
+%define value@_f_hex2$@gc rbp+G_PARAMETER1
 _f_hex2$@gc:
   push  rbp
   mov   rbp, rsp
@@ -208,7 +214,8 @@ _f_hex2$@gc:
   lea	rax, [rsp]
   mov	rcx, rax
 
-  push	rdx r8
+  push	rdx
+  push  r8
   mov   r8, qword [value@_f_hex2$@gc]
 
   mov	dl, r8b
@@ -232,7 +239,8 @@ _f_hex2$@gc:
   mov   byte [rax], dh
   mov   byte [rax+1], dl
   mov   byte [rax+2], 0
-  pop	r8 rdx
+  pop	r8
+  pop   rdx
 
   mov   rax, rcx
   mov   rsp, rbp
@@ -254,7 +262,9 @@ _f_hex$@gc:
   lea	rax, [rsp]	; This is now the string pointer
   mov	rcx, rax
 
-  push  rcx rdx rdi
+  push  rcx
+  push  rdx
+  push  rdi
 
   mov   rcx, qword [rbp+G_PARAMETER2]
   lea   rdi, [rax+rcx]
@@ -274,7 +284,9 @@ _f_hex$@gc:
   shr   rax, 4				; bring next nibble to lowest position
   loop	.convert_loop
 
-  pop	rdi rdx rcx
+  pop	rdi
+  pop   rdx
+  pop   rcx
 
   mov   rax, rcx
   mov   rsp, rbp
@@ -282,11 +294,15 @@ _f_hex$@gc:
   retn  G_STACKSPACE_2_PARAM
 
 
-filename@_f_ReadAllText@gc equ rbp+G_PARAMETER1
+%define filename@_f_ReadAllText@gc rbp+G_PARAMETER1
 _f_ReadAllText@gc:
   push  rbp
   mov   rbp, rsp
-  push  r11 r12 r13 r14 r15
+  push  r11
+  push  r12
+  push  r13
+  push  r14
+  push  r15
   mov   rax, qword [filename@_f_ReadAllText@gc]
   mov   rcx, rax
   lea   rdx, [readalltext_openmode]
@@ -331,13 +347,17 @@ _f_ReadAllText@gc:
   add   rsp, 50h
   mov   rax, r15
 
-  pop   r15 r14 r13 r12 r11
+  pop   r15
+  pop   r14
+  pop   r13
+  pop   r12
+  pop   r11
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_1_PARAM
 
 
-stream@_f_fgets@msvcrt equ rbp+G_PARAMETER1
+%define stream@_f_fgets@msvcrt rbp+G_PARAMETER1
 _f_fgets@msvcrt:
   push  rbp
   mov   rbp, rsp
@@ -352,13 +372,14 @@ _f_fgets@msvcrt:
   retn  G_STACKSPACE_1_PARAM
 
 
-dest@_f_fill@gc equ rbp+G_PARAMETER1
-size@_f_fill@gc equ rbp+G_PARAMETER2
-value@_f_fill@gc equ rbp+G_PARAMETER3
+%define dest@_f_fill@gc rbp+G_PARAMETER1
+%define size@_f_fill@gc rbp+G_PARAMETER2
+%define value@_f_fill@gc rbp+G_PARAMETER3
 _f_fill@gc:
   push  rbp
   mov   rbp, rsp
-  push	rdi rcx
+  push	rdi
+  push  rcx
 
   mov   rdi, qword [dest@_f_fill@gc]
   mov   rcx, qword [size@_f_fill@gc]
@@ -366,21 +387,27 @@ _f_fill@gc:
   cld
   rep stosb	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
 
-  pop	rcx rdi
+  pop	rcx
+  pop   rdi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_3_PARAM
 
 
-dest@_f_rectfill@gc equ rbp+G_PARAMETER1
-width@_f_rectfill@gc equ rbp+G_PARAMETER2
-height@_f_rectfill@gc equ rbp+G_PARAMETER3
-linesize@_f_rectfill@gc equ rbp+G_PARAMETER4
-value@_f_rectfill@gc equ rbp+G_PARAMETER5
+%define dest@_f_rectfill@gc rbp+G_PARAMETER1
+%define width@_f_rectfill@gc rbp+G_PARAMETER2
+%define height@_f_rectfill@gc rbp+G_PARAMETER3
+%define linesize@_f_rectfill@gc rbp+G_PARAMETER4
+%define value@_f_rectfill@gc rbp+G_PARAMETER5
 _f_rectfill@gc:
   push  rbp
   mov   rbp, rsp
-  push	r8 r9 r10 rdi rcx rdx
+  push	r8
+  push  r9
+  push  r10
+  push  rdi
+  push  rcx
+  push  rdx
   cld
 
   mov	r8, qword [height@_f_rectfill@gc]
@@ -400,7 +427,12 @@ _f_rectfill@gc:
   cmp	r11, r8
   jne	.loopNext
 
-  pop	rdx rcx rdi r10 r9 r8
+  pop	rdx
+  pop   rcx
+  pop   rdi
+  pop   r10
+  pop   r9
+  pop   r8
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_5_PARAM
@@ -419,13 +451,19 @@ _f_bswap32@gc:
 _f_copy@gc:
   push  rbp
   mov   rbp, rsp
-  push	rsi rdi rdx rcx
+  push	rsi
+  push  rdi
+  push  rdx
+  push  rcx
   mov	rsi, [rbp+G_PARAMETER1]
   mov	rdi, [rbp+G_PARAMETER2]
   mov	rcx, [rbp+G_PARAMETER3]
   cld
   rep movsb
-  pop	rcx rdx rdi rsi
+  pop	rcx
+  pop   rdx
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_3_PARAM
@@ -434,13 +472,15 @@ _f_copy@gc:
 _f_fill32@gc:
   push  rbp
   mov   rbp, rsp
-  push	rdi rcx
+  push	rdi
+  push  rcx
   mov   rdi, [rbp+G_PARAMETER1]
   mov   rcx, [rbp+G_PARAMETER2]
   mov   eax, [rbp+G_PARAMETER3]
   cld
   rep stosd	; please notice: a rep stosb is as fast as rep stosq since Haswell (4770). Rep movsb uses 256-bit operations internally.
-  pop	rcx rdi
+  pop	rcx
+  pop   rdi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_3_PARAM

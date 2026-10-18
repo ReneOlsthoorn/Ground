@@ -33,7 +33,7 @@ namespace GroundCompiler
                 int sizeOfVariable = varSymbol.DataType.SizeInBytes;
                 int sizeAddedForAlignment = this.ClassStatement.Align(sizeOfVariable, offset);
                 offset += sizeAddedForAlignment;
-                Emitter.Writeline($"{varSymbol.Name}@{ClassName} = {offset}");
+                Emitter.WriteEqu($"{varSymbol.Name}@{ClassName}", offset);
                 offset += sizeOfVariable;
             }
         }

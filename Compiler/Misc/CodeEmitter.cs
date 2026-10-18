@@ -23,13 +23,13 @@ namespace GroundCompiler
         public CodeEmitter(CPU_X86_64 cpu, Dictionary<string, Token>? preprocessorDefines = null, CompilationSession session = null)
         {
             this.cpu = cpu;
+            this.session = session;
             generatedCode = new List<string>();
             GeneratedCode_Equates = new List<string>();
             InsertPreprocessorDefines(preprocessorDefines);
             GeneratedCode_Main = new List<string>();
             GeneratedCode_Procedures = new List<string>();
             GeneratedCode_Data = new List<string>();
-            this.session = session;
         }
 
         public void CloseGeneratedCode_Main()
@@ -55,6 +55,20 @@ namespace GroundCompiler
         }
 
         public void Writeline(string text) { generatedCode.Add(text + "\r\n"); }
+        public void WriteDefine(string key, string value)
+        {
+            if (session.CompileForNASM())
+                Writeline($"%define {key} {value}");
+            else
+                Writeline($"{key} equ {value}");
+        }
+        public void WriteEqu(string key, long value)
+        {
+            if (session.CompileForNASM())
+                Writeline($"{key} equ {value}");
+            else
+                Writeline($"{key} = {value}");
+        }
         public void Codeline(string text) { Writeline($"  {text}"); }
         public string NewLabel() { return $"L{labelCounter++}"; }
 
@@ -578,14 +592,16 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
+        public string Octoword() => session.CompileForNASM() ? "oword" : "xword";
+
         public void Negation(Expression? expr = null)
         {
             if (expr != null && expr.ExprType.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 if (expr.ExprType.SizeInBytes == 8)
-                    Codeline($"xorps   xmm0, xword [Negation_XMM]");
+                    Codeline($"xorps   xmm0, {Octoword()} [Negation_XMM]");
                 if (expr.ExprType.SizeInBytes == 4)
-                    Codeline($"xorps   xmm0, xword [Negation_XMM32]");
+                    Codeline($"xorps   xmm0, {Octoword()} [Negation_XMM32]");
             }
             else 
                 Codeline($"neg   rax");
@@ -736,10 +752,12 @@ namespace GroundCompiler
             else if (datatype.Contains(Datatype.TypeEnum.String))
             {
                 //copy the string pointed in rax, to the [rbp-{variableName}]
-                Codeline($"push  rax rcx");
+                Codeline($"push  rax");
+                Codeline($"push  rcx");
                 Codeline($"lea   rcx, qword [rbp-{variableName}]");
                 Codeline($"call  CopyString");
-                Codeline($"pop   rcx rax");
+                Codeline($"pop   rcx");
+                Codeline($"pop   rax");
             }
             else
             {
@@ -764,10 +782,12 @@ namespace GroundCompiler
             else if (datatype.Contains(Datatype.TypeEnum.String))
             {
                 //copy the string pointed in rax, to the [rbp-{variableName}]
-                Codeline($"push  rax rcx");
+                Codeline($"push  rax");
+                Codeline($"push  rcx");
                 Codeline($"lea   rcx, qword [rcx-{variableName}]");
                 Codeline($"call  CopyString");
-                Codeline($"pop   rcx rax");
+                Codeline($"pop   rcx");
+                Codeline($"pop   rax");
             }
             else
                 Codeline($"mov   [rcx-{variableName}], rax");
@@ -784,10 +804,12 @@ namespace GroundCompiler
             else if (targetType.Contains(Datatype.TypeEnum.String))
             {
                 //copy the string pointed in rax, to the [rbp-{variableName}]
-                Codeline($"push  rax rcx");
+                Codeline($"push  rax");
+                Codeline($"push  rcx");
                 Codeline($"lea   rcx, qword [{reg}+{instVar}]");
                 Codeline($"call  CopyString");
-                Codeline($"pop   rcx rax");
+                Codeline($"pop   rcx");
+                Codeline($"pop   rax");
             }
             else
             {
@@ -954,10 +976,12 @@ namespace GroundCompiler
             if (targetType.Contains(Datatype.TypeEnum.String))
             {
                 // rax = source   rcx = destination
-                Codeline($"push  rax rcx");
+                Codeline($"push  rax");
+                Codeline($"push  rcx");
                 Codeline($"lea   rcx, qword [{baseReg}+{index}*{nrBytes}]");
                 Codeline($"call  CopyString");
-                Codeline($"pop   rcx rax");
+                Codeline($"pop   rcx");
+                Codeline($"pop   rax");
                 return;
             }
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -1087,7 +1111,15 @@ namespace GroundCompiler
                 if (preprocessorDefines[key]?.Datatype?.Contains(Datatype.TypeEnum.String) ?? false)
                     continue;
 
-                GeneratedCode_Equates.Add($"GC_{key}={preprocessorDefines[key].Lexeme}\r\n");
+                if (session.CompileForNASM())
+                {
+                    if (preprocessorDefines[key]?.Datatype?.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
+                        GeneratedCode_Equates.Add($"%define GC_{key} {preprocessorDefines[key].Lexeme}\r\n");
+                    else
+                        GeneratedCode_Equates.Add($"GC_{key} equ {preprocessorDefines[key].Lexeme}\r\n");
+                }
+                else
+                    GeneratedCode_Equates.Add($"GC_{key} = {preprocessorDefines[key].Lexeme}\r\n");
             }
         }
     }

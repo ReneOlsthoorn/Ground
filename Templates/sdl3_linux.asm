@@ -1,23 +1,21 @@
-format ELF64
 
-include 'Include\sdl3.inc'
-include 'Templates\part_equates.fasm'
+global main
+
+%include 'Include/sdl3_nasm.inc'
+%include 'Templates/part_equates.asm'
 gc_linux equ 1
 gc_windows equ 0
-
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES
 
-section '.text' executable
+%include 'Include/sdl3_extern.inc'
+%include 'Include/sdl3_image_extern.inc'
+%include 'Include/sdl3_mixer_extern.inc'
+%include 'Include/clib_extern.inc'
 
-include 'Include\sdl3_extrn.inc'
-include 'Include\sdl3_image_extrn.inc'
-include 'Include\sdl3_mixer_extrn.inc'
-include 'Include\clib_extrn.inc'
-
-public main
-
+section .text
+default rel
 main:
   push	rbp
   mov	rbp, rsp
@@ -47,16 +45,20 @@ assert_exitpoint:
 ; *** END PROCEDURES ***
 
 
-include 'Templates\part_string_linux.fasm'
-include 'Templates\part_utils.fasm'
-include 'Templates\part_hardcoded_library_linux.fasm'
+%include 'Templates/part_string_linux.asm'
+%include 'Templates/part_utils.asm'
+%include 'Templates/part_hardcoded_library_linux.asm'
 
 PlotSprite:
 ;rcx = source
 ;rdx = destination pixels
 ;r8  = width
 ;r9  = height
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -66,7 +68,7 @@ PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -77,19 +79,23 @@ PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   ret
 
 
-source@_f_PlotSprite equ rbp+G_PARAMETER1
-destination@_f_PlotSprite equ rbp+G_PARAMETER2
-width@_f_PlotSprite equ rbp+G_PARAMETER3
-height@_f_PlotSprite equ rbp+G_PARAMETER4
+%define source@_f_PlotSprite rbp+G_PARAMETER1
+%define destination@_f_PlotSprite rbp+G_PARAMETER2
+%define width@_f_PlotSprite rbp+G_PARAMETER3
+%define height@_f_PlotSprite rbp+G_PARAMETER4
 _f_PlotSprite:
 ;rcx = source
 ;rdx = destination pixels
@@ -101,7 +107,11 @@ _f_PlotSprite:
   mov   rdx, qword [destination@_f_PlotSprite]
   mov   r8, qword [width@_f_PlotSprite]
   mov   r9, qword [height@_f_PlotSprite]
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -111,7 +121,7 @@ _f_PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -122,22 +132,26 @@ _f_PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_4_PARAM
 
 
-source@_f_PlotSheetSprite equ rbp+G_PARAMETER1
-destination@_f_PlotSheetSprite equ rbp+G_PARAMETER2
-width@_f_PlotSheetSprite equ rbp+G_PARAMETER3
-height@_f_PlotSheetSprite equ rbp+G_PARAMETER4
-sheetwidth@_f_PlotSheetSprite equ rbp+G_PARAMETER5
+%define source@_f_PlotSheetSprite rbp+G_PARAMETER1
+%define destination@_f_PlotSheetSprite rbp+G_PARAMETER2
+%define width@_f_PlotSheetSprite rbp+G_PARAMETER3
+%define height@_f_PlotSheetSprite rbp+G_PARAMETER4
+%define sheetwidth@_f_PlotSheetSprite rbp+G_PARAMETER5
 _f_PlotSheetSprite:
 ;rcx = source
 ;rdx = destination pixels
@@ -150,7 +164,12 @@ _f_PlotSheetSprite:
   mov   rdx, qword [destination@_f_PlotSheetSprite]
   mov   r8, qword [width@_f_PlotSheetSprite]
   mov   r9, qword [height@_f_PlotSheetSprite]
-  push	rsi rdi r10 r15 r14 r13
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
+  push  r13
   mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
   shl	r13d, 2
 
@@ -163,7 +182,7 @@ _f_PlotSheetSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp2:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -174,17 +193,22 @@ _f_PlotSheetSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp2
   add	rsi, r13
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r13 r14 r15 r10 rdi rsi
+  pop	r13
+  pop   r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_5_PARAM
 
-color@_f_GC_ClearScreenPixels equ rbp+G_PARAMETER1
+%define color@_f_GC_ClearScreenPixels rbp+G_PARAMETER1
 _f_GC_ClearScreenPixels:
   push  rbp
   mov   rbp, rsp
@@ -201,7 +225,7 @@ _f_GC_ClearScreenPixels:
   retn  G_STACKSPACE_1_PARAM
 
 
-section '.data' writeable align 16
+section .data
 Negation_XMM            db 0,0,0,0,0,0,0,80h
                         db 0,0,0,0,0,0,0,80h
 Negation_XMM32          db 0,0,0,80h,0,0,0,0

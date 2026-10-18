@@ -17,14 +17,14 @@ namespace GroundCompiler
             if (args.Length == 0)
             {
 #if DEBUG
-                //fileName = "bertus.g";
+                fileName = "bertus.g";
                 //fileName = "bugs.g";
                 //fileName = "fire.g";
                 //fileName = "game_of_life.g";
                 //fileName = "gpu_circles.g";
                 //fileName = "gpu_fireworks.g";
                 //fileName = "gpu_spiral.g";
-                fileName = "gpu_tempotypen.g";
+                //fileName = "gpu_tempotypen.g";
                 //fileName = "hexacubes.g";
                 //fileName = "high_noon.g";
                 //fileName = "jump.g";
@@ -45,6 +45,7 @@ namespace GroundCompiler
                 //fileName = "sudoku.g";
                 //fileName = "tetrus.g";
                 //fileName = "unittests.g";
+                //fileName = "hello_world.g";
                 session.GenerateDebugInformation = false;
                 session.LinkingAfterCompilation = true;
                 session.RunAfterCompilation = true;
@@ -129,9 +130,12 @@ namespace GroundCompiler
             if (theSession.GenerateDebugInformation)
                 assemblerParameters = $"{outputAsmFilename} -s {outputFasFilename}";
 
+            if (theSession.IsCurrentlyOnLinux)
+                assemblerParameters = $"-f elf64 {outputAsmFilename} -o {outputAsmFilenameClean}.o";
+
             var startInfo = new ProcessStartInfo
             {
-                FileName = theSession.IsCurrentlyOnLinux ? "fasm" : "fasm\\fasm.exe",
+                FileName = theSession.IsCurrentlyOnLinux ? "nasm" : "fasm\\fasm.exe",
                 Arguments = assemblerParameters,
                 WorkingDirectory = currentDir
             };

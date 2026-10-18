@@ -3,8 +3,8 @@ entry start
 stack 80000h, 80000h
 
 include 'fasm\win64a.inc'
-include 'Include\sdl3.inc'
-include 'Templates\part_equates.fasm'
+include 'Include\sdl3_fasm.inc'
+include 'Templates\part_equates.asm'
 
 SCREEN_WIDTH=960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
 SCREEN_HEIGHT=560
@@ -200,9 +200,9 @@ ReadChar:
   ret
 
 
-include 'Templates\part_string.fasm'
-include 'Templates\part_utils.fasm'
-include 'Templates\part_hardcoded_library.fasm'
+include 'Templates\part_string.asm'
+include 'Templates\part_utils.asm'
+include 'Templates\part_hardcoded_library.asm'
 
 
 DrawAllCRTLines:
