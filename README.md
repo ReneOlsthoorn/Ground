@@ -1,6 +1,6 @@
 # Ground
 
-This is the compiler for the programming language `Ground` for Windows and Linux that promotes high performance 
+This is the compiler for the programming language `Ground` for Linux and Windows that promotes high performance 
 computing. It allows mixing high-level programming constructs with x86-64. The assembly can be added anywhere in the 
 Ground code, so the programmer stays in control of the CPU.  
   
@@ -8,8 +8,8 @@ Ground has constructs like `class` and `function`, statements like `if`, `for` a
 like `int`, `float`, `byte`, `string` and arrays. See file `unittests.g` for some syntax examples.  
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
-written in C# and generates x86-64 assembly which is assembled by [FASM](https://flatassembler.net/) on Windows 
-and [NASM](https://www.nasm.us/) on Linux.  
+written in C# and generates x86-64 assembly which is assembled by [NASM](https://www.nasm.us/) on Linux and 
+[FASM](https://flatassembler.net/) on Windows.  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small executable 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
@@ -146,12 +146,12 @@ The following libraries can be seen in examples:
 #library comdlg32 comdlg32.dll
 #library gdi32 gdi32.dll
 #library ucrt ucrtbase.dll
-#library raylib raylib.dll
 #library sidelib GroundSideLibrary.dll
 #library glm libcglm-0.dll
 #library chipmunk libchipmunk.dll
 #library libcurl libcurl-x64.dll
 
+#library raylib raylib.dll raylib
 #library sdl3 sdl3.dll SDL3
 #library sdl3_image sdl3_image.dll SDL3_image
 #library sdl3_mixer SDL3_mixer.dll SDL3_mixer
@@ -526,7 +526,7 @@ The PC platform had cheap hardware, so everybody joined. This resulted in total 
 In 1994, I bought an `ESCOM 486DX2 66 MHz` PC with 420MB harddisk and 4MB memory. It was great. Now, 30 years and 
 numerous PC's later, the platform is still alive. It has no vendor lock-in and you can pick and choose your moment 
 to upgrade. We were truly blessed with this plaform and it's domination for the last 30 years. This must be said!  
-However, it seems that the good times have ended!
+However, it seems like the good times have ended!
 
 ### The Fall of Windows: turning away from the Personal Computer towards an agentic AI cloud OS
 In 2026, several users were moving to Linux because Windows 11 collects personal data and sends it to the cloud. 
@@ -539,10 +539,9 @@ account login. This is on purpose.
 Microsoft promotes subscription based computing. They have large investments in their 500+ datacenters. These 
 datacenters must be paid for with Azure, AI or remote gaming subscriptions.  
 Microsoft is pushing their services like Xbox Game Pass, Cloud storage Onedrive, AI Copilot, Microsoft Edge 
-browser which transfers data to Microsoft and Ads in the start menu. It is irritating. Doesn't Microsoft know that 
-Google became popular for not having ads in the startpage?  
-Microsoft also has keys to unlock your bitlocker. 
-[They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/)  
+browser which transfers data to Microsoft and Ads in the start menu. It is simply irritating. Doesn't Microsoft 
+know that Google became popular for not having ads in their startpage like Altavista?  
+Microsoft also has keys to unlock your bitlocker. [They give them to the FBI.](https://www.forbes.com/sites/thomasbrewster/2026/01/22/microsoft-gave-fbi-keys-to-unlock-bitlocker-encrypted-data/)  
 
 ### The Fall of Windows: Smart App Control: No homebrew anymore!
 Microsoft has a new feature in Windows 11 called Smart App Control. This is a gatekeeper for executables, 
@@ -551,17 +550,26 @@ Several services that I created myself would not run on Windows 11. After invest
 App Control prevented the services from running. Fortunately it could be deactived, but this is again a feature I don't 
 want. Windows is moving its users away from the `Personal Computer` concept towards a subscription-based AI cloud computer usage. 
 If we are not careful, in the future we will no longer own our own computing power and technology.  
-Many users want their freedom back and are looking at Linux. Most definately the users that don't have the required 
-TPM 2.0 that Windows 11 requires will be looking for a new OS.
+Many users want freedom and are looking at Linux. Most definately the users that don't have the required TPM 2.0 
+that Windows 11 requires will be looking for a new OS.
 
 ### My move to Linux / Manjaro
 If you read this document, you'll notice that I'm grateful for the past of Windows, but was highly frustrated by its state 
-in 2026. As a result, in July 2026 I gave Linux a try and it exceeded my expectations. At this moment I use Manjaro, a stable 
+in 2026. As a result, in July 2026 I gave Linux a try and that exceeded my expectations. At this moment I use Manjaro, a stable 
 OS that is able to run Steam. It is derived from Arch which offers rolling releases.
 
-### Move to NASM on Linux
-The original FASM that Ground uses, FASM 1, won't get support for APX (Advanced Performance Extensions). So Ground now uses
-NASM 3 on Linux that already has APX implemented in it.
+### Moving from FASM to NASM
+Ground uses FASM 1 and that version probably will not get support for APX (Advanced Performance Extensions). The new fasmg 
+seems to be a template/macro engine and FASM 2 is a set of templates. In fact fasmg is a kind of programming language. It has 
+some unusual concepts like the CALM precompiled macros. When I look at the opengl example, I conclude that fasmg and fasm2 
+makes code unnecessary difficult. So, Ground moved to NASM, which is a traditional assembler with already APX implemented in it. 
+APX is fun: 32 registers, 3 operand instructions. Yeah Buddy!  
+Until Intel 'Nova Lake' or AMD Zen 7 is available for purchase, Ground will still use FASM on Windows.  
+
+### General future direction
+Raylib can play .xm module music, play samples at a certain pitch and has support for shaders. SDL3 is also a good library, but
+has less features out of the box. So raylib will be the default game programming library, Linux will be the default OS and NASM
+the default assembler.
 
 ### Smoothscroller
 <p align="center">
@@ -705,10 +713,6 @@ GLSL: Rubber Cube</p>
 <img src="https://github.com/ReneOlsthoorn/Ground/blob/master/Resources/Ground_TempoTypen.gif?raw=true" width="500" /><br/>
 Tempo Typen</p>
 
-### Ground Release zipfile
-The Ground Release zipfile on Github contains all the sourcecode and most of the examples as executable. 
-The executables are in the `bin\Release` directory of the zipfile.
-
 ### Changelog
 2025.01: Kotlin look-a-like for-loops.  
 2025.04: Bertus game.  
@@ -725,6 +729,6 @@ The executables are in the `bin\Release` directory of the zipfile.
 2026.05: Several GLSL examples added. f32 literals added.  
 2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
 2026.08: Support for Linux added. Started implementation of the System V AMD64 ABI.  
-2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod.
+2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod. 
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
-2026.10: Continued to work on the system v amd64 abi. Move to NASM for Linux. Removed Soloud (Problems on Linux).  
+2026.10: Continued to work on the System V AMD64 ABI. Move to NASM for Linux. Removed Soloud.  
