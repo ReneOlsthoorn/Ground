@@ -236,6 +236,17 @@ while (StatusRunning)
 
 	bool computerPlayerMoved = false;
 	if (ai.timeOut == 0 and deathTimeout == 0) {
+	    // de speler schiet een kogel, reageer meteen
+	    if (player[0].bullet_flying and ai.otherRouteTimer == 0) {
+			ai.stuckCounter = 5;
+			ai.BeingStuck();
+			if (p1y < p2y)
+				ai.otherRouteY = 180;
+			else
+				ai.otherRouteY = 0;
+			ai.otherRouteTimer = 100;
+			ai.timeOut = 0;
+		}
 		if (p1x < p2x and (p2x-p1x) > 10) {
 			if (frameCount % 2 == 0) {
 				player[1].MoveLeft();
@@ -246,7 +257,7 @@ while (StatusRunning)
 			computerPlayerMoved = true;
 		}
 		player[1].facingRight = (p1x > p2x);
-		if (p1y < p2y and (p2y-p1y) > 5) {
+		if (p1y < p2y and (p2y-p1y) > 8) {
 			player[1].MoveUp();
 			computerPlayerMoved = true;
 		} else if (p1y > p2y and (p1y-p2y) > 5) {
@@ -254,9 +265,16 @@ while (StatusRunning)
 			computerPlayerMoved = true;
 		} else {
 			bool hasTreeInFront = ComputerPlayerHasTreeInBulletPath();
-			if (!hasTreeInFront and player[0].action != ACTOR_ACTION_DEATH and player[1].action != ACTOR_ACTION_DEATH and ai.otherRouteTimer == 0) {
+			if ((player[1].facingRight == (player[0].x > player[1].x)) and !hasTreeInFront and player[0].action != ACTOR_ACTION_DEATH and player[1].action != ACTOR_ACTION_DEATH and ai.otherRouteTimer == 0) {
 				player[1].Shoot();
-				ai.timeOut = sdl3.SDL_rand(32767) % 120;
+				ai.stuckCounter = 5;
+				ai.BeingStuck();
+				if (p1y < p2y)
+				   ai.otherRouteY = 180;
+				else
+				   ai.otherRouteY = 0;
+				ai.otherRouteTimer = 100;
+				ai.timeOut = 30; //sdl3.SDL_rand(32767) % 120
 			} else if (hasTreeInFront) {
 				ai.BeingStuck();
 			}

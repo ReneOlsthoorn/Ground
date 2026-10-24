@@ -32,7 +32,8 @@ function IsPointInCircle(float px, float py, float cx, float cy, float radius) :
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO | g.SDL_INIT_AUDIO);
 ptr window = sdl3.SDL_CreateWindow("Bugs", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-ptr renderer = sdl3.SDL_CreateRenderer(window, null);
+#windows  ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
+#linux    ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
 sdl3.SDL_SetRenderVSync(renderer, 1);
 
