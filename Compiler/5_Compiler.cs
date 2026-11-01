@@ -744,7 +744,15 @@ namespace GroundCompiler
                     string threadName = ((Variable)expr.ArgumentNodes[0]).Name.Lexeme;
 
                     // Total exception to the rule: Creating a Thread.
-                    emitter.Codeline($"invoke kernel32_CreateThread, 0, 0x10000, _f_Generated_{threadName}_Startup, 0, 0, 0");
+                    emitter.Codeline($"sub rsp, 0x30");
+                    emitter.Codeline($"mov rcx, 0");
+                    emitter.Codeline($"mov rdx, 0x10000");
+                    emitter.Codeline($"lea r8, [_f_Generated_{threadName}_Startup]");
+                    emitter.Codeline($"mov r9, 0");
+                    emitter.Codeline($"mov qword [rsp+0x20], 0");
+                    emitter.Codeline($"mov qword [rsp+0x28], 0");
+                    emitter.Codeline($"call [kernel32_CreateThread]");
+                    emitter.Codeline($"add rsp, 0x30");
                     emitter.Codeline($"jmp   _f_Generated_{threadName}_AfterStartup");
                     emitter.Writeline($"_f_Generated_{threadName}_Startup:");
                     emitter.Codeline($"push  rbp");

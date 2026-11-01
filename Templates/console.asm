@@ -2,8 +2,8 @@ format pe64 console
 entry start
 stack 80000h, 80000h      ; reserve 512k stack virtual space, allocate 512k at startup. So 512k stack is available.
 
-include 'fasm\win64a.inc'
-include 'Templates\part_equates.asm'
+include 'fasm2/include/win64a.inc'
+include 'Templates/part_equates.asm'
 gc_linux equ 0
 gc_windows equ 1
 
@@ -16,16 +16,29 @@ start:
   mov	rbp, rsp
   mov   [main_rbp], rbp
 
-  invoke kernel32_GetStdHandle, STD_OUTPUT_HANDLE
+  mov   rcx, STD_OUTPUT_HANDLE
+  sub   rsp, 0x20
+  call  [kernel32_GetStdHandle]
+  add   rsp, 0x20
   mov	[GetStdHandle_outputhandle], rax
 
-  invoke kernel32_GetStdHandle, STD_INPUT_HANDLE
+  mov   rcx, STD_INPUT_HANDLE
+  sub   rsp, 0x20
+  call  [kernel32_GetStdHandle]
+  add   rsp, 0x20
   mov	[GetStdHandle_inputhandle], rax
 
-  invoke kernel32_GetProcessHeap
+  sub   rsp, 0x20
+  call  [kernel32_GetProcessHeap]
+  add   rsp, 0x20
   mov	[processHeapHandle], rax
 
-  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  xor   rcx, rcx                    ; hModule = NULL
+  mov   rdx, currentExeDirChars     ; lpFilename
+  mov   r8, 256                     ; nSize
+  sub   rsp, 0x20
+  call  [kernel32_GetModuleFileNameA]
+  add   rsp, 0x20
   mov	rcx, currentExeDirChars
   call	StringLength    ; rax stringlength
   mov   r8, currentExeDirChars
@@ -50,7 +63,10 @@ start:
 
 assert_exitpoint:
   mov	rsp, rbp
-  invoke kernel32_ExitProcess, 0
+  mov   rcx, 0
+  sub   rsp, 0x20
+  call  [kernel32_ExitProcess]
+  add   rsp, 0x20
   pop	rbp
   ret
 
@@ -62,26 +78,43 @@ assert_exitpoint:
 
 PrintScreenString:
 ;input rax: pointer to string
-  push	r8 r9 rcx       ; fastcall 16-byte stack alignment
+  push	r8
+  push  r9
+  push  rcx       ; fastcall 16-byte stack alignment
   mov	r8, rax
   mov	rcx, rax
   call	StringLength
-  mov	r9, rax
-  invoke kernel32_WriteFile, [GetStdHandle_outputhandle], r8, r9, ResultBytesWritten, NULL
-  pop   rcx r9 r8
+
+  sub   rsp, 0x30
+  mov   rcx, [GetStdHandle_outputhandle] ; hFile
+  mov   rdx, r8                          ; lpBuffer
+  mov	r8, rax                          ; nNumberOfBytesToWrite
+  lea   r9, [ResultBytesWritten]         ; lpNumberOfBytesWritten
+  mov   qword [rsp+0x20], 0              ; lpOverlapped = NULL
+  call  [kernel32_WriteFile]
+  add   rsp, 0x30
+
+  pop   rcx
+  pop   r9
+  pop   r8
   ret
 
 ReadChar:
   push	rbp             ; fastcall 16-byte stack alignment
-  lea	rax, [tmpCharSpace]
-  mov	r8, 1
-  invoke kernel32_ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
+  sub   rsp, 0x30
+  mov   rcx, [GetStdHandle_inputhandle] ; hFile
+  lea	rdx, [tmpCharSpace]
+  mov   r8, 1                           ; nNumberOfBytesToRead
+  lea   r9, [ResultBytesRead]           ; lpNumberOfBytesRead
+  mov   qword [rsp+0x20], 0             ; lpOverlapped = NULL
+  call  [kernel32_ReadFile]
+  add   rsp, 0x30
   pop	rbp
   ret
 
-include 'Templates\part_string.asm'
-include 'Templates\part_utils.asm'
-include 'Templates\part_hardcoded_library.asm'
+include 'Templates/part_string.asm'
+include 'Templates/part_utils.asm'
+include 'Templates/part_hardcoded_library.asm'
 
 
 
@@ -90,8 +123,8 @@ section '.idata' import data readable writeable
 ;GC_INSERTIONPOINT_LIBRARIES
           msvcrt, 'msvcrt.dll'
 
-  include 'Include\kernel32_api.inc'
-  include 'Include\msvcrt_api.inc'
+  include 'Include/kernel32_api.inc'
+  include 'Include/msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
 
 

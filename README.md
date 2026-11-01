@@ -9,7 +9,7 @@ like `int`, `float`, `byte`, `string` and arrays. See file `unittests.g` for som
   
 Ground variables can be referenced in assembly by using the generated symbolic constants. The compiler itself is 
 written in C# and generates x86-64 assembly which is assembled by [NASM](https://www.nasm.us/) on Linux and 
-[FASM](https://flatassembler.net/) on Windows.  
+[FASM 2](https://flatassembler.net/) on Windows.  
 The generated code is poured into an assembly template which can be freely chosen. This will result in small executable 
 files when the template is chosen wisely. For instance, there is a `console` template which opens the console, but 
 also a sdl3 template which doesn't have a console and is useful when starting `SDL3` applications. The latest added
@@ -301,7 +301,7 @@ There are several steps done before the generated .EXE file is executed:
 1) The Lexer generates tokens from the sourcecode.  
 2) The tokens are grouped in a Abstract Syntax Tree (AST) by the Parser.  
 3) The Optimizer makes the AST more compact, for instance by combining integer or string literals.  
-4) The Compiler converts the AST to x86-64 assembly. It uses FASM to generate the Portable Executable file.  
+4) The Compiler converts the AST to x86-64 assembly. It uses `FASM 2` to generate the Portable Executable file.  
 
 ### Tokenize details:
 Each token can have multiple types. For instance, the "True" token has 3 types: Literal, Boolean and True. The tokens 
@@ -558,13 +558,12 @@ If you read this document, you'll notice that I'm grateful for the past of Windo
 in 2026. As a result, in July 2026 I gave Linux a try and that exceeded my expectations. At this moment I use Manjaro, a stable 
 OS that is able to run Steam. It is derived from Arch which offers rolling releases.
 
-### Moving from FASM to NASM
-Ground uses FASM 1 and that version probably will not get support for APX (Advanced Performance Extensions). The new fasmg 
-seems to be a template/macro engine and FASM 2 is a set of templates. In fact fasmg is a kind of programming language. It has 
-some unusual concepts like the CALM precompiled macros. When I look at the opengl example, I conclude that fasmg and fasm2 
-makes code unnecessary difficult. So, Ground moved to NASM, which is a traditional assembler with already APX implemented in it. 
-APX is fun: 32 registers, 3 operand instructions. Yeah Buddy!  
-Until Intel 'Nova Lake' or AMD Zen 7 is available for purchase, Ground will still use FASM on Windows.  
+### Support for NASM
+Ground uses `FASM 2` and that version has no support for APX (Advanced Performance Extensions) yet. The new fasmg 
+seems to be a template/macro engine and `FASM 2` is a set of templates. It has some unusual concepts like the CALM precompiled 
+macros. When I look at the opengl example, I conclude that fasmg and fasm2 makes code difficult. So, for Linux Ground moved to 
+NASM, which is a traditional assembler with already APX implemented in it. APX is fun: 32 registers, 3 operand instructions. Yeah Buddy!  
+Until Intel 'Nova Lake' or AMD Zen 7 is available for purchase, Ground will still use FASM 2 on Windows.  
 
 ### General future direction
 Raylib can play .xm module music, play samples at a certain pitch and has support for shaders. SDL3 is also a good library, but
@@ -732,3 +731,4 @@ Tempo Typen</p>
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod. 
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
 2026.10: Continued to work on the System V AMD64 ABI. Move to NASM for Linux. Removed Soloud.  
+2026.11: Upgraded Windows assembler to `FASM 2`.  

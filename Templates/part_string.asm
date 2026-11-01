@@ -5,7 +5,9 @@ AddCombinedStrings:
 ;       rdx = ptr to second string
 ;       rax = ptr to result string being max. 256 bytes. That is 255 chars and 1 ending zero.
 ;OUTPUT:rax = ptr to result string
-  push	r8 r9 rax
+  push	r8
+  push	r9
+  push	rax
   mov	r8, rax 
   xor	r9, r9
 .loopFirst:
@@ -32,7 +34,9 @@ AddCombinedStrings:
   xor	eax, eax
   mov	[r8+r9], al
 .exit:
-  pop	rax r9 r8
+  pop	rax
+  pop	r9
+  pop	r8
   ret
 
 
@@ -44,9 +48,9 @@ PrintNumber:
   cdq						; sign extend eax into edx. edx:eax = number
   idiv	rcx					; rax = quotient, rdx = remainder
   test	eax, eax			; Is quotient zero?
-  je	@F					; yes, don't display it
+  je	.no_display			; yes, don't display it
   call	PrintNumber			; Display the quotient
-@@:
+.no_display:
   lea	r8d, [edx+'0']
   lea	rax, [rbp - 0x10]
   mov	[rax], r8b
@@ -64,7 +68,11 @@ IntegerToString:
 ; rax = int value to convert
 ; rcx = the buffer to store the result
 ;RESULT: rcx buffer is filled
-  push	rcx rdi rbx r14 r15     ; win32 stack 16-byte alignment
+  push	rcx
+  push  rdi
+  push  rbx
+  push  r14
+  push  r15     ; win32 stack 16-byte alignment
   mov	rdi, rcx
   cld
   test	rax, rax
@@ -106,7 +114,11 @@ IntegerToString:
   xor	eax, eax		; store the string terminating zero byte
   stosb
   mov	rax, r8
-  pop	r15 r14 rbx rdi rcx
+  pop	r15
+  pop   r14
+  pop   rbx
+  pop   rdi
+  pop   rcx
   ret
 
 
@@ -114,10 +126,18 @@ IntegerToString:
 ;rcx = the buffer to store the result
 ;RESULT: rcx buffer is filled
 FloatToString:
-  push  rcx rsi rdi
+  push  rcx
+  push	rsi
+  push	rdi
   mov	rdi, rcx
-  movq  rax, xmm0
-  invoke msvcrt_sprintf,tmpCharSpace,sprintf_float_template,rax
+
+  lea	rcx, [tmpCharSpace]
+  lea   rdx, [sprintf_float_template]
+  movq  r8, xmm0
+  sub   rsp, 0x20
+  call  [msvcrt_sprintf]
+  add   rsp, 0x20
+
   lea   rcx, [tmpCharSpace]
   mov   rsi, rcx
   call  StringLength
@@ -125,7 +145,9 @@ FloatToString:
   mov	rcx, rax
   cld
   rep	movsb			; copy string
-  pop   rdi rsi rcx
+  pop   rdi
+  pop	rsi
+  pop	rcx
   ret
 
 
@@ -159,7 +181,8 @@ StringLength:
 CopyString:
 ; rax = source
 ; rcx = destination
-  push	rsi rdi
+  push	rsi
+  push	rdi
   mov	rsi, rax
   mov	rdi, rcx
   mov	rcx, 255
@@ -173,6 +196,7 @@ CopyString:
   mov	al,0
   stosb
 .done:
-  pop	rdi rsi
+  pop	rdi
+  pop	rsi
   ret
 

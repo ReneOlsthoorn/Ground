@@ -20,7 +20,11 @@ _f_BitValue@gc:
 
 _f_input_int@gc:
   push  rbp
-  invoke msvcrt_scanf, scanf_int_read, scanf_int_result
+  lea	rcx, [scanf_int_read]
+  lea	rdx, [scanf_int_result]
+  sub   rsp, 0x20
+  call  [msvcrt_scanf]
+  add   rsp, 0x20
   mov   rax, [scanf_int_result]
   pop   rbp
   ret   G_STACKSPACE_0_PARAM      ; no parameters pushes the lexical parent frame on the stack, and the class instance (which is null in this case)
@@ -28,7 +32,11 @@ _f_input_int@gc:
 
 _f_input_string@gc:
   push  rbp
-  invoke msvcrt_scanf, scanf_string_read, tmpCharSpace
+  lea	rcx, [scanf_string_read]
+  lea	rdx, [tmpCharSpace]
+  sub   rsp, 0x20
+  call  [msvcrt_scanf]
+  add   rsp, 0x20
   mov   rax, tmpCharSpace
   pop   rbp
   ret   G_STACKSPACE_0_PARAM

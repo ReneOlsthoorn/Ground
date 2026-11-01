@@ -57,14 +57,14 @@ namespace GroundCompiler
         public void Writeline(string text) { generatedCode.Add(text + "\r\n"); }
         public void WriteDefine(string key, string value)
         {
-            if (session.CompileForNASM())
+            if (session.CompileForNASM)
                 Writeline($"%define {key} {value}");
             else
                 Writeline($"{key} equ {value}");
         }
         public void WriteEqu(string key, long value)
         {
-            if (session.CompileForNASM())
+            if (session.CompileForNASM)
                 Writeline($"{key} equ {value}");
             else
                 Writeline($"{key} = {value}");
@@ -592,7 +592,7 @@ namespace GroundCompiler
             cpu.FreeRegister("rcx");
         }
 
-        public string Octoword() => session.CompileForNASM() ? "oword" : "xword";
+        public string Octoword() => session.CompileForNASM ? "oword" : "xword";
 
         public void Negation(Expression? expr = null)
         {
@@ -1111,7 +1111,7 @@ namespace GroundCompiler
                 if (preprocessorDefines[key]?.Datatype?.Contains(Datatype.TypeEnum.String) ?? false)
                     continue;
 
-                if (session.CompileForNASM())
+                if (session.CompileForNASM)
                 {
                     if (preprocessorDefines[key]?.Datatype?.Contains(Datatype.TypeEnum.FloatingPoint) ?? false)
                         GeneratedCode_Equates.Add($"%define GC_{key} {preprocessorDefines[key].Lexeme}\r\n");

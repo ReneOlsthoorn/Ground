@@ -18,9 +18,6 @@ main:
   push	rbp
   mov	rbp, rsp
   mov   [main_rbp], rbp
-
-  ;invoke kernel32_GetProcessHeap
-  ;mov	[processHeapHandle], rax
    
   mov   rax, 89                 ; SYS_readlink
   mov   rdi, cwd_path           ; "/proc/self/cwd"

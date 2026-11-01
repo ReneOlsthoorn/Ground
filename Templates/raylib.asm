@@ -1,10 +1,10 @@
-format pe64 GUI 5.0
+format PE64 NX GUI 6.0
 entry start
 stack 80000h, 80000h
 
-include 'fasm\win64a.inc'
-include 'Include\raylib.inc'
-include 'Templates\part_equates.asm'
+include 'fasm2/include/win64a.inc'
+include 'Include/raylib.inc'
+include 'Templates/part_equates.asm'
 gc_linux equ 0
 gc_windows equ 1
 
@@ -17,10 +17,17 @@ start:
   mov	rbp, rsp
   mov   [main_rbp], rbp
 
-  invoke kernel32_GetProcessHeap
+  sub   rsp, 0x20
+  call  [kernel32_GetProcessHeap]
+  add   rsp, 0x20
   mov	[processHeapHandle], rax
 
-  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  xor   rcx, rcx                    ; hModule = NULL
+  mov   rdx, currentExeDirChars     ; lpFilename
+  mov   r8, 256                     ; nSize
+  sub   rsp, 0x20
+  call  [kernel32_GetModuleFileNameA]
+  add   rsp, 0x20
   mov	rcx, currentExeDirChars
   call	StringLength    ; rax stringlength
   mov   r8, currentExeDirChars
@@ -45,7 +52,10 @@ start:
 
 assert_exitpoint:
   mov	rsp, rbp
-  invoke kernel32_ExitProcess, 0
+  mov   rcx, 0
+  sub   rsp, 0x20
+  call  [kernel32_ExitProcess]
+  add   rsp, 0x20
   pop	rbp
   ret
 
@@ -55,9 +65,9 @@ assert_exitpoint:
 ; *** END PROCEDURES ***
 
 
-include 'Templates\part_string.asm'
-include 'Templates\part_utils.asm'
-include 'Templates\part_hardcoded_library.asm'
+include 'Templates/part_string.asm'
+include 'Templates/part_utils.asm'
+include 'Templates/part_hardcoded_library.asm'
 
 
 color@_f_GC_ClearScreenPixels equ rbp+G_PARAMETER1
@@ -83,8 +93,8 @@ section '.idata' import data readable writeable
           msvcrt, 'msvcrt.dll'
 
 
-  include 'Include\kernel32_api.inc'
-  include 'Include\msvcrt_api.inc'
+  include 'Include/kernel32_api.inc'
+  include 'Include/msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
 
 

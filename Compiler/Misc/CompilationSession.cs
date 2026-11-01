@@ -27,10 +27,10 @@ namespace GroundCompiler
         public int CurrentIndex = -1;
 
         public bool RunAfterCompilation = false;
-        public bool GenerateDebugInformation = false;
         public bool IsCurrentlyOnLinux = false;
+        public bool IsCurrentlyOnWindows { get { return !this.IsCurrentlyOnLinux; } }
         public bool CompileForLinux = false;
-        public bool LinkingAfterCompilation = false;
+        public bool CompileForNASM = true;
         public string GeneratedCode;
 
         public PreProcessor PreProcessor;
@@ -39,6 +39,14 @@ namespace GroundCompiler
         public Lexer Lexer;
         public Parser Parser;
         public Compiler Compiler;
+
+        public CompilationSession(bool isOnLinux = true)
+        {
+            this.IsCurrentlyOnLinux = isOnLinux;
+            this.CompileForLinux = isOnLinux;
+            this.CompileForNASM = this.CompileForLinux;
+        }
+
 
         public void SaveOldNeedle()
         {
@@ -83,6 +91,5 @@ namespace GroundCompiler
         public string SourceCode { get { return SourcecodePackStack.Peek().SourceCode; } }
         public int Needle { get { return SourcecodePackStack.Peek().Needle; } }
         public LineCounter LineCounter { get { return SourcecodePackStack.Peek().LineCounter; } }
-        public bool CompileForNASM() => this.CompileForLinux;
     }
 }

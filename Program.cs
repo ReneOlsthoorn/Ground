@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace GroundCompiler
 {
@@ -13,7 +12,7 @@ namespace GroundCompiler
         {
             string currentDir = System.IO.Directory.GetCurrentDirectory();
             string fileName, fullPath;
-            CompilationSession session = new CompilationSession() { IsCurrentlyOnLinux = OperatingSystem.IsLinux(), CompileForLinux = OperatingSystem.IsLinux() };
+            CompilationSession session = new CompilationSession(OperatingSystem.IsLinux());
             if (args.Length == 0)
             {
 #if DEBUG
@@ -45,18 +44,15 @@ namespace GroundCompiler
                 //fileName = "sudoku.g";
                 //fileName = "tetrus.g";
                 //fileName = "unittests.g";
-                //fileName = "hello_world.g";
-                session.GenerateDebugInformation = false;
-                session.LinkingAfterCompilation = true;
-                session.RunAfterCompilation = true;
+
                 fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples/{fileName}"));
                 if (!File.Exists(fullPath)) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Test/{fileName}")); }
-                if (!File.Exists(fullPath) && !OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}")); }
-                if (!File.Exists(fullPath) && OperatingSystem.IsLinux()) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}")); }
+                if (!File.Exists(fullPath) && session.IsCurrentlyOnWindows) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Windows/{fileName}")); }
+                if (!File.Exists(fullPath) && session.IsCurrentlyOnLinux) { fullPath = Path.GetFullPath(Path.Combine(currentDir, $"../../Examples_Linux/{fileName}")); }
                 fileName = Path.GetFileNameWithoutExtension(fullPath);
 
-                //Generate Linux Output on a Window host:
-                //session.CompileForLinux = true;  session.IsCurrentlyOnLinux = false;  session.RunAfterCompilation = false;
+                //Cross Compilation (generate Linux Output on a Windows):  session.CompileForLinux = true;
+                session.RunAfterCompilation = true;
 #else
                 Console.WriteLine("GroundCompiler. Error: provide a filename with extension .g");
                 return;
@@ -118,24 +114,37 @@ namespace GroundCompiler
 
         public void Assemble()
         {
-            string outputAsmFilenameClean = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
-            string outputAsmFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.asm"));
-            string outputFasFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.fas"));
-            string outputLstFilename = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}.lst"));
+            string outputFilepath = Path.GetFullPath(Path.Combine(currentDir, $"{theSession.SourceFilename}"));
+            string outputAsmFilepath = $"{outputFilepath}.asm";
 
-            File.WriteAllText(outputAsmFilename, theSession.GeneratedCode);
+            File.WriteAllText(outputAsmFilepath, theSession.GeneratedCode);
             Console.WriteLine("*** Start assembler.");
 
-            string assemblerParameters = $"{outputAsmFilename}";
-            if (theSession.GenerateDebugInformation)
-                assemblerParameters = $"{outputAsmFilename} -s {outputFasFilename}";
+            string assemblerFilename = "";
+            string assemblerParameters = "";
 
-            if (theSession.IsCurrentlyOnLinux)
-                assemblerParameters = $"-f elf64 {outputAsmFilename} -o {outputAsmFilenameClean}.o";
+            if (theSession.CompileForLinux)
+            {
+                assemblerFilename = "nasm";
+                assemblerParameters = $"-f elf64 {outputAsmFilepath} -o {outputFilepath}.o";
+            } 
+            else
+            {
+                if (theSession.CompileForNASM)
+                {
+                    assemblerFilename = "nasm.exe";
+                    assemblerParameters = $"-f win64 {outputAsmFilepath} -o {outputFilepath}.obj";
+                }
+                else
+                {
+                    assemblerFilename = "fasm2\\fasm2.cmd";
+                    assemblerParameters = $"{outputAsmFilepath}";
+                }
+            }
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = theSession.IsCurrentlyOnLinux ? "nasm" : "fasm\\fasm.exe",
+                FileName = assemblerFilename,
                 Arguments = assemblerParameters,
                 WorkingDirectory = currentDir
             };
@@ -154,105 +163,15 @@ namespace GroundCompiler
                         libsToLink.Add(item.Item3);
                 }
                 string allLibs = string.Join(" ", libsToLink.Select(lib => $"-l{lib}"));
-                string processStart = $"{outputAsmFilenameClean}.o -o {outputAsmFilenameClean} -lm -lpthread -ldl -lrt {allLibs} -no-pie";
-                string linkingStr = $"gcc {theSession.SourceFilename}.o -o {theSession.SourceFilename} -lm -lpthread -ldl -lrt {allLibs} -no-pie && ./{theSession.SourceFilename}";
-
-                if (theSession.LinkingAfterCompilation)
-                {
-                    Console.WriteLine($"gcc {processStart}");
-                    info = new System.Diagnostics.ProcessStartInfo("gcc", processStart);
-                    info.WorkingDirectory = currentDir;
-                    p = new System.Diagnostics.Process();
-                    p.StartInfo = info;
-                    p.Start();
-                    p.WaitForExit();
-                }
-                else
-                    File.WriteAllText(Path.GetFullPath(Path.Combine(currentDir, $"linkandrun.sh")), linkingStr);
-            }
-
-            if (theSession.GenerateDebugInformation && !theSession.IsCurrentlyOnLinux)
-            {
-                Console.WriteLine("*** Generating Debug information.");
-
-                info = new System.Diagnostics.ProcessStartInfo("fasm\\listing.exe", $"{outputFasFilename} {outputLstFilename}");
+                string processStart = $"{outputFilepath}.o -o {outputFilepath} -lm -lpthread -ldl -lrt {allLibs} -no-pie";
+                Console.WriteLine($"gcc {processStart}");
+                info = new System.Diagnostics.ProcessStartInfo("gcc", processStart);
+                info.WorkingDirectory = currentDir;
                 p = new System.Diagnostics.Process();
                 p.StartInfo = info;
                 p.Start();
                 p.WaitForExit();
-
-                Generate_x64dbg_EXE(outputLstFilename);
             }
-        }
-
-
-        public string x64dbgDbFolder = "c:\\prg\\x64dbg2025\\x64\\db";
-
-        public void Generate_x64dbg_EXE(string outputLstFilename)
-        {
-            string[] lines = File.ReadAllLines(outputLstFilename);
-            int start = -1, end = -1, counter = 0;
-
-            foreach (var line in lines)
-            {
-                if (line.Contains("section '.text'"))
-                    start = counter;
-
-                if (line.Contains("section '.idata'"))
-                    end = counter;
-
-                counter++;
-            }
-            if (start == -1 || end == -1) { return; }
-
-            string commentPart = "";
-            int counterCommentPart = 0;
-            int needle = start;
-            while (needle < end)
-            {
-                string line = lines[needle++];
-                if (line.Length < 8) { continue; }
-                string address = line.Substring(0, 8);
-                if (!Char.IsAsciiHexDigit(address[0])) continue;
-                if (!Char.IsAsciiHexDigit(address[1])) continue;
-                if (!Char.IsAsciiHexDigit(address[2])) continue;
-                if (!Char.IsAsciiHexDigit(address[3])) continue;
-                if (!Char.IsAsciiHexDigit(address[4])) continue;
-                if (!Char.IsAsciiHexDigit(address[5])) continue;
-                if (!Char.IsAsciiHexDigit(address[6])) continue;
-                if (!Char.IsAsciiHexDigit(address[7])) continue;
-
-                int getal = Convert.ToInt32(address, 16);
-                getal = getal - 0x200 + 0x1000;
-
-                string outputAddress = $"0x{getal.ToString("X")}";
-                string text = line.Substring(66);
-                int firstSemicolon = text.IndexOf(";");
-                if (firstSemicolon != -1)
-                    text = text.Substring(0, firstSemicolon);
-
-                text = text.Trim();
-                text = text.Replace("\t", " ");
-                text = Regex.Replace(text, @"[^a-zA-Z0-9,_\*\+\-\.\[\]\(\)\@ ]", string.Empty);
-                if (commentPart != "") { commentPart += ",\n"; }
-
-                string commentLittlePart = "  {\n";
-                commentLittlePart += "   \"module\": \"" + theSession.SourceFilename + ".exe\",\n";
-                commentLittlePart += $"   \"address\": \"{outputAddress}\",\n";
-                commentLittlePart += $"   \"manual\": true,\n";
-                commentLittlePart += $"   \"text\": \"{ text }\"\n";
-                commentLittlePart += "  }";
-
-                commentPart += commentLittlePart;
-                counterCommentPart++;
-            }
-
-            string dd64 = "{\n \"comments\": [\n";
-            dd64 += commentPart;
-            dd64 += "\n ]\n}";
-
-            string dd64Filename = $"{ x64dbgDbFolder }\\{theSession.SourceFilename}.exe.dd64";
-            File.WriteAllText(dd64Filename, dd64);
         }
 
 

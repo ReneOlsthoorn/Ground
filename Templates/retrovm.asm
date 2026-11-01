@@ -34,17 +34,30 @@ start:
   mov	rbp, rsp
   mov   [main_rbp], rbp
 
-  invoke kernel32_GetStdHandle, STD_OUTPUT_HANDLE
+  mov   rcx, STD_OUTPUT_HANDLE
+  sub   rsp, 0x20
+  call  [kernel32_GetStdHandle]
+  add   rsp, 0x20
   mov	[GetStdHandle_outputhandle], rax
 
-  invoke kernel32_GetStdHandle, STD_INPUT_HANDLE
+  mov   rcx, STD_INPUT_HANDLE
+  sub   rsp, 0x20
+  call  [kernel32_GetStdHandle]
+  add   rsp, 0x20
   mov	[GetStdHandle_inputhandle], rax
 
-  invoke kernel32_GetProcessHeap
+  sub   rsp, 0x20
+  call  [kernel32_GetProcessHeap]
+  add   rsp, 0x20
   mov	[processHeapHandle], rax
 
 ; Set the CurrentExeDir as FixedString at position 0 (zero).
-  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  xor   rcx, rcx                    ; hModule = NULL
+  mov   rdx, currentExeDirChars     ; lpFilename
+  mov   r8, 256                     ; nSize
+  sub   rsp, 0x20
+  call  [kernel32_GetModuleFileNameA]
+  add   rsp, 0x20
   mov	rcx, currentExeDirChars
   call	StringLength    ; rax stringlength
   mov   r8, currentExeDirChars
@@ -69,7 +82,10 @@ start:
 
 assert_exitpoint:
   mov	rsp, rbp
-  invoke kernel32_ExitProcess, 0
+  mov   rcx, 0
+  sub   rsp, 0x20
+  call  [kernel32_ExitProcess]
+  add   rsp, 0x20
   pop	rbp
   ret
 
@@ -83,7 +99,9 @@ assert_exitpoint:
 
 PrintScreenString:
 ;rax = string ptr
-  push	r12 r13 r15
+  push	r12
+  push	r13
+  push	r15
   mov	r13, rax
 .nextChar:
   xor	eax, eax
@@ -107,14 +125,18 @@ PrintScreenString:
   inc	r13
   jmp	.nextChar
 .end:
-  pop	r15 r13 r12
+  pop	r15
+  pop	r13
+  pop	r12
   ret
 
 
 PrintScreenColorString:
 ;rax = string ptr
 ;r8 = color (byte)
-  push	r12 r13 r15
+  push	r12
+  push  r13
+  push  r15
   mov	r15, [font32_charcolor_p]
   mov	r13, rax
 .nextChar:
@@ -140,7 +162,9 @@ PrintScreenColorString:
   inc	r13
   jmp	.nextChar
 .end:
-  pop	r15 r13 r12
+  pop	r15
+  pop   r13
+  pop   r12
   ret
 
 
@@ -150,26 +174,28 @@ CalculateNextCursorPosition:
   mov	rcx, [cursor_x]
   mov	rdx, [cursor_y]
   cmp	al, 13 ;\r
-  jne	@F
+  jne	.no13
   mov	ecx, 0
   jmp	.exit
-@@:
+.no13:
   cmp	al, 10 ;\n
-  jne	@F
+  jne	.no10
   inc	edx
   jmp	.exit
-@@:
+.no10:
   inc	ecx
 .exit:
   cmp	ecx, GC_Screen_TextColumns-1
-  jl	@F
+  jl	.tmp3
   sub	ecx, GC_Screen_TextColumns-1
   inc	edx
-@@:
+.tmp3:
   cmp	edx, GC_Screen_TextRows-1
-  jl	@F
+  jl	.tmp4
 ; scroll the entire screen.
-  push	rsi rdi rcx
+  push	rsi
+  push  rdi
+  push  rcx
   mov	rdi, [screentext1_p]
   mov	rsi, rdi
   add	rsi, GC_Screen_TextColumns
@@ -182,9 +208,11 @@ CalculateNextCursorPosition:
   mov	rcx, GC_Screen_TextColumns
   cld
   rep	stosb
-  pop	rcx rdi rsi
+  pop	rcx
+  pop   rdi
+  pop   rsi
   dec	edx
-@@:
+.tmp4:
   mov	[cursor_x], rcx
   mov	[cursor_y], rdx
   pop	r15
@@ -193,9 +221,14 @@ CalculateNextCursorPosition:
 
 ReadChar:
   push	rbp             ; fastcall 16-byte stack alignment
-  lea	rax, [tmpCharSpace]
-  mov	r8, 1
-  invoke kernel32_ReadFile, [GetStdHandle_inputhandle], rax, r8, ResultBytesRead, NULL
+  sub   rsp, 0x30
+  mov   rcx, [GetStdHandle_inputhandle] ; hFile
+  lea	rdx, [tmpCharSpace]
+  mov   r8, 1                           ; nNumberOfBytesToRead
+  lea   r9, [ResultBytesRead]           ; lpNumberOfBytesRead
+  mov   qword [rsp+0x20], 0             ; lpOverlapped = NULL
+  call  [kernel32_ReadFile]
+  add   rsp, 0x30
   pop	rbp
   ret
 
@@ -206,17 +239,19 @@ include 'Templates\part_hardcoded_library.asm'
 
 
 DrawAllCRTLines:
-  push	r12 r11 r13
+  push	r12
+  push  r11
+  push  r13
   xor	r12d, r12d
   mov	r13, [screenmode]
 .loop:
   mov	rcx, r12
   mov	rax, [next_copperline]
   cmp	rax, rcx  ; should we call the copper function? 
-  jne	@F
+  jne	.tmp5
   mov	rax, [user_copper_p]
   cmp	eax, 0
-  jz	@F
+  jz	.tmp5
   push	rbp
   mov	rbp, [main_rbp]
   push  qword 0          ; Keep 16-byte stack alignment! (for win32)
@@ -229,7 +264,7 @@ DrawAllCRTLines:
   mov	rax, [user_copper_p]
   call	rax
   pop	rbp
-@@:
+.tmp5:
   mov	rcx, r12
 
   cmp	r13d, 2
@@ -247,7 +282,9 @@ DrawAllCRTLines:
   inc	r12d
   cmp	r12d, SCREEN_HEIGHT
   jnz	.loop
-  pop	r13 r11 r12
+  pop	r13
+  pop   r11
+  pop   r12
   ret
 
 
@@ -257,7 +294,15 @@ DrawAllCRTLines:
 
 DrawCRTLine_TEXT1_FONT32:
 ;rcx = y position to draw (yscroll not added yet)
-  push	rbp rsi rdi r11 r12 r13 r14 r15 rbx
+  push	rbp
+  push  rsi
+  push  rdi
+  push  r11
+  push  r12
+  push  r13
+  push  r14
+  push  r15
+  push  rbx
   mov	rbp, rsp
   sub	rsp, 0x10
 
@@ -366,7 +411,15 @@ DrawCRTLine_TEXT1_FONT32:
   jmp	.loop
 .exit_loop:
   mov	rsp, rbp
-  pop	rbx r15 r14 r13 r12 r11 rdi rsi rbp
+  pop	rbx
+  pop   r15
+  pop   r14
+  pop   r13
+  pop   r12
+  pop   r11
+  pop   rdi
+  pop   rsi
+  pop   rbp
   ret
 
 
@@ -375,7 +428,11 @@ DrawCRTLine_TEXT1_FONT256:
 ;rcx = y position to draw (yscroll not added yet)
   push	rbp
   mov	rbp, rsp
-  push  rsi rdi r11 r12 r13
+  push  rsi
+  push  rdi
+  push  r11
+  push  r12
+  push  r13
   mov	rdi, [pixels_p]
   mov	r9, rcx
   mov	rax, SCREEN_WIDTH*4
@@ -428,7 +485,11 @@ DrawCRTLine_TEXT1_FONT256:
   inc	r10					; goto the next screencharacter 
   jmp	.loop
 .exit_loop:
-  pop	r13 r12 r11 rdi rsi
+  pop	r13
+  pop   r12
+  pop   r11
+  pop   rdi
+  pop   rsi
   mov	rsp, rbp
   pop	rbp
   ret
@@ -439,7 +500,11 @@ DrawCRTLine_TEXT4_FONT1024:
 ;rcx = y position to draw (yscroll not added yet)
   push	rbp
   mov	rbp, rsp
-  push	rsi rdi r11 r12 r13
+  push	rsi
+  push  rdi
+  push  r11
+  push  r12
+  push  r13
   mov	rdi, [pixels_p]
   mov	r9, rcx
   mov	rax, SCREEN_WIDTH*4
@@ -492,7 +557,11 @@ DrawCRTLine_TEXT4_FONT1024:
   add	r10, 4				; goto the next screencharacter 
   jmp	.loop
 .exit_loop:
-  pop	r13 r12 r11 rdi rsi
+  pop	r13
+  pop   r12
+  pop   r11
+  pop   rdi
+  pop   rsi
   mov	rsp, rbp
   pop	rbp
   ret
@@ -503,7 +572,11 @@ PlotSprite:
 ;rdx = destination pixels
 ;r8  = width
 ;r9  = height
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -513,7 +586,7 @@ PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp6:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -524,12 +597,16 @@ PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp6
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   ret
 
   
@@ -548,7 +625,11 @@ _f_PlotSprite:
   mov   rdx, qword [destination@_f_PlotSprite]
   mov   r8, qword [width@_f_PlotSprite]
   mov   r9, qword [height@_f_PlotSprite]
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -558,7 +639,7 @@ _f_PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp7:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -569,12 +650,16 @@ _f_PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp7
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_4_PARAM
@@ -597,7 +682,12 @@ _f_PlotSheetSprite:
   mov   rdx, qword [destination@_f_PlotSheetSprite]
   mov   r8, qword [width@_f_PlotSheetSprite]
   mov   r9, qword [height@_f_PlotSheetSprite]
-  push	rsi rdi r10 r15 r14 r13
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
+  push  r13
   mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
   shl	r13d, 2
 
@@ -610,7 +700,7 @@ _f_PlotSheetSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp9:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -621,12 +711,17 @@ _f_PlotSheetSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp9
   add	rsi, r13
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r13 r14 r15 r10 rdi rsi
+  pop	r13
+  pop   r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_5_PARAM

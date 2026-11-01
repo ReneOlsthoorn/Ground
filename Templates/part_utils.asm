@@ -14,7 +14,7 @@
 ;Setting up a local stack for storage of local vars:
 ;push rbp
 ;mov rbp, rsp
-;sub rsp, 30h        ; 4 qwords space for the 4 parameters. Store them for later use.
+;sub rsp, 20h        ; 4 qwords space for the 4 parameters. Store them for later use.
 ;mov [rbp-8h], rcx   ; storage of par1
 ;mov [rbp-10h], rdx  ; storage of par2
 ;mov [rbp-18h], r8   ; storage of par3

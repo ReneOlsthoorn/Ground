@@ -1,10 +1,10 @@
-format pe64 GUI 5.0
-entry start
+format PE64 NX GUI 6.0
+entry main
 stack 80000h, 80000h
 
-include 'fasm\win64a.inc'
-include 'Include\sdl3_fasm.inc'
-include 'Templates\part_equates.asm'
+include 'fasm2/include/win64a.inc'
+include 'Include/sdl3_fasm.inc'
+include 'Templates/part_equates.asm'
 gc_linux equ 0
 gc_windows equ 1
 
@@ -12,15 +12,22 @@ gc_windows equ 1
 ;GC_INSERTIONPOINT_EQUATES
 
 section '.text' code readable executable
-start:
+main:
   push	rbp
   mov	rbp, rsp
   mov   [main_rbp], rbp
 
-  invoke kernel32_GetProcessHeap
+  sub   rsp, 0x20
+  call  [kernel32_GetProcessHeap]
+  add   rsp, 0x20
   mov	[processHeapHandle], rax
 
-  invoke kernel32_GetModuleFileNameA, 0, currentExeDirChars, 256
+  xor   rcx, rcx                    ; hModule = NULL
+  mov   rdx, currentExeDirChars     ; lpFilename
+  mov   r8, 256                     ; nSize
+  sub   rsp, 0x20
+  call  [kernel32_GetModuleFileNameA]
+  add   rsp, 0x20
   mov	rcx, currentExeDirChars
   call	StringLength    ; rax stringlength
   mov   r8, currentExeDirChars
@@ -45,7 +52,10 @@ start:
 
 assert_exitpoint:
   mov	rsp, rbp
-  invoke kernel32_ExitProcess, 0
+  mov   rcx, 0
+  sub   rsp, 0x20
+  call  [kernel32_ExitProcess]
+  add   rsp, 0x20
   pop	rbp
   ret
 
@@ -55,9 +65,9 @@ assert_exitpoint:
 ; *** END PROCEDURES ***
 
 
-include 'Templates\part_string.asm'
-include 'Templates\part_utils.asm'
-include 'Templates\part_hardcoded_library.asm'
+include 'Templates/part_string.asm'
+include 'Templates/part_utils.asm'
+include 'Templates/part_hardcoded_library.asm'
 
 
 PlotSprite:
@@ -65,7 +75,11 @@ PlotSprite:
 ;rdx = destination pixels
 ;r8  = width
 ;r9  = height
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -75,7 +89,7 @@ PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -86,12 +100,16 @@ PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   ret
 
 
@@ -110,7 +128,11 @@ _f_PlotSprite:
   mov   rdx, qword [destination@_f_PlotSprite]
   mov   r8, qword [width@_f_PlotSprite]
   mov   r9, qword [height@_f_PlotSprite]
-  push	rsi rdi r10 r15 r14
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
   mov	r15, [pixels_p]
   mov	rsi, rcx
   mov	rdi, rdx
@@ -120,7 +142,7 @@ _f_PlotSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -131,12 +153,16 @@ _f_PlotSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp
   add	rsi, r10
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r14 r15 r10 rdi rsi
+  pop	r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_4_PARAM
@@ -159,7 +185,12 @@ _f_PlotSheetSprite:
   mov   rdx, qword [destination@_f_PlotSheetSprite]
   mov   r8, qword [width@_f_PlotSheetSprite]
   mov   r9, qword [height@_f_PlotSheetSprite]
-  push	rsi rdi r10 r15 r14 r13
+  push	rsi
+  push  rdi
+  push  r10
+  push  r15
+  push  r14
+  push  r13
   mov   r13, qword [sheetwidth@_f_PlotSheetSprite]
   shl	r13d, 2
 
@@ -172,7 +203,7 @@ _f_PlotSheetSprite:
   shl	edx, 2
 .newLine:
   mov	ecx, 0
-@@:
+.tmp2:
   mov	eax, [rsi+rcx*4]
   cmp	eax, 0h
   je	.skip
@@ -183,12 +214,17 @@ _f_PlotSheetSprite:
 .skip:
   add	ecx, 1
   cmp	ecx, r8d
-  jnz	@B
+  jnz	.tmp2
   add	rsi, r13
   add	rdi, rdx
   dec	r9d
   jnz	.newLine
-  pop	r13 r14 r15 r10 rdi rsi
+  pop	r13
+  pop   r14
+  pop   r15
+  pop   r10
+  pop   rdi
+  pop   rsi
   mov   rsp, rbp
   pop   rbp
   retn  G_STACKSPACE_5_PARAM
@@ -217,8 +253,8 @@ section '.idata' import data readable writeable
           msvcrt, 'msvcrt.dll'
 
 
-  include 'Include\kernel32_api.inc'
-  include 'Include\msvcrt_api.inc'
+  include 'Include/kernel32_api.inc'
+  include 'Include/msvcrt_api.inc'
 ;GC_INSERTIONPOINT_LIBRARY_API_INCLUDES
 
 
