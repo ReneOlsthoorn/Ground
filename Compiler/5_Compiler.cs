@@ -1286,11 +1286,10 @@ namespace GroundCompiler
                         emitter.IncrementCurrent();
                     if (expr.Operator.Contains(TokenType.MinusMinus))
                         emitter.DecrementCurrent();
-                    emitter.Push();
+                    emitter.Push();     // the value is pushed, the propertyset will pop it.
                     PropertySet propSet = new PropertySet(propExpr, null, null);
                     propSet.Parent = propExpr.Parent;
                     VisitorPropertySet(propSet);
-                    emitter.Pop();
                 }
                 else if (expr.RightNode is Variable theVariable)
                 {
