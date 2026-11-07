@@ -475,7 +475,8 @@ namespace GroundCompiler
             Codeline($"xor   rdx, rdx");    // always clean rdx before division
             Codeline($"pop   {reg}");
             StackPop();
-            Codeline($"div   {reg}");
+            Codeline($"cqo");
+            Codeline($"idiv   {reg}");
             cpu.FreeRegister("rdx");
             cpu.FreeRegister(reg);
         }
@@ -496,8 +497,9 @@ namespace GroundCompiler
             Codeline($"xor   edx, edx");        // always clean rdx before division
             Codeline($"pop   {reg}");
             StackPop();
-            Codeline($"div   {reg}");
-            Codeline($"mov   eax, edx");
+            Codeline($"cqo");
+            Codeline($"idiv   {reg}");
+            Codeline($"mov   rax, rdx");
             cpu.FreeRegister("rdx");
             cpu.FreeRegister(reg);
         }
@@ -588,7 +590,7 @@ namespace GroundCompiler
             cpu.ReserveRegister("rcx");
             Codeline($"pop   rcx");
             StackPop();
-            Codeline($"shr   rax, cl");
+            Codeline($"sar   rax, cl");
             cpu.FreeRegister("rcx");
         }
 
