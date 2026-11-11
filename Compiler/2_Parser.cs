@@ -130,6 +130,8 @@ namespace GroundCompiler
                 datatypeStr += "*";
 
             Datatype datatype = Datatype.GetDatatype(datatypeStr, arrayNrs);
+            if (theType.Properties.ContainsKey("volatile"))
+                datatype.Properties["volatile"] = true;
             return datatype;
         }
 

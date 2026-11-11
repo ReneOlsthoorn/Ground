@@ -212,10 +212,22 @@ namespace GroundCompiler
                 token.Value = (sLower == "true");
                 return;
             }
+            bool isVolatile = false;
+            if (sLower == "volatile")
+            {
+                SkipIfMatch("volatile");
+                char c = GetFirstNonSpaceChar();
+                s = ReadMatching(IsIdentifierRest);
+                token.Lexeme = s;
+                sLower = s.ToLower();
+                isVolatile = true;
+            }
             if (Datatype.ContainsDatatype(sLower))
             {
                 fill(token, sLower, TokenType.Type);
                 token.Datatype = Datatype.GetDatatype(sLower);
+                if (isVolatile)
+                    token.Properties["volatile"] = true;
                 return;
             }
 

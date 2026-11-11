@@ -713,24 +713,25 @@ GLSL: Rubber Cube</p>
 Tempo Typen</p>
 
 ### Changelog
-2025.01: Kotlin look-a-like for-loops.  
+2025.01: `Kotlin` look-a-like for-loops.  
 2025.04: Bertus game.  
 2025.06: Snake game. Game Of Life.  
 2025.07: Tetrus game.  
 2025.08: Racer game.  
-2025.09: Jump game, Bugs game, ConnectFour (Vier-op-een-rij) and Chess using StockFish added.  
+2025.09: Jump game, Bugs game, ConnectFour (Vier-op-een-rij) and Chess using `StockFish` added.  
 2025.10: High Noon game.  
-2025.11: Memory game. GroundSideLibrary now build with MSYS2.  
+2025.11: Memory game. GroundSideLibrary now build with `MSYS2`.  
 2025.12: Fireworks demo. 3D demo.  
 2026.01: Electronic Life 2026.  
 2026.02: Circles effect, Spiral effect and Hexacubes effect added.  
-2026.04: Reference counting memorymanager removed. Raylib 6.0 template added.  
-2026.05: Several GLSL examples added. f32 literals added.  
+2026.04: Reference counting memorymanager removed. `Raylib 6.0` template added.  
+2026.05: Several `GLSL` examples added. f32 literals added.  
 2026.06: Support for nested properties and automatic dereferencing of pointer related code. Tempo Typen added.  
-2026.08: Support for Linux added. Started implementation of the System V AMD64 ABI.  
+2026.08: Support for `Linux` added. Started implementation of the `System V AMD64 ABI`.  
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod. 
-Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
-2026.10: Continued to work on the System V AMD64 ABI. Move to NASM for Linux. Removed Soloud.  
+Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (`Manjaro` in my case).  
+2026.10: Continued to work on the `System V AMD64 ABI`. Move to `NASM` for Linux. Removed Soloud.  
 2026.11: Upgraded Windows assembler to `FASM 2`. Refactored FunctionCall. The (too) large method was 
-overthrown and made in a class which has different methods for internal function calls, winX64 and linux 
-system calls.
+knocked over and tranformed into a class that has different methods for internal function calls, winX64 and linux 
+system calls. New keyword: `volatile`. Use it to prevent the optimizer from caching the value. Normally, when
+you change a variable in an asm-block, you define the variable as volatile.

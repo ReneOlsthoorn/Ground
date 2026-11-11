@@ -71,7 +71,8 @@ namespace GroundCompiler
         Function,     // function statement
         Class,        // class statement
         Group,        // group statement
-        Dll           // Dll statement
+        Dll,          // Dll statement
+        Volatile      // Volatile
     }
 
 

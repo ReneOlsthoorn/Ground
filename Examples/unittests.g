@@ -602,4 +602,13 @@ if (gc.windows) {
     assert(f23str == "1.#INF000000");
 }
 
+
+volatile bool vbool = true;
+asm {
+  lea	rdx, [vbool@main]
+  mov	qword [rdx], 0
+}
+assert(vbool == false);
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

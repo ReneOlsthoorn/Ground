@@ -81,6 +81,17 @@ namespace GroundCompiler
                     assignedVarsDict[theVar] = 1;
             }
 
+            // When the variable is volatile, exclude it from optimization.
+            var volatileStatements = rootNode.AllNodes()
+                .OfType<VarStatement>()
+                .Where(e => e.ResultType.Properties.ContainsKey("volatile"));
+            foreach (var volatileStmt in volatileStatements)
+            {
+                var theVar = volatileStmt.GetNameIncludingLocalScope();
+                if (theVar != null)
+                    assignedVarsDict[theVar] = 1;
+            }
+
             var unAssignedVars = literalVars.Keys.Where(e => !assignedVarsDict.ContainsKey(e)).ToList();
 
             // Vervang de niet opnieuw toegewezen variabelen met de Literal en optimize opnieuw.
