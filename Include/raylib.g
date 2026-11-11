@@ -195,13 +195,13 @@ dll raylib function DrawTexturePro(raylib_Texture2D texture2d, raylib_Rectangle 
 dll raylib function DrawTextureRec(raylib_Texture2D texture2d, raylib_Rectangle source, raylib_Vector2 position, u32 tint);
 dll raylib function GetMousePosition() : raylib_Vector2;
 
-dll raylib function GetCurrentMonitor() : int;
+dll raylib function GetCurrentMonitor() : i32;
 dll raylib function GetMonitorWidth(int monitor) : int;
 dll raylib function GetMonitorHeight(int monitor) : int;
 dll raylib function SetConfigFlags(u64 flags);
 
-dll raylib function GetScreenWidth() : int;
-dll raylib function GetScreenHeight() : int;
+dll raylib function GetScreenWidth() : i32;
+dll raylib function GetScreenHeight() : i32;
 
 dll raylib function SetWindowState(u64 flags);
 dll raylib function SetWindowSize(int width, int height);

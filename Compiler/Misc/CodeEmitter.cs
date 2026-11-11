@@ -224,6 +224,19 @@ namespace GroundCompiler
             cpu.FreeRegister(reg);
         }
 
+        public void Push8BytesForStackAlignment()
+        {
+            Codeline($"sub   rsp, 8");
+            //Codeline($"push  qword 0xdd");
+            StackPush();
+        }
+        public void Pop8BytesForStackAlignment()
+        {
+            Codeline($"add   rsp, 8");
+            StackPop();
+        }
+
+
         public void Push(Datatype? conversionDatatype = null)
         {
             if (conversionDatatype != null && conversionDatatype.Contains(Datatype.TypeEnum.FloatingPoint))

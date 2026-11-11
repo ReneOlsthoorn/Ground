@@ -731,4 +731,6 @@ Tempo Typen</p>
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod. 
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (Manjaro in my case).  
 2026.10: Continued to work on the System V AMD64 ABI. Move to NASM for Linux. Removed Soloud.  
-2026.11: Upgraded Windows assembler to `FASM 2`.  
+2026.11: Upgraded Windows assembler to `FASM 2`. Refactored FunctionCall. The (too) large method was 
+overthrown and made in a class which has different methods for internal function calls, winX64 and linux 
+system calls.

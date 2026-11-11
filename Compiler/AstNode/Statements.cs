@@ -948,6 +948,20 @@ namespace GroundCompiler.Statements
             this.Scope = new Scope(this);
         }
 
+        // size = 0 means no convertion is needed
+        public int Result_RAX_Register_Size()
+        {
+            if (ResultDatatype != null) {
+                if (Datatype.IsFloatingPoint(ResultDatatype))
+                    return 0;
+                int resultSize = ResultDatatype.SizeInBytes;
+                if (ResultDatatype.Name.StartsWith("bool"))
+                    resultSize = 1;
+                return resultSize;
+            }
+            return 0;
+        }
+
         public void AddUsedRegister(string reg)
         {
             if (Properties.ContainsKey("in EmittedProcedure"))
