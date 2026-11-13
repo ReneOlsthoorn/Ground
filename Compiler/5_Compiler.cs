@@ -265,30 +265,30 @@ namespace GroundCompiler
 
 
         // Expression like: [ 1, 2, 3, 4 ].  Direction: Read
-        public object? VisitorList(Expressions.List list)
+        public object? VisitorList(Expressions.List listExpr)
         {
             // ExprType in list contains the result datatype.
             // We need to fill RAX with an reference to the list
             // Allocate the number of elements in the memory manager.
-            if (!list.ExprType.Contains(Datatype.TypeEnum.Array))
+            if (!listExpr.ExprType.Contains(Datatype.TypeEnum.Array))
                 Error("VisitListExpr: List is no Array");
 
-            int sizeEachElement = list.ExprType.Base!.SizeInBytes;
-            UInt64 nrBytesToAllocate = list.SizeInBytes();
+            int sizeEachElement = listExpr.ExprType.Base!.SizeInBytes;
+            UInt64 nrBytesToAllocate = listExpr.SizeInBytes();
 
             emitter.ReserveOnStack((int)nrBytesToAllocate);
-            if (list.ElementsNodes.Count > 0)
+            if (listExpr.ElementsNodes.Count > 0)
             {
                 emitter.Push();
-                string baseReg = cpu.GetRestoredRegister(list);
+                string baseReg = cpu.GetRestoredRegister(listExpr);
                 emitter.MoveCurrentToRegister(baseReg);
-                for (int i = 0; i < list.ElementsNodes.Count; i++)
+                for (int i = 0; i < listExpr.ElementsNodes.Count; i++)
                 {
-                    Expression expr = list.ElementsNodes[i];
-                    if (list.ExprType.Contains(Datatype.TypeEnum.Array))
+                    Expression expr = listExpr.ElementsNodes[i];
+                    if (listExpr.ExprType.Contains(Datatype.TypeEnum.Array))
                     {
                         expr.Properties["old ExprType"] = expr.ExprType;
-                        expr.ExprType = list.ExprType.Base;
+                        expr.ExprType = listExpr.ExprType.Base;
                     }
 
                     EmitExpression(expr);

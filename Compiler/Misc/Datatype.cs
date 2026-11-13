@@ -132,8 +132,8 @@ namespace GroundCompiler
             { "float",      Datatype.FromData("float",      [ TypeEnum.Number, TypeEnum.FloatingPoint ], isValueType:true, nrBytes:8) },
             { "double",     Datatype.FromData("double",     [ TypeEnum.Number, TypeEnum.FloatingPoint ], isValueType:true, nrBytes:8) },
             { "f64",        Datatype.FromData("f64",        [ TypeEnum.Number, TypeEnum.FloatingPoint ], isValueType:true, nrBytes:8) },
-            { "bool",       Datatype.FromData("bool",       [ TypeEnum.Boolean ], isValueType:true, nrBytes:8) },
-            { "boolean",    Datatype.FromData("boolean",    [ TypeEnum.Boolean ], isValueType:true, nrBytes:8) },
+            { "bool",       Datatype.FromData("bool",       [ TypeEnum.Boolean ], isValueType:true, nrBytes:1) },
+            { "boolean",    Datatype.FromData("boolean",    [ TypeEnum.Boolean ], isValueType:true, nrBytes:1) },
             { "string",     Datatype.FromData("string",     [ TypeEnum.String ], isValueType:true, nrBytes:256) }
         };
 

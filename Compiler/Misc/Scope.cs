@@ -92,7 +92,7 @@ namespace GroundCompiler
             {
                 if (theSymbol is LocalVariableSymbol)
                     return (theSymbol as LocalVariableSymbol)!.DataType;
-                if (theSymbol is LocalVariableSymbol)
+                if (theSymbol is FunctionParameterSymbol)
                     return (theSymbol as FunctionParameterSymbol)!.DataType;
             }
             return Datatype.GetDatatype("i64");

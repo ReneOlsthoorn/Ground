@@ -284,7 +284,7 @@ namespace GroundCompiler
                 (getLin(ref input, index + 2)?.CompDest == "mov;rax"))
             {
                 LinearIR el2 = getLin(ref input, index + 1)!;
-                el2.SourceOperand = linObj.SourceOperand;
+                el2.SourceOperand = $"qword {linObj.SourceOperand}";
                 input[index] = "";
                 input[index + 1] = el2;
             }

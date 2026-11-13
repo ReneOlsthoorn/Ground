@@ -1,5 +1,5 @@
 
-dll sdl3_mixer function MIX_Init() : int;
+dll sdl3_mixer function MIX_Init() : bool;
 dll sdl3_mixer function MIX_Quit();
 dll sdl3_mixer function MIX_CreateMixerDevice(int devid, ptr audiospec) : ptr;
 dll sdl3_mixer function MIX_LoadAudio(ptr mixer, string filepath, bool predecode) : ptr;

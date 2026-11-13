@@ -80,7 +80,7 @@ dll sdl3 function SDL_fabs(float x) : float;
 dll sdl3 function SDL_abs(i32 x) : i32;
 dll sdl3 function SDL_rand_r(ptr state, i32 n) : i32;
 dll sdl3 function SDL_randf_r(ptr state) : f32;
-dll sdl3 function SDL_rand_bits_r(ptr state) : i32;
+dll sdl3 function SDL_rand_bits_r(ptr state) : u32;
 
 dll sdl3 function SDL_cos(float value) : float;
 dll sdl3 function SDL_sin(float value) : float;

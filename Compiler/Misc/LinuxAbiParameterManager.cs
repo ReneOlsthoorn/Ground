@@ -37,7 +37,7 @@ public class LinuxAbiParameterManager
     public void getFloatRegister(FunctionParameter par)
     {
         // xmm0 t/m xmm7
-        if (floatRegisterIndex > 7 || (integerRegisterIndex == 7 && par.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter)))
+        if (floatRegisterIndex > 7 || (floatRegisterIndex == 7 && par.Properties.ContainsKey(FunctionParameterPropKey.LinuxTwoRegisterParameter)))
         {
             par.Properties[FunctionParameterPropKey.LinuxNormalParameterOnStack] = true;
             nrRegistersOnStack++;
