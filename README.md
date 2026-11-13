@@ -267,7 +267,9 @@ On Linux, you can use `edb` as a debugger.
 
 ### Optimizer
 Ground contains an optimizer (in `Optimizer.cs`), which will replace literals and removes unused variables. It will 
-scan the assembly code for usage of variables to avoid removing used variables.
+scan the assembly code for usage of variables to avoid removing used variables. It also contains a peephole 
+optimizer (in `CodeEmitter.cs`) which refactors code for size and speed. To accomplish that, the emitter contains
+Linear Intermediate Representation (IR) objects.
 ```
 int a = (2*5)+5+3+(4/2);
 int b = 4*10;
@@ -292,8 +294,8 @@ is faster than a divide operand. However, this is not needed because the optimiz
 There is a lot of C code in the world. C is practically the base of all major operating systems like Unix, Windows,
 Linux, BSD and MacOS. A lot of C libraries do an excellent job. For instance the unpacking of a `.PNG` file can be
 done with existing C libraries. The `GroundSideLibrary` is a .DLL which contains all that C code and creates an 
-interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default. So, some
-opensource programmers managed to make a better C environment than Microsoft.
+interface for it. It is compiled using MSYS2 MINGW64, which is great and uses MSVCRT or UCRT by default. It is 
+remarkable to see that opensource programmers managed to make a better C environment than Microsoft.
 
 ### Details about the compiler
 There are several steps done before the generated .EXE file is executed:
@@ -731,7 +733,8 @@ Tempo Typen</p>
 2026.09: Problems with Soloud(crashes) and Mikmod(very slow) on Linux. Now using SDL3_mixer for playing a mod. 
 Games Bertus, Bugs, HighNoon, Snake and most raylib examples made working for Linux (`Manjaro` in my case).  
 2026.10: Continued to work on the `System V AMD64 ABI`. Move to `NASM` for Linux. Removed Soloud.  
-2026.11: Upgraded Windows assembler to `FASM 2`. Refactored FunctionCall. The (too) large method was 
+2026.11: Upgraded Windows assembler to `FASM 2`. Refactored FunctionCall. The previous large method was 
 knocked over and tranformed into a class that has different methods for internal function calls, winX64 and linux 
 system calls. New keyword: `volatile`. Use it to prevent the optimizer from caching the value. Normally, when
-you change a variable in an asm-block, you define the variable as volatile.
+you change a variable in an asm-block, you define the variable as volatile. The emitter now accepts Linear IR objects, 
+so Ground can do peephole optimizations with them. The results are great! The generated code is smaller and thus faster.

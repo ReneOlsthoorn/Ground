@@ -126,6 +126,11 @@ IntegerToString:
 ;rcx = the buffer to store the result
 ;RESULT: rcx buffer is filled
 FloatToString:
+  push  rbp
+  mov   rbp, rsp
+  and   rsp, -16   ; //align 16
+
+  sub	rsp, 8
   push  rcx
   push	rsi
   push	rdi
@@ -145,9 +150,13 @@ FloatToString:
   mov	rcx, rax
   cld
   rep	movsb			; copy string
+
   pop   rdi
   pop	rsi
   pop	rcx
+  add	rsp, 8
+  mov   rsp, rbp
+  pop   rbp
   ret
 
 

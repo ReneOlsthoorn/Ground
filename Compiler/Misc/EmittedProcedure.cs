@@ -144,13 +144,13 @@ namespace GroundCompiler
         public void EmitStoreUsedRegisterValues()
         {
             foreach (var reg in this.FunctionStatement.UsedRegisters())
-                Emitter.Codeline($"mov   [_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}], {reg}");
+                Emitter.CodeIR("mov", $"[_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}]", $"{reg}");
         }
 
         public void EmitRestoreUsedRegisterValues()
         {
             foreach (var reg in this.FunctionStatement.UsedRegisters())
-                Emitter.Codeline($"mov   {reg}, [_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}]");
+                Emitter.CodeIR("mov", $"{reg}", $"[_register_{Emitter.AssemblyVariableNameForFunctionParameter(ProcedureName, reg)}]");
         }
 
         public void EmitReleaseStackframe()

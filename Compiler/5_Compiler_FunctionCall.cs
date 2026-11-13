@@ -211,13 +211,15 @@ namespace GroundCompiler
 
                         compiler.EmitExpression(arg);
 
-                        emitter.Codeline($"push  rcx rdi");  // rcx = nr of bytes, rdi = destination pointer
+                        emitter.Codeline($"push  rcx");  // rcx = nr of bytes
+                        emitter.Codeline($"push  rdi");  // rdi = destination pointer
                         emitter.Codeline($"mov   rdi, rax");
                         emitter.Codeline($"mov   rcx, {sizeToClean}");
                         emitter.Codeline($"xor   eax, eax");
                         emitter.Codeline($"cld");
                         emitter.Codeline($"rep stosb");
-                        emitter.Codeline($"pop   rdi rcx");
+                        emitter.Codeline($"pop   rdi");
+                        emitter.Codeline($"pop   rcx");
                         return true;
                     }
                 }
@@ -461,8 +463,10 @@ namespace GroundCompiler
             }
 
             /* Clear the necessary bits in the rax result when the result is a C int or boolean. */
-            if (resultRAXsize == 4)
+            if (resultRAXsize == -4)
                 emitter.Codeline($"movsxd rax, eax");
+            else if (resultRAXsize == 4)
+                emitter.Codeline($"mov   eax, eax");  // a simple mov does zero fill.
             else if (resultRAXsize == 1)
                 emitter.Codeline($"movzx rax, al");
 
@@ -595,8 +599,10 @@ namespace GroundCompiler
                 emitter.FreeOnRSP(lpm.totalStackByteSize);
 
             /* Clear the necessary bits in the rax result when the result is a C int or boolean. */
-            if (resultRAXsize == 4)
+            if (resultRAXsize == -4)
                 emitter.Codeline($"movsxd rax, eax");
+            else if (resultRAXsize == 4)
+                emitter.Codeline($"mov   eax, eax");  // a simple mov does zero fill.
             else if (resultRAXsize == 1)
                 emitter.Codeline($"movzx rax, al");
 

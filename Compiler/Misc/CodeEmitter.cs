@@ -4,6 +4,108 @@ using System.Globalization;
 
 namespace GroundCompiler
 {
+    public class LinearIR  //IR = Intermediate Representation
+    {
+        private static readonly HashSet<string> IntegerRegisters = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
+            "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"
+        };
+
+        public string Instruction;
+        public string? DestinationOperand;
+        public string? SourceOperand;
+        public Dictionary<string, object?> Properties;
+
+        // We use the same order as the Intel assembly: first destination and then source.
+        public LinearIR(string instruction, string? destinationOperand = null, string? sourceOperand = null)
+        {
+            this.Instruction = instruction;
+            this.DestinationOperand = destinationOperand;
+            this.SourceOperand = sourceOperand;
+            this.Properties = new Dictionary<string, object?>();
+        }
+
+        public string InstructionPadded
+        {
+            get { return Instruction.PadRight(6); }
+        }
+
+        public override string ToString()
+        {
+            if ((DestinationOperand == null) && (SourceOperand == null))
+                return $"  {InstructionPadded}\r\n";
+            if ((DestinationOperand != null) && (SourceOperand == null))
+                return $"  {InstructionPadded}{this.DestinationOperand}\r\n";
+            if ((DestinationOperand != null) && (SourceOperand != null))
+                return $"  {InstructionPadded}{this.DestinationOperand}, {this.SourceOperand}\r\n";
+            return "";
+        }
+
+        public string Comp
+        {
+            get {
+                if ((DestinationOperand == null) && (SourceOperand == null))
+                    return $"{Instruction}";
+                if ((DestinationOperand != null) && (SourceOperand == null))
+                    return $"{Instruction};{this.DestinationOperand}";
+                if ((DestinationOperand != null) && (SourceOperand != null))
+                    return $"{Instruction};{this.DestinationOperand};{this.SourceOperand}";
+                return "";
+            }
+        }
+
+        public string CompDest
+        {
+            get
+            {
+                if ((DestinationOperand == null) && (SourceOperand == null))
+                    return $"{Instruction}";
+                if (DestinationOperand != null)
+                    return $"{Instruction};{this.DestinationOperand}";
+                return "";
+            }
+        }
+
+        public string CompSrc
+        {
+            get
+            {
+                if ((DestinationOperand == null) && (SourceOperand == null))
+                    return $"{Instruction}";
+                if (SourceOperand != null)
+                    return $"{Instruction};{this.SourceOperand}";
+                return "";
+            }
+        }
+
+        public bool IsPop() => Instruction?.ToLowerInvariant() == "pop";
+        public string? theSetInstructionCondition() {
+            if (Instruction?.ToLowerInvariant()?.StartsWith("set") ?? false)
+            {
+                if (Instruction == "setg") return "g";
+                if (Instruction == "setge") return "ge";
+                if (Instruction == "setl") return "l";
+                if (Instruction == "setle") return "le";
+            }
+            return null;
+        }
+
+        public bool SourceIsImmediateInteger()
+        {
+            if (SourceOperand == null) return false;
+            return (int.TryParse(SourceOperand, out _));
+        }
+
+        public bool IsDestinationIntegerRegister()
+        {
+            if (DestinationOperand == null)
+                return false;
+            return IntegerRegisters.Contains(DestinationOperand);
+        }
+    }
+
+
     public class CodeEmitter
     {
         public CPU_X86_64 cpu;
@@ -11,7 +113,7 @@ namespace GroundCompiler
         public List<string> GeneratedCode_Main;
         public List<string> GeneratedCode_Procedures;
         public List<string> GeneratedCode_Data;
-        public List<string> generatedCode;
+        public List<object> generatedCode;
         public int FramePosition;
         private CompilationSession session;
 
@@ -24,7 +126,7 @@ namespace GroundCompiler
         {
             this.cpu = cpu;
             this.session = session;
-            generatedCode = new List<string>();
+            generatedCode = new List<object>();
             GeneratedCode_Equates = new List<string>();
             InsertPreprocessorDefines(preprocessorDefines);
             GeneratedCode_Main = new List<string>();
@@ -32,25 +134,227 @@ namespace GroundCompiler
             GeneratedCode_Data = new List<string>();
         }
 
+        public List<LinearIR>? GetLinearIR_Range(ref List<object> input, int index, int size)
+        {
+            List<LinearIR> result = new List<LinearIR>();
+            for (int i = 0; i < size; i++)
+            {
+                object obj = input[index+i];
+                if (obj is string strObj)
+                    return null;
+                LinearIR linObj = (LinearIR)obj;
+                result.Add(linObj);
+            }
+            return result;
+        }
+
+        public LinearIR? getLin(ref List<object> input, int index)
+        {
+            object obj = input[index];
+            if (obj is LinearIR linObj)
+                return linObj;
+            return null;
+        }
+
+        public string getInstr(ref List<object> input, int index)
+        {
+            if (input.Count <= index)
+                return "";
+            object obj = input[index];
+            if (obj is LinearIR linObj)
+                return linObj.Instruction;
+            if (obj is string strObj)
+                return strObj.TrimStart().Split(' ')[0];
+            return "";
+        }
+
+        public string getComp(ref List<object> input, int index)
+        {
+            if (input.Count <= index)
+                return "";
+            object obj = input[index];
+            if (obj is LinearIR linObj)
+                return linObj.Comp;
+            if (obj is string strObj)
+                return string.Join(";", strObj.Trim().Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries));
+            return "";
+        }
+
+        public void PeepholeOptimize(LinearIR linObj, ref List<object> input, int index, int listSize)
+        {
+            /*  cmp rax, ?
+                setg al
+                movzx rax, al
+                test rax, rax
+                jz L0 
+
+            becomes:
+                cmp rax, ?
+                jng L0
+            */
+            if (linObj.Properties.ContainsKey("hint peephole int > >= < <=") && (index + 6 < listSize))
+            {
+                List<LinearIR>? list = GetLinearIR_Range(ref input, index, 5);
+                if (list != null)
+                {
+                    if ((list[0].Instruction == "cmp") && (list[0].DestinationOperand == "rax") &&
+                        (list[1].Instruction.StartsWith("set")) && (list[1].DestinationOperand == "al") &&
+                        (list[2].Comp == "movzx;rax;al") &&
+                        (list[3].Comp == "test;rax;rax") &&
+                        (list[4].Instruction == "jz"))
+                    {
+                        string? condition = list[1].theSetInstructionCondition();
+                        if (condition != null)
+                        {
+                            LinearIR conditionalJump = new LinearIR($"jn{condition}", list[4].DestinationOperand);
+                            input[index + 1] = conditionalJump;
+                            for (int i = 2; i <= 4; i++)
+                                input[index + i] = "";
+                        }
+                    }
+                }
+            }
+
+            /*  sub   rax, ?
+                neg   rax
+                mov   eax, 1
+                sbb   eax, 0
+                test  rax, rax
+                jz    L0
+            
+            becomes:
+                cmp   rax, ?
+                jne   L0
+             */
+            if (linObj.Properties.ContainsKey("hint peephole int == !=") && (index + 8 < listSize))
+            {
+                List<LinearIR>? list = GetLinearIR_Range(ref input, index, 6);
+                if (list != null)
+                {
+                    if ((list[0].Instruction == "sub") && (list[0].DestinationOperand == "rax") &&
+                        (list[1].Comp == "neg;rax") &&
+                        (((list[2].Comp == "mov;eax;1") && (list[3].Comp == "sbb;eax;0")) || ((list[2].Comp == "mov;eax;0") && (list[3].Comp == "adc;eax;0"))) &&
+                        (list[4].Comp == "test;rax;rax") &&
+                        (list[5].Instruction == "jz"))
+                    {
+                        bool eq = (list[3].Comp == "sbb;eax;0");
+                        string condition = eq ? "ne" : "e";
+                        if (condition != null)
+                        {
+                            input[index] = new LinearIR($"cmp", list[0].DestinationOperand, list[0].SourceOperand);
+                            input[index + 1] = new LinearIR($"j{condition}", list[5].DestinationOperand);
+                            for (int i = 2; i <= 5; i++)
+                                input[index + i] = "";
+                        }
+                    }
+                }
+            }
+
+            /*  mov   rax, ?
+                push  rax
+                mov   rax, ?
+                pop   r8
+
+            becomes:
+                mov   r8, ?
+                mov   rax, ?
+            */
+            if (linObj.CompDest == "mov;rax")
+            {
+                if ((getLin(ref input, index + 1)?.CompDest == "push;rax") &&
+                    (getLin(ref input, index + 2)?.CompDest == "mov;rax") &&
+                    (getLin(ref input, index + 3)?.Instruction == "pop") && (getLin(ref input, index + 3)?.IsDestinationIntegerRegister() ?? false))
+                {
+                    linObj.DestinationOperand = getLin(ref input, index + 3)?.DestinationOperand;
+                    input[index + 1] = "";
+                    input[index + 3] = "";
+                }
+            }
+
+            /*
+              mov   rax, 1
+              mov   ?, rax
+              mov   rax, 0    --> this one is important, else rax might be used somewhere else in the code
+
+            becomes:
+              mov   ?, 1
+             */
+            if (linObj.CompDest == "mov;rax" && linObj.SourceIsImmediateInteger() &&
+                (getLin(ref input, index + 1)?.CompSrc == "mov;rax") &&
+                (getLin(ref input, index + 2)?.CompDest == "mov;rax"))
+            {
+                LinearIR el2 = getLin(ref input, index + 1)!;
+                el2.SourceOperand = linObj.SourceOperand;
+                input[index] = "";
+                input[index + 1] = el2;
+            }
+
+            /*
+              xor   eax, eax
+              mov   rax, ?
+
+            becomes:
+              mov   rax, ?
+             */
+            if (linObj.Comp == "xor;eax;eax" &&
+                ((getLin(ref input, index + 1)?.CompDest == "mov;rax") || (getLin(ref input, index + 1)?.CompDest == "mov;eax")) && (getLin(ref input, index + 1)?.Comp != "mov;eax;eax"))
+            {
+                input[index] = "";
+            }
+        }
+
+        public void PeepholeOptimizationPass(ref List<object> input, int listSize)
+        {
+            for (int i = 0; i < listSize; i++)
+            {
+                object obj = input[i];
+                if (obj is string strObj)
+                    continue;
+                LinearIR linObj = (LinearIR)obj;
+                PeepholeOptimize(linObj, ref input, i, listSize);
+            }
+        }
+
+        public List<string> ConvertToStrings(List<object> mixedGenerated)
+        {
+            int listSize = mixedGenerated.Count;
+            PeepholeOptimizationPass(ref mixedGenerated, listSize);
+
+            List<string> result = new List<string>();
+            for (int i = 0; i < listSize; i++)
+            {
+                object obj = mixedGenerated[i];
+                if (obj is string strObj)
+                {
+                    if (strObj != "")
+                        result.Add(strObj);
+                    continue;
+                }
+                LinearIR linObj = (LinearIR)obj;
+                result.Add(linObj.ToString());
+            }
+            return result;
+        }
+
         public void CloseGeneratedCode_Main()
         {
-            GeneratedCode_Main.AddRange(generatedCode);
-            generatedCode = new List<string>();
+            GeneratedCode_Main.AddRange(ConvertToStrings(generatedCode));
+            generatedCode = new List<object>();
         }
         public void CloseGeneratedCode_Procedures()
         {
-            GeneratedCode_Procedures.AddRange(generatedCode);
-            generatedCode = new List<string>();
+            GeneratedCode_Procedures.AddRange(ConvertToStrings(generatedCode));
+            generatedCode = new List<object>();
         }
         public void CloseGeneratedCode_Data()
         {
-            GeneratedCode_Data.AddRange(generatedCode);
-            generatedCode = new List<string>();
+            GeneratedCode_Data.AddRange(ConvertToStrings(generatedCode));
+            generatedCode = new List<object>();
         }
         public List<string> CloseGeneratedCode()
         {
-            var result = generatedCode;
-            generatedCode = new List<string>();
+            var result = ConvertToStrings(generatedCode);
+            generatedCode = new List<object>();
             return result;
         }
 
@@ -70,6 +374,12 @@ namespace GroundCompiler
                 Writeline($"{key} = {value}");
         }
         public void Codeline(string text) { Writeline($"  {text}"); }
+        public LinearIR CodeIR(string? instr, string? op1 = null, string? op2 = null)
+        {
+            LinearIR ir = new LinearIR(instr, op1, op2);
+            generatedCode.Add(ir);
+            return ir;
+        }
         public string NewLabel() { return $"L{labelCounter++}"; }
 
         public void EmitNOP() => Codeline("nop");
@@ -126,9 +436,9 @@ namespace GroundCompiler
 
         public void CreateStackframe()
         {
-            Codeline($"push  rbp");         // this line makes the value at [rbp] always the parent
+            CodeIR("push","rbp");         // this line makes the value at [rbp] always the parent
             StackPush();  // now, the stack is aligned, because when starting a function, the stack is always unaligned.
-            Codeline($"mov   rbp, rsp");
+            CodeIR("mov","rbp","rsp");
         }
 
         public void ReserveStackspace(int stackSpaceNeeded)
@@ -136,7 +446,7 @@ namespace GroundCompiler
             if (stackSpaceNeeded % 16 > 0)
                 Compiler.Error("Stack is not aligned on 16 byte boundary");
 
-            Codeline($"sub   rsp, {stackSpaceNeeded}");
+            CodeIR("sub","rsp",$"{stackSpaceNeeded}");
             StackSub(stackSpaceNeeded);
 /* The code below can be used to clear the allocated stack space. It would be better if the user called zero() on the array.
             Codeline($"lea   rax, [rsp]");
@@ -152,87 +462,86 @@ namespace GroundCompiler
         {
             if (!noFrameRestoration)
             {
-                Codeline($"mov   rsp, rbp");
+                CodeIR("mov", "rsp", "rbp");
                 // the intial "mov rbp, rsp" statement is done with an aligned stack, so the stackpos is -16
                 StackPos = -16;
-                Codeline($"pop   rbp");
+                CodeIR("pop", "rbp");
                 StackPop();
             }
             if (returnPop > 0)
-                Codeline($"retn  {returnPop}\r\n");
+                CodeIR("retn",$"{returnPop}");
             else
-                Codeline($"ret\r\n");
+                CodeIR("ret");
         }
 
         public void CallFunction(FunctionSymbol f, Expression expr)
         {
             string assemblyFunctionname = ConvertToAssemblyFunctionName(f.FunctionStmt.Name.Lexeme, f.FunctionStmt.GetGroupOrClassName());
-            Codeline($"call  {assemblyFunctionname}");
+            CodeIR("call",$"{assemblyFunctionname}");
         }
 
         public void LoadConstantString(StringConstantSymbol strSymbol)
         {
-            Codeline($"lea   rax, [{strSymbol.SymbolRefId}]");
+            CodeIR("lea", "rax", $"[{strSymbol.SymbolRefId}]");
         }
 
-        public void RegisterMove(string reg1, string reg2) => Codeline($"mov   {reg2}, {reg1}");
-        public void LoadHardcodedGroupVariable(string name) => Codeline($"mov   rax, {name}");
-        public void StoreCurrent(string name) => Codeline($"mov   {name}, rax");
-        public void LoadNull() => Codeline($"xor   eax, eax");
+        public void RegisterMove(string reg1, string reg2) => CodeIR("mov", reg2, reg1);
+        public void LoadHardcodedGroupVariable(string name) => CodeIR("mov", "rax", name);
+        public void StoreCurrent(string name) => CodeIR("mov", name, "rax");
+        public void LoadNull() => CodeIR("xor", "eax", "eax");
 
 
         public void LoadConstant64(Int64 value)
         {
-            Codeline($"mov   rax, {value}");
+            CodeIR("mov", "rax", $"{value}");
         }
 
         public void LoadBoolean(bool value)
         {
-            Codeline($"mov   rax, {(value ? 1 : 0)}");
+            CodeIR("mov", "rax", $"{(value ? 1 : 0)}");
         }
         public void LoadInfinityFloat64()
         {
-            Codeline($"mov   rax, 0x7FF0000000000000");
-            Codeline($"movq  xmm0, rax");
+            CodeIR("mov", "rax", "0x7FF0000000000000");
+            CodeIR("movq", "xmm0", "rax");
         }
 
         public void LoadConstantFloat32(string name)
         {
-            Codeline($"movss xmm0, dword [{name}]");
+            CodeIR("movss", "xmm0", $"dword [{name}]");
         }
 
         public void LoadConstantFloat64(string name)
         {
-            Codeline($"movq  xmm0, qword [{name}]");
+            CodeIR("movq", "xmm0", $"qword [{name}]");
         }
 
-        public void LoadAssemblyVariableString(string name) => Codeline($"lea   rax, [{name}]");
+        public void LoadAssemblyVariableString(string name) => CodeIR("lea", "rax", $"[{name}]");
 
         public void LoadSystemVarsVariable(string name)
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, [vars]");
-            Codeline($"mov   rax, [{reg}+SystemVars.{name}]");
+            CodeIR("mov", $"{reg}", "[vars]");
+            CodeIR("mov", "rax", $"[{reg}+SystemVars.{name}]");
             cpu.FreeRegister(reg);
         }
 
         public void StoreSystemVarsVariable(string name, int nrBytes = 8)
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, [vars]");
-            Codeline($"mov   [{reg}+SystemVars.{name}], {cpu.RAX_Register_Sized(nrBytes)}");
+            CodeIR("mov", $"{reg}", "[vars]");
+            CodeIR("mov", $"[{reg}+SystemVars.{name}]", $"{cpu.RAX_Register_Sized(nrBytes)}");
             cpu.FreeRegister(reg);
         }
 
         public void Push8BytesForStackAlignment()
         {
-            Codeline($"sub   rsp, 8");
-            //Codeline($"push  qword 0xdd");
+            CodeIR("sub", "rsp", "8");
             StackPush();
         }
         public void Pop8BytesForStackAlignment()
         {
-            Codeline($"add   rsp, 8");
+            CodeIR("add", "rsp", "8");
             StackPop();
         }
 
@@ -243,38 +552,38 @@ namespace GroundCompiler
                 PushFloat();
             else
             {
-                Codeline($"push  rax");
+                CodeIR("push", "rax");
                 StackPush();
             }
         }
 
         public void PushRegister(string reg)
         {
-            Codeline($"push  {reg}");
+            CodeIR("push", $"{reg}");
             StackPush();
         }
         public void PopRegister(string reg)
         {
-            Codeline($"pop  {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
         }
 
         public void PushFloat()
         {
-            Codeline($"sub   rsp, 8");
+            CodeIR("sub", "rsp", "8");
             StackSub();
-            Codeline($"movq  qword [rsp], xmm0");
+            CodeIR("movq", "qword [rsp]", "xmm0");
         }
 
         public void ReserveOnRSP(int size, string? register = null)
         {
             if (size > 0)
-                Codeline($"sub   rsp, 0x{size.ToString("x")}");
+                CodeIR("sub", "rsp", $"0x{size.ToString("x")}");
 
             if (register != null)
             {
                 cpu.ReserveRegister(register);
-                Codeline($"mov   {register}, rsp");
+                CodeIR("mov", $"{register}", "rsp");
                 cpu.FreeRegister(register);
             }
         }
@@ -330,9 +639,9 @@ namespace GroundCompiler
             }
 
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"add   rax, {reg}");
+            CodeIR("add", "rax", $"{reg}");
             cpu.FreeRegister(reg);
         }
 
@@ -438,9 +747,10 @@ namespace GroundCompiler
             }
 
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", reg);
             StackPop();
-            Codeline($"sub   rax, {reg}");
+            var ir = CodeIR("sub", "rax", reg);
+            ir.Properties["hint peephole int == !="] = true;
             cpu.FreeRegister(reg);
         }
 
@@ -463,9 +773,9 @@ namespace GroundCompiler
             }
 
             cpu.ReserveRegister("rdx");
-            Codeline($"pop   rdx");
+            CodeIR("pop", "rdx");
             StackPop();
-            Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
+            CodeIR("mul", "rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
             cpu.FreeRegister("rdx");
         }
 
@@ -485,11 +795,11 @@ namespace GroundCompiler
 
             var reg = cpu.GetTmpRegister();
             cpu.ReserveRegister("rdx");
-            Codeline($"xor   rdx, rdx");    // always clean rdx before division
-            Codeline($"pop   {reg}");
+            CodeIR("xor", "rdx", "rdx");    // always clean rdx before division
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"cqo");
-            Codeline($"idiv   {reg}");
+            CodeIR("cqo");
+            CodeIR("idiv", $"{reg}");
             cpu.FreeRegister("rdx");
             cpu.FreeRegister(reg);
         }
@@ -497,9 +807,9 @@ namespace GroundCompiler
         public void PopBitwiseAnd()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"and   rax, {reg}");
+            CodeIR("and", "rax", $"{reg}");
             cpu.FreeRegister(reg);
         }
 
@@ -507,12 +817,12 @@ namespace GroundCompiler
         {
             var reg = cpu.GetTmpRegister();
             cpu.ReserveRegister("rdx");
-            Codeline($"xor   edx, edx");        // always clean rdx before division
-            Codeline($"pop   {reg}");
+            CodeIR("xor", "edx", "edx");        // always clean rdx before division
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"cqo");
-            Codeline($"idiv   {reg}");
-            Codeline($"mov   rax, rdx");
+            CodeIR("cqo");
+            CodeIR("idiv", $"{reg}");
+            CodeIR("mov", "rax", "rdx");
             cpu.FreeRegister("rdx");
             cpu.FreeRegister(reg);
         }
@@ -520,29 +830,30 @@ namespace GroundCompiler
         public void PopBitwiseOr()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"or   rax, {reg}");
+            CodeIR("or", "rax", $"{reg}");
             cpu.FreeRegister(reg);
         }
 
         public void PopBitwiseXor()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"xor  rax, {reg}");
+            CodeIR("xor", "rax", $"{reg}");
             cpu.FreeRegister(reg);
         }
 
         public void PopCCToBoolean(string condition)
         {
-            var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            var reg = cpu.GetTmpRegister();            
+            CodeIR("pop", reg);
             StackPop();
-            Codeline($"cmp   rax, {reg}");
-            Codeline($"set{condition}  al");
-            Codeline($"movzx rax, al");
+            var ir = CodeIR("cmp", "rax", reg);
+            ir.Properties["hint peephole int > >= < <="] = true;
+            CodeIR($"set{condition}", "al");
+            CodeIR("movzx", "rax", "al");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
         }
@@ -553,18 +864,18 @@ namespace GroundCompiler
 
         public void Logical()
         {
-            Codeline($"neg   rax");         // if rax != 0 => carry flag is set
-            Codeline($"mov   eax, 0");
-            Codeline($"adc   eax, 0");
+            CodeIR("neg", "rax");         // if rax != 0 => carry flag is set
+            CodeIR("mov", "eax", "0");
+            CodeIR("adc", "eax", "0");
             // input int64 rax == 0, output bool rax -> 0
             // input int64 rax != 0, output bool rax -> 1
         }
 
         public void LogicalNot()
         {
-            Codeline($"neg   rax");         // if rax != 0 => carry flag is set
-            Codeline($"mov   eax, 1");
-            Codeline($"sbb   eax, 0");
+            CodeIR("neg", "rax");         // if rax != 0 => carry flag is set
+            CodeIR("mov", "eax", "1");
+            CodeIR("sbb", "eax", "0");
             // input int64 rax == 0, output bool rax -> 1
             // input int64 rax != 0, output bool rax -> 0
         }
@@ -572,9 +883,9 @@ namespace GroundCompiler
         public void PopOr()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"or    rax, {reg}");
+            CodeIR("or", "rax", $"{reg}");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
         }
@@ -582,9 +893,9 @@ namespace GroundCompiler
         public void PopAnd()
         {
             var reg = cpu.GetTmpRegister();
-            Codeline($"pop   {reg}");
+            CodeIR("pop", $"{reg}");
             StackPop();
-            Codeline($"and   rax, {reg}");
+            CodeIR("and", "rax", $"{reg}");
             // bool rax 1 = true, bool rax 0 = false;
             cpu.FreeRegister(reg);
         }
@@ -592,18 +903,18 @@ namespace GroundCompiler
         public void PopShiftLeft()
         {
             cpu.ReserveRegister("rcx");
-            Codeline($"pop   rcx");
+            CodeIR("pop", "rcx");
             StackPop();
-            Codeline($"shl   rax, cl");
+            CodeIR("shl", "rax", "cl");
             cpu.FreeRegister("rcx");
         }
 
         public void PopShiftRight()
         {
             cpu.ReserveRegister("rcx");
-            Codeline($"pop   rcx");
+            CodeIR("pop", "rcx");
             StackPop();
-            Codeline($"sar   rax, cl");
+            CodeIR("sar", "rax", "cl");
             cpu.FreeRegister("rcx");
         }
 
@@ -619,24 +930,24 @@ namespace GroundCompiler
                     Codeline($"xorps   xmm0, {Octoword()} [Negation_XMM32]");
             }
             else 
-                Codeline($"neg   rax");
+                CodeIR("neg", "rax");
         }
 
         public void JumpToLabelIfTrue(string label)
         {
-            Codeline($"cmp   eax, 0");
-            Codeline($"jnz   {label}");
+            CodeIR("test", "rax", "rax");
+            CodeIR("jnz", label);
         }
 
         public void JumpToLabelIfFalse(string label)
         {
-            Codeline($"cmp   eax, 0");
-            Codeline($"jz    {label}");
+            CodeIR("test", "rax", "rax");
+            CodeIR("jz", label);
         }
 
         public void JumpToLabel(string label)
         {
-            Codeline($"jmp   {label}");
+            CodeIR("jmp", label);
         }
 
         public string Gather_LexicalParentStackframe(int levelDeep)
@@ -655,7 +966,7 @@ namespace GroundCompiler
         public string Gather_CurrentStackframe()
         {
             cpu.ReserveRegister("rcx");
-            Codeline("mov   rcx, rbp");
+            CodeIR("mov", "rcx", "rbp");
             return "rcx";
         }
 
@@ -663,8 +974,8 @@ namespace GroundCompiler
         {
             var nrBytes = datatype.SizeInBytes;
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
-            Codeline($"xor   eax, eax");
+            CodeIR("mov", $"{reg}", "rax");
+            CodeIR("xor", "eax", "eax");
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
                 if (datatype.SizeInBytes == 8)
@@ -673,14 +984,14 @@ namespace GroundCompiler
                     Codeline($"movd   xmm0, [{reg}]");
             }
             else
-                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{reg}]");
+                CodeIR("mov", $"{cpu.RAX_Register_Sized(nrBytes)}", $"[{reg}]");
             cpu.FreeRegister(reg);
         }
         public void StorePointingTo(Datatype datatype)
         {
             var nrBytes = datatype.SizeInBytes;
             var reg = cpu.GetTmpRegister();
-            Codeline($"mov   {reg}, rax");
+            CodeIR("mov", $"{reg}", "rax");
             Pop();
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
             {
@@ -690,10 +1001,10 @@ namespace GroundCompiler
                     Codeline($"movd   [{reg}], xmm0");
             }
             else
-                Codeline($"mov   [{reg}], {cpu.RAX_Register_Sized(nrBytes)}");
+                CodeIR("mov", $"[{reg}]", $"{cpu.RAX_Register_Sized(nrBytes)}");
             cpu.FreeRegister(reg);
         }
-        public void LeaFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rbp-{variableName}]");
+        public void LeaFunctionVariable64(string variableName) => CodeIR("lea", "rax", $"qword [rbp-{variableName}]");
         public void LoadFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -704,11 +1015,11 @@ namespace GroundCompiler
                     Codeline($"movd  xmm0, dword [rbp-{variableName}]");
             }
             else if (datatype.Contains(Datatype.TypeEnum.String))
-                Codeline($"lea   rax, qword [rbp-{variableName}]");
+                CodeIR("lea", "rax", $"qword [rbp-{variableName}]");
             else
-                Codeline($"mov   rax, qword [rbp-{variableName}]");
+                CodeIR("mov", "rax", $"qword [rbp-{variableName}]");
         }
-        public void LeaParentFunctionVariable64(string variableName) => Codeline($"lea   rax, qword [rcx-{variableName}]");
+        public void LeaParentFunctionVariable64(string variableName) => CodeIR("lea", "rax", $"qword [rcx-{variableName}]");
         public void LoadParentFunctionVariable64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint))
@@ -721,10 +1032,10 @@ namespace GroundCompiler
             else if (datatype.Contains(Datatype.TypeEnum.String))
                 LeaParentFunctionVariable64(variableName);
             else
-                Codeline($"mov   rax, qword [rcx-{variableName}]");
+                CodeIR("mov", "rax", $"qword [rcx-{variableName}]");
         }
-        public void LeaFunctionParameter64(string variableName) => Codeline($"lea   rax, qword [rbp+{variableName}]");
-        public void LoadFunctionParameter64(string variableName) => Codeline($"mov   rax, qword [rbp+{variableName}]");
+        public void LeaFunctionParameter64(string variableName) => CodeIR("lea", "rax", $"qword [rbp+{variableName}]");
+        public void LoadFunctionParameter64(string variableName) => CodeIR("mov", "rax", $"qword [rbp+{variableName}]");
         public void LoadFunctionParameter64(string variableName, Datatype datatype)
         {
             if (datatype.Contains(Datatype.TypeEnum.FloatingPoint)) {
@@ -734,12 +1045,12 @@ namespace GroundCompiler
                     Codeline($"movd  xmm0, dword [rbp+{variableName}]");
             }
             else
-                Codeline($"mov   rax, qword [rbp+{variableName}]");
+                CodeIR("mov", "rax", $"qword [rbp+{variableName}]");
         }
 
         public void LoadFunction(string functionName)
         {
-            Codeline($"mov   rax, {functionName}");
+            CodeIR("mov", "rax", $"{functionName}");
         }
 
         public void StoreFunctionParameter64(string variableName, Datatype datatype)
@@ -752,7 +1063,7 @@ namespace GroundCompiler
                     Codeline($"movd  dword [rbp+{variableName}], xmm0");
             }
             else
-                Codeline($"mov   qword [rbp+{variableName}], rax");
+                CodeIR("mov", $"qword [rbp+{variableName}]", "rax");
         }
 
         public void StoreFunctionVariable64(string variableName, Datatype datatype)
@@ -781,7 +1092,7 @@ namespace GroundCompiler
                 // Because a byte in de stack will misalign the stack horribly. And also, local variables are
                 // not arrays, so they take not so much space. It is not like the programmer will be defining 300
                 // byte variables. In that case, an array is created by the programmer those objects are a pointer.
-                Codeline($"mov   qword [rbp-{variableName}], rax");
+                CodeIR("mov", $"qword [rbp-{variableName}]", "rax");
             }
         }
 
@@ -805,7 +1116,7 @@ namespace GroundCompiler
                 Codeline($"pop   rax");
             }
             else
-                Codeline($"mov   [rcx-{variableName}], rax");
+                CodeIR("mov", $"[rcx-{variableName}]", "rax");
         }
 
         public void StoreInstanceVar(string instVar, string reg, Datatype targetType)
@@ -829,7 +1140,7 @@ namespace GroundCompiler
             else
             {
                 var nrBytes = targetType.SizeInBytes;
-                Codeline($"mov   {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}], {cpu.RAX_Register_Sized(nrBytes)}");
+                CodeIR("mov", $"{cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]", $"{cpu.RAX_Register_Sized(nrBytes)}");
             }
         }
 
@@ -856,23 +1167,23 @@ namespace GroundCompiler
                 if (nrBytes < 4)
                     Codeline($"xor   rax, rax");
 
-                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
+                CodeIR("mov", $"{cpu.RAX_Register_Sized(nrBytes)}", $"{cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
             }
         }
 
         public void LeaInstanceVar(string instVar, string reg, Datatype datatype)
         {
             var nrBytes = datatype.SizeInBytes;
-            Codeline($"lea   rax, {cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
+            CodeIR("lea", "rax", $"{cpu.FasmSizeIndicator(nrBytes)} [{reg}+{instVar}]");
         }
 
         public void IncrementCurrent()
         {
-            Codeline($"inc   rax");
+            CodeIR("inc", "rax");
         }
         public void DecrementCurrent()
         {
-            Codeline($"dec   rax");
+            CodeIR("dec", "rax");
         }
 
         public void ReserveOnStack(int space, string register = "rax")
@@ -883,7 +1194,7 @@ namespace GroundCompiler
                 toReserve = space - onder15 + 16;
 
             FramePosition += toReserve;
-            Codeline($"lea   {register}, [rbp-{FramePosition}]");
+            CodeIR("lea", $"{register}", $"[rbp-{FramePosition}]");
         }
 
         public void IntegerToString(Expression expr)
@@ -979,12 +1290,12 @@ namespace GroundCompiler
                 PopFloat(register);
             else
             {
-                Codeline($"pop   {((register == null) ? "rax" : register)}");
+                CodeIR("pop", $"{ register ?? "rax" }");
                 StackPop();
             }
         }
 
-        public void MoveCurrentToRegister(string reg) => Codeline($"mov   {reg}, rax");
+        public void MoveCurrentToRegister(string reg) => CodeIR("mov", $"{reg}", "rax");
 
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, int index, Datatype targetType)
         {
@@ -1006,7 +1317,7 @@ namespace GroundCompiler
                 if (targetType.SizeInBytes == 4)
                     Codeline($"movd  eax, xmm0");  // below, the basereg+index cannot be done with xmm0
             }
-            Codeline($"mov   [{baseReg}+{index}*{nrBytes}], {cpu.RAX_Register_Sized(nrBytes)}");
+            CodeIR("mov", $"[{baseReg}+{index}*{nrBytes}]", $"{cpu.RAX_Register_Sized(nrBytes)}");
         }
 
         public void StoreCurrentInBasedIndex(int nrBytes, string baseReg, string indexReg, Datatype targetType)
@@ -1018,51 +1329,51 @@ namespace GroundCompiler
                 if (targetType.SizeInBytes == 4)
                     Codeline($"movd  eax, xmm0");  // below, the basereg+index cannot be done with xmm0
             }
-            Codeline($"mov   [{baseReg}+({indexReg}*{nrBytes})], {cpu.RAX_Register_Sized(nrBytes)}");
+            CodeIR("mov", $"[{baseReg}+({indexReg}*{nrBytes})]", $"{cpu.RAX_Register_Sized(nrBytes)}");
         }
 
         public void SignExtend(Datatype theType)
         {
             if (theType.IsValueType && theType.Contains(Datatype.TypeEnum.Signed) && theType.Contains(Datatype.TypeEnum.Integer) && theType.SizeInBytes < 8)
-                Codeline($"movsx rax, {cpu.RAX_Register_Sized(theType.SizeInBytes)}");
+                CodeIR("movsx", "rax", $"{cpu.RAX_Register_Sized(theType.SizeInBytes)}");
         }
 
         public void LoadBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
-            Codeline($"xor   eax, eax");
+            CodeIR("xor", "eax", "eax");
             if (nrBytes >= 16 && Utils.IsLog2(nrBytes))
             {
                 string reg = cpu.GetTmpRegister();
-                Codeline($"mov   {reg}, {indexReg}");
-                Codeline($"shl   {reg}, {Math.Log2(nrBytes)}");
-                Codeline($"lea   rax, [{baseReg}+{reg}]");
+                CodeIR("mov", $"{reg}", $"{indexReg}");
+                CodeIR("shl", $"{reg}", $"{Math.Log2(nrBytes)}");
+                CodeIR("lea", "rax", $"[{baseReg}+{reg}]");
                 cpu.FreeRegister(reg);
             }
             else if (nrBytes == 1 || nrBytes == 2 || nrBytes == 4 || nrBytes == 8)
-                Codeline($"mov   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+                CodeIR("mov", $"{cpu.RAX_Register_Sized(nrBytes)}", $"[{baseReg}+({indexReg}*{nrBytes})]");
             else
                 Compiler.Error($"LoadBasedIndexToCurrent: Index of {nrBytes} is not supported.");
 
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 8))
-                Codeline($"movq   xmm0, rax");
+                CodeIR("movq", "xmm0", "rax");
             if (targetType.Contains(Datatype.TypeEnum.FloatingPoint) && (targetType.SizeInBytes == 4))
-                Codeline($"movd   xmm0, eax");
+                CodeIR("movd", "xmm0", "eax");
         }
 
         public void LeaBasedIndexToCurrent(int nrBytes, string baseReg, string indexReg, Datatype targetType)
         {
-            Codeline($"xor   eax, eax");
+            CodeIR("xor", "eax", "eax");
             //if (targetType.Contains(Datatype.TypeEnum.String) && nrBytes == 256)
             if (nrBytes >= 16 && Utils.IsLog2(nrBytes))
             {
                 string reg = cpu.GetTmpRegister();
-                Codeline($"mov   {reg}, {indexReg}");
-                Codeline($"shl   {reg}, {Math.Log2(nrBytes)}");
-                Codeline($"lea   rax, [{baseReg}+{reg}]");
+                CodeIR("mov", $"{reg}", $"{indexReg}");
+                CodeIR("shl", $"{reg}", $"{Math.Log2(nrBytes)}");
+                CodeIR("lea", "rax", $"[{baseReg}+{reg}]");
                 cpu.FreeRegister(reg);
             }
             else if (nrBytes == 1 || nrBytes == 2 || nrBytes == 4 || nrBytes == 8)
-                Codeline($"lea   {cpu.RAX_Register_Sized(nrBytes)}, [{baseReg}+({indexReg}*{nrBytes})]");
+                CodeIR("lea", $"{cpu.RAX_Register_Sized(nrBytes)}", $"[{baseReg}+({indexReg}*{nrBytes})]");
             else
                 Compiler.Error($"LeaBasedIndexToCurrent: Index of {nrBytes} is not supported.");
         }
@@ -1072,15 +1383,15 @@ namespace GroundCompiler
             if (nrBytes != 1 && nrBytes != 2 && nrBytes != 4 && nrBytes != 8)
             {
                 cpu.ReserveRegister("rdx");
-                Codeline($"mov   rax, {nrBytes}");
-                Codeline($"mov   rdx, {indexReg}");
-                Codeline($"mul   rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
-                Codeline($"mov   {indexReg}, rax");
-                Codeline($"lea   rax, [{baseReg}+{indexReg}]");
+                CodeIR("mov", "rax", $"{nrBytes}");
+                CodeIR("mov", "rdx", $"{indexReg}");
+                CodeIR("mul", "rdx");   // rdx will be normally be destroyed anyway by the result being stored in rdx:rax
+                CodeIR("mov", $"{indexReg}", "rax");
+                CodeIR("lea", "rax", $"[{baseReg}+{indexReg}]");
                 cpu.FreeRegister("rdx");
             }
             else
-                Codeline($"lea   rax, [{baseReg}+({indexReg}*{nrBytes})]");
+                CodeIR("lea", "rax", $"[{baseReg}+({indexReg}*{nrBytes})]");
         }
 
         public void resizeCurrentFloatingPoint(int sourceNrBytes, int destinationNrBytes)
@@ -1103,11 +1414,11 @@ namespace GroundCompiler
         public void resizeCurrent(int newNrBytes)
         {
             if (newNrBytes == 1)
-                Codeline($"and   rax, 0xff");
+                CodeIR("and", "rax", "0xff");
             else if (newNrBytes == 2)
-                Codeline($"and   rax, 0xffff");
+                CodeIR("and", "rax", "0xffff");
             else if (newNrBytes == 4)
-                Codeline($"mov   eax, eax");
+                CodeIR("mov", "eax", "eax");
         }
 
         public bool IsAlign16(long stackposition) => (((-stackposition) % 16) == 0);

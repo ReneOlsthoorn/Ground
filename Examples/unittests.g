@@ -611,4 +611,16 @@ asm {
 assert(vbool == false);
 
 
+class TestClass {
+	int x;
+}
+TestClass tc;
+tc.x = 3;
+i = 3;
+assert(i++ == 3);
+assert(i++ == 4);
+assert(tc.x++ == 3);
+assert(tc.x++ == 4);
+
+
 println("SUCCESS: unittests were completed with SUCCESS.");

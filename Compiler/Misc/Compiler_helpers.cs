@@ -130,13 +130,18 @@ namespace GroundCompiler
         {
             var currentScope = variableExpr.GetScope();
             var symbol = GetSymbol(variableExpr.Name.Lexeme, currentScope!, variableExpr.Name);
+            string reg;
 
             if (symbol is LocalVariableSymbol localVarSymbol)
                 emitter.StoreFunctionVariable64(emitter.AssemblyVariableName(localVarSymbol, currentScope?.Owner), localVarSymbol.DataType);
             else if (symbol is FunctionParameterSymbol funcParSymbol)
                 emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
             else if (symbol is ParentScopeVariable parentSymbol)
+            {
+                reg = emitter.Gather_LexicalParentStackframe(parentSymbol.LevelsDeep);
                 emitter.StoreParentFunctionParameter64(emitter.AssemblyVariableName(symbol.Name, parentSymbol!.TheScopeStatement), parentSymbol.DataType);
+                cpu.FreeRegister(reg);
+            }
             else if (symbol is FunctionSymbol funcSymbol)
                 Compiler.Error("VariableAccessWrite >> Not implemented yet.");
             else if (symbol is HardcodedVariable hardcodedSymbol)
@@ -161,6 +166,7 @@ namespace GroundCompiler
             else if (symbol is FunctionParameterSymbol funcParSymbol)
             {
                 EmitExpression(assignment.RightOfEqualSignNode);
+                EmitConversionCompatibleType(assignment.RightOfEqualSignNode, assignment.LeftOfEqualSignNode.ExprType);
                 emitter.StoreFunctionParameter64(emitter.AssemblyVariableName(funcParSymbol), funcParSymbol.DataType);
             }
             else if (symbol is ParentScopeVariable parentSymbol)

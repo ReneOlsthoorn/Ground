@@ -131,6 +131,7 @@ extern sprintf
 FloatToString:
   push  rbp
   mov   rbp, rsp
+  and   rsp, -16
   sub   rsp, 10h
   mov   [rbp-8h], rcx    ; the buffer to store
   
@@ -141,6 +142,7 @@ FloatToString:
   call	PrintNumber			; Display the quotient
 .no_display2:
   push  rdi
+  sub   rsp, 8    ;align 16-byte
   mov   eax, 1          ; 1 argument
   ; xmm0 = float argument
   lea   rdi, [tmpCharSpace]             ;   rdi = buffer
@@ -155,7 +157,8 @@ FloatToString:
   mov	rcx, rax
   cld
   rep	movsb			; copy string
-  
+
+  add   rsp, 8  
   pop   rdi
   pop   rsi
   pop   rcx

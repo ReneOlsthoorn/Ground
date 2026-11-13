@@ -955,6 +955,8 @@ namespace GroundCompiler.Statements
                 if (Datatype.IsFloatingPoint(ResultDatatype))
                     return 0;
                 int resultSize = ResultDatatype.SizeInBytes;
+                if (resultSize == 4 && ResultDatatype.Contains(Datatype.TypeEnum.Signed))
+                    resultSize = -4;
                 if (ResultDatatype.Name.StartsWith("bool"))
                     resultSize = 1;
                 return resultSize;

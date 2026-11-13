@@ -209,12 +209,14 @@ namespace GroundCompiler
             string doneLabel = emitter.NewLabel();
             emitter.JumpToLabelIfFalse(elseLabel);
             EmitStatement(stmt.ThenBranchNode);
-            emitter.JumpToLabel(doneLabel);
+            if (stmt.ElseBranchNode != null)
+                emitter.JumpToLabel(doneLabel);
             emitter.InsertLabel(elseLabel);
             if (stmt.ElseBranchNode != null)
+            {
                 EmitStatement(stmt.ElseBranchNode);
-
-            emitter.InsertLabel(doneLabel);
+                emitter.InsertLabel(doneLabel);
+            }
             return null;
         }
 
@@ -716,6 +718,7 @@ namespace GroundCompiler
                 if (expr.RightNode is PropertyExpression propExpr)
                 {
                     VisitorPropertyGet(propExpr);
+                    emitter.Push();
                     if (expr.Operator.Contains(TokenType.PlusPlus))
                         emitter.IncrementCurrent();
                     if (expr.Operator.Contains(TokenType.MinusMinus))
@@ -724,6 +727,7 @@ namespace GroundCompiler
                     PropertySet propSet = new PropertySet(propExpr, null, null);
                     propSet.Parent = propExpr.Parent;
                     VisitorPropertySet(propSet);
+                    emitter.Pop();
                 }
                 else if (expr.RightNode is Variable theVariable)
                 {
