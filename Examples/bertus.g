@@ -381,7 +381,12 @@ function GameIsOver() {
 }
 
 #include soundtracker.g
-SoundtrackerInit("sound/mod/mlp magic-78.mod");
+bool soundOK = SoundtrackerInit("sound/mod/mlp magic-78.mod");
+if not (soundOK) {
+	string error = sdl3.SDL_GetError();
+	println(error);
+	return;
+}
 
 // BEGIN Mainloop:
 GotoLevel();

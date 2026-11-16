@@ -105,6 +105,7 @@ dll sdl3 function SDL_ShowSimpleMessageBox(int messageBoxFlags, string title, st
 dll sdl3 function SDL_CreateProperties() : i32;
 dll sdl3 function SDL_SetNumberProperty(i32 props, string propname, int val) : bool;
 dll sdl3 function SDL_DestroyProperties(i32 props);
+dll sdl3 function SDL_GetError() : string;
 
 class SDL_AudioSpec packed {
 	u32 format;

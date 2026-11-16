@@ -59,7 +59,8 @@ function DrawPortion(int y) {
         pixels[x,y] = 0xff000000 + (amountPart << 16) + (amountPart << 8) + amountPart;
         */
 asm {
-  push  rdi rdx
+  push  rdi
+  push  rdx
   mov   rdi, [pixelPtr@DrawPortion]
   mov   rax, [sinValue@DrawPortion]
   add   rax, 128
@@ -78,7 +79,8 @@ asm {
   or    eax, edx
   or    eax, 0xff000000
   mov   [rdi], eax
-  pop   rdx rdi
+  pop   rdx
+  pop   rdi
 }
         pixelPtr = pixelPtr + 4;
     }

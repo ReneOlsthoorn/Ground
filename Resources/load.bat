@@ -94,6 +94,22 @@ rmdir /s /q sdl3-mixer
 del /Q /F sdl3-mixer.tar
 
 
+rem  *** libxmp.dll ***  Needed to play Amiga Soundtracker files
+set THEFILE="libxmp.tar.zst"
+if exist %THEFILE% (
+  echo File %THEFILE% already exists. Skipping download.
+) else (
+  echo Downloading %THEFILE%...
+  curl -L -o %THEFILE% "https://mirror.msys2.org/mingw/mingw64/mingw-w64-x86_64-libxmp-4.7.4-1-any.pkg.tar.zst"
+)
+zstd.exe -df %THEFILE%
+mkdir libxmp
+tar -xf libxmp.tar -C libxmp
+move libxmp\mingw64\bin\libxmp.dll .
+rmdir /s /q libxmp
+del /Q /F libxmp.tar
+
+
 rem  *** libcglm-0.dll ***  3d matrix
 set THEFILE="libcglm.tar.zst"
 if exist %THEFILE% (

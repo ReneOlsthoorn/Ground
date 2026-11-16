@@ -4,6 +4,7 @@ del /Q /F curl-win64-mingw.zip
 del /Q /F libcurl-x64.dll
 del /Q /F libmikmod.tar.zst
 del /Q /F libcglm.tar.zst
+del /Q /F libxmp.tar.zst
 del /Q /F load.bat
 del /Q /F raylib-6.0.zip
 del /Q /F SDL3_image-win32-x64.zip

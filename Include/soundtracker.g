@@ -1,5 +1,5 @@
 
-int mixInitResult = sdl3_mixer.MIX_Init();
+bool mixInitResult = sdl3_mixer.MIX_Init();
 if (mixInitResult == 0)
    return;
 
@@ -14,16 +14,23 @@ modulePlayerSpec.freq = 48000;  // 0xbb80
 
 i32 playerProps = sdl3.SDL_CreateProperties();
 
-function SoundtrackerInit(string path) {
+function SoundtrackerInit(string path) : bool {
     soundtrackerMixer = sdl3_mixer.MIX_CreateMixerDevice(g.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &modulePlayerSpec);
+    if (soundtrackerMixer == null)
+        return false;
     mod_audio = sdl3_mixer.MIX_LoadAudio(soundtrackerMixer, path, false);
+    if (mod_audio == null)
+        return false;
     soundtrackerTrack = sdl3_mixer.MIX_CreateTrack(soundtrackerMixer);
+    if (soundtrackerTrack == null)
+        return false;
     sdl3_mixer.MIX_SetTrackAudio(soundtrackerTrack, mod_audio);
     sdl3.SDL_SetNumberProperty(playerProps, "SDL_mixer.play.loops", -1);
     //sdl3.SDL_SetNumberProperty(playerProps, "SDL_mixer.play.start_order", 2);  // start from other pattern: did not work
     //sdl3.SDL_SetNumberProperty(playerProps, "SDL_mixer.play.start_frame", 2);  // start from other pattern: did not work
     sdl3_mixer.MIX_PlayTrack(soundtrackerTrack, playerProps);
     //sdl3_mixer.MIX_SetTrackPlaybackPosition(soundtrackerTrack, 2);  // start from other pattern: did not work
+    return true;
 }
 
 function SoundtrackerFree() {

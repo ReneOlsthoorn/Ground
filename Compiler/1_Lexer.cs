@@ -157,7 +157,8 @@ namespace GroundCompiler
                     if (attributes.Length > 0)
                         token.Properties["attributes"] = attributes;
                     NextChar();
-                    string s = ReadMatching(IsNotRightBrace);
+                    string s = ReadTillEndCurlyBraces();
+                    int strlen = s.Length;
                     token.Value = s;
                     NextChar();
                 }
@@ -234,6 +235,24 @@ namespace GroundCompiler
             token.Type = TokenType.Identifier;   // in other cases, it's an identifier
         }
 
+        public string ReadTillEndCurlyBraces()
+        {
+            int startPos = needle;
+            while (CurrentChar() != '}')
+            {
+                NextChar();
+                if (CurrentChar() == '{')
+                {
+                    while (CurrentChar() != '}')
+                        NextChar();
+                    NextChar();
+                }
+            }
+            
+            int endPos = needle;
+            return sourcecode.Substring(startPos, endPos - startPos);
+        }
+        
         public string ReadMatching(Func<char, char, bool> CharValidFunction)
         {
             int startPos = needle;

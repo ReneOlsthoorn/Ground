@@ -15,7 +15,7 @@
 #define MAP_SIZE 1024
 
 sdl3.SDL_Init(g.SDL_INIT_VIDEO);
-ptr window = sdl3.SDL_CreateWindow("Mode 7 optimized", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+ptr window = sdl3.SDL_CreateWindow("Mode 7 optimized with assembly on 1 thread", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
 #windows  ptr renderer = sdl3.SDL_CreateRenderer(window, "direct3d");
 #linux    ptr renderer = sdl3.SDL_CreateRenderer(window, null);
 ptr texture = sdl3.SDL_CreateTexture(renderer, g.SDL_PIXELFORMAT_ARGB8888, g.SDL_TEXTUREACCESS_STREAMING, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -27,8 +27,6 @@ byte[SDL3_EVENT_SIZE] event = [];
 u32* eventType = &event[SDL3_KEYBOARDEVENT_TYPE_U32];
 u32* eventScancode = &event[SDL3_KEYBOARDEVENT_SCANCODE_U32];
 bool StatusRunning = true;
-bool thread1Busy = false;
-bool thread2Busy = false;
 int nMapSize = 1024;
 float fWorldX = 132.8;
 float fWorldY = 651.5;
@@ -139,21 +137,6 @@ function Innerloop(int pStartY, int pEndY, ptr myPixel_p) {
 	}
 }
 
-function Thread2() {
-	while (StatusRunning) {
-		if (thread2Busy) {
-			int halfHeight = SCREEN_HEIGHT / 2;
-			ptr threadPixel_p = g.[pixels_p]+(SCREEN_WIDTH * halfHeight * SCREEN_PIXELSIZE);
-            Innerloop(halfHeight, SCREEN_HEIGHT, threadPixel_p);
-			thread2Busy = false;
-		}
-	}
-}
-
-
-#windows  GC_CreateThread(Thread2);
-#linux    GC_Clone(Thread2);
-
 while (StatusRunning)
 {
 	while (sdl3.SDL_PollEvent(&event[0])) {
@@ -170,17 +153,8 @@ while (StatusRunning)
 	sdl3.SDL_LockTexture(texture, null, &pixels, &pitch);
 	g.[pixels_p] = pixels;
 
-	thread1Busy = StatusRunning;
-	thread2Busy = StatusRunning;
-
-	if (thread1Busy) {
-		loopStartTicks = sdl3.SDL_GetTicks();
-		ptr threadPixel_p = g.[pixels_p];
-		int halfHeight = SCREEN_HEIGHT / 2;
-		Innerloop(0, halfHeight, threadPixel_p);
-		thread1Busy = false;
-	}
-	while (thread2Busy) { }
+    loopStartTicks = sdl3.SDL_GetTicks();
+    Innerloop(0, SCREEN_HEIGHT, g.[pixels_p]);
 
 	int currentTicks = sdl3.SDL_GetTicks() - loopStartTicks;
 	if (currentTicks < debugBestTicks) {
@@ -209,7 +183,6 @@ sdl3.SDL_Quit();
 
 sdl3.SDL_DestroySurface(convertedSurface);
 sdl3.SDL_DestroySurface(surface);
-
 
 //string showStr = "Best innerloop time: " + debugBestTicks + "ms";
 //sdl3.SDL_ShowSimpleMessageBox(g.SDL_MESSAGEBOX_INFORMATION, "Info", showStr, null);
