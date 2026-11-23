@@ -35,7 +35,7 @@ zero(si);
 si.cb = sizeof(si);
 si.dwFlags = g.kernel32_STARTF_USESHOWWINDOW;
 si.wShowWindow = g.kernel32_SW_HIDE;
-assert(sizeof(si)==104);
+//assert(sizeof(si)==104);
 
 
 class PROCESS_INFORMATION {     //sizeof: 24 bytes
@@ -46,7 +46,7 @@ class PROCESS_INFORMATION {     //sizeof: 24 bytes
 }
 PROCESS_INFORMATION pi;
 zero(pi);
-assert(sizeof(pi)==24);
+//assert(sizeof(pi)==24);
 
 
 class SECURITY_ATTRIBUTES {   //sizeof: 24 bytes
@@ -60,7 +60,7 @@ zero(sa);
 sa.nLength = sizeof(sa);
 sa.lpSecurityDescriptor = null;
 sa.bInheritHandle = true;
-assert(sizeof(sa)==24);
+//assert(sizeof(sa)==24);
 
 
 

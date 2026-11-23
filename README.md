@@ -243,7 +243,7 @@ so that will be the future.
 * You can only declare Classes at the root level. Inner classes are not supported.
 * To clean up your code, methods and variables can be easily stored in a separate file that you include in the main sourcefile.
 * During development of your shader, use the `console` template to be able to see the logging of the GLSL compiler. Also don't use fullscreen, because in the case your code crashes the desktop is not restored.
-* The Chipmunk physics DLL had to be manually build, because it only works without symbols in the DLL. 
+* The Chipmunk physics DLL had to be manually build, because a change in GCC caused it to fail when two bodies collide. To correctly build it, -fno-finite-math-only must be used.
 These steps were done: I checked out the sourcecode and created a directory called build. Into this directory I 
 created the make files like this: 
 `cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-s" -DBUILD_STATIC=ON`  

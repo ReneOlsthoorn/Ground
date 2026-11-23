@@ -5,6 +5,7 @@ global main
 gc_linux equ 1
 gc_windows equ 0
 %include 'Include/clib_extern.inc'
+%include 'Include/chipmunk_extern.inc'
 
 ; *** GENERATED EQUATES CODE ***
 ;GC_INSERTIONPOINT_EQUATES

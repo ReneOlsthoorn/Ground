@@ -70,49 +70,6 @@ include 'Templates/part_utils.asm'
 include 'Templates/part_hardcoded_library.asm'
 
 
-PlotSprite:
-;rcx = source
-;rdx = destination pixels
-;r8  = width
-;r9  = height
-  push	rsi
-  push  rdi
-  push  r10
-  push  r15
-  push  r14
-  mov	r15, [pixels_p]
-  mov	rsi, rcx
-  mov	rdi, rdx
-  mov	r10d, r8d
-  shl	r10d, 2
-  mov	rdx, GC_SCREEN_WIDTH
-  shl	edx, 2
-.newLine:
-  mov	ecx, 0
-.tmp:
-  mov	eax, [rsi+rcx*4]
-  cmp	eax, 0h
-  je	.skip
-  lea	r14, [rdi+rcx*4]
-  cmp	r14, r15
-  jl	.skip
-  mov	[r14], eax
-.skip:
-  add	ecx, 1
-  cmp	ecx, r8d
-  jnz	.tmp
-  add	rsi, r10
-  add	rdi, rdx
-  dec	r9d
-  jnz	.newLine
-  pop	r14
-  pop   r15
-  pop   r10
-  pop   rdi
-  pop   rsi
-  ret
-
-
 source@_f_PlotSprite equ rbp+G_PARAMETER1
 destination@_f_PlotSprite equ rbp+G_PARAMETER2
 width@_f_PlotSprite equ rbp+G_PARAMETER3

@@ -147,7 +147,7 @@ function Thread2StockFish() {
     si.hStdError = hStdOutWrite;
     si.hStdInput = hStdInRead;
 
-	string exePath = "stockfish-windows-x86-64-avx2.exe";
+	string exePath = "stockfish.exe";
 	bool waarde = kernel32.CreateProcessA(exePath, null, null, null, true, g.kernel32_CREATE_NO_WINDOWS, null, null, &si, &pi);
 
 	if not (waarde) {

@@ -126,15 +126,31 @@ rmdir /s /q libcglm
 del /Q /F libcglm.tar
 
 
+rem  *** libchipmunk.dll ***
+rem set THEFILE="libchipmunk.tar.zst"
+rem if exist %THEFILE% (
+rem   echo File %THEFILE% already exists. Skipping download.
+rem ) else (
+rem   echo Downloading %THEFILE%...
+rem   curl -L -o %THEFILE% "https://mirror.msys2.org/mingw/ucrt64/mingw-w64-ucrt-x86_64-chipmunk-7.0.3-2-any.pkg.tar.zst"
+rem )
+rem zstd.exe -df %THEFILE%
+rem mkdir libchipmunk
+rem tar -xf libchipmunk.tar -C libchipmunk
+rem move libchipmunk\ucrt64\bin\libchipmunk.dll .
+rem rmdir /s /q libchipmunk
+rem del /Q /F libchipmunk.tar
+
+
 rem  *** stockfish-windows-x86-64-avx2.exe ***  This is the worlds best Chess engine.
-set THEFILE="stockfish-windows-x86-64-avx2.zip"
+set THEFILE="stockfish.zip"
 if exist %THEFILE% (
   echo File %THEFILE% already exists. Skipping download.
 ) else (
   echo Downloading %THEFILE%...
-  curl -L -o %THEFILE% "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64-avx2.zip"
+  curl -L -o %THEFILE% "https://github.com/official-stockfish/Stockfish/releases/download/sf_19/stockfish-windows-x86-64-universal.zip"
 )
 tar -xf %THEFILE%
-move stockfish\stockfish-windows-x86-64-avx2.exe .
+move stockfish\stockfish-windows-x86-64-universal.exe stockfish.exe
 rmdir /s /q stockfish
 

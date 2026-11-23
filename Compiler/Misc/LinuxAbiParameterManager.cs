@@ -220,16 +220,43 @@ public class LinuxAbiParameterManager
         }  
     }
 
+
     public void RetrieveLargerResult()
     {
         if (linuxCopyResultBytes > 0)
         {
-            emitter.Codeline("push  rcx");
-            emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
-            emitter.Codeline("mov   [rcx], rax");     // deze twee kloppen wel, want voor resultaten groter dan 16 wordt het resultaat in een pointer in RDI teruggegeven. Zie CheckForLargeResult.
-            emitter.Codeline("mov   [rcx+8], rdx");
-            emitter.Codeline("mov   rax, rcx");
-            emitter.Codeline("pop   rcx");
+            int nrInstVariables = 0;
+
+            var classStatement = dllFunctionSymbol.FunctionStmt.ResultDatatype!.Properties["classStatement"] as ClassStatement;
+            var varStList = classStatement!.InstanceVariableNodes;
+            bool willBeFloatParameter = true;
+            foreach (var varSt in varStList)
+            {
+                nrInstVariables++;
+                if (!varSt.ResultType.Contains(Datatype.TypeEnum.FloatingPoint))
+                    willBeFloatParameter = false;
+            }
+
+            if (nrInstVariables != 2)
+                Compiler.Error("Linux System V amd64 ABI result > 8 <= 16 which is not 2 parameters. Please create support for more parameters");
+
+            if (!willBeFloatParameter)
+            {
+                emitter.Codeline("push  rcx");
+                emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
+                emitter.Codeline("mov   [rcx], rax");     // deze twee kloppen wel, want voor resultaten groter dan 16 wordt het resultaat in een pointer in RDI teruggegeven. Zie CheckForLargeResult.
+                emitter.Codeline("mov   [rcx+8], rdx");
+                emitter.Codeline("mov   rax, rcx");
+                emitter.Codeline("pop   rcx");
+            } else
+            {
+                emitter.Codeline("push  rcx");
+                emitter.ReserveOnStack(linuxCopyResultBytes, "rcx");
+                emitter.Codeline("movq   [rcx], xmm0");
+                emitter.Codeline("movq   [rcx+8], xmm1");
+                emitter.Codeline("mov   rax, rcx");
+                emitter.Codeline("pop   rcx");
+            }
         }
     }
     

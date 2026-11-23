@@ -2,9 +2,9 @@ format pe64 GUI 5.0
 entry start
 stack 80000h, 80000h
 
-include 'fasm\win64a.inc'
-include 'Include\sdl3_fasm.inc'
-include 'Templates\part_equates.asm'
+include 'fasm2/include/win64a.inc'
+include 'Include/sdl3_fasm.inc'
+include 'Templates/part_equates.asm'
 
 SCREEN_WIDTH=960			; Screen width is less than the textcolumns * 16, because of the extra column for scrolling
 SCREEN_HEIGHT=560
@@ -567,49 +567,6 @@ DrawCRTLine_TEXT4_FONT1024:
   ret
 
 
-PlotSprite:
-;rcx = source
-;rdx = destination pixels
-;r8  = width
-;r9  = height
-  push	rsi
-  push  rdi
-  push  r10
-  push  r15
-  push  r14
-  mov	r15, [pixels_p]
-  mov	rsi, rcx
-  mov	rdi, rdx
-  mov	r10d, r8d
-  shl	r10d, 2
-  mov	rdx, SCREEN_WIDTH
-  shl	edx, 2
-.newLine:
-  mov	ecx, 0
-.tmp6:
-  mov	eax, [rsi+rcx*4]
-  cmp	eax, 0h
-  je	.skip
-  lea	r14, [rdi+rcx*4]
-  cmp	r14, r15
-  jl	.skip
-  mov	[r14], eax
-.skip:
-  add	ecx, 1
-  cmp	ecx, r8d
-  jnz	.tmp6
-  add	rsi, r10
-  add	rdi, rdx
-  dec	r9d
-  jnz	.newLine
-  pop	r14
-  pop   r15
-  pop   r10
-  pop   rdi
-  pop   rsi
-  ret
-
-  
 source@_f_PlotSprite equ rbp+G_PARAMETER1
 destination@_f_PlotSprite equ rbp+G_PARAMETER2
 width@_f_PlotSprite equ rbp+G_PARAMETER3

@@ -19,7 +19,6 @@
 #library user32 user32.dll
 #library sdl3 sdl3.dll
 #library sdl3_image sdl3_image.dll
-#library sidelib GroundSideLibrary.dll
 #library comdlg32 comdlg32.dll
 
 //   SETTINGS
